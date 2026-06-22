@@ -1,4 +1,4 @@
-const BASE_URL = '/.netlify/functions/financeiro';
+const BASE_URL = '/api/financeiro';
 
 function toSearchParams(params?: Record<string, unknown>): URLSearchParams {
   const sp = new URLSearchParams();

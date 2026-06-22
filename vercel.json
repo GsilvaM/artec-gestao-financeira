@@ -1,10 +1,15 @@
 {
-  "buildCommand": "bun run build",
+  "buildCommand": "prisma generate && bun run build",
   "installCommand": "bun install",
   "outputDirectory": "dist",
+  "functions": {
+    "api/**/*.ts": {
+      "runtime": "nodejs@22.x"
+    }
+  },
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/((?!api).*)",
       "destination": "/index.html"
     }
   ]
