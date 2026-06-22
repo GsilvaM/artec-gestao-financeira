@@ -41,7 +41,7 @@ export function AppLayout() {
       <AppSidebar collapsed={collapsed} onCollapsedChange={setCollapsed} pathname={location.pathname} userEmail={user?.email} onSignOut={handleSignOut} />
       <div className={cn("min-w-0 transition-[padding] duration-200 lg:pl-[264px]", collapsed && "lg:pl-[72px]") }>
         <Topbar pathname={location.pathname} userEmail={user?.email} onOpenMobile={() => setMobileOpen(true)} onSignOut={handleSignOut} />
-        <main className="min-w-0 pb-10">
+        <main className="min-w-0 pb-20 lg:pb-16">
           <Outlet />
         </main>
       </div>

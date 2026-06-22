@@ -19,7 +19,7 @@ interface PageShellProps {
 
 export function PageShell({ icon: Icon, title, subtitle, actionLabel, onAction, children }: PageShellProps) {
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 pb-8 pt-6 sm:px-6 lg:px-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <div className="flex size-12 items-center justify-center rounded-2xl bg-[#EAF3FB] text-[#174E8C]">
