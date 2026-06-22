@@ -19,16 +19,21 @@ export type ClientForm = z.infer<typeof clientSchema>;
 
 const initialForm: ClientForm = { nome: "", telefone: "", email: "", documento: "", observacoes: "" };
 
+export type ClientRecord = ClientForm & { id: string; status: "ativo" };
+
 interface ClientDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreate: (client: ClientForm & { id: string; status: "ativo" }) => void;
+  record?: ClientRecord | null;
+  onSave: (data: ClientRecord) => void;
 }
 
-export function ClientDialog({ open, onOpenChange, onCreate }: ClientDialogProps) {
-  const [form, setForm] = useState<ClientForm>(initialForm);
+export function ClientDialog({ open, onOpenChange, record, onSave }: ClientDialogProps) {
+  const [form, setForm] = useState<ClientForm>(record ?? initialForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+
+  const isEditing = !!record;
 
   function updateField(field: keyof ClientForm, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -39,25 +44,29 @@ export function ClientDialog({ open, onOpenChange, onCreate }: ClientDialogProps
     const parsed = clientSchema.safeParse(form);
     if (!parsed.success) {
       setErrors(Object.fromEntries(parsed.error.issues.map((issue) => [String(issue.path[0]), issue.message])));
-      toast.error("Revise os campos do cliente");
+      toast.error("Revise os campos");
       return;
     }
     setSaving(true);
     await new Promise((resolve) => setTimeout(resolve, 250));
-    onCreate({ id: crypto.randomUUID(), status: "ativo", ...parsed.data });
+    onSave({
+      id: record?.id ?? crypto.randomUUID(),
+      status: "ativo",
+      ...parsed.data,
+    });
     setSaving(false);
     setForm(initialForm);
     onOpenChange(false);
-    toast.success("Cliente criado");
+    toast.success(isEditing ? "Registro atualizado" : "Registro criado");
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v) { setForm(initialForm); setErrors({}); } onOpenChange(v); }}>
       <DialogContent className="relative">
-        <DialogCloseButton onClick={() => onOpenChange(false)} />
+        <DialogCloseButton onClick={() => { setForm(initialForm); setErrors({}); onOpenChange(false); }} />
         <DialogHeader>
-          <DialogTitle>Novo Cliente</DialogTitle>
-          <DialogDescription>Cadastre dados básicos para vincular serviços, contas e lançamentos.</DialogDescription>
+          <DialogTitle>{isEditing ? "Editar Registro" : "Novo Cliente"}</DialogTitle>
+          <DialogDescription>{isEditing ? "Altere os dados do registro." : "Cadastre dados básicos para vincular serviços, contas e lançamentos."}</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Nome" error={errors.nome}><Input value={form.nome} onChange={(e) => updateField("nome", e.target.value)} placeholder="Nome ou razão social" /></Field>
@@ -67,8 +76,8 @@ export function ClientDialog({ open, onOpenChange, onCreate }: ClientDialogProps
           <div className="sm:col-span-2"><Field label="Endereço/observações"><Textarea value={form.observacoes} onChange={(e) => updateField("observacoes", e.target.value)} placeholder="Endereço, bairro, cidade ou observações" /></Field></div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={handleSave} disabled={saving}>{saving ? "Salvando..." : "Salvar Cliente"}</Button>
+          <Button variant="outline" onClick={() => { setForm(initialForm); setErrors({}); onOpenChange(false); }}>Cancelar</Button>
+          <Button onClick={handleSave} disabled={saving}>{saving ? "Salvando..." : isEditing ? "Atualizar" : "Salvar"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

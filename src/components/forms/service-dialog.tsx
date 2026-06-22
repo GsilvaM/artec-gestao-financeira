@@ -20,24 +20,24 @@ const serviceSchema = z.object({
 export type ServiceForm = z.infer<typeof serviceSchema>;
 
 const initialForm: ServiceForm = {
-  cliente: "",
-  tipo: "",
-  tecnico: "",
-  prazo: "",
-  prioridade: "media",
-  observacoes: "",
+  cliente: "", tipo: "", tecnico: "", prazo: "", prioridade: "media", observacoes: "",
 };
+
+export type ServiceRecord = ServiceForm & { id: string; status: "rascunho" };
 
 interface ServiceDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreate: (service: ServiceForm & { id: string; status: "rascunho" }) => void;
+  record?: ServiceRecord | null;
+  onSave: (data: ServiceRecord) => void;
 }
 
-export function ServiceDialog({ open, onOpenChange, onCreate }: ServiceDialogProps) {
-  const [form, setForm] = useState<ServiceForm>(initialForm);
+export function ServiceDialog({ open, onOpenChange, record, onSave }: ServiceDialogProps) {
+  const [form, setForm] = useState<ServiceForm>(record ?? initialForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+
+  const isEditing = !!record;
 
   function updateField(field: keyof ServiceForm, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -48,25 +48,29 @@ export function ServiceDialog({ open, onOpenChange, onCreate }: ServiceDialogPro
     const parsed = serviceSchema.safeParse(form);
     if (!parsed.success) {
       setErrors(Object.fromEntries(parsed.error.issues.map((issue) => [String(issue.path[0]), issue.message])));
-      toast.error("Revise os campos do serviço");
+      toast.error("Revise os campos");
       return;
     }
     setSaving(true);
     await new Promise((resolve) => setTimeout(resolve, 250));
-    onCreate({ id: crypto.randomUUID(), status: "rascunho", ...parsed.data });
+    onSave({
+      id: record?.id ?? crypto.randomUUID(),
+      status: "rascunho",
+      ...parsed.data,
+    });
     setSaving(false);
     setForm(initialForm);
     onOpenChange(false);
-    toast.success("Serviço criado");
+    toast.success(isEditing ? "Serviço atualizado" : "Serviço criado");
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v) { setForm(initialForm); setErrors({}); } onOpenChange(v); }}>
       <DialogContent className="relative">
-        <DialogCloseButton onClick={() => onOpenChange(false)} />
+        <DialogCloseButton onClick={() => { setForm(initialForm); setErrors({}); onOpenChange(false); }} />
         <DialogHeader>
-          <DialogTitle>Novo Serviço</DialogTitle>
-          <DialogDescription>Crie um serviço inicial para acompanhar cliente, técnico e prazo.</DialogDescription>
+          <DialogTitle>{isEditing ? "Editar Serviço" : "Novo Serviço"}</DialogTitle>
+          <DialogDescription>{isEditing ? "Altere os dados do serviço." : "Crie um serviço para acompanhar cliente, técnico e prazo."}</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Cliente" error={errors.cliente}><Input value={form.cliente} onChange={(e) => updateField("cliente", e.target.value)} placeholder="Nome do cliente" /></Field>
@@ -77,8 +81,8 @@ export function ServiceDialog({ open, onOpenChange, onCreate }: ServiceDialogPro
           <Field label="Observações"><Textarea value={form.observacoes} onChange={(e) => updateField("observacoes", e.target.value)} placeholder="Detalhes do atendimento" /></Field>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={handleSave} disabled={saving}>{saving ? "Salvando..." : "Salvar Serviço"}</Button>
+          <Button variant="outline" onClick={() => { setForm(initialForm); setErrors({}); onOpenChange(false); }}>Cancelar</Button>
+          <Button onClick={handleSave} disabled={saving}>{saving ? "Salvando..." : isEditing ? "Atualizar" : "Salvar"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

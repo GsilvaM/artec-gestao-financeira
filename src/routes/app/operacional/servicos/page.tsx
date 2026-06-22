@@ -1,22 +1,41 @@
 import { useState } from "react";
 import { ClipboardList, Clock, MoreHorizontal, Pencil, PlayCircle, Trash2, Wrench } from "lucide-react";
-import { ServiceDialog, type ServiceForm } from "@/components/forms/service-dialog";
-import { EmptyState, FilterBar, MetricCard, PageShell, StatusBadge, StatusSelect } from "@/components/layout/page-shell";
+import { ServiceDialog, type ServiceRecord } from "@/components/forms/service-dialog";
+import { Dialog, DialogCloseButton, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { EmptyState, FilterBar, MetricCard, PageShell, StatusBadge, StatusSelect } from "@/components/layout/page-shell";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-type Service = ServiceForm & { id: string; status: "rascunho" };
-
 export function Component() {
   const [open, setOpen] = useState(false);
-  const [services, setServices] = useState<Service[]>([]);
+  const [editing, setEditing] = useState<ServiceRecord | null>(null);
+  const [deleting, setDeleting] = useState<ServiceRecord | null>(null);
+  const [records, setRecords] = useState<ServiceRecord[]>([]);
+
+  function handleSave(data: ServiceRecord) {
+    setRecords((current) => {
+      const exists = current.findIndex((r) => r.id === data.id);
+      if (exists >= 0) {
+        const copy = [...current];
+        copy[exists] = data;
+        return copy;
+      }
+      return [data, ...current];
+    });
+  }
+
+  function confirmDelete() {
+    if (!deleting) return;
+    setRecords((current) => current.filter((r) => r.id !== deleting.id));
+    setDeleting(null);
+  }
 
   return (
-    <PageShell icon={ClipboardList} title="Serviços" subtitle="Gerencie ordens de serviço, status e responsáveis" actionLabel="Novo Serviço" onAction={() => setOpen(true)}>
+    <PageShell icon={ClipboardList} title="Serviços" subtitle="Gerencie ordens de serviço, status e responsáveis" actionLabel="Novo Serviço" onAction={() => { setEditing(null); setOpen(true); }}>
       <div className="grid gap-4 sm:grid-cols-3">
-        <MetricCard title="Abertos" value={String(services.length)} icon={PlayCircle} tone="blue" />
+        <MetricCard title="Abertos" value={String(records.length)} icon={PlayCircle} tone="blue" />
         <MetricCard title="Em execução" value="0" icon={Wrench} tone="amber" />
         <MetricCard title="Atrasados" value="0" icon={Clock} tone="red" />
       </div>
@@ -25,7 +44,7 @@ export function Component() {
         <Table>
           <TableHeader><TableRow>{["OS", "Cliente", "Serviço", "Técnico", "Status", "Prazo", "Ações"].map((column) => <TableHead key={column}>{column}</TableHead>)}</TableRow></TableHeader>
           <TableBody>
-            {services.length ? services.map((service, index) => (
+            {records.length ? records.map((service, index) => (
               <TableRow key={service.id}>
                 <TableCell className="font-medium">OS-{String(index + 1).padStart(4, "0")}</TableCell>
                 <TableCell>{service.cliente}</TableCell>
@@ -39,20 +58,33 @@ export function Component() {
                       <Button variant="ghost" size="icon" aria-label="Ações do serviço"><MoreHorizontal className="size-4" /></Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
-                      <DropdownMenuItem onClick={() => {}}><Pencil className="size-4" />Editar</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => { setEditing(service); setOpen(true); }}><Pencil className="size-4" />Editar</DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem destructive onClick={() => {}}><Trash2 className="size-4" />Excluir</DropdownMenuItem>
+                      <DropdownMenuItem destructive onClick={() => setDeleting(service)}><Trash2 className="size-4" />Excluir</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
               </TableRow>
             )) : (
-              <TableRow><TableCell colSpan={7} className="p-0"><EmptyState title="Nenhuma ordem de serviço encontrada." description="Crie ordens de serviço para organizar a operação." actionLabel="Novo Serviço" onAction={() => setOpen(true)} /></TableCell></TableRow>
+              <TableRow><TableCell colSpan={7} className="p-0"><EmptyState title="Nenhuma ordem de serviço encontrada." description="Crie ordens de serviço para organizar a operação." actionLabel="Novo Serviço" onAction={() => { setEditing(null); setOpen(true); }} /></TableCell></TableRow>
             )}
           </TableBody>
         </Table>
       </Card>
-      <ServiceDialog open={open} onOpenChange={setOpen} onCreate={(service) => setServices((current) => [service, ...current])} />
+      <ServiceDialog open={open} onOpenChange={setOpen} record={editing} onSave={handleSave} />
+      <Dialog open={!!deleting} onOpenChange={(v) => { if (!v) setDeleting(null); }}>
+        <DialogContent className="relative">
+          <DialogCloseButton onClick={() => setDeleting(null)} />
+          <DialogHeader>
+            <DialogTitle>Excluir Serviço</DialogTitle>
+            <DialogDescription>Confirma a exclusão do serviço <strong>OS-{deleting ? String(records.findIndex((r) => r.id === deleting.id) + 1).padStart(4, "0") : ""}</strong>? Esta ação não pode ser desfeita.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleting(null)}>Cancelar</Button>
+            <Button variant="destructive" onClick={confirmDelete}>Excluir</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PageShell>
   );
 }
