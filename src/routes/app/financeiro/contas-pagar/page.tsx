@@ -64,8 +64,10 @@ export function Component() {
     try {
       await deleteEntry(deletingId);
       toast.success("Conta a pagar excluída");
-    } catch {
-      toast.error("Erro ao excluir conta a pagar");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro ao excluir conta a pagar";
+      console.error("[delete-accounts-payable]", msg, err);
+      toast.error(msg);
     } finally {
       setDeletingId(null);
     }
@@ -96,8 +98,10 @@ export function Component() {
       }
       setOpen(false);
       resetForm();
-    } catch {
-      toast.error("Erro ao salvar conta a pagar");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro ao salvar conta a pagar";
+      console.error("[save-accounts-payable]", msg, err);
+      toast.error(msg);
     }
   }
 

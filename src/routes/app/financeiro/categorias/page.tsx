@@ -53,8 +53,10 @@ export function Component() {
     try {
       await deleteCategory(deletingId);
       toast.success("Categoria excluída");
-    } catch {
-      toast.error("Erro ao excluir categoria");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro ao excluir categoria";
+      console.error("[delete-category]", msg, err);
+      toast.error(msg);
     } finally {
       setDeletingId(null);
     }
@@ -72,8 +74,10 @@ export function Component() {
       }
       setOpen(false);
       resetForm();
-    } catch {
-      toast.error("Erro ao salvar categoria");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro ao salvar categoria";
+      console.error("[save-category]", msg, err);
+      toast.error(msg);
     }
   }
 

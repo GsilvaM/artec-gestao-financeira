@@ -117,8 +117,10 @@ export function Component() {
     try {
       await deleteEntry(deletingId);
       toast.success("Lançamento excluído");
-    } catch {
-      toast.error("Erro ao excluir lançamento");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro ao excluir lançamento";
+      console.error("[delete-entry]", msg, err);
+      toast.error(msg);
     } finally {
       setDeletingId(null);
     }
@@ -177,8 +179,10 @@ export function Component() {
       }
       setOpen(false);
       resetForm();
-    } catch {
-      toast.error("Erro ao salvar lançamento");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro ao salvar lançamento";
+      console.error("[save-entry]", msg, err);
+      toast.error(msg);
     }
   }
 

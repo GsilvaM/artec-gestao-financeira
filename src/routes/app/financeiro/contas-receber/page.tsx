@@ -64,8 +64,10 @@ export function Component() {
     try {
       await deleteEntry(deletingId);
       toast.success("Conta a receber excluída");
-    } catch {
-      toast.error("Erro ao excluir conta a receber");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro ao excluir conta a receber";
+      console.error("[delete-accounts-receivable]", msg, err);
+      toast.error(msg);
     } finally {
       setDeletingId(null);
     }
@@ -96,8 +98,10 @@ export function Component() {
       }
       setOpen(false);
       resetForm();
-    } catch {
-      toast.error("Erro ao salvar conta a receber");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro ao salvar conta a receber";
+      console.error("[save-accounts-receivable]", msg, err);
+      toast.error(msg);
     }
   }
 

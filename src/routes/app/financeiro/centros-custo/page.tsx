@@ -49,8 +49,10 @@ export function Component() {
     try {
       await deleteCenter(deletingId);
       toast.success("Centro de custo excluído");
-    } catch {
-      toast.error("Erro ao excluir centro de custo");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro ao excluir centro de custo";
+      console.error("[delete-cost-center]", msg, err);
+      toast.error(msg);
     } finally {
       setDeletingId(null);
     }
@@ -68,8 +70,10 @@ export function Component() {
       }
       setOpen(false);
       resetForm();
-    } catch {
-      toast.error("Erro ao salvar centro de custo");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro ao salvar centro de custo";
+      console.error("[save-cost-center]", msg, err);
+      toast.error(msg);
     }
   }
 
