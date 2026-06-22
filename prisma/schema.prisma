@@ -1,0 +1,290 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Profile {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @unique @map("user_id") @db.Uuid
+  name       String?
+  avatarUrl  String?  @map("avatar_url")
+  phone      String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  deletedAt  DateTime? @map("deleted_at")
+
+  role       Role?     @relation(fields: [roleId], references: [id])
+  roleId     String?   @map("role_id") @db.Uuid
+
+  @@map("profiles")
+}
+
+model Role {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  profiles   Profile[]
+  permissions Permission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String   @id @default(uuid()) @db.Uuid
+  roleId      String   @map("role_id") @db.Uuid
+  module      String
+  action      String
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  role Role @relation(fields: [roleId], references: [id])
+
+  @@unique([roleId, module, action])
+  @@map("permissions")
+}
+
+model Category {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  type      String   // receita | despesa
+  color     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  financialEntries FinancialEntry[]
+
+  @@index([type])
+  @@map("categories")
+}
+
+model CostCenter {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  code      String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  financialEntries FinancialEntry[]
+  serviceOrders    ServiceOrder[]
+  goals            Goal[]
+
+  @@index([active])
+  @@map("cost_centers")
+}
+
+model FinancialEntry {
+  id          String   @id @default(uuid()) @db.Uuid
+  description String
+  amount      Decimal  @db.Decimal(12, 2)
+  type        String   // receita | despesa
+  date        DateTime
+  status      String   @default("pending") // pending | confirmed | cancelled
+  categoryId  String   @map("category_id") @db.Uuid
+  costCenterId String? @map("cost_center_id") @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  notes       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  category   Category   @relation(fields: [categoryId], references: [id])
+  costCenter CostCenter? @relation(fields: [costCenterId], references: [id])
+
+  @@index([date])
+  @@index([type])
+  @@index([status])
+  @@index([categoryId])
+  @@index([costCenterId])
+  @@index([userId])
+  @@map("financial_entries")
+}
+
+model AccountPayable {
+  id              String    @id @default(uuid()) @db.Uuid
+  description     String
+  amount          Decimal   @db.Decimal(12, 2)
+  dueDate         DateTime  @map("due_date")
+  paidDate        DateTime? @map("paid_date")
+  status          String    @default("pending") // pending | paid | overdue | cancelled
+  categoryId      String    @map("category_id") @db.Uuid
+  costCenterId    String?   @map("cost_center_id") @db.Uuid
+  supplier        String?
+  userId          String    @map("user_id") @db.Uuid
+  notes           String?
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  @@index([dueDate])
+  @@index([status])
+  @@index([categoryId])
+  @@index([costCenterId])
+  @@index([userId])
+  @@map("accounts_payable")
+}
+
+model AccountReceivable {
+  id              String    @id @default(uuid()) @db.Uuid
+  description     String
+  amount          Decimal   @db.Decimal(12, 2)
+  dueDate         DateTime  @map("due_date")
+  receivedDate    DateTime? @map("received_date")
+  status          String    @default("pending") // pending | received | overdue | cancelled
+  categoryId      String    @map("category_id") @db.Uuid
+  costCenterId    String?   @map("cost_center_id") @db.Uuid
+  client          String?
+  userId          String    @map("user_id") @db.Uuid
+  notes           String?
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  @@index([dueDate])
+  @@index([status])
+  @@index([categoryId])
+  @@index([costCenterId])
+  @@index([userId])
+  @@map("accounts_receivable")
+}
+
+model ServiceCatalog {
+  id          String    @id @default(uuid()) @db.Uuid
+  name        String
+  description String?
+  estimatedCost Decimal? @map("estimated_cost") @db.Decimal(12, 2)
+  estimatedPrice Decimal? @map("estimated_price") @db.Decimal(12, 2)
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  serviceOrders ServiceOrder[]
+
+  @@index([active])
+  @@map("service_catalog")
+}
+
+model ServiceOrder {
+  id              String    @id @default(uuid()) @db.Uuid
+  serviceId       String    @map("service_id") @db.Uuid
+  description     String?
+  status          String    @default("open") // open | in_progress | completed | cancelled
+  costCenterId    String?   @map("cost_center_id") @db.Uuid
+  technicianId    String?   @map("technician_id") @db.Uuid
+  chargedAmount   Decimal?  @map("charged_amount") @db.Decimal(12, 2)
+  estimatedCost   Decimal?  @map("estimated_cost") @db.Decimal(12, 2)
+  actualCost      Decimal?  @map("actual_cost") @db.Decimal(12, 2)
+  startDate       DateTime? @map("start_date")
+  endDate         DateTime? @map("end_date")
+  userId          String    @map("user_id") @db.Uuid
+  notes           String?
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  service    ServiceCatalog @relation(fields: [serviceId], references: [id])
+  costCenter CostCenter?    @relation(fields: [costCenterId], references: [id])
+  technician Technician?    @relation(fields: [technicianId], references: [id])
+
+  @@index([status])
+  @@index([technicianId])
+  @@index([costCenterId])
+  @@index([userId])
+  @@map("service_orders")
+}
+
+model Technician {
+  id          String    @id @default(uuid()) @db.Uuid
+  name        String
+  email       String?   @unique
+  phone       String?
+  specialty   String?
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  serviceOrders ServiceOrder[]
+
+  @@index([active])
+  @@map("technicians")
+}
+
+model Collaborator {
+  id          String    @id @default(uuid()) @db.Uuid
+  name        String
+  email       String?   @unique
+  phone       String?
+  role        String?   // cargo/função
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  @@index([active])
+  @@map("collaborators")
+}
+
+model Goal {
+  id          String   @id @default(uuid()) @db.Uuid
+  description String
+  targetAmount Decimal  @map("target_amount") @db.Decimal(12, 2)
+  achievedAmount Decimal @default(0) @map("achieved_amount") @db.Decimal(12, 2)
+  period      String   // month | quarter | year
+  periodStart DateTime @map("period_start")
+  periodEnd   DateTime @map("period_end")
+  costCenterId String? @map("cost_center_id") @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  notes       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  costCenter CostCenter? @relation(fields: [costCenterId], references: [id])
+
+  @@index([periodStart, periodEnd])
+  @@index([costCenterId])
+  @@index([userId])
+  @@map("goals")
+}
+
+model Attachment {
+  id          String   @id @default(uuid()) @db.Uuid
+  filename    String
+  originalName String @map("original_name")
+  mimeType    String   @map("mime_type")
+  size        Int
+  url         String
+  entityType  String   @map("entity_type") // financial_entry | account_payable | account_receivable | service_order
+  entityId    String   @map("entity_id") @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@map("attachments")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  action    String
+  entity    String?
+  entityId  String?  @map("entity_id") @db.Uuid
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([action])
+  @@map("audit_logs")
+}
