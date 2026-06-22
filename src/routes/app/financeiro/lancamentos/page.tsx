@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
-import { ArrowDownCircle, ArrowUpCircle, Banknote, FileText, ListChecks, Loader2, MoreHorizontal } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, Banknote, FileText, ListChecks, Loader2, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { EmptyState, FilterBar, MetricCard, MoneyValue, MonthSelect, PageShell, StatusBadge, StatusSelect } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogCloseButton, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
@@ -151,7 +152,18 @@ export function Component() {
                 <TableCell className="font-medium">{entry.description}</TableCell>
                 <TableCell><MoneyValue value={formatMoney(Number(entry.amount))} tone={entry.type === "receita" ? "positive" : "negative"} /></TableCell>
                 <TableCell><StatusBadge status={entry.status as never} /></TableCell>
-                <TableCell><Button variant="ghost" size="icon" aria-label="Ações do lançamento"><MoreHorizontal className="size-4" /></Button></TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" aria-label="Ações do lançamento"><MoreHorizontal className="size-4" /></Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem onClick={() => toast.info("Editar lançamento (em breve)")}><Pencil className="size-4" />Editar</DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem destructive onClick={() => toast.info("Excluir lançamento (em breve)")}><Trash2 className="size-4" />Excluir</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
               </TableRow>
             )) : (
               <TableRow>

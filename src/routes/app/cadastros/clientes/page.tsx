@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Building2, MoreHorizontal, UserRoundPlus, Users } from "lucide-react";
+import { Building2, MoreHorizontal, Pencil, Trash2, UserRoundPlus, Users } from "lucide-react";
 import { ClientDialog, type ClientForm } from "@/components/forms/client-dialog";
 import { EmptyState, FilterBar, MetricCard, PageShell, StatusBadge, StatusSelect } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 type Client = ClientForm & { id: string; status: "ativo" };
@@ -30,7 +31,18 @@ export function Component() {
                 <TableCell><div>{client.telefone}</div><div className="text-xs text-[#64748B]">{client.email}</div></TableCell>
                 <TableCell>{client.observacoes || "-"}</TableCell>
                 <TableCell><StatusBadge status={client.status} /></TableCell>
-                <TableCell><Button variant="ghost" size="icon" aria-label="Ações do cliente"><MoreHorizontal className="size-4" /></Button></TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" aria-label="Ações do cliente"><MoreHorizontal className="size-4" /></Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem onClick={() => {}}><Pencil className="size-4" />Editar</DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem destructive onClick={() => {}}><Trash2 className="size-4" />Excluir</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
               </TableRow>
             )) : (
               <TableRow><TableCell colSpan={6} className="p-0"><EmptyState title="Nenhum cliente encontrado." description="Cadastre clientes para vincular serviços, contas e lançamentos." actionLabel="Novo Cliente" onAction={() => setOpen(true)} /></TableCell></TableRow>

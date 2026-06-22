@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { ClipboardList, Clock, MoreHorizontal, PlayCircle, Wrench } from "lucide-react";
+import { ClipboardList, Clock, MoreHorizontal, Pencil, PlayCircle, Trash2, Wrench } from "lucide-react";
 import { ServiceDialog, type ServiceForm } from "@/components/forms/service-dialog";
 import { EmptyState, FilterBar, MetricCard, PageShell, StatusBadge, StatusSelect } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 type Service = ServiceForm & { id: string; status: "rascunho" };
@@ -32,7 +33,18 @@ export function Component() {
                 <TableCell>{service.tecnico}</TableCell>
                 <TableCell><StatusBadge status={service.status} /></TableCell>
                 <TableCell>{formatDate(service.prazo)}</TableCell>
-                <TableCell><Button variant="ghost" size="icon" aria-label="Ações do serviço"><MoreHorizontal className="size-4" /></Button></TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" aria-label="Ações do serviço"><MoreHorizontal className="size-4" /></Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem onClick={() => {}}><Pencil className="size-4" />Editar</DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem destructive onClick={() => {}}><Trash2 className="size-4" />Excluir</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
               </TableRow>
             )) : (
               <TableRow><TableCell colSpan={7} className="p-0"><EmptyState title="Nenhuma ordem de serviço encontrada." description="Crie ordens de serviço para organizar a operação." actionLabel="Novo Serviço" onAction={() => setOpen(true)} /></TableCell></TableRow>
