@@ -8,6 +8,6 @@ export default defineConfig({
     seed: "bun run prisma/seed.ts",
   },
   datasource: {
-    url: env("DIRECT_URL"),
+    url: env("DIRECT_URL") || env("DATABASE_URL"),
   },
 });

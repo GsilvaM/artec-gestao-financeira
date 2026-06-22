@@ -1,5 +1,5 @@
 {
-  "buildCommand": "prisma generate && bun run build",
+  "buildCommand": "prisma generate && prisma migrate deploy && bun run build",
   "installCommand": "bun install",
   "outputDirectory": "dist",
   "rewrites": [
