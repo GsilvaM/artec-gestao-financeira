@@ -4,8 +4,8 @@ import {
   accountReceivableRepo,
   categoryRepo,
   costCenterRepo,
-} from "../../src/server/financeiro/repositories.js";
-import { getDre, getCashFlow } from "../../src/server/financeiro/queries.js";
+} from "../src/server/financeiro/repositories.js";
+import { getDre, getCashFlow } from "../src/server/financeiro/queries.js";
 
 function parseBody(req: import("http").IncomingMessage): Promise<unknown> {
   return new Promise((resolve, reject) => {
@@ -35,7 +35,7 @@ export default async function handler(
   res: import("http").ServerResponse
 ) {
   const url = new URL(req.url ?? "/", `http://${req.headers.host ?? "localhost"}`);
-  const segments = url.pathname.replace(/^\/api\/financeiro\//, "").split("/").filter(Boolean);
+  const segments = url.pathname.replace(/^\/api\/financeiro\/?/, "").split("/").filter(Boolean);
   const resource = segments[0];
   const id = segments[1];
   const method = req.method ?? "GET";
