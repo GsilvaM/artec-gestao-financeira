@@ -10,6 +10,7 @@ function createPrismaClient() {
     connectionString: process.env.DATABASE_URL,
     max: isServerless ? 1 : 10,
     idleTimeoutMillis: isServerless ? 10_000 : 30_000,
+    ssl: { rejectUnauthorized: false },
   });
   const adapter = new PrismaPg(pool);
   return new PrismaClient({ adapter });
