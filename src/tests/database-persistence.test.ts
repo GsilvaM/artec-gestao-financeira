@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, it, expect, afterAll } from "vitest";
-import { prisma } from "@/lib/prisma/client";
+import { prisma } from "../lib/prisma/client.js";
 
 afterAll(async () => {
   await prisma.$disconnect();

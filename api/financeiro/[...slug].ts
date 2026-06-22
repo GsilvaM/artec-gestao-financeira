@@ -4,8 +4,8 @@ import {
   accountReceivableRepo,
   categoryRepo,
   costCenterRepo,
-} from "../../src/server/financeiro/repositories";
-import { getDre, getCashFlow } from "../../src/server/financeiro/queries";
+} from "../../src/server/financeiro/repositories.js";
+import { getDre, getCashFlow } from "../../src/server/financeiro/queries.js";
 
 function parseBody(req: import("http").IncomingMessage): Promise<unknown> {
   return new Promise((resolve, reject) => {
