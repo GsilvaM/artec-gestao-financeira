@@ -1,10 +1,12 @@
 import "@testing-library/jest-dom/vitest";
 
-HTMLDialogElement.prototype.showModal = function showModal() {
-  this.open = true;
-};
+if (typeof HTMLDialogElement !== "undefined") {
+  HTMLDialogElement.prototype.showModal = function showModal() {
+    this.open = true;
+  };
 
-HTMLDialogElement.prototype.close = function close() {
-  this.open = false;
-  this.dispatchEvent(new Event("close"));
-};
+  HTMLDialogElement.prototype.close = function close() {
+    this.open = false;
+    this.dispatchEvent(new Event("close"));
+  };
+}
