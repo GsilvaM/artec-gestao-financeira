@@ -29,6 +29,7 @@ function send(res: import("http").ServerResponse, status: number, data: unknown)
   res.end(JSON.stringify(data));
 }
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export default async function handler(
   req: import("http").IncomingMessage,
   res: import("http").ServerResponse

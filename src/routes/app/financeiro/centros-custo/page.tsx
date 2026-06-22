@@ -8,7 +8,6 @@ import { Dialog, DialogCloseButton, DialogContent, DialogDescription, DialogFoot
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useCostCenters, useCreateCostCenter, useUpdateCostCenter, useDeleteCostCenter } from "@/domain/financeiro/hooks/use-cost-centers";
 import type { CostCenterRow } from "@/domain/financeiro/types";
@@ -80,7 +79,7 @@ export function Component() {
         <MetricCard title="Centros ativos" value={String((centers ?? []).filter((c) => c.active).length)} icon={Building} tone="blue" />
       </div>
       <FilterBar searchPlaceholder="Buscar centro de custo..." />
-      <Card className="overflow-hidden">
+      <Card className="overflow-visible">
         <Table>
           <TableHeader>
             <TableRow>{["Código", "Nome", "Status", "Ações"].map((column) => <TableHead key={column}>{column}</TableHead>)}</TableRow>

@@ -92,10 +92,6 @@ export function Component() {
     return match?.id ?? null;
   }
 
-  function findCategoryName(id: string): string {
-    return (categories ?? []).find((c) => c.id === id)?.name ?? "";
-  }
-
   function handleEdit(entry: FinancialEntryRow) {
     const parsedDate = entry.date ? new Date(entry.date + (entry.date.includes("T") ? "" : "T00:00:00")) : new Date();
     setForm({
@@ -198,7 +194,7 @@ export function Component() {
         <MonthSelect />
         <StatusSelect />
       </FilterBar>
-      <Card className="overflow-hidden">
+      <Card className="overflow-visible">
         <Table>
           <TableHeader>
             <TableRow>{["Data", "Tipo", "Categoria", "Descrição", "Valor", "Status", "Ações"].map((column) => <TableHead key={column}>{column}</TableHead>)}</TableRow>

@@ -116,7 +116,7 @@ export function Component() {
         <MetricCard title="Vencidas" value={String((entries ?? []).filter((e) => e.status === "overdue").length)} icon={AlertTriangle} tone="red" />
       </div>
       <FilterBar searchPlaceholder="Buscar conta a pagar..."><StatusSelect /></FilterBar>
-      <Card className="overflow-hidden">
+      <Card className="overflow-visible">
         <Table>
           <TableHeader>
             <TableRow>{["Vencimento", "Fornecedor", "Descrição", "Categoria", "Valor", "Status", "Ações"].map((column) => <TableHead key={column}>{column}</TableHead>)}</TableRow>

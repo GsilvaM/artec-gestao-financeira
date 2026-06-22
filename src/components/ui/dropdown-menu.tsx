@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Children, cloneElement, createContext, useCallback, useContext, useEffect, useId, useRef, useState, type ReactElement, type ReactNode } from "react";
+import { Children, cloneElement, createContext, createPortal, useCallback, useContext, useEffect, useId, useRef, useState, type ReactElement, type ReactNode } from "react";
 
 interface DropdownContextValue {
   open: boolean;
@@ -8,6 +8,8 @@ interface DropdownContextValue {
   triggerId: string;
   contentId: string;
   triggerRef: React.RefObject<HTMLButtonElement | null>;
+  contentStyle: React.CSSProperties;
+  setContentStyle: (style: React.CSSProperties) => void;
 }
 
 const DropdownContext = createContext<DropdownContextValue | null>(null);
@@ -20,6 +22,7 @@ function useDropdown() {
 
 export function DropdownMenu({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
+  const [contentStyle, setContentStyle] = useState<React.CSSProperties>({});
   const id = useId();
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
@@ -51,8 +54,8 @@ export function DropdownMenu({ children }: { children: ReactNode }) {
   }, [open]);
 
   return (
-    <DropdownContext.Provider value={{ open, toggle, close, triggerId: `dtrig-${id}`, contentId: `dcont-${id}`, triggerRef }}>
-      <div className="relative inline-block text-left">{children}</div>
+    <DropdownContext.Provider value={{ open, toggle, close, triggerId: `dtrig-${id}`, contentId: `dcont-${id}`, triggerRef, contentStyle, setContentStyle }}>
+      <div className="inline-block">{children}</div>
     </DropdownContext.Provider>
   );
 }
@@ -64,10 +67,19 @@ interface DropdownMenuTriggerProps {
 }
 
 export function DropdownMenuTrigger({ children, asChild, className, ...props }: DropdownMenuTriggerProps & Record<string, unknown>) {
-  const { open, toggle, triggerId, contentId, triggerRef } = useDropdown();
+  const { open, toggle, triggerId, contentId, triggerRef, setContentStyle } = useDropdown();
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setContentStyle({
+        position: "fixed",
+        top: `${rect.bottom + 4}px`,
+        left: `${Math.max(8, rect.right - 160)}px`,
+        zIndex: 9999,
+      });
+    }
     toggle();
   };
 
@@ -107,18 +119,19 @@ export function DropdownMenuTrigger({ children, asChild, className, ...props }: 
   );
 }
 
-export function DropdownMenuContent({ children, className, align = "end", ...props }: React.HTMLAttributes<HTMLDivElement> & { align?: "start" | "end" }) {
-  const { open, contentId } = useDropdown();
+export function DropdownMenuContent({ children, className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  const { open, contentId, contentStyle } = useDropdown();
   if (!open) return null;
-  return (
+
+  const content = (
     <div
       ref={(ref) => { if (ref) (ref as HTMLDivElement).focus(); }}
       id={contentId}
       role="menu"
       aria-orientation="vertical"
+      style={contentStyle}
       className={cn(
-        "absolute z-50 mt-1 min-w-[9rem] origin-top-right animate-in fade-in-0 zoom-in-95 rounded-xl border border-[#E2E8F0] bg-white p-1 shadow-[0_10px_38px_-10px_rgba(15,23,42,0.35),0_0_0_1px_rgba(0,0,0,0.05)] focus:outline-none",
-        align === "end" ? "right-0" : "left-0",
+        "min-w-[9rem] origin-top-right animate-in fade-in-0 zoom-in-95 rounded-xl border border-[#E2E8F0] bg-white p-1 shadow-[0_10px_38px_-10px_rgba(15,23,42,0.35),0_0_0_1px_rgba(0,0,0,0.05)] focus:outline-none",
         className,
       )}
       {...props}
@@ -126,6 +139,8 @@ export function DropdownMenuContent({ children, className, align = "end", ...pro
       {children}
     </div>
   );
+
+  return createPortal(content, document.body);
 }
 
 export function DropdownMenuItem({ children, className, onClick, destructive, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { destructive?: boolean }) {

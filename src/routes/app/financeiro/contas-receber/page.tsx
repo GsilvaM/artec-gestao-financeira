@@ -116,7 +116,7 @@ export function Component() {
         <MetricCard title="Pendentes" value={String((entries ?? []).filter((e) => e.status === "pending").length)} icon={Clock} tone="amber" />
       </div>
       <FilterBar searchPlaceholder="Buscar conta a receber..."><StatusSelect /></FilterBar>
-      <Card className="overflow-hidden">
+      <Card className="overflow-visible">
         <Table>
           <TableHeader>
             <TableRow>{["Vencimento", "Cliente", "Descrição", "Categoria", "Valor", "Status", "Ações"].map((column) => <TableHead key={column}>{column}</TableHead>)}</TableRow>

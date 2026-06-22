@@ -85,7 +85,7 @@ export function Component() {
       <FilterBar searchPlaceholder="Buscar categoria...">
         <Select value={type} onChange={(e) => setType(e.target.value as "receita" | "despesa")} options={[{ value: "receita", label: "Receita" }, { value: "despesa", label: "Despesa" }]} />
       </FilterBar>
-      <Card className="overflow-hidden">
+      <Card className="overflow-visible">
         <Table>
           <TableHeader>
             <TableRow>{["Nome", "Tipo", "Status", "Ações"].map((column) => <TableHead key={column}>{column}</TableHead>)}</TableRow>
