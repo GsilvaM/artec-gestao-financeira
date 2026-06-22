@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
-import { ArrowDownCircle, ArrowUpCircle, Banknote, FileText, ListChecks, MoreHorizontal } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, Banknote, FileText, ListChecks, Loader2, MoreHorizontal } from "lucide-react";
 import { EmptyState, FilterBar, MetricCard, MoneyValue, MonthSelect, PageShell, StatusBadge, StatusSelect } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogCloseButton, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -11,19 +11,21 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useFinancialEntries, useCreateFinancialEntry } from "@/domain/financeiro/hooks/use-financial-entries";
+import { useCategories } from "@/domain/financeiro/hooks/use-categories";
+import { useAuthStore } from "@/lib/supabase/auth-store";
 
 const schema = z.object({
   data: z.string().min(1, "Informe a data"),
   tipo: z.enum(["receita", "despesa"], { required_error: "Informe o tipo" }),
-  categoria: z.string().min(2, "Informe a categoria"),
+  categoria: z.string().min(1, "Selecione a categoria"),
   descricao: z.string().min(3, "Informe a descrição"),
-  pessoa: z.string().min(2, "Informe cliente ou fornecedor"),
+  pessoa: z.string().optional(),
   valor: z.coerce.number().positive("Informe um valor maior que zero"),
   status: z.enum(["aberto", "pago", "vencido"]),
   observacoes: z.string().optional(),
 });
 
-type Entry = z.infer<typeof schema> & { id: string };
 type FormState = z.input<typeof schema>;
 
 const initialForm: FormState = {
@@ -37,19 +39,36 @@ const initialForm: FormState = {
   observacoes: "",
 };
 
+const STATUS_MAP: Record<string, string> = {
+  aberto: "pending",
+  pago: "confirmed",
+  vencido: "cancelled",
+};
+
 export function Component() {
   const [open, setOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<FormState>(initialForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [entries, setEntries] = useState<Entry[]>([]);
-  const receitas = entries.filter((entry) => entry.tipo === "receita").reduce((sum, entry) => sum + entry.valor, 0);
-  const despesas = entries.filter((entry) => entry.tipo === "despesa").reduce((sum, entry) => sum + entry.valor, 0);
+
+  const user = useAuthStore((state) => state.user);
+  const { data: entries, isLoading, error } = useFinancialEntries();
+  const { data: categories } = useCategories();
+  const { mutateAsync: createEntry, isPending: saving } = useCreateFinancialEntry();
+
+  const receitas = (entries ?? []).filter((e) => e.type === "receita").reduce((sum, e) => sum + e.amount, 0);
+  const despesas = (entries ?? []).filter((e) => e.type === "despesa").reduce((sum, e) => sum + e.amount, 0);
   const saldo = receitas - despesas;
 
   function updateField(field: keyof FormState, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: "" }));
+  }
+
+  function findCategoryId(name: string): string | null {
+    const match = (categories ?? []).find(
+      (c) => c.name.toLowerCase() === name.toLowerCase() && c.type === form.tipo,
+    );
+    return match?.id ?? null;
   }
 
   async function handleSave() {
@@ -59,19 +78,45 @@ export function Component() {
       toast.error("Revise os campos do lançamento");
       return;
     }
-    setSaving(true);
-    await new Promise((resolve) => setTimeout(resolve, 250));
-    setEntries((current) => [{ id: crypto.randomUUID(), ...parsed.data }, ...current]);
-    setSaving(false);
-    setOpen(false);
-    setForm(initialForm);
-    toast.success("Lançamento criado");
+
+    if (!user) {
+      toast.error("Usuário não autenticado");
+      return;
+    }
+
+    const categoryId = findCategoryId(parsed.data.categoria);
+    if (!categoryId) {
+      toast.error("Categoria não encontrada. Cadastre-a em Financeiro > Categorias primeiro.");
+      return;
+    }
+
+    const parts = [parsed.data.observacoes];
+    if (parsed.data.pessoa) parts.unshift(`Cliente/Fornecedor: ${parsed.data.pessoa}`);
+    const notes = parts.filter(Boolean).join(" | ") || null;
+
+    try {
+      await createEntry({
+        description: parsed.data.descricao,
+        amount: parsed.data.valor,
+        type: parsed.data.tipo,
+        date: new Date(parsed.data.data + "T00:00:00"),
+        status: STATUS_MAP[parsed.data.status] ?? "pending",
+        categoryId,
+        userId: user.id,
+        notes,
+      });
+      setOpen(false);
+      setForm(initialForm);
+      toast.success("Lançamento criado");
+    } catch {
+      toast.error("Erro ao salvar lançamento");
+    }
   }
 
   return (
     <PageShell icon={FileText} title="Lançamentos" subtitle="Cadastre receitas, custos e despesas" actionLabel="Novo Lançamento" onAction={() => setOpen(true)}>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard title="Total Lançamentos" value={String(entries.length)} icon={ListChecks} tone="blue" />
+        <MetricCard title="Total Lançamentos" value={String(entries?.length ?? 0)} icon={ListChecks} tone="blue" />
         <MetricCard title="Receitas" value={formatMoney(receitas)} icon={ArrowUpCircle} tone="green" />
         <MetricCard title="Despesas" value={formatMoney(despesas)} icon={ArrowDownCircle} tone="red" />
         <MetricCard title="Saldo" value={formatMoney(saldo)} icon={Banknote} tone={saldo < 0 ? "red" : "blue"} />
@@ -83,23 +128,34 @@ export function Component() {
       <Card className="overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow>{["Data", "Tipo", "Categoria", "Descrição", "Cliente/Fornecedor", "Valor", "Status", "Ações"].map((column) => <TableHead key={column}>{column}</TableHead>)}</TableRow>
+            <TableRow>{["Data", "Tipo", "Categoria", "Descrição", "Valor", "Status", "Ações"].map((column) => <TableHead key={column}>{column}</TableHead>)}</TableRow>
           </TableHeader>
           <TableBody>
-            {entries.length ? entries.map((entry) => (
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={7} className="h-48 text-center">
+                  <Loader2 className="mx-auto size-6 animate-spin text-muted-foreground" />
+                </TableCell>
+              </TableRow>
+            ) : error ? (
+              <TableRow>
+                <TableCell colSpan={7} className="h-48 text-center text-destructive">
+                  Erro ao carregar lançamentos
+                </TableCell>
+              </TableRow>
+            ) : entries?.length ? entries.map((entry) => (
               <TableRow key={entry.id}>
-                <TableCell>{formatDate(entry.data)}</TableCell>
-                <TableCell>{entry.tipo === "receita" ? "Receita" : "Despesa"}</TableCell>
-                <TableCell>{entry.categoria}</TableCell>
-                <TableCell className="font-medium">{entry.descricao}</TableCell>
-                <TableCell>{entry.pessoa}</TableCell>
-                <TableCell><MoneyValue value={formatMoney(entry.valor)} tone={entry.tipo === "receita" ? "positive" : "negative"} /></TableCell>
-                <TableCell><StatusBadge status={entry.status} /></TableCell>
+                <TableCell>{formatDate(entry.date)}</TableCell>
+                <TableCell>{entry.type === "receita" ? "Receita" : "Despesa"}</TableCell>
+                <TableCell>{entry.categoryName}</TableCell>
+                <TableCell className="font-medium">{entry.description}</TableCell>
+                <TableCell><MoneyValue value={formatMoney(Number(entry.amount))} tone={entry.type === "receita" ? "positive" : "negative"} /></TableCell>
+                <TableCell><StatusBadge status={entry.status as never} /></TableCell>
                 <TableCell><Button variant="ghost" size="icon" aria-label="Ações do lançamento"><MoreHorizontal className="size-4" /></Button></TableCell>
               </TableRow>
             )) : (
               <TableRow>
-                <TableCell colSpan={8} className="p-0">
+                <TableCell colSpan={7} className="p-0">
                   <EmptyState title="Nenhum lançamento encontrado." description="Use o botão Novo Lançamento para cadastrar receitas, custos ou despesas." actionLabel="Novo Lançamento" onAction={() => setOpen(true)} />
                 </TableCell>
               </TableRow>
@@ -117,12 +173,18 @@ export function Component() {
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Data" error={errors.data}><Input type="date" value={form.data} onChange={(e) => updateField("data", e.target.value)} /></Field>
             <Field label="Tipo" error={errors.tipo}><Select value={form.tipo} onChange={(e) => updateField("tipo", e.target.value)} options={[{ value: "receita", label: "Receita" }, { value: "despesa", label: "Despesa" }]} /></Field>
-            <Field label="Categoria" error={errors.categoria}><Input value={form.categoria} onChange={(e) => updateField("categoria", e.target.value)} placeholder="Ex: Manutenção" /></Field>
+            <Field label="Categoria" error={errors.categoria}>
+              <Select value={form.categoria} onChange={(e) => updateField("categoria", e.target.value)}
+                options={(categories ?? [])
+                  .filter((c) => c.type === form.tipo)
+                  .map((c) => ({ value: c.name, label: c.name }))}
+                placeholder={categories?.length ? "Selecione..." : "Nenhuma categoria"} />
+            </Field>
             <Field label="Status" error={errors.status}><Select value={form.status} onChange={(e) => updateField("status", e.target.value)} options={[{ value: "aberto", label: "Aberto" }, { value: "pago", label: "Pago" }, { value: "vencido", label: "Vencido" }]} /></Field>
             <Field label="Descrição" error={errors.descricao}><Input value={form.descricao} onChange={(e) => updateField("descricao", e.target.value)} placeholder="Descrição do lançamento" /></Field>
-            <Field label="Cliente/Fornecedor" error={errors.pessoa}><Input value={form.pessoa} onChange={(e) => updateField("pessoa", e.target.value)} placeholder="Nome relacionado" /></Field>
+            <Field label="Cliente/Fornecedor"><Input value={form.pessoa ?? ""} onChange={(e) => updateField("pessoa", e.target.value)} placeholder="Nome relacionado" /></Field>
             <Field label="Valor" error={errors.valor}><Input type="number" min="0" step="0.01" value={form.valor} onChange={(e) => updateField("valor", e.target.value)} placeholder="0,00" /></Field>
-            <Field label="Observações"><Textarea value={form.observacoes} onChange={(e) => updateField("observacoes", e.target.value)} placeholder="Informações adicionais" /></Field>
+            <Field label="Observações"><Textarea value={form.observacoes ?? ""} onChange={(e) => updateField("observacoes", e.target.value)} placeholder="Informações adicionais" /></Field>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
@@ -143,5 +205,5 @@ function formatMoney(value: number) {
 }
 
 function formatDate(value: string) {
-  return value ? new Date(`${value}T00:00:00`).toLocaleDateString("pt-BR") : "-";
+  return value ? new Date(value + "T00:00:00").toLocaleDateString("pt-BR") : "-";
 }

@@ -55,15 +55,34 @@ export function MoneyValue({ value, tone = "neutral" }: { value: string; tone?: 
   return <span className={cn("font-semibold tabular-nums", color)}>{value}</span>;
 }
 
-export function StatusBadge({ status }: { status: "aberto" | "pago" | "vencido" | "rascunho" | "ativo" }) {
-  const styles = {
-    aberto: "bg-[#EAF3FB] text-[#174E8C] ring-[#2F73B8]/15",
-    pago: "bg-emerald-50 text-[#10B981] ring-emerald-500/15",
-    vencido: "bg-red-50 text-[#EF4444] ring-red-500/15",
-    rascunho: "bg-amber-50 text-[#F59E0B] ring-amber-500/15",
-    ativo: "bg-slate-100 text-slate-700 ring-slate-500/10",
-  };
-  return <span className={cn("inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1", styles[status])}>{status}</span>;
+const statusStyles: Record<string, string> = {
+  aberto: "bg-[#EAF3FB] text-[#174E8C] ring-[#2F73B8]/15",
+  pending: "bg-[#EAF3FB] text-[#174E8C] ring-[#2F73B8]/15",
+  pago: "bg-emerald-50 text-[#10B981] ring-emerald-500/15",
+  confirmed: "bg-emerald-50 text-[#10B981] ring-emerald-500/15",
+  vencido: "bg-red-50 text-[#EF4444] ring-red-500/15",
+  cancelled: "bg-red-50 text-[#EF4444] ring-red-500/15",
+  rascunho: "bg-amber-50 text-[#F59E0B] ring-amber-500/15",
+  ativo: "bg-slate-100 text-slate-700 ring-slate-500/10",
+};
+
+const statusLabels: Record<string, string> = {
+  aberto: "Aberto",
+  pending: "Pendente",
+  pago: "Pago",
+  confirmed: "Confirmado",
+  vencido: "Vencido",
+  cancelled: "Cancelado",
+  rascunho: "Rascunho",
+  ativo: "Ativo",
+};
+
+export function StatusBadge({ status }: { status: string }) {
+  return (
+    <span className={cn("inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1", statusStyles[status] ?? "bg-slate-100 text-slate-700 ring-slate-500/10")}>
+      {statusLabels[status] ?? status}
+    </span>
+  );
 }
 
 export function LoadingState({ label = "Carregando..." }: { label?: string }) {
