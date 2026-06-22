@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
-import { Children, cloneElement, createContext, createPortal, useCallback, useContext, useEffect, useId, useRef, useState, type ReactElement, type ReactNode } from "react";
+import { Children, cloneElement, createContext, useCallback, useContext, useEffect, useId, useRef, useState, type ReactElement, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 interface DropdownContextValue {
   open: boolean;
