@@ -76,8 +76,8 @@ describe("financial components", () => {
   it("renders launch cards and table with calculated formatted values", async () => {
     renderWithClient(<Lancamentos />);
 
-    expect(await screen.findByText("Receita instalação")).toBeInTheDocument();
-    expect(screen.getByText("Compra material")).toBeInTheDocument();
+    expect((await screen.findAllByText("Receita instalação")).length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Compra material").length).toBeGreaterThan(0);
     expect(screen.getAllByText(moneyText("1.000,00")).length).toBeGreaterThan(0);
     expect(screen.getAllByText(moneyText("660,00")).length).toBeGreaterThan(0);
     expect(screen.getAllByText(moneyText("340,00")).length).toBeGreaterThan(0);

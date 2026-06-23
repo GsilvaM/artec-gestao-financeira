@@ -1,22 +1,20 @@
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
-import { ArrowDownCircle, ArrowUpCircle, Banknote, FileText, ListChecks, Loader2, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, Banknote, FileText, ListChecks } from "lucide-react";
 import { FormField as Field } from "@/components/forms/form-field";
-import { EmptyState, FilterBar, MetricCard, MoneyValue, MonthSelect, PageShell, StatusBadge, StatusSelect } from "@/components/layout/page-shell";
+import { FilterBar, MetricCard, MonthSelect, PageShell, StatusSelect } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogCloseButton, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Card } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useFinancialEntries, useCreateFinancialEntry, useUpdateFinancialEntry, useDeleteFinancialEntry } from "@/domain/financeiro/hooks/use-financial-entries";
 import { useCategories } from "@/domain/financeiro/hooks/use-categories";
 import { useAuthStore } from "@/lib/supabase/auth-store";
 import { calculateFinancialSummary } from "@/domain/financeiro/calculations";
-import { formatDate, formatMoney } from "@/lib/utils";
+import { formatMoney } from "@/lib/utils";
+import { ResponsiveTransactionList } from "./responsive-transaction-list";
 import type { FinancialEntryRow, FinancialEntryFilters } from "@/domain/financeiro/types";
 
 const schema = z.object({
@@ -213,55 +211,13 @@ export function Component() {
         <MonthSelect value={filterMonth} onValueChange={setFilterMonth} />
         <StatusSelect value={filterStatus} onValueChange={setFilterStatus} />
       </FilterBar>
-      <Card className="overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>{["Data", "Tipo", "Categoria", "Descrição", "Valor", "Status", "Ações"].map((column) => <TableHead key={column}>{column}</TableHead>)}</TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={7} className="h-48 text-center">
-                  <Loader2 className="mx-auto size-6 animate-spin text-muted-foreground" />
-                </TableCell>
-              </TableRow>
-            ) : error ? (
-              <TableRow>
-                <TableCell colSpan={7} className="h-48 text-center text-destructive">
-                  Erro ao carregar lançamentos
-                </TableCell>
-              </TableRow>
-            ) : entries?.length ? entries.map((entry) => (
-              <TableRow key={entry.id}>
-                <TableCell>{formatDate(entry.date)}</TableCell>
-                <TableCell>{entry.type === "receita" ? "Receita" : "Despesa"}</TableCell>
-                <TableCell>{entry.categoryName}</TableCell>
-                <TableCell className="font-medium">{entry.description}</TableCell>
-                <TableCell><MoneyValue value={formatMoney(entry.amount)} tone={entry.type === "receita" ? "positive" : "negative"} /></TableCell>
-                <TableCell><StatusBadge status={entry.status} /></TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" aria-label="Ações do lançamento"><MoreHorizontal className="size-4" /></Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuItem onClick={() => handleEdit(entry)}><Pencil className="size-4" />Editar</DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem destructive onClick={() => handleDelete(entry)}><Trash2 className="size-4" />Excluir</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            )) : (
-              <TableRow>
-                <TableCell colSpan={7} className="p-0">
-                  <EmptyState title="Nenhum lançamento encontrado." description="Use o botão Novo Lançamento para cadastrar receitas, custos ou despesas." actionLabel="Novo Lançamento" onAction={() => { resetForm(); setOpen(true); }} />
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </Card>
+      <ResponsiveTransactionList
+        entries={entries}
+        isLoading={isLoading}
+        error={error}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+      />
       <Dialog open={open} onOpenChange={(v) => { if (!v) resetForm(); setOpen(v); }}>
         <DialogContent className="relative">
           <DialogCloseButton onClick={() => { resetForm(); setOpen(false); }} />
