@@ -157,11 +157,6 @@ bun run test
 
 Para E2E, configure as credenciais de teste. Os valores padrão do projeto são:
 
-```env
-E2E_TEST_EMAIL=gmls.dev@gmail.com
-E2E_TEST_PASSWORD=Gm99463683!
-```
-
 Depois execute:
 
 ```bash
