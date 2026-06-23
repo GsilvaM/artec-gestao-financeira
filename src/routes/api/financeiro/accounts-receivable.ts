@@ -2,14 +2,14 @@ import {
   accountReceivableRepo,
 } from "../../../server/financeiro/repositories.js";
 import {
-  accountReceivableSchema,
+  accountReceivableCreateSchema,
   accountReceivableUpdateSchema,
 } from "../../../domain/financeiro/schemas.js";
 import { z } from "zod";
 import { json, parseDate, requireId, handleRepoError, type RouteArgs } from "./_utils.js";
 
 const uuidField = z.string().uuid();
-const createSchema = accountReceivableSchema.extend({ userId: uuidField });
+const createSchema = z.object({ ...accountReceivableCreateSchema.shape, userId: uuidField });
 
 export async function loader({ request }: RouteArgs) {
   const url = new URL(request.url);

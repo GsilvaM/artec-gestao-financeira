@@ -2,14 +2,14 @@ import {
   financialEntryRepo,
 } from "../../../server/financeiro/repositories.js";
 import {
-  financialEntrySchema,
+  financialEntryCreateSchema,
   financialEntryUpdateSchema,
 } from "../../../domain/financeiro/schemas.js";
 import { z } from "zod";
 import { json, parseDate, requireId, handleRepoError, type RouteArgs } from "./_utils.js";
 
 const uuidField = z.string().uuid();
-const createSchema = financialEntrySchema.extend({ userId: uuidField });
+const createSchema = z.object({ ...financialEntryCreateSchema.shape, userId: uuidField });
 
 export async function loader({ request }: RouteArgs) {
   const url = new URL(request.url);

@@ -30,7 +30,7 @@ const notesField = z.string().nullable().optional();
 
 // ── Financial Entry ──────────────────────────────────────────────────
 
-export const financialEntrySchema = z.object({
+export const financialEntryCreateSchema = z.object({
   description: descriptionField,
   amount: positiveDecimal,
   type: z.enum([ENTRY_TYPES.RECEITA, ENTRY_TYPES.DESPESA], {
@@ -48,11 +48,12 @@ export const financialEntrySchema = z.object({
   notes: notesField,
 });
 
-export const financialEntryUpdateSchema = financialEntrySchema.partial();
+export const financialEntrySchema = financialEntryCreateSchema;
+export const financialEntryUpdateSchema = financialEntryCreateSchema.partial();
 
 // ── Account Payable ──────────────────────────────────────────────────
 
-export const accountPayableSchema = z.object({
+export const accountPayableCreateSchema = z.object({
   description: descriptionField,
   amount: positiveDecimal,
   dueDate: dateField,
@@ -74,11 +75,12 @@ export const accountPayableSchema = z.object({
   notes: notesField,
 });
 
-export const accountPayableUpdateSchema = accountPayableSchema.partial();
+export const accountPayableSchema = accountPayableCreateSchema;
+export const accountPayableUpdateSchema = accountPayableCreateSchema.partial();
 
 // ── Account Receivable ───────────────────────────────────────────────
 
-export const accountReceivableSchema = z.object({
+export const accountReceivableCreateSchema = z.object({
   description: descriptionField,
   amount: positiveDecimal,
   dueDate: dateField,
@@ -100,11 +102,12 @@ export const accountReceivableSchema = z.object({
   notes: notesField,
 });
 
-export const accountReceivableUpdateSchema = accountReceivableSchema.partial();
+export const accountReceivableSchema = accountReceivableCreateSchema;
+export const accountReceivableUpdateSchema = accountReceivableCreateSchema.partial();
 
 // ── Category ─────────────────────────────────────────────────────────
 
-export const categorySchema = z.object({
+export const categoryCreateSchema = z.object({
   name: z
     .string({ required_error: 'Nome é obrigatório' })
     .min(1, 'Nome é obrigatório'),
@@ -118,11 +121,12 @@ export const categorySchema = z.object({
     .optional(),
 });
 
-export const categoryUpdateSchema = categorySchema.partial();
+export const categorySchema = categoryCreateSchema;
+export const categoryUpdateSchema = categoryCreateSchema.partial();
 
 // ── Cost Center ──────────────────────────────────────────────────────
 
-export const costCenterSchema = z.object({
+export const costCenterCreateSchema = z.object({
   name: z
     .string({ required_error: 'Nome é obrigatório' })
     .min(1, 'Nome é obrigatório'),
@@ -130,7 +134,8 @@ export const costCenterSchema = z.object({
   active: z.boolean().default(true),
 });
 
-export const costCenterUpdateSchema = costCenterSchema.partial();
+export const costCenterSchema = costCenterCreateSchema;
+export const costCenterUpdateSchema = costCenterCreateSchema.partial();
 
 // ── Filter schemas ───────────────────────────────────────────────────
 

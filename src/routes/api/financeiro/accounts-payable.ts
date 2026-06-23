@@ -2,14 +2,14 @@ import {
   accountPayableRepo,
 } from "../../../server/financeiro/repositories.js";
 import {
-  accountPayableSchema,
+  accountPayableCreateSchema,
   accountPayableUpdateSchema,
 } from "../../../domain/financeiro/schemas.js";
 import { z } from "zod";
 import { json, parseDate, requireId, handleRepoError, type RouteArgs } from "./_utils.js";
 
 const uuidField = z.string().uuid();
-const createSchema = accountPayableSchema.extend({ userId: uuidField });
+const createSchema = z.object({ ...accountPayableCreateSchema.shape, userId: uuidField });
 
 export async function loader({ request }: RouteArgs) {
   const url = new URL(request.url);

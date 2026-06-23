@@ -1,5 +1,5 @@
 import { categoryRepo } from "../../../server/financeiro/repositories.js";
-import { categorySchema, categoryUpdateSchema } from "../../../domain/financeiro/schemas.js";
+import { categoryCreateSchema, categoryUpdateSchema } from "../../../domain/financeiro/schemas.js";
 import { json, requireId, handleRepoError, type RouteArgs } from "./_utils.js";
 
 export async function loader({ request }: RouteArgs) {
@@ -18,7 +18,7 @@ export async function action({ request, params }: RouteArgs) {
   try {
     if (request.method === "POST") {
       const body = await request.json();
-      return json(await categoryRepo.create(categorySchema.parse(body)), { status: 201 });
+      return json(await categoryRepo.create(categoryCreateSchema.parse(body)), { status: 201 });
     }
     if (request.method === "PUT") {
       requireId(id);
