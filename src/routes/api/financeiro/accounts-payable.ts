@@ -1,5 +1,6 @@
 import {
   accountPayableRepo,
+  type CreateAccountPayableData,
 } from "../../../server/financeiro/repositories.js";
 import {
   accountPayableCreateSchema,
@@ -35,7 +36,7 @@ export async function action({ request, params }: RouteArgs) {
   try {
     if (request.method === "POST") {
       const body = await request.json();
-      const data = createSchema.parse(body);
+      const data = createSchema.parse(body) as CreateAccountPayableData;
 
       return json(await accountPayableRepo.create(data), { status: 201 });
     }

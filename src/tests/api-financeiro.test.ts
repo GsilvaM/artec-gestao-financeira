@@ -134,6 +134,15 @@ describe("_utils", () => {
       expect(body.error).toBe("Validation failed");
     });
 
+    it("returns 400 for ValidationError", async () => {
+      const err = new Error("ID é obrigatório");
+      err.name = "ValidationError";
+      const response = handleRepoError(err);
+      expect(response.status).toBe(400);
+      const body = await response.json();
+      expect(body.error).toBe("ID é obrigatório");
+    });
+
     it("returns 500 for unknown errors", async () => {
       const response = handleRepoError(new Error("Unexpected"));
       expect(response.status).toBe(500);

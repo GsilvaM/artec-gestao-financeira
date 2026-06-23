@@ -1,4 +1,4 @@
-import { costCenterRepo } from "../../../server/financeiro/repositories.js";
+import { costCenterRepo, type CreateCostCenterData } from "../../../server/financeiro/repositories.js";
 import { costCenterCreateSchema, costCenterUpdateSchema } from "../../../domain/financeiro/schemas.js";
 import { json, requireId, handleRepoError, type RouteArgs } from "./_utils.js";
 
@@ -16,7 +16,7 @@ export async function action({ request, params }: RouteArgs) {
   try {
     if (request.method === "POST") {
       const body = await request.json();
-      const data = costCenterCreateSchema.parse(body);
+      const data = costCenterCreateSchema.parse(body) as CreateCostCenterData;
 
       return json(await costCenterRepo.create(data), { status: 201 });
     }

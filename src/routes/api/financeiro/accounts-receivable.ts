@@ -1,5 +1,6 @@
 import {
   accountReceivableRepo,
+  type CreateAccountReceivableData,
 } from "../../../server/financeiro/repositories.js";
 import {
   accountReceivableCreateSchema,
@@ -35,7 +36,7 @@ export async function action({ request, params }: RouteArgs) {
   try {
     if (request.method === "POST") {
       const body = await request.json();
-      const data = createSchema.parse(body);
+      const data = createSchema.parse(body) as CreateAccountReceivableData;
 
       return json(await accountReceivableRepo.create(data), { status: 201 });
     }

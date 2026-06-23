@@ -1,5 +1,6 @@
 import {
   financialEntryRepo,
+  type CreateFinancialEntryData,
 } from "../../../server/financeiro/repositories.js";
 import {
   financialEntryCreateSchema,
@@ -40,7 +41,7 @@ export async function action({ request, params }: RouteArgs) {
   try {
     if (request.method === "POST") {
       const body = await request.json();
-      const data = createSchema.parse(body);
+      const data = createSchema.parse(body) as CreateFinancialEntryData;
 
       return json(await financialEntryRepo.create(data), { status: 201 });
     }

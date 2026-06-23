@@ -20,7 +20,7 @@ export function handleRepoError(err: unknown): Response {
   console.error("[api/financeiro]", error);
   if (error.name === "NotFoundError")
     return json({ error: error.message }, { status: 404 });
-  if (error.name === "ZodError")
+  if (error.name === "ZodError" || error.name === "ValidationError")
     return json({ error: error.message }, { status: 400 });
   return json({ error: error.message }, { status: 500 });
 }
