@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "prisma generate && tsc -b && vite build",
+    "postinstall": "prisma generate",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
@@ -74,4 +75,6 @@
     "*.{ts,tsx}": ["eslint --fix", "prettier --write"],
     "*.{json,css,md}": ["prettier --write"]
   }
+  
+  
 }
