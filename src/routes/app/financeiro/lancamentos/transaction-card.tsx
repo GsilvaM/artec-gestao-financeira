@@ -1,4 +1,4 @@
-import { ArrowDownCircle, ArrowUpCircle, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { MoneyValue } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,16 +12,16 @@ interface TransactionCardProps {
   onDelete?: (entry: FinancialEntryRow) => void;
 }
 
-const statusDotColor: Record<string, string> = {
-  pending: "bg-[#2F73B8]",
-  confirmed: "bg-[#10B981]",
-  cancelled: "bg-[#EF4444]",
-};
-
 const statusLabels: Record<string, string> = {
   pending: "Pendente",
   confirmed: "Confirmado",
   cancelled: "Cancelado",
+};
+
+const statusColors: Record<string, string> = {
+  pending: "text-[#2F73B8]",
+  confirmed: "text-[#10B981]",
+  cancelled: "text-[#EF4444]",
 };
 
 export function TransactionCard({ transaction, onEdit, onDelete }: TransactionCardProps) {
@@ -30,25 +30,43 @@ export function TransactionCard({ transaction, onEdit, onDelete }: TransactionCa
   return (
     <Card className="rounded-lg border shadow-sm transition-all duration-200 hover:shadow-md">
       <CardContent className="p-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            {isReceita
-              ? <ArrowUpCircle className="size-4 text-[#10B981]" />
-              : <ArrowDownCircle className="size-4 text-[#EF4444]" />
-            }
-            <span className="text-xs font-semibold text-[#0F172A]">
-              {isReceita ? "Receita" : "Despesa"}
-            </span>
+        <div className="space-y-1">
+          {/* Linha principal: descrição + valor */}
+          <div className="flex items-start justify-between gap-2">
+            <p className="min-w-0 flex-1 break-words text-sm font-medium leading-tight text-[#0F172A]">
+              {transaction.description}
+            </p>
+            <p className="shrink-0 text-lg font-semibold leading-tight tabular-nums">
+              <MoneyValue
+                value={formatMoney(transaction.amount)}
+                tone={isReceita ? "positive" : "negative"}
+              />
+            </p>
           </div>
-          <div className="flex items-center gap-1">
-            <span className="flex items-center gap-1">
-              <span className={cn("size-1.5 rounded-full", statusDotColor[transaction.status] ?? "bg-slate-400")} />
-              <span className="text-[10px] font-medium text-[#64748B]">{statusLabels[transaction.status] ?? transaction.status}</span>
+
+          {/* Linha secundária: categoria • data */}
+          <p className="truncate text-xs text-[#64748B]">
+            {[transaction.categoryName, formatDate(transaction.date)].filter(Boolean).join(" • ")}
+          </p>
+
+          {/* Linha inferior: tipo + status + ações */}
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-1 text-xs text-[#64748B]">
+              {isReceita
+                ? <ArrowUp className="size-3 text-[#10B981]" />
+                : <ArrowDown className="size-3 text-[#EF4444]" />
+              }
+              {isReceita ? "Receita" : "Despesa"}
+              <span className="text-[#94A3B8]">•</span>
+              <span className={cn(statusColors[transaction.status] ?? "text-[#64748B]")}>
+                {statusLabels[transaction.status] ?? transaction.status}
+              </span>
             </span>
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="size-6" aria-label="Ações do lançamento">
-                  <MoreHorizontal className="size-3.5" />
+                <Button variant="ghost" size="icon" className="size-5" aria-label="Ações do lançamento">
+                  <MoreHorizontal className="size-3" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
@@ -63,19 +81,6 @@ export function TransactionCard({ transaction, onEdit, onDelete }: TransactionCa
             </DropdownMenu>
           </div>
         </div>
-
-        <p className="mt-1.5 text-sm font-semibold text-[#0F172A] leading-tight">{transaction.description}</p>
-
-        <p className="mt-0.5 text-xs text-[#64748B]">
-          {[transaction.categoryName, formatDate(transaction.date)].filter(Boolean).join(" • ")}
-        </p>
-
-        <p className="mt-1 text-lg font-bold tabular-nums leading-tight">
-          <MoneyValue
-            value={formatMoney(transaction.amount)}
-            tone={isReceita ? "positive" : "negative"}
-          />
-        </p>
       </CardContent>
     </Card>
   );
