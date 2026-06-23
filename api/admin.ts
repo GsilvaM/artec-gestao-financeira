@@ -1,0 +1,41 @@
+import type { IncomingMessage, ServerResponse } from "node:http";
+import handler from "../src/routes/api/admin/handler.js";
+
+export default async function vercelHandler(
+  req: IncomingMessage,
+  res: ServerResponse,
+) {
+  const url = new URL(req.url ?? "/", `http://${req.headers.host ?? "localhost"}`);
+
+  const chunks: Buffer[] = [];
+  for await (const chunk of req) {
+    chunks.push(Buffer.from(chunk));
+  }
+  const body = Buffer.concat(chunks).toString();
+
+  const headers = new Headers();
+  for (const [key, value] of Object.entries(req.headers)) {
+    if (value) {
+      headers.set(key, Array.isArray(value) ? value.join(", ") : value);
+    }
+  }
+
+  const request = new Request(url.toString(), {
+    method: req.method,
+    headers,
+    body: body || undefined,
+  });
+
+  try {
+    const response = await handler(request);
+    res.statusCode = response.status;
+    response.headers.forEach((value, key) => res.setHeader(key, value));
+    const responseBody = await response.text();
+    res.end(responseBody);
+  } catch (err) {
+    console.error("[api/admin] unhandled error:", err);
+    res.statusCode = 500;
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify({ error: "Internal server error" }));
+  }
+}

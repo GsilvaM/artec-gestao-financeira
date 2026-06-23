@@ -143,7 +143,7 @@ interface FilterBarProps {
 export function FilterBar({ searchPlaceholder = "Buscar...", children }: FilterBarProps) {
   return (
     <Card>
-      <CardContent className="flex flex-col gap-3 p-4 md:flex-row md:items-center">
+      <CardContent className="flex flex-col gap-3 p-4 sm:p-4 md:flex-row md:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#94A3B8]" />
           <Input className="pl-9" placeholder={searchPlaceholder} aria-label={searchPlaceholder} />

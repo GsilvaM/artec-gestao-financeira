@@ -5,9 +5,16 @@
   "functions": {
     "api/financeiro.ts": {
       "includeFiles": "src/**"
+    },
+    "api/admin.ts": {
+      "includeFiles": "src/**"
     }
   },
   "rewrites": [
+    {
+      "source": "/api/admin/:path*",
+      "destination": "/api/admin"
+    },
     {
       "source": "/api/financeiro/:path*",
       "destination": "/api/financeiro"
