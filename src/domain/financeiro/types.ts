@@ -15,7 +15,7 @@ import {
   accountReceivableFilterSchema,
   categoryFilterSchema,
   costCenterFilterSchema,
-} from './schemas';
+} from './schemas.js';
 
 // ── Inferred from Zod schemas ────────────────────────────────────────
 

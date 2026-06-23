@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { dreKeys } from '../query-keys';
+import { dreKeys } from '../query-keys.js';
 import { clientApi } from '@/server/financeiro/client-api';
 
 export function useDre(year: number) {

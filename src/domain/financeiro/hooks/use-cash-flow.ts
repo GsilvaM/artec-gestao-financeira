@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { cashFlowKeys } from '../query-keys';
+import { cashFlowKeys } from '../query-keys.js';
 import { clientApi } from '@/server/financeiro/client-api';
 
 type Granularity = 'day' | 'week' | 'month';

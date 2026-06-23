@@ -4,7 +4,7 @@ import type {
   AccountReceivableFilters,
   CategoryFilters,
   CostCenterFilters,
-} from './types';
+} from './types.js';
 
 export const financialEntryKeys = {
   all: ['financial-entries'] as const,

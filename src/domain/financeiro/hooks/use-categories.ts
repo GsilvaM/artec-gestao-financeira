@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { categoryKeys } from '../query-keys';
+import { categoryKeys } from '../query-keys.js';
 import { clientApi } from '@/server/financeiro/client-api';
-import type { CategoryRow, CategoryFilters, CategoryUpdate } from '../types';
+import type { CategoryRow, CategoryFilters, CategoryUpdate } from '../types.js';
 
 type CategoryApiResponse = {
   id: string;

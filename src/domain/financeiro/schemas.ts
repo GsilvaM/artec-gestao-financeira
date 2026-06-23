@@ -5,7 +5,7 @@ import {
   ACCOUNT_PAYABLE_STATUS,
   ACCOUNT_RECEIVABLE_STATUS,
   CATEGORY_TYPES,
-} from './constants';
+} from './constants.js';
 
 const uuidField = z.string({ message: 'ID inválido' }).uuid('ID deve ser um UUID válido');
 

@@ -1,8 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { accountPayableKeys, accountReceivableKeys } from '../query-keys';
+import { accountPayableKeys, accountReceivableKeys } from '../query-keys.js';
 import { clientApi } from '@/server/financeiro/client-api';
 import { toFiniteNumber } from '@/lib/utils';
-import type { AccountPayableFilters, AccountReceivableFilters, AccountPayableRow, AccountPayableUpdate, AccountReceivableRow, AccountReceivableUpdate } from '../types';
+import type { AccountPayableFilters, AccountReceivableFilters, AccountPayableRow, AccountPayableUpdate, AccountReceivableRow, AccountReceivableUpdate } from '../types.js';
 
 type AccountPayableApiResponse = {
   id: string;

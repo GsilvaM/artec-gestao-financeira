@@ -1,8 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { financialEntryKeys } from '../query-keys';
+import { financialEntryKeys } from '../query-keys.js';
 import { clientApi } from '@/server/financeiro/client-api';
 import { toFiniteNumber } from '@/lib/utils';
-import type { FinancialEntryRow, FinancialEntryFilters, FinancialEntryUpdate } from '../types';
+import type { FinancialEntryRow, FinancialEntryFilters, FinancialEntryUpdate } from '../types.js';
 
 type EntryApiResponse = {
   id: string;

@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { costCenterKeys } from '../query-keys';
+import { costCenterKeys } from '../query-keys.js';
 import { clientApi } from '@/server/financeiro/client-api';
-import type { CostCenterRow, CostCenterUpdate } from '../types';
+import type { CostCenterRow, CostCenterUpdate } from '../types.js';
 
 type CostCenterApiResponse = {
   id: string;
