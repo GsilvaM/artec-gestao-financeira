@@ -215,6 +215,7 @@ export const accountPayableRepo = {
 
     return prisma.accountPayable.findMany({
       where,
+      include: { category: true, costCenter: true },
       orderBy: { dueDate: "asc" },
     });
   },
@@ -222,6 +223,7 @@ export const accountPayableRepo = {
   async findById(id: string) {
     const entry = await prisma.accountPayable.findFirst({
       where: { id, deletedAt: null },
+      include: { category: true, costCenter: true },
     });
     if (!entry) throw new NotFoundError("AccountPayable", id);
     return entry;
@@ -240,6 +242,7 @@ export const accountPayableRepo = {
         userId: data.userId,
         notes: data.notes ?? null,
       },
+      include: { category: true, costCenter: true },
     });
   },
 
@@ -252,6 +255,7 @@ export const accountPayableRepo = {
     return prisma.accountPayable.update({
       where: { id },
       data,
+      include: { category: true, costCenter: true },
     });
   },
 
@@ -327,6 +331,7 @@ export const accountReceivableRepo = {
 
     return prisma.accountReceivable.findMany({
       where,
+      include: { category: true, costCenter: true },
       orderBy: { dueDate: "asc" },
     });
   },
@@ -334,6 +339,7 @@ export const accountReceivableRepo = {
   async findById(id: string) {
     const entry = await prisma.accountReceivable.findFirst({
       where: { id, deletedAt: null },
+      include: { category: true, costCenter: true },
     });
     if (!entry) throw new NotFoundError("AccountReceivable", id);
     return entry;
@@ -352,6 +358,7 @@ export const accountReceivableRepo = {
         userId: data.userId,
         notes: data.notes ?? null,
       },
+      include: { category: true, costCenter: true },
     });
   },
 
@@ -364,6 +371,7 @@ export const accountReceivableRepo = {
     return prisma.accountReceivable.update({
       where: { id },
       data,
+      include: { category: true, costCenter: true },
     });
   },
 

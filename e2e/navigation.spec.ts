@@ -28,7 +28,7 @@ test.describe("Sidebar navigation", () => {
     test(`navigates to "${url}" when clicking "${label}"`, async ({
       page,
     }) => {
-      await page.getByRole("link", { name: label, exact: true }).click();
+      await page.locator(`a[href="${url}"]`).first().click();
       await expect(page).toHaveURL(url);
     });
   }

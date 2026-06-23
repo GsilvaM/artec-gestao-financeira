@@ -29,7 +29,7 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
   return (
     <dialog
       ref={ref}
-      className="w-[calc(100vw-2rem)] max-w-2xl rounded-2xl border border-[#E2E8F0] bg-white p-0 text-[#0F172A] shadow-[0_24px_64px_-24px_rgba(15,23,42,0.45)] backdrop:bg-slate-950/45 open:animate-in open:fade-in-0 open:zoom-in-95"
+      className="max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-2xl overflow-y-auto rounded-2xl border border-[#E2E8F0] bg-white p-0 text-[#0F172A] shadow-[0_24px_64px_-24px_rgba(15,23,42,0.45)] backdrop:bg-slate-950/45 open:animate-in open:fade-in-0 open:zoom-in-95"
       onClick={(e) => { if (e.target === ref.current) onOpenChange(false); }}
     >
       {children}

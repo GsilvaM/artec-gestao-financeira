@@ -79,6 +79,13 @@
     border-color: var(--border);
   }
 
+  html,
+  body,
+  #root {
+    width: 100%;
+    overflow-x: hidden;
+  }
+
   body {
     background: var(--background);
     color: var(--foreground);

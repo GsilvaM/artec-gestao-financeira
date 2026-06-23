@@ -15,6 +15,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useFinancialEntries, useCreateFinancialEntry, useUpdateFinancialEntry, useDeleteFinancialEntry } from "@/domain/financeiro/hooks/use-financial-entries";
 import { useCategories } from "@/domain/financeiro/hooks/use-categories";
 import { useAuthStore } from "@/lib/supabase/auth-store";
+import { calculateFinancialSummary } from "@/domain/financeiro/calculations";
+import { formatDate, formatMoney } from "@/lib/utils";
 import type { FinancialEntryRow } from "@/domain/financeiro/types";
 
 const schema = z.object({
@@ -70,9 +72,7 @@ export function Component() {
   const isEditing = !!editingId;
   const isWorking = saving || updating;
 
-  const receitas = (entries ?? []).filter((e) => e.type === "receita").reduce((sum, e) => sum + e.amount, 0);
-  const despesas = (entries ?? []).filter((e) => e.type === "despesa").reduce((sum, e) => sum + e.amount, 0);
-  const saldo = receitas - despesas;
+  const { receitas, despesas, saldo } = calculateFinancialSummary(entries ?? []);
 
   function resetForm() {
     setForm(initialForm);
@@ -222,8 +222,8 @@ export function Component() {
                 <TableCell>{entry.type === "receita" ? "Receita" : "Despesa"}</TableCell>
                 <TableCell>{entry.categoryName}</TableCell>
                 <TableCell className="font-medium">{entry.description}</TableCell>
-                <TableCell><MoneyValue value={formatMoney(Number(entry.amount))} tone={entry.type === "receita" ? "positive" : "negative"} /></TableCell>
-                <TableCell><StatusBadge status={entry.status as never} /></TableCell>
+                <TableCell><MoneyValue value={formatMoney(entry.amount)} tone={entry.type === "receita" ? "positive" : "negative"} /></TableCell>
+                <TableCell><StatusBadge status={entry.status} /></TableCell>
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -295,12 +295,4 @@ export function Component() {
 
 function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
   return <div className="space-y-2"><Label>{label}</Label>{children}{error ? <p className="text-xs font-medium text-[#EF4444]">{error}</p> : null}</div>;
-}
-
-function formatMoney(value: number) {
-  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
-
-function formatDate(value: string) {
-  return value ? new Date(value + (value.includes("T") ? "" : "T00:00:00")).toLocaleDateString("pt-BR") : "-";
 }

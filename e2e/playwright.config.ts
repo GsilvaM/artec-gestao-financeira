@@ -1,4 +1,7 @@
 import { defineConfig } from "@playwright/test";
+import { config } from "dotenv";
+
+config();
 
 export default defineConfig({
   testDir: ".",
@@ -12,6 +15,13 @@ export default defineConfig({
   use: {
     baseURL: process.env.BASE_URL || "http://localhost:3000",
     trace: "on-first-retry",
+  },
+
+  webServer: {
+    command: "bun run dev -- --host 127.0.0.1 --port 3000",
+    url: "http://127.0.0.1:3000",
+    reuseExistingServer: !process.env.CI,
+    timeout: 120_000,
   },
 
   projects: [

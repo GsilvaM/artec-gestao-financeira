@@ -59,6 +59,8 @@ model Category {
   deletedAt DateTime? @map("deleted_at")
 
   financialEntries FinancialEntry[]
+  accountsPayable AccountPayable[]
+  accountsReceivable AccountReceivable[]
 
   @@index([type])
   @@map("categories")
@@ -74,6 +76,8 @@ model CostCenter {
   deletedAt DateTime? @map("deleted_at")
 
   financialEntries FinancialEntry[]
+  accountsPayable AccountPayable[]
+  accountsReceivable AccountReceivable[]
   serviceOrders    ServiceOrder[]
   goals            Goal[]
 
@@ -124,6 +128,9 @@ model AccountPayable {
   updatedAt       DateTime  @updatedAt @map("updated_at")
   deletedAt       DateTime? @map("deleted_at")
 
+  category        Category   @relation(fields: [categoryId], references: [id])
+  costCenter      CostCenter? @relation(fields: [costCenterId], references: [id])
+
   @@index([dueDate])
   @@index([status])
   @@index([categoryId])
@@ -147,6 +154,9 @@ model AccountReceivable {
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
   deletedAt       DateTime? @map("deleted_at")
+
+  category        Category   @relation(fields: [categoryId], references: [id])
+  costCenter      CostCenter? @relation(fields: [costCenterId], references: [id])
 
   @@index([dueDate])
   @@index([status])

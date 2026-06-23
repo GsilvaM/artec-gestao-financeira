@@ -14,13 +14,19 @@ const descriptionField = z
   .min(1, 'Descrição é obrigatória');
 
 const positiveDecimal = z
-  .number({ required_error: 'Valor é obrigatório', invalid_type_error: 'Valor deve ser numérico' })
-  .positive('Valor deve ser positivo')
-  .multipleOf(0.01, 'Valor deve ter no máximo 2 casas decimais');
+  .preprocess((value) => {
+    if (typeof value !== 'string') return value;
+    const input = value.trim();
+    const normalized = input.includes(',') ? input.replace(/\./g, '').replace(',', '.') : input;
+    return normalized ? Number(normalized) : undefined;
+  }, z
+    .number({ required_error: 'Valor é obrigatório', invalid_type_error: 'Valor deve ser numérico' })
+    .positive('Valor deve ser positivo')
+    .multipleOf(0.01, 'Valor deve ter no máximo 2 casas decimais'));
 
-const dateField = z.date({ required_error: 'Data é obrigatória' });
+const dateField = z.coerce.date({ required_error: 'Data é obrigatória', invalid_type_error: 'Data inválida' });
 
-const notesField = z.string().optional();
+const notesField = z.string().nullable().optional();
 
 // ── Financial Entry ──────────────────────────────────────────────────
 

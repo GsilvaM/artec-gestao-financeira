@@ -1,16 +1,12 @@
 import { test as setup } from "@playwright/test";
+import { ensureE2EUserAndData } from "./seed-user.js";
+import { getE2ECredentials } from "./env.js";
 
 const authFile = ".auth/user.json";
 
 setup("authenticate with Supabase", async ({ page }) => {
-  const email = process.env.E2E_TEST_EMAIL;
-  const password = process.env.E2E_TEST_PASSWORD;
-
-  if (!email || !password) {
-    throw new Error(
-      "E2E_TEST_EMAIL and E2E_TEST_PASSWORD environment variables must be set",
-    );
-  }
+  await ensureE2EUserAndData();
+  const { email, password } = getE2ECredentials();
 
   await page.goto("/");
   await page.locator("#email").fill(email);

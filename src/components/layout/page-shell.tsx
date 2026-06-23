@@ -60,7 +60,10 @@ const statusStyles: Record<string, string> = {
   pending: "bg-[#EAF3FB] text-[#174E8C] ring-[#2F73B8]/15",
   pago: "bg-emerald-50 text-[#10B981] ring-emerald-500/15",
   confirmed: "bg-emerald-50 text-[#10B981] ring-emerald-500/15",
+  paid: "bg-emerald-50 text-[#10B981] ring-emerald-500/15",
+  received: "bg-emerald-50 text-[#10B981] ring-emerald-500/15",
   vencido: "bg-red-50 text-[#EF4444] ring-red-500/15",
+  overdue: "bg-red-50 text-[#EF4444] ring-red-500/15",
   cancelled: "bg-red-50 text-[#EF4444] ring-red-500/15",
   rascunho: "bg-amber-50 text-[#F59E0B] ring-amber-500/15",
   ativo: "bg-slate-100 text-slate-700 ring-slate-500/10",
@@ -71,7 +74,10 @@ const statusLabels: Record<string, string> = {
   pending: "Pendente",
   pago: "Pago",
   confirmed: "Confirmado",
+  paid: "Pago",
+  received: "Recebido",
   vencido: "Vencido",
+  overdue: "Vencido",
   cancelled: "Cancelado",
   rascunho: "Rascunho",
   ativo: "Ativo",
@@ -116,9 +122,9 @@ export function MetricCard({ title, value, icon: Icon, tone = "blue", helper }: 
   return (
     <Card>
       <CardContent className="flex items-center justify-between gap-4 p-5">
-        <div>
+        <div className="min-w-0">
           <p className="text-sm font-medium text-[#64748B]">{title}</p>
-          <p className="mt-2 text-2xl font-bold text-[#0F172A]">{value}</p>
+          <p className="mt-2 truncate text-2xl font-bold text-[#0F172A]" title={value}>{value}</p>
           {helper ? <p className="mt-1 text-xs text-[#94A3B8]">{helper}</p> : null}
         </div>
         <div className={cn("flex size-11 items-center justify-center rounded-2xl", toneStyles[tone])}>

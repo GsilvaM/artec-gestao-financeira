@@ -12,6 +12,8 @@ import { Select } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAccountsPayable, useCreateAccountPayable, useUpdateAccountPayable, useDeleteAccountPayable } from "@/domain/financeiro/hooks/use-accounts";
 import { useCategories } from "@/domain/financeiro/hooks/use-categories";
+import { useAuthStore } from "@/lib/supabase/auth-store";
+import { formatDate, formatMoney, parseMoneyInput, toFiniteNumber } from "@/lib/utils";
 import type { AccountPayableRow } from "@/domain/financeiro/types";
 
 export function Component() {
@@ -25,6 +27,7 @@ export function Component() {
   const [categoryId, setCategoryId] = useState("");
   const [status, setStatus] = useState("pending");
 
+  const user = useAuthStore((state) => state.user);
   const { data: entries, isLoading } = useAccountsPayable();
   const { data: categories } = useCategories();
   const { mutateAsync: createEntry, isPending: creating } = useCreateAccountPayable();
@@ -75,10 +78,11 @@ export function Component() {
 
   async function handleSave() {
     if (!description.trim()) { toast.error("Informe a descrição"); return; }
-    const parsedAmount = Number.parseFloat(amount);
+    const parsedAmount = parseMoneyInput(amount);
     if (Number.isNaN(parsedAmount) || parsedAmount <= 0) { toast.error("Informe um valor válido"); return; }
     if (!dueDate) { toast.error("Informe a data de vencimento"); return; }
     if (!categoryId) { toast.error("Selecione a categoria"); return; }
+    if (!user) { toast.error("Usuário não autenticado"); return; }
 
     try {
       const payload = {
@@ -88,6 +92,7 @@ export function Component() {
         status,
         categoryId,
         supplier: supplier.trim() || undefined,
+        userId: user.id,
       };
       if (editingId) {
         await updateEntry({ id: editingId, data: payload });
@@ -105,6 +110,11 @@ export function Component() {
     }
   }
 
+  const payableEntries = entries ?? [];
+  const openEntries = payableEntries.filter((e) => e.status === "pending" || e.status === "overdue");
+  const openAmount = openEntries.reduce((sum, e) => sum + toFiniteNumber(e.amount), 0);
+  const overdueAmount = payableEntries.filter((e) => e.status === "overdue").reduce((sum, e) => sum + toFiniteNumber(e.amount), 0);
+
   const statusOptions = [
     { value: "pending", label: "Pendente" },
     { value: "paid", label: "Pago" },
@@ -115,9 +125,9 @@ export function Component() {
   return (
     <PageShell icon={CreditCard} title="Contas a Pagar" subtitle="Acompanhe obrigações, vencimentos e pagamentos" actionLabel="Nova Conta" onAction={() => { resetForm(); setOpen(true); }}>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard title="Em aberto" value={String((entries ?? []).filter((e) => e.status === "pending" || e.status === "overdue").length)} icon={WalletCards} tone="blue" />
-        <MetricCard title="Vence hoje" value={String((entries ?? []).filter((e) => e.dueDate === new Date().toISOString().slice(0, 10)).length)} icon={CalendarClock} tone="amber" />
-        <MetricCard title="Vencidas" value={String((entries ?? []).filter((e) => e.status === "overdue").length)} icon={AlertTriangle} tone="red" />
+        <MetricCard title="Em aberto" value={formatMoney(openAmount)} icon={WalletCards} tone="blue" helper={`${openEntries.length} conta(s)`} />
+        <MetricCard title="Vence hoje" value={String(payableEntries.filter((e) => e.dueDate.slice(0, 10) === new Date().toISOString().slice(0, 10)).length)} icon={CalendarClock} tone="amber" />
+        <MetricCard title="Vencidas" value={formatMoney(overdueAmount)} icon={AlertTriangle} tone="red" />
       </div>
       <FilterBar searchPlaceholder="Buscar conta a pagar..."><StatusSelect /></FilterBar>
       <Card className="overflow-visible">
@@ -130,12 +140,12 @@ export function Component() {
               <TableRow><TableCell colSpan={7} className="h-48 text-center text-sm text-[#64748B]">Carregando...</TableCell></TableRow>
             ) : entries?.length ? entries.map((entry) => (
               <TableRow key={entry.id}>
-                <TableCell>{entry.dueDate ? new Date(entry.dueDate + (entry.dueDate.includes("T") ? "" : "T00:00:00")).toLocaleDateString("pt-BR") : "-"}</TableCell>
+                <TableCell>{formatDate(entry.dueDate)}</TableCell>
                 <TableCell>{entry.supplier ?? "-"}</TableCell>
                 <TableCell className="font-medium">{entry.description}</TableCell>
                 <TableCell>{entry.categoryName}</TableCell>
-                <TableCell>{Number(entry.amount).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</TableCell>
-                <TableCell><StatusBadge status={entry.status as never} /></TableCell>
+                <TableCell>{formatMoney(entry.amount)}</TableCell>
+                <TableCell><StatusBadge status={entry.status} /></TableCell>
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>

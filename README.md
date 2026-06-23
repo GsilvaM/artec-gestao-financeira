@@ -88,6 +88,9 @@ VITE_SUPABASE_ANON_KEY=your-anon-key
 DATABASE_URL=postgresql://...
 DIRECT_URL=postgresql://...
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+E2E_TEST_EMAIL=gmls.dev@gmail.com
+E2E_TEST_PASSWORD=Gm99463683!
 ```
 
 Importante: variáveis sem prefixo `VITE_` são server-only e não devem ser usadas no frontend.
@@ -136,7 +139,9 @@ O seed atual cria dados auxiliares como roles, categorias e centros de custo:
 bun prisma db seed
 ```
 
-Usuários não são criados pelo seed. O acesso é gerenciado pelo Supabase Auth.
+Usuários da aplicação são gerenciados pelo Supabase Auth. Para E2E, o Playwright executa um seed idempotente que cria/atualiza o usuário `E2E_TEST_EMAIL`, confirma o email, garante categorias mínimas e remove lançamentos antigos marcados como `[E2E]`.
+
+Esse seed automático exige `VITE_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` e `DATABASE_URL` configurados no ambiente de teste. Sem a service role, crie o usuário manualmente no Supabase Auth com as credenciais E2E e confirme o email antes de rodar os testes.
 
 ## Autenticação
 
@@ -150,11 +155,11 @@ Os testes atuais cobrem ações principais de frontend, incluindo abertura de mo
 bun run test
 ```
 
-Para E2E, configure as credenciais de teste:
+Para E2E, configure as credenciais de teste. Os valores padrão do projeto são:
 
 ```env
-E2E_TEST_EMAIL=email@teste.com
-E2E_TEST_PASSWORD=senha-de-teste
+E2E_TEST_EMAIL=gmls.dev@gmail.com
+E2E_TEST_PASSWORD=Gm99463683!
 ```
 
 Depois execute:
@@ -162,6 +167,8 @@ Depois execute:
 ```bash
 bun run e2e
 ```
+
+O comando sobe o Vite automaticamente em `http://127.0.0.1:3000`, autentica via Supabase, navega pelo sistema, cria/edita/exclui lançamento financeiro, valida dashboard e realiza logout.
 
 ## Segurança
 

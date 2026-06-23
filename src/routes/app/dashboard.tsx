@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MetricCard, PageShell } from "@/components/layout/page-shell";
+import { calculateFinancialSummary } from "@/domain/financeiro/calculations";
+import { useFinancialEntries } from "@/domain/financeiro/hooks/use-financial-entries";
+import { formatMoney } from "@/lib/utils";
 
 const chartData = [
   { mes: "Jan", receitas: 42000, despesas: 26000 },
@@ -17,6 +20,8 @@ const chartData = [
 
 export function Component() {
   const navigate = useNavigate();
+  const { data: entries } = useFinancialEntries();
+  const { receitas, despesas, saldo } = calculateFinancialSummary(entries ?? []);
   const shortcuts = [
     { label: "Novo lançamento", to: "/app/financeiro/lancamentos" },
     { label: "Nova conta a pagar", to: "/app/financeiro/contas-pagar" },
@@ -26,9 +31,9 @@ export function Component() {
   return (
     <PageShell icon={LayoutDashboard} title="Dashboard" subtitle="Visão geral financeira e operacional da Artec">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard title="Receitas do mês" value="R$ 62.000" icon={ArrowUpCircle} tone="green" helper="Mock visual para o painel" />
-        <MetricCard title="Despesas do mês" value="R$ 35.000" icon={ArrowDownCircle} tone="red" helper="Custos e despesas" />
-        <MetricCard title="Saldo projetado" value="R$ 27.000" icon={Banknote} tone="blue" helper="Resultado parcial" />
+        <MetricCard title="Receitas" value={formatMoney(receitas)} icon={ArrowUpCircle} tone="green" helper="Lançamentos cadastrados" />
+        <MetricCard title="Despesas" value={formatMoney(despesas)} icon={ArrowDownCircle} tone="red" helper="Custos e despesas" />
+        <MetricCard title="Saldo projetado" value={formatMoney(saldo)} icon={Banknote} tone={saldo < 0 ? "red" : "blue"} helper="Resultado parcial" />
         <MetricCard title="Serviços ativos" value="18" icon={CalendarCheck} tone="amber" helper="Ordens em andamento" />
       </div>
 
@@ -46,7 +51,7 @@ export function Component() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
                 <XAxis dataKey="mes" stroke="#94A3B8" fontSize={12} />
                 <YAxis stroke="#94A3B8" fontSize={12} />
-                <Tooltip formatter={(value) => `R$ ${Number(value).toLocaleString("pt-BR")}`} />
+                <Tooltip formatter={(value) => formatMoney(value)} />
                 <Area type="monotone" dataKey="receitas" stroke="#10B981" fill="#10B981" fillOpacity={0.15} />
                 <Area type="monotone" dataKey="despesas" stroke="#EF4444" fill="#EF4444" fillOpacity={0.12} />
               </AreaChart>

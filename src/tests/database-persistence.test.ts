@@ -1,6 +1,8 @@
 // @vitest-environment node
 import { describe, it, expect, afterAll } from "vitest";
 import { prisma } from "../lib/prisma/client.js";
+import { financialEntryRepo } from "../server/financeiro/repositories.js";
+import { getDre } from "../server/financeiro/queries.js";
 
 afterAll(async () => {
   await prisma.$disconnect();
@@ -117,5 +119,37 @@ describe("database persistence", () => {
       SELECT 1 AS result
     `;
     expect(rows[0]?.result).toBe(1);
+  });
+
+  it("performs financial entry CRUD and updates DRE aggregation", async () => {
+    const category = await prisma.category.create({
+      data: { name: "Teste Integração Receita", type: "receita", color: "#10B981" },
+    });
+
+    const created = await financialEntryRepo.create({
+      description: "Teste integração lançamento",
+      amount: 1000,
+      type: "receita",
+      date: new Date("2026-06-15T00:00:00.000Z"),
+      status: "confirmed",
+      categoryId: category.id,
+      userId: "00000000-0000-0000-0000-000000000000",
+    });
+
+    expect(Number(created.amount)).toBe(1000);
+
+    const updated = await financialEntryRepo.update(created.id, { amount: 1660 });
+    expect(Number(updated.amount)).toBe(1660);
+
+    const dre = await getDre(2026);
+    expect(dre.summary.totalReceitas).toBeGreaterThanOrEqual(1660);
+    expect(dre.rows.some((row) => row.type === "receita" && row.total >= 1660)).toBe(true);
+
+    await financialEntryRepo.softDelete(created.id);
+    const deleted = await prisma.financialEntry.findFirst({ where: { id: created.id, deletedAt: null } });
+    expect(deleted).toBeNull();
+
+    await prisma.financialEntry.delete({ where: { id: created.id } });
+    await prisma.category.delete({ where: { id: category.id } });
   });
 });

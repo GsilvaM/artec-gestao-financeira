@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { financialEntryKeys } from '../query-keys';
 import { clientApi } from '@/server/financeiro/client-api';
+import { toFiniteNumber } from '@/lib/utils';
 import type { FinancialEntryRow, FinancialEntryFilters, FinancialEntryUpdate } from '../types';
 
 type EntryApiResponse = {
@@ -24,7 +25,7 @@ function toRow(e: EntryApiResponse): FinancialEntryRow {
   return {
     id: e.id,
     description: e.description,
-    amount: e.amount,
+    amount: toFiniteNumber(e.amount),
     type: e.type as FinancialEntryRow['type'],
     date: e.date,
     status: e.status as FinancialEntryRow['status'],
@@ -44,7 +45,7 @@ export function useFinancialEntries(filters?: FinancialEntryFilters) {
   return useQuery({
     queryKey: financialEntryKeys.list(filters),
     queryFn: async () => {
-      const entries: EntryApiResponse[] = await clientApi.financialEntries.findAll(filters as Record<string, unknown>);
+      const entries = (await clientApi.financialEntries.findAll(filters as Record<string, unknown>)) as EntryApiResponse[];
       return entries.map(toRow);
     },
   });
@@ -54,7 +55,7 @@ export function useFinancialEntry(id: string) {
   return useQuery({
     queryKey: financialEntryKeys.byId(id),
     queryFn: async () => {
-      const entry: EntryApiResponse = await clientApi.financialEntries.findById(id);
+      const entry = (await clientApi.financialEntries.findById(id)) as EntryApiResponse;
       return toRow(entry);
     },
     enabled: !!id,

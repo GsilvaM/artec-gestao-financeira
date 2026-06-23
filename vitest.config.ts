@@ -23,5 +23,35 @@ export default defineConfig({
       SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
     },
     pool: "forks",
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "html", "json-summary"],
+      include: [
+        "src/domain/financeiro/calculations.ts",
+        "src/domain/financeiro/schemas.ts",
+        "src/lib/utils.ts",
+      ],
+      exclude: [
+        "src/tests/**",
+      ],
+      thresholds: {
+        lines: 80,
+        functions: 80,
+        branches: 80,
+        statements: 80,
+        "src/domain/financeiro/calculations.ts": {
+          lines: 90,
+          functions: 90,
+          branches: 90,
+          statements: 90,
+        },
+        "src/lib/utils.ts": {
+          lines: 90,
+          functions: 90,
+          branches: 90,
+          statements: 90,
+        },
+      },
+    },
   },
 });

@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { describe, expect, it } from "vitest";
 import { Component as Lancamentos } from "@/routes/app/financeiro/lancamentos/page";
@@ -8,9 +9,14 @@ import { Component as Relatorios } from "@/routes/app/relatorios/page";
 import { Component as RelatorioFinanceiro } from "@/routes/app/relatorios/financeiros/page";
 import { Component as Configuracoes } from "@/routes/app/configuracoes/page";
 
+function renderWithQueryClient(ui: React.ReactElement) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>);
+}
+
 describe("frontend actions", () => {
   it("opens the new financial entry dialog", () => {
-    render(<Lancamentos />);
+    renderWithQueryClient(<Lancamentos />);
     fireEvent.click(screen.getAllByRole("button", { name: /novo lançamento/i })[0]);
     expect(screen.getByRole("heading", { name: /novo lançamento/i })).toBeInTheDocument();
   });
@@ -28,7 +34,7 @@ describe("frontend actions", () => {
   });
 
   it("navigates from reports to a concrete report", () => {
-    render(
+    renderWithQueryClient(
       <MemoryRouter initialEntries={["/app/relatorios"]}>
         <Routes>
           <Route path="/app/relatorios" element={<Relatorios />} />
