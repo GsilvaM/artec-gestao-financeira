@@ -61,10 +61,14 @@ const MOCK_ENTRY = {
   date: new Date("2026-06-10"),
   status: "confirmed",
   categoryId: "00000000-0000-0000-0000-000000000001",
+  costCenterId: null,
   userId: "00000000-0000-0000-0000-000000000002",
   notes: null,
   createdAt: new Date("2026-06-10"),
   updatedAt: new Date("2026-06-10"),
+  deletedAt: null,
+  category: { id: "00000000-0000-0000-0000-000000000001", name: "Serviços", type: "receita", color: "#10B981", createdAt: new Date("2026-01-01"), updatedAt: new Date("2026-06-10"), deletedAt: null },
+  costCenter: null,
 };
 
 const MOCK_CATEGORY = {
@@ -72,6 +76,9 @@ const MOCK_CATEGORY = {
   name: "Serviços",
   type: "receita",
   color: "#10B981",
+  createdAt: new Date("2026-01-01"),
+  updatedAt: new Date("2026-06-10"),
+  deletedAt: null,
 };
 
 describe("_utils", () => {
@@ -146,7 +153,7 @@ describe("handler dispatcher", () => {
   });
 
   it("routes entries GET to entries loader", async () => {
-    vi.mocked(financialEntryRepo.findAll).mockResolvedValue([MOCK_ENTRY]);
+    vi.mocked(financialEntryRepo.findAll).mockResolvedValue([MOCK_ENTRY] as never);
     const request = new Request("http://localhost/api/financeiro/entries");
     const response = await handler(request);
     expect(response.status).toBe(200);
@@ -159,7 +166,7 @@ describe("entries route module", () => {
   });
 
   it("retorna lista de lançamentos via loader", async () => {
-    vi.mocked(financialEntryRepo.findAll).mockResolvedValue([MOCK_ENTRY]);
+    vi.mocked(financialEntryRepo.findAll).mockResolvedValue([MOCK_ENTRY] as never);
     const request = new Request("http://localhost/api/financeiro/entries");
     const response = await entries.loader({ request, params: {} });
     expect(response.status).toBe(200);
@@ -180,7 +187,7 @@ describe("entries route module", () => {
   });
 
   it("retorna 201 para POST via action", async () => {
-    vi.mocked(financialEntryRepo.create).mockResolvedValue(MOCK_ENTRY);
+    vi.mocked(financialEntryRepo.create).mockResolvedValue(MOCK_ENTRY as never);
     const payload = {
       description: "Nova entrada",
       amount: 500,

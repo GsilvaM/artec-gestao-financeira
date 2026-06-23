@@ -99,7 +99,7 @@ describe("financial components", () => {
     const table = await screen.findByRole("table");
     expect(table.parentElement).toHaveClass("overflow-auto");
 
-    fireEvent.click(screen.getAllByRole("button", { name: /novo lançamento/i })[0]);
+    fireEvent.click(screen.getAllByRole("button", { name: /novo lançamento/i })[0]!);
     const dialog = await screen.findByRole("dialog");
     expect(dialog).toHaveClass("overflow-y-auto");
     expect(dialog).toHaveClass("max-h-[calc(100dvh-2rem)]");

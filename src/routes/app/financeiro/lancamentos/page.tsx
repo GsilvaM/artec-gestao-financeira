@@ -38,7 +38,7 @@ const initialForm: FormState = {
   categoria: "",
   descricao: "",
   pessoa: "",
-  valor: "",
+  valor: 0,
   status: "aberto",
   observacoes: "",
 };
@@ -101,7 +101,7 @@ export function Component() {
       descricao: entry.description,
       pessoa: entry.notes?.startsWith("Cliente/Fornecedor: ") ? entry.notes.replace("Cliente/Fornecedor: ", "").split(" | ")[0] : "",
       valor: entry.amount,
-      status: STATUS_REVERSE[entry.status] ?? "aberto",
+      status: (STATUS_REVERSE[entry.status] ?? "aberto") as "aberto" | "pago" | "vencido",
       observacoes: entry.notes?.startsWith("Cliente/Fornecedor: ") ? entry.notes.split(" | ").slice(1).join(" | ") : entry.notes ?? "",
     });
     setEditingId(entry.id);
@@ -158,7 +158,7 @@ export function Component() {
             amount: parsed.data.valor,
             type: parsed.data.tipo,
             date: new Date(parsed.data.data + "T00:00:00"),
-            status: STATUS_MAP[parsed.data.status] ?? "pending",
+            status: (STATUS_MAP[parsed.data.status] ?? "pending") as "pending" | "confirmed" | "cancelled",
             categoryId,
             notes,
           },

@@ -27,7 +27,7 @@ export function useCostCenters(includeInactive?: boolean) {
   return useQuery({
     queryKey: costCenterKeys.list(includeInactive ? undefined : { active: true }),
     queryFn: async () => {
-      const centers: CostCenterApiResponse[] = await clientApi.costCenters.findAll(includeInactive);
+      const centers = await clientApi.costCenters.findAll(includeInactive) as CostCenterApiResponse[];
       return centers.map(toRow);
     },
   });
@@ -37,7 +37,7 @@ export function useCostCenter(id: string) {
   return useQuery({
     queryKey: costCenterKeys.byId(id),
     queryFn: async () => {
-      const center: CostCenterApiResponse = await clientApi.costCenters.findById(id);
+      const center = await clientApi.costCenters.findById(id) as CostCenterApiResponse;
       return toRow(center);
     },
     enabled: !!id,

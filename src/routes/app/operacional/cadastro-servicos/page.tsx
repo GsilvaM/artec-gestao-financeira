@@ -21,7 +21,7 @@ export function Component() {
         emptyTitle="Nenhum serviço cadastrado."
         emptyDescription="Cadastre modelos de serviço para acelerar lançamentos operacionais."
       />
-      <ServiceDialog open={open} onOpenChange={setOpen} onCreate={(service) => setServices((current) => [service, ...current])} />
+      <ServiceDialog open={open} onOpenChange={setOpen} onSave={(data) => setServices((current) => [data, ...current])} />
     </>
   );
 }

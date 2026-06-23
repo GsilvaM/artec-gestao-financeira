@@ -27,7 +27,7 @@ export function useCategories(filters?: CategoryFilters) {
   return useQuery({
     queryKey: categoryKeys.list(filters),
     queryFn: async () => {
-      const categories: CategoryApiResponse[] = await clientApi.categories.findAll(filters as Record<string, unknown>);
+      const categories = await clientApi.categories.findAll(filters as Record<string, unknown>) as CategoryApiResponse[];
       return categories.map(toRow);
     },
   });
@@ -37,7 +37,7 @@ export function useCategory(id: string) {
   return useQuery({
     queryKey: categoryKeys.byId(id),
     queryFn: async () => {
-      const category: CategoryApiResponse = await clientApi.categories.findById(id);
+      const category = await clientApi.categories.findById(id) as CategoryApiResponse;
       return toRow(category);
     },
     enabled: !!id,

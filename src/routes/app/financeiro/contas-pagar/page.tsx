@@ -25,7 +25,7 @@ export function Component() {
   const [dueDate, setDueDate] = useState("");
   const [supplier, setSupplier] = useState("");
   const [categoryId, setCategoryId] = useState("");
-  const [status, setStatus] = useState("pending");
+  const [status, setStatus] = useState<AccountPayableRow["status"]>("pending");
 
   const user = useAuthStore((state) => state.user);
   const { data: entries, isLoading } = useAccountsPayable();
@@ -182,7 +182,7 @@ export function Component() {
                 options={(categories ?? []).map((c) => ({ value: c.id, label: c.name }))}
                 placeholder="Selecione..." />
             </Field>
-            <Field label="Status"><Select value={status} onChange={(e) => setStatus(e.target.value)} options={statusOptions} /></Field>
+            <Field label="Status"><Select value={status} onChange={(e) => setStatus(e.target.value as AccountPayableRow["status"])} options={statusOptions} /></Field>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => { resetForm(); setOpen(false); }}>Cancelar</Button>

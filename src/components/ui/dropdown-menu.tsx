@@ -85,7 +85,7 @@ export function DropdownMenuTrigger({ children, asChild, className, ...props }: 
   };
 
   if (asChild) {
-    const child = Children.only(children) as ReactElement<React.HTMLAttributes<HTMLElement>>;
+    const child = Children.only(children) as ReactElement<React.HTMLAttributes<HTMLElement> & { ref?: React.Ref<HTMLElement> }>;
     const mergedClassName = cn(child.props.className, className);
 
     return cloneElement(child, {
@@ -94,7 +94,7 @@ export function DropdownMenuTrigger({ children, asChild, className, ...props }: 
       "aria-haspopup": "menu",
       "aria-expanded": open,
       "aria-controls": contentId,
-      onClick: (e: React.MouseEvent) => {
+      onClick: (e: React.MouseEvent<HTMLElement>) => {
         child.props.onClick?.(e);
         if (!e.defaultPrevented) handleClick(e);
       },

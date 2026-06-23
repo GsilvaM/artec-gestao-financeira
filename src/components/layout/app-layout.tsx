@@ -161,7 +161,7 @@ function SidebarGroup({ item, pathname, collapsed, expanded, flyoutOpen, onToggl
         {flyoutOpen ? (
           <div className="absolute left-[calc(100%+0.75rem)] top-0 z-50 w-64 rounded-2xl border border-[#E2E8F0] bg-white p-2 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.45)]">
             <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[#94A3B8]">{item.title}</div>
-            <SidebarSubmenu items={item.items} pathname={pathname} onNavigate={onFlyoutClose} />
+            <SidebarSubmenu items={item.items ?? []} pathname={pathname} onNavigate={onFlyoutClose} />
           </div>
         ) : null}
       </div>
@@ -180,7 +180,7 @@ function SidebarGroup({ item, pathname, collapsed, expanded, flyoutOpen, onToggl
         <span className="min-w-0 flex-1 truncate text-left">{item.title}</span>
         <ChevronDown className={cn("size-4 shrink-0 transition-transform", expanded && "rotate-180")} />
       </button>
-      {expanded ? <SidebarSubmenu items={item.items} pathname={pathname} /> : null}
+      {expanded ? <SidebarSubmenu items={item.items ?? []} pathname={pathname} /> : null}
     </div>
   );
 }
