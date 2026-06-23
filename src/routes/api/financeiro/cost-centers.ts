@@ -16,7 +16,9 @@ export async function action({ request, params }: RouteArgs) {
   try {
     if (request.method === "POST") {
       const body = await request.json();
-      return json(await costCenterRepo.create(costCenterCreateSchema.parse(body)), { status: 201 });
+      const data = costCenterCreateSchema.parse(body);
+
+      return json(await costCenterRepo.create(data), { status: 201 });
     }
     if (request.method === "PUT") {
       requireId(id);

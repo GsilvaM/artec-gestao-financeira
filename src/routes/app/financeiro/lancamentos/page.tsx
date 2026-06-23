@@ -147,7 +147,7 @@ export function Component() {
 
     const parts = [parsed.data.observacoes];
     if (parsed.data.pessoa) parts.unshift(`Cliente/Fornecedor: ${parsed.data.pessoa}`);
-    const notes = parts.filter(Boolean).join(" | ") || null;
+    const notes = parts.filter(Boolean).join(" | ") || undefined;
 
     try {
       if (editingId) {

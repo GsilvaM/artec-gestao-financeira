@@ -9,7 +9,10 @@ import { z } from "zod";
 import { json, parseDate, requireId, handleRepoError, type RouteArgs } from "./_utils.js";
 
 const uuidField = z.string().uuid();
-const createSchema = z.object({ ...accountReceivableCreateSchema.shape, userId: uuidField });
+
+const createSchema = accountReceivableCreateSchema.extend({
+  userId: uuidField,
+});
 
 export async function loader({ request }: RouteArgs) {
   const url = new URL(request.url);
@@ -32,15 +35,19 @@ export async function action({ request, params }: RouteArgs) {
   try {
     if (request.method === "POST") {
       const body = await request.json();
-      return json(await accountReceivableRepo.create(createSchema.parse(body)), { status: 201 });
+      const data = createSchema.parse(body);
+
+      return json(await accountReceivableRepo.create(data), { status: 201 });
     }
     if (request.method === "PUT") {
       requireId(id);
       const body = await request.json();
+
       return json(await accountReceivableRepo.update(id!, accountReceivableUpdateSchema.parse(body)));
     }
     if (request.method === "DELETE") {
       requireId(id);
+
       return json(await accountReceivableRepo.softDelete(id!));
     }
     return json({ error: "Method not allowed" }, { status: 405 });

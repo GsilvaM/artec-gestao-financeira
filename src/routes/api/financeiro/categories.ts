@@ -18,7 +18,9 @@ export async function action({ request, params }: RouteArgs) {
   try {
     if (request.method === "POST") {
       const body = await request.json();
-      return json(await categoryRepo.create(categoryCreateSchema.parse(body)), { status: 201 });
+      const data = categoryCreateSchema.parse(body);
+
+      return json(await categoryRepo.create(data), { status: 201 });
     }
     if (request.method === "PUT") {
       requireId(id);
