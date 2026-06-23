@@ -9,6 +9,7 @@ interface DropdownContextValue {
   triggerId: string;
   contentId: string;
   triggerRef: React.RefObject<HTMLButtonElement | null>;
+  contentRef: React.RefObject<HTMLDivElement | null>;
   contentStyle: React.CSSProperties;
   setContentStyle: (style: React.CSSProperties) => void;
 }
@@ -55,7 +56,7 @@ export function DropdownMenu({ children }: { children: ReactNode }) {
   }, [open]);
 
   return (
-    <DropdownContext.Provider value={{ open, toggle, close, triggerId: `dtrig-${id}`, contentId: `dcont-${id}`, triggerRef, contentStyle, setContentStyle }}>
+    <DropdownContext.Provider value={{ open, toggle, close, triggerId: `dtrig-${id}`, contentId: `dcont-${id}`, triggerRef, contentRef, contentStyle, setContentStyle }}>
       <div className="inline-block">{children}</div>
     </DropdownContext.Provider>
   );
@@ -121,18 +122,22 @@ export function DropdownMenuTrigger({ children, asChild, className, ...props }: 
 }
 
 export function DropdownMenuContent({ children, className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  const { open, contentId, contentStyle } = useDropdown();
+  const { open, contentId, contentRef, contentStyle } = useDropdown();
   if (!open) return null;
 
   const content = (
     <div
-      ref={(ref) => { if (ref) (ref as HTMLDivElement).focus(); }}
+      ref={(ref) => {
+        contentRef.current = ref;
+        if (ref) ref.focus();
+      }}
       id={contentId}
       role="menu"
       aria-orientation="vertical"
+      tabIndex={-1}
       style={contentStyle}
       className={cn(
-        "min-w-[9rem] origin-top-right animate-in fade-in-0 zoom-in-95 rounded-xl border border-[#E2E8F0] bg-white p-1 shadow-[0_10px_38px_-10px_rgba(15,23,42,0.35),0_0_0_1px_rgba(0,0,0,0.05)] focus:outline-none",
+        "min-w-[9rem] origin-top-right animate-in fade-in-0 zoom-in-95 rounded-lg border border-[#E2E8F0] bg-white p-1 shadow-[0_10px_38px_-10px_rgba(15,23,42,0.35),0_0_0_1px_rgba(0,0,0,0.05)] focus:outline-none",
         className,
       )}
       {...props}

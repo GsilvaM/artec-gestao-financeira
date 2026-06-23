@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 
 export function Table({ className, ...props }: React.HTMLAttributes<HTMLTableElement>) {
-  return <div className="relative w-full overflow-auto"><table className={cn("w-full min-w-[760px] caption-bottom text-sm", className)} {...props} /></div>;
+  return <div className="relative w-full overflow-auto overflow-x-auto overscroll-x-contain"><table className={cn("w-full min-w-[640px] caption-bottom text-sm", className)} {...props} /></div>;
 }
 
 export function TableHeader({ className, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
@@ -21,11 +21,11 @@ export function TableRow({ className, ...props }: React.HTMLAttributes<HTMLTable
 }
 
 export function TableHead({ className, ...props }: React.ThHTMLAttributes<HTMLTableCellElement>) {
-  return <th className={cn("h-11 px-4 text-left align-middle text-xs font-bold uppercase tracking-wide text-[#64748B] [&:has([role=checkbox])]:pr-0", className)} {...props} />;
+  return <th scope="col" className={cn("h-11 px-3 text-left align-middle text-xs font-bold uppercase tracking-wide text-[#475569] sm:px-4 [&:has([role=checkbox])]:pr-0", className)} {...props} />;
 }
 
 export function TableCell({ className, ...props }: React.TdHTMLAttributes<HTMLTableCellElement>) {
-  return <td className={cn("px-4 py-3 align-middle text-[#0F172A] [&:has([role=checkbox])]:pr-0", className)} {...props} />;
+  return <td className={cn("px-3 py-3 align-middle text-[#0F172A] sm:px-4 [&:has([role=checkbox])]:pr-0", className)} {...props} />;
 }
 
 export function TableCaption({ className, ...props }: React.HTMLAttributes<HTMLTableCaptionElement>) {

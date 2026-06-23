@@ -39,7 +39,7 @@ export function Component() {
         <MetricCard title="Novos contatos" value="0" icon={UserRoundPlus} tone="slate" />
       </div>
       <FilterBar searchPlaceholder="Buscar fornecedor..."><StatusSelect /></FilterBar>
-      <Card className="overflow-visible">
+      <Card className="overflow-hidden">
         <Table>
           <TableHeader><TableRow>{["Nome/Razão Social", "Documento", "Contato", "Status", "Ações"].map((column) => <TableHead key={column}>{column}</TableHead>)}</TableRow></TableHeader>
           <TableBody>

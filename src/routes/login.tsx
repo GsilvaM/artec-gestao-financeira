@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 
 export function Component() {
   const [email, setEmail] = useState("");
@@ -33,21 +33,21 @@ export function Component() {
       <Card className="relative w-full max-w-md overflow-hidden shadow-xl">
         <div className="h-2 bg-[#2F73B8]" />
         <CardHeader className="items-center text-center">
-          <div className="mb-2 flex size-14 items-center justify-center rounded-2xl bg-[#EAF3FB] text-[#174E8C]">
+          <div className="mb-2 flex size-14 items-center justify-center rounded-lg bg-[#EAF3FB] text-[#174E8C]">
             <ShieldCheck className="size-7" />
           </div>
-          <CardTitle className="text-2xl">Artec Gestão</CardTitle>
+          <h1 className="text-2xl font-semibold leading-none">Artec Gestão</h1>
           <CardDescription>Entre com sua conta para acessar o painel</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@email.com" />
+              <Input id="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@email.com" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Senha</Label>
-              <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
+              <Input id="password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="********" />
             </div>
             <Button type="submit" disabled={submitting} className="w-full">
               <LockKeyhole className="size-4" />

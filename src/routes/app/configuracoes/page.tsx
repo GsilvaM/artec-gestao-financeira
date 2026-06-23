@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Bell, Building2, CreditCard, Palette, Settings, UserCog } from "lucide-react";
+import { FormField as Field } from "@/components/forms/form-field";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogCloseButton, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { PageShell } from "@/components/layout/page-shell";
@@ -34,9 +34,9 @@ export function Component() {
     <PageShell icon={Settings} title="Configurações" subtitle="Ajustes gerais e preferências do sistema">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {settings.map((item) => (
-          <Card key={item.title} className="group transition hover:-translate-y-0.5 hover:border-[#BBD7EF] hover:shadow-[0_20px_45px_-32px_rgba(15,23,42,0.55)]">
+          <Card key={item.title} className="group transition-colors hover:border-[#BBD7EF]">
             <CardHeader className="flex-row items-center gap-3 space-y-0">
-              <div className="flex size-11 items-center justify-center rounded-2xl bg-[#EAF3FB] text-[#174E8C] transition group-hover:scale-105">
+              <div className="flex size-11 items-center justify-center rounded-lg bg-[#EAF3FB] text-[#174E8C]">
                 <item.icon className="size-5" />
               </div>
               <CardTitle className="text-base">{item.title}</CardTitle>
@@ -70,8 +70,4 @@ export function Component() {
       </Dialog>
     </PageShell>
   );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return <div className="space-y-2"><Label>{label}</Label>{children}</div>;
 }

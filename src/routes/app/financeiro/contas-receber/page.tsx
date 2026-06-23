@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Banknote, CalendarCheck, CircleDollarSign, Clock, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { FormField as Field } from "@/components/forms/form-field";
 import { EmptyState, FilterBar, MetricCard, PageShell, StatusBadge, StatusSelect } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogCloseButton, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAccountsReceivable, useCreateAccountReceivable, useUpdateAccountReceivable, useDeleteAccountReceivable } from "@/domain/financeiro/hooks/use-accounts";
@@ -130,7 +130,7 @@ export function Component() {
         <MetricCard title="Pendentes" value={String(receivableEntries.filter((e) => e.status === "pending").length)} icon={Clock} tone="amber" />
       </div>
       <FilterBar searchPlaceholder="Buscar conta a receber..."><StatusSelect /></FilterBar>
-      <Card className="overflow-visible">
+      <Card className="overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>{["Vencimento", "Cliente", "Descrição", "Categoria", "Valor", "Status", "Ações"].map((column) => <TableHead key={column}>{column}</TableHead>)}</TableRow>
@@ -205,8 +205,4 @@ export function Component() {
       </Dialog>
     </PageShell>
   );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return <div className="space-y-2"><Label>{label}</Label>{children}</div>;
 }

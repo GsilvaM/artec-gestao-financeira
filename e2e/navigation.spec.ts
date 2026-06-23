@@ -36,7 +36,7 @@ test.describe("Sidebar navigation", () => {
   test("shows logged-in user email in sidebar footer", async ({ page }) => {
     const email = process.env.E2E_TEST_EMAIL;
     if (email) {
-      await expect(page.getByText(email)).toBeVisible();
+      await expect(page.getByRole("complementary").getByText(email)).toBeVisible();
     }
   });
 

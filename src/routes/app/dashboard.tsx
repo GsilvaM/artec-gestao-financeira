@@ -34,7 +34,7 @@ export function Component() {
         <MetricCard title="Receitas" value={formatMoney(receitas)} icon={ArrowUpCircle} tone="green" helper="Lançamentos cadastrados" />
         <MetricCard title="Despesas" value={formatMoney(despesas)} icon={ArrowDownCircle} tone="red" helper="Custos e despesas" />
         <MetricCard title="Saldo projetado" value={formatMoney(saldo)} icon={Banknote} tone={saldo < 0 ? "red" : "blue"} helper="Resultado parcial" />
-        <MetricCard title="Serviços ativos" value="18" icon={CalendarCheck} tone="amber" helper="Ordens em andamento" />
+        <MetricCard title="Serviços ativos" value="0" icon={CalendarCheck} tone="amber" helper="Ordens cadastradas" />
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[1.6fr_1fr]">
@@ -83,7 +83,7 @@ export function Component() {
         </CardHeader>
         <CardContent className="space-y-3">
           {['Lançamentos aguardando integração', 'Contas a pagar sem vencimentos cadastrados', 'Serviços pendentes de atualização'].map((item) => (
-            <div key={item} className="flex flex-col gap-2 rounded-2xl border border-[#E2E8F0] p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div key={item} className="flex flex-col gap-2 rounded-lg border border-[#E2E8F0] p-4 sm:flex-row sm:items-center sm:justify-between">
               <span className="text-sm text-[#0F172A]">{item}</span>
               <Badge variant="secondary">Pendente</Badge>
             </div>

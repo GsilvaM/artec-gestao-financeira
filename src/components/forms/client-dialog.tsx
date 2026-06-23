@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
+import { FormField as Field } from "@/components/forms/form-field";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogCloseButton, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 const clientSchema = z.object({
@@ -82,8 +82,4 @@ export function ClientDialog({ open, onOpenChange, record, onSave }: ClientDialo
       </DialogContent>
     </Dialog>
   );
-}
-
-function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
-  return <div className="space-y-2"><Label>{label}</Label>{children}{error ? <p className="text-xs font-medium text-[#EF4444]">{error}</p> : null}</div>;
 }

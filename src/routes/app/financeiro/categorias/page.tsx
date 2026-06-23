@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { FolderTree, MoreHorizontal, Pencil, Tags, Trash2 } from "lucide-react";
+import { FormField as Field } from "@/components/forms/form-field";
 import { EmptyState, FilterBar, MetricCard, PageShell, StatusBadge } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogCloseButton, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from "@/domain/financeiro/hooks/use-categories";
@@ -89,7 +89,7 @@ export function Component() {
       <FilterBar searchPlaceholder="Buscar categoria...">
         <Select value={type} onChange={(e) => setType(e.target.value as "receita" | "despesa")} options={[{ value: "receita", label: "Receita" }, { value: "despesa", label: "Despesa" }]} />
       </FilterBar>
-      <Card className="overflow-visible">
+      <Card className="overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>{["Nome", "Tipo", "Status", "Ações"].map((column) => <TableHead key={column}>{column}</TableHead>)}</TableRow>
@@ -154,8 +154,4 @@ export function Component() {
       </Dialog>
     </PageShell>
   );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return <div className="space-y-2"><Label>{label}</Label>{children}</div>;
 }

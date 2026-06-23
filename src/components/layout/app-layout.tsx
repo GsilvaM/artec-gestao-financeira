@@ -38,10 +38,13 @@ export function AppLayout() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A]">
+      <a href="#conteudo-principal" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-[#174E8C] focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#2F73B8]/40">
+        Pular para o conteudo
+      </a>
       <AppSidebar collapsed={collapsed} onCollapsedChange={setCollapsed} pathname={location.pathname} userEmail={user?.email} onSignOut={handleSignOut} />
       <div className={cn("min-w-0 transition-[padding] duration-200 lg:pl-[264px]", collapsed && "lg:pl-[72px]") }>
-        <Topbar pathname={location.pathname} userEmail={user?.email} onOpenMobile={() => setMobileOpen(true)} onSignOut={handleSignOut} />
-        <main className="min-w-0 pb-20 lg:pb-16">
+        <Topbar pathname={location.pathname} userEmail={user?.email} mobileOpen={mobileOpen} onOpenMobile={() => setMobileOpen(true)} onSignOut={handleSignOut} />
+        <main id="conteudo-principal" tabIndex={-1} className="min-w-0 pb-20 outline-none lg:pb-16">
           <Outlet />
         </main>
       </div>
@@ -237,11 +240,11 @@ function SidebarFooter({ collapsed, userEmail, onSignOut }: { collapsed: boolean
   );
 }
 
-function Topbar({ pathname, userEmail, onOpenMobile, onSignOut }: { pathname: string; userEmail?: string; onOpenMobile: () => void; onSignOut: () => void }) {
+function Topbar({ pathname, userEmail, mobileOpen, onOpenMobile, onSignOut }: { pathname: string; userEmail?: string; mobileOpen: boolean; onOpenMobile: () => void; onSignOut: () => void }) {
   return (
     <header className="sticky top-0 z-30 h-16 border-b border-[#E2E8F0] bg-white/90 backdrop-blur-xl">
       <div className="flex h-full min-w-0 items-center gap-3 px-4 sm:px-6 lg:px-8">
-        <button type="button" onClick={onOpenMobile} className="flex size-10 items-center justify-center rounded-xl border border-[#E2E8F0] text-[#64748B] transition hover:bg-[#F8FAFC] hover:text-[#174E8C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2F73B8]/40 lg:hidden" aria-label="Abrir menu">
+        <button type="button" onClick={onOpenMobile} className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-[#E2E8F0] text-[#64748B] transition hover:bg-[#F8FAFC] hover:text-[#174E8C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2F73B8]/40 lg:hidden" aria-label="Abrir menu" aria-expanded={mobileOpen} aria-controls="menu-mobile">
           <Menu className="size-5" />
         </button>
         <Breadcrumbs pathname={pathname} />
@@ -344,7 +347,7 @@ function MobileNavDrawer({ open, pathname, userEmail, onClose, onSignOut }: { op
   return (
     <div className="fixed inset-0 z-50 lg:hidden">
       <button type="button" aria-label="Fechar menu" className="absolute inset-0 bg-slate-950/40" onClick={onClose} />
-      <aside className="relative flex h-full w-80 max-w-[88vw] flex-col border-r border-[#E2E8F0] bg-white shadow-2xl">
+      <aside id="menu-mobile" role="dialog" aria-modal="true" aria-label="Menu principal" className="relative flex h-full w-80 max-w-[88vw] flex-col border-r border-[#E2E8F0] bg-white shadow-2xl">
         <div className="flex h-16 items-center justify-between border-b border-[#E2E8F0] px-4">
           <div className="flex items-center gap-3"><span className="flex size-10 items-center justify-center rounded-2xl bg-[#174E8C] text-sm font-bold text-white">AG</span><span className="font-bold text-[#0F172A]">Artec Gestão</span></div>
           <button type="button" onClick={onClose} aria-label="Fechar menu" className="rounded-xl p-2 text-[#64748B] hover:bg-[#F8FAFC] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2F73B8]/40"><X className="size-5" /></button>

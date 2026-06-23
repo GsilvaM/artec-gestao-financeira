@@ -40,7 +40,7 @@ export function Component() {
         <MetricCard title="Atrasados" value="0" icon={Clock} tone="red" />
       </div>
       <FilterBar searchPlaceholder="Buscar serviço, cliente ou técnico..."><StatusSelect /></FilterBar>
-      <Card className="overflow-visible">
+      <Card className="overflow-hidden">
         <Table>
           <TableHeader><TableRow>{["OS", "Cliente", "Serviço", "Técnico", "Status", "Prazo", "Ações"].map((column) => <TableHead key={column}>{column}</TableHead>)}</TableRow></TableHeader>
           <TableBody>

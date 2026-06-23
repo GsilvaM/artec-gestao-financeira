@@ -39,7 +39,7 @@ export function Component() {
         <MetricCard title="Empresas" value={String(records.filter((r) => r.documento.length > 11).length)} icon={Building2} tone="slate" />
       </div>
       <FilterBar searchPlaceholder="Buscar cliente, documento ou e-mail..."><StatusSelect /></FilterBar>
-      <Card className="overflow-visible">
+      <Card className="overflow-hidden">
         <Table>
           <TableHeader><TableRow>{["Nome/Razão Social", "Documento", "Contato", "Cidade", "Status", "Ações"].map((column) => <TableHead key={column}>{column}</TableHead>)}</TableRow></TableHeader>
           <TableBody>

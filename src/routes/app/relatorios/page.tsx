@@ -16,9 +16,9 @@ export function Component() {
     <PageShell icon={BarChart3} title="Relatórios" subtitle="Painéis e exportações para análise gerencial">
       <div className="grid gap-4 md:grid-cols-3">
         {reports.map((report) => (
-          <Card key={report.title} className="group overflow-hidden transition hover:-translate-y-0.5 hover:border-[#BBD7EF] hover:shadow-[0_20px_45px_-32px_rgba(15,23,42,0.55)]">
+          <Card key={report.title} className="group overflow-hidden transition-colors hover:border-[#BBD7EF]">
             <CardHeader>
-              <div className="mb-3 flex size-12 items-center justify-center rounded-2xl bg-[#EAF3FB] text-[#174E8C] transition group-hover:scale-105">
+              <div className="mb-3 flex size-12 items-center justify-center rounded-lg bg-[#EAF3FB] text-[#174E8C]">
                 <report.icon className="size-6" />
               </div>
               <CardTitle className="text-lg">{report.title}</CardTitle>

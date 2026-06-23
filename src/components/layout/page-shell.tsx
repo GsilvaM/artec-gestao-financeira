@@ -19,15 +19,15 @@ interface PageShellProps {
 
 export function PageShell({ icon: Icon, title, subtitle, actionLabel, onAction, children }: PageShellProps) {
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 pb-8 pt-6 sm:px-6 lg:px-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-4">
-          <div className="flex size-12 items-center justify-center rounded-2xl bg-[#EAF3FB] text-[#174E8C]">
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-3 pb-8 pt-4 sm:gap-6 sm:px-6 sm:pt-6 lg:px-8">
+      <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-start gap-3 sm:items-center sm:gap-4">
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-[#EAF3FB] text-[#174E8C] sm:size-12">
             <Icon className="size-6" />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-[#0F172A]">{title}</h1>
-            <p className="mt-1 text-sm text-[#64748B]">{subtitle}</p>
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold text-[#0F172A] sm:text-2xl">{title}</h1>
+            <p className="mt-1 max-w-3xl text-sm leading-6 text-[#64748B]">{subtitle}</p>
           </div>
         </div>
         {actionLabel ? (
@@ -121,13 +121,13 @@ const toneStyles = {
 export function MetricCard({ title, value, icon: Icon, tone = "blue", helper }: MetricCardProps) {
   return (
     <Card>
-      <CardContent className="flex items-center justify-between gap-4 p-5">
+      <CardContent className="flex min-h-28 items-center justify-between gap-4 p-4 sm:p-5">
         <div className="min-w-0">
           <p className="text-sm font-medium text-[#64748B]">{title}</p>
-          <p className="mt-2 truncate text-2xl font-bold text-[#0F172A]" title={value}>{value}</p>
+          <p className="mt-2 break-words text-2xl font-bold text-[#0F172A]" title={value}>{value}</p>
           {helper ? <p className="mt-1 text-xs text-[#94A3B8]">{helper}</p> : null}
         </div>
-        <div className={cn("flex size-11 items-center justify-center rounded-2xl", toneStyles[tone])}>
+        <div className={cn("flex size-11 shrink-0 items-center justify-center rounded-lg", toneStyles[tone])}>
           <Icon className="size-5" />
         </div>
       </CardContent>
@@ -146,9 +146,9 @@ export function FilterBar({ searchPlaceholder = "Buscar...", children }: FilterB
       <CardContent className="flex flex-col gap-3 p-4 md:flex-row md:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#94A3B8]" />
-          <Input className="pl-9" placeholder={searchPlaceholder} />
+          <Input className="pl-9" placeholder={searchPlaceholder} aria-label={searchPlaceholder} />
         </div>
-        {children}
+        {children ? <div className="grid gap-3 sm:grid-cols-2 md:flex md:shrink-0">{children}</div> : null}
       </CardContent>
     </Card>
   );
@@ -158,6 +158,7 @@ export function MonthSelect() {
   return (
     <Select
       className="md:w-44"
+      aria-label="Filtrar por mes"
       placeholder="Mês"
       options={[
         { value: "2026-06", label: "Junho/2026" },
@@ -172,6 +173,7 @@ export function StatusSelect() {
   return (
     <Select
       className="md:w-44"
+      aria-label="Filtrar por status"
       placeholder="Status"
       options={[
         { value: "aberto", label: "Aberto" },
@@ -191,18 +193,21 @@ interface EmptyStateProps {
 
 export function EmptyState({ title, description, actionLabel, onAction }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center px-4 py-12 text-center">
-      <div className="flex size-14 items-center justify-center rounded-2xl bg-[#EAF3FB] text-[#174E8C]">
-        <TableProperties className="size-6" />
+    <div className="flex min-h-72 items-center justify-center px-4 py-10 text-center sm:px-6 sm:py-14">
+      <div className="mx-auto flex w-full max-w-lg flex-col items-center">
+        <div className="relative mb-5 flex size-16 items-center justify-center rounded-lg border border-[#BBD7EF] bg-[#F8FAFC] text-[#174E8C] shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+          <div className="absolute inset-2 rounded-md bg-[#EAF3FB]" />
+          <TableProperties className="relative size-7" />
+        </div>
+        <h3 className="text-balance text-base font-semibold leading-6 text-[#0F172A] sm:text-lg">{title}</h3>
+        {description ? <p className="mt-2 max-w-md text-pretty text-sm leading-6 text-[#64748B]">{description}</p> : null}
+        {actionLabel ? (
+          <Button className="mt-6" variant="secondary" onClick={onAction}>
+            <Plus className="size-4" />
+            {actionLabel}
+          </Button>
+        ) : null}
       </div>
-      <h3 className="mt-4 text-base font-semibold text-[#0F172A]">{title}</h3>
-      {description ? <p className="mt-1 max-w-md text-sm text-[#64748B]">{description}</p> : null}
-      {actionLabel ? (
-        <Button className="mt-5" variant="secondary" onClick={onAction}>
-          <Plus className="size-4" />
-          {actionLabel}
-        </Button>
-      ) : null}
     </div>
   );
 }

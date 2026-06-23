@@ -2,12 +2,12 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { ArrowDownCircle, ArrowUpCircle, Banknote, FileText, ListChecks, Loader2, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { FormField as Field } from "@/components/forms/form-field";
 import { EmptyState, FilterBar, MetricCard, MoneyValue, MonthSelect, PageShell, StatusBadge, StatusSelect } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogCloseButton, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
@@ -198,7 +198,7 @@ export function Component() {
         <MonthSelect />
         <StatusSelect />
       </FilterBar>
-      <Card className="overflow-visible">
+      <Card className="overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>{["Data", "Tipo", "Categoria", "Descrição", "Valor", "Status", "Ações"].map((column) => <TableHead key={column}>{column}</TableHead>)}</TableRow>
@@ -291,8 +291,4 @@ export function Component() {
       </Dialog>
     </PageShell>
   );
-}
-
-function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
-  return <div className="space-y-2"><Label>{label}</Label>{children}{error ? <p className="text-xs font-medium text-[#EF4444]">{error}</p> : null}</div>;
 }

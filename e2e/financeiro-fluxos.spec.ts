@@ -19,7 +19,7 @@ test.describe("Fluxos financeiros", () => {
       status: "pago",
     });
     await expect(page.getByText(receitaDescricao)).toBeVisible();
-    await expect(page.getByText(/R\$\s*1\.000,00/)).toBeVisible();
+    await expect(page.getByRole("table").getByText(/R\$\s*1\.000,00/)).toBeVisible();
 
     await createEntry(page, {
       description: despesaDescricao,
@@ -29,24 +29,24 @@ test.describe("Fluxos financeiros", () => {
       status: "aberto",
     });
     await expect(page.getByText(despesaDescricao)).toBeVisible();
-    await expect(page.getByText(/R\$\s*660,00/)).toBeVisible();
+    await expect(page.getByRole("table").getByText(/R\$\s*660,00/)).toBeVisible();
     await expect(page.getByText(/R\$\s*340,00/)).toBeVisible();
 
     await editFirstEntry(page, receitaDescricao, receitaEditada, "1660");
     await expect(page.getByText(receitaEditada)).toBeVisible();
-    await expect(page.getByText(/R\$\s*1\.660,00/)).toBeVisible();
-    await expect(page.getByText(/R\$\s*1\.000,00/)).toBeVisible();
+    await expect(page.getByRole("table").getByText(/R\$\s*1\.660,00/)).toBeVisible();
+    await expect(page.getByText(/R\$\s*1\.000,00/).first()).toBeVisible();
 
     await deleteEntry(page, despesaDescricao);
     await expect(page.getByText(despesaDescricao)).toHaveCount(0);
-    await expect(page.getByText(/R\$\s*1\.660,00/)).toBeVisible();
+    await expect(page.getByRole("table").getByText(/R\$\s*1\.660,00/)).toBeVisible();
 
     await page.goto("/app");
     await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
-    await expect(page.getByText(/R\$\s*1\.660,00/)).toBeVisible();
+    await expect(page.getByText(/R\$\s*1\.660,00/).first()).toBeVisible();
 
     await page.getByRole("button", { name: /menu do usuário/i }).click();
-    await page.getByRole("button", { name: /^sair$/i }).click();
+    await page.getByRole("banner").getByRole("button", { name: /^sair$/i }).click();
     await expect(page.getByRole("heading", { name: "Artec Gestão" })).toBeVisible();
   });
 

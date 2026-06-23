@@ -100,15 +100,18 @@ export async function getCashFlow(
     Array<{ period: Date; receitas: string; despesas: string; saldo: string }>
   >`
     SELECT
-      DATE_TRUNC(${trunc}, fe.date)::date AS period,
-      COALESCE(SUM(CASE WHEN fe.type = 'receita' THEN fe.amount ELSE 0 END), 0)::text AS receitas,
-      COALESCE(SUM(CASE WHEN fe.type = 'despesa'  THEN fe.amount ELSE 0 END), 0)::text AS despesas,
-      COALESCE(SUM(CASE WHEN fe.type = 'receita' THEN fe.amount ELSE -fe.amount END), 0)::text AS saldo
-    FROM financial_entries fe
-    WHERE fe.deleted_at IS NULL
-      AND fe.date >= ${dateFrom}
-      AND fe.date <= ${dateTo}
-    GROUP BY DATE_TRUNC(${trunc}, fe.date)
+      grouped.period,
+      COALESCE(SUM(CASE WHEN grouped.type = 'receita' THEN grouped.amount ELSE 0 END), 0)::text AS receitas,
+      COALESCE(SUM(CASE WHEN grouped.type = 'despesa'  THEN grouped.amount ELSE 0 END), 0)::text AS despesas,
+      COALESCE(SUM(CASE WHEN grouped.type = 'receita' THEN grouped.amount ELSE -grouped.amount END), 0)::text AS saldo
+    FROM (
+      SELECT DATE_TRUNC(${trunc}, fe.date)::date AS period, fe.type, fe.amount
+      FROM financial_entries fe
+      WHERE fe.deleted_at IS NULL
+        AND fe.date >= ${dateFrom}
+        AND fe.date <= ${dateTo}
+    ) grouped
+    GROUP BY grouped.period
     ORDER BY period
   `;
 
