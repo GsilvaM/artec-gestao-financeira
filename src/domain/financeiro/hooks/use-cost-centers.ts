@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { costCenterKeys } from '../query-keys.js';
 import { clientApi } from '@/server/financeiro/client-api';
-import type { CostCenterRow, CostCenterUpdate } from '../types.js';
+import type { CostCenterRow, CostCenterFilters, CostCenterUpdate } from '../types.js';
 
 type CostCenterApiResponse = {
   id: string;
@@ -23,11 +23,11 @@ function toRow(cc: CostCenterApiResponse): CostCenterRow {
   };
 }
 
-export function useCostCenters(includeInactive?: boolean) {
+export function useCostCenters(filters?: CostCenterFilters) {
   return useQuery({
-    queryKey: costCenterKeys.list(includeInactive ? undefined : { active: true }),
+    queryKey: costCenterKeys.list(filters),
     queryFn: async () => {
-      const centers = await clientApi.costCenters.findAll(includeInactive) as CostCenterApiResponse[];
+      const centers = await clientApi.costCenters.findAll(filters as Record<string, unknown>) as CostCenterApiResponse[];
       return centers.map(toRow);
     },
   });

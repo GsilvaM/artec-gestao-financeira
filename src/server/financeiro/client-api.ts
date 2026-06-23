@@ -106,8 +106,8 @@ export const clientApi = {
   },
 
   costCenters: {
-    findAll: (includeInactive?: boolean) =>
-      fetch(`${BASE_URL}/cost-centers?${includeInactive ? 'includeInactive=true' : ''}`).then(handleResponse),
+    findAll: (filters?: Record<string, unknown>) =>
+      fetch(`${BASE_URL}/cost-centers?${toSearchParams(filters)}`).then(handleResponse),
     findById: (id: string) =>
       fetch(`${BASE_URL}/cost-centers/${id}`).then(handleResponse),
     create: (data: unknown) =>

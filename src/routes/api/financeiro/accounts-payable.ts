@@ -27,6 +27,7 @@ export async function loader({ request }: RouteArgs) {
       supplier: url.searchParams.get("supplier") ?? undefined,
       dueDateFrom: parseDate(url.searchParams.get("dueDateFrom")),
       dueDateTo: parseDate(url.searchParams.get("dueDateTo")),
+      search: url.searchParams.get("search") ?? undefined,
     }));
   } catch (err) { return handleRepoError(err); }
 }

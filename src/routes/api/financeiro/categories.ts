@@ -9,6 +9,7 @@ export async function loader({ request }: RouteArgs) {
     if (id) return json(await categoryRepo.findById(id));
     return json(await categoryRepo.findAll({
       type: url.searchParams.get("type") ?? undefined,
+      search: url.searchParams.get("search") ?? undefined,
     }));
   } catch (err) { return handleRepoError(err); }
 }

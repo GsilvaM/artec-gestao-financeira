@@ -145,6 +145,6 @@ export const categoryFilterSchema = z.object({
 });
 
 export const costCenterFilterSchema = z.object({
-  active: z.boolean().optional(),
+  includeInactive: z.boolean().optional(),
   search: z.string().optional(),
 });

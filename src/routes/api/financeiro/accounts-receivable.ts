@@ -27,6 +27,7 @@ export async function loader({ request }: RouteArgs) {
       client: url.searchParams.get("client") ?? undefined,
       dueDateFrom: parseDate(url.searchParams.get("dueDateFrom")),
       dueDateTo: parseDate(url.searchParams.get("dueDateTo")),
+      search: url.searchParams.get("search") ?? undefined,
     }));
   } catch (err) { return handleRepoError(err); }
 }

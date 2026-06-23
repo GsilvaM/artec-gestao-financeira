@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Banknote, CalendarCheck, CircleDollarSign, Clock, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { FormField as Field } from "@/components/forms/form-field";
@@ -14,7 +14,13 @@ import { useAccountsReceivable, useCreateAccountReceivable, useUpdateAccountRece
 import { useCategories } from "@/domain/financeiro/hooks/use-categories";
 import { useAuthStore } from "@/lib/supabase/auth-store";
 import { formatDate, formatMoney, parseMoneyInput, toFiniteNumber } from "@/lib/utils";
-import type { AccountReceivableRow } from "@/domain/financeiro/types";
+import type { AccountReceivableFilters, AccountReceivableRow } from "@/domain/financeiro/types";
+
+const AR_STATUS_MAP: Record<string, string> = {
+  aberto: "pending",
+  pago: "received",
+  vencido: "overdue",
+};
 
 export function Component() {
   const [open, setOpen] = useState(false);
@@ -26,9 +32,18 @@ export function Component() {
   const [client, setClient] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [status, setStatus] = useState<AccountReceivableRow["status"]>("pending");
+  const [search, setSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+
+  const filters = useMemo<AccountReceivableFilters | undefined>(() => {
+    const f: AccountReceivableFilters = {};
+    if (search) f.search = search;
+    if (filterStatus) f.status = (AR_STATUS_MAP[filterStatus] ?? filterStatus) as AccountReceivableFilters["status"];
+    return Object.keys(f).length ? f : undefined;
+  }, [search, filterStatus]);
 
   const user = useAuthStore((state) => state.user);
-  const { data: entries, isLoading } = useAccountsReceivable();
+  const { data: entries, isLoading } = useAccountsReceivable(filters);
   const { data: categories } = useCategories();
   const { mutateAsync: createEntry, isPending: creating } = useCreateAccountReceivable();
   const { mutateAsync: updateEntry, isPending: updating } = useUpdateAccountReceivable();
@@ -129,7 +144,7 @@ export function Component() {
         <MetricCard title="Recebidas" value={formatMoney(receivedAmount)} icon={CalendarCheck} tone="blue" />
         <MetricCard title="Pendentes" value={String(receivableEntries.filter((e) => e.status === "pending").length)} icon={Clock} tone="amber" />
       </div>
-      <FilterBar searchPlaceholder="Buscar conta a receber..."><StatusSelect /></FilterBar>
+      <FilterBar searchPlaceholder="Buscar conta a receber..." search={search} onSearchChange={setSearch}><StatusSelect value={filterStatus} onValueChange={setFilterStatus} /></FilterBar>
       <Card className="overflow-hidden">
         <Table>
           <TableHeader>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Building, MoreHorizontal, Network, Pencil, Trash2 } from "lucide-react";
 import { FormField as Field } from "@/components/forms/form-field";
@@ -10,7 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useCostCenters, useCreateCostCenter, useUpdateCostCenter, useDeleteCostCenter } from "@/domain/financeiro/hooks/use-cost-centers";
-import type { CostCenterRow } from "@/domain/financeiro/types";
+import type { CostCenterFilters, CostCenterRow } from "@/domain/financeiro/types";
 
 export function Component() {
   const [open, setOpen] = useState(false);
@@ -18,8 +18,15 @@ export function Component() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
+  const [search, setSearch] = useState("");
 
-  const { data: centers, isLoading } = useCostCenters(true);
+  const filters = useMemo<CostCenterFilters | undefined>(() => {
+    const f: CostCenterFilters = { includeInactive: true };
+    if (search) f.search = search;
+    return f;
+  }, [search]);
+
+  const { data: centers, isLoading } = useCostCenters(filters);
   const { mutateAsync: createCenter, isPending: creating } = useCreateCostCenter();
   const { mutateAsync: updateCenter, isPending: updating } = useUpdateCostCenter();
   const { mutateAsync: deleteCenter, isPending: deleting } = useDeleteCostCenter();
@@ -82,7 +89,7 @@ export function Component() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard title="Centros ativos" value={String((centers ?? []).filter((c) => c.active).length)} icon={Building} tone="blue" />
       </div>
-      <FilterBar searchPlaceholder="Buscar centro de custo..." />
+      <FilterBar searchPlaceholder="Buscar centro de custo..." search={search} onSearchChange={setSearch} />
       <Card className="overflow-hidden">
         <Table>
           <TableHeader>

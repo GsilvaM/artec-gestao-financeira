@@ -7,7 +7,10 @@ export async function loader({ request }: RouteArgs) {
   const id = url.searchParams.get("id");
   try {
     if (id) return json(await costCenterRepo.findById(id));
-    return json(await costCenterRepo.findAll(url.searchParams.get("includeInactive") === "true"));
+    return json(await costCenterRepo.findAll({
+      includeInactive: url.searchParams.get("includeInactive") === "true",
+      search: url.searchParams.get("search") ?? undefined,
+    }));
   } catch (err) { return handleRepoError(err); }
 }
 

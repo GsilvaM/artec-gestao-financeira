@@ -76,6 +76,7 @@ export interface FinancialEntryFilters {
   userId?: string;
   dateFrom?: Date;
   dateTo?: Date;
+  search?: string;
 }
 
 export const financialEntryRepo = {
@@ -93,6 +94,15 @@ export const financialEntryRepo = {
               ...(filters?.dateFrom ? { gte: filters.dateFrom } : {}),
               ...(filters?.dateTo ? { lte: filters.dateTo } : {}),
             },
+          }
+        : {}),
+      ...(filters?.search
+        ? {
+            OR: [
+              { description: { contains: filters.search, mode: "insensitive" } },
+              { notes: { contains: filters.search, mode: "insensitive" } },
+              { category: { name: { contains: filters.search, mode: "insensitive" } } },
+            ],
           }
         : {}),
     };
@@ -191,6 +201,7 @@ export interface AccountPayableFilters {
   supplier?: string;
   dueDateFrom?: Date;
   dueDateTo?: Date;
+  search?: string;
 }
 
 export const accountPayableRepo = {
@@ -209,6 +220,16 @@ export const accountPayableRepo = {
               ...(filters?.dueDateFrom ? { gte: filters.dueDateFrom } : {}),
               ...(filters?.dueDateTo ? { lte: filters.dueDateTo } : {}),
             },
+          }
+        : {}),
+      ...(filters?.search
+        ? {
+            OR: [
+              { description: { contains: filters.search, mode: "insensitive" } },
+              { supplier: { contains: filters.search, mode: "insensitive" } },
+              { notes: { contains: filters.search, mode: "insensitive" } },
+              { category: { name: { contains: filters.search, mode: "insensitive" } } },
+            ],
           }
         : {}),
     };
@@ -307,6 +328,7 @@ export interface AccountReceivableFilters {
   client?: string;
   dueDateFrom?: Date;
   dueDateTo?: Date;
+  search?: string;
 }
 
 export const accountReceivableRepo = {
@@ -325,6 +347,16 @@ export const accountReceivableRepo = {
               ...(filters?.dueDateFrom ? { gte: filters.dueDateFrom } : {}),
               ...(filters?.dueDateTo ? { lte: filters.dueDateTo } : {}),
             },
+          }
+        : {}),
+      ...(filters?.search
+        ? {
+            OR: [
+              { description: { contains: filters.search, mode: "insensitive" } },
+              { client: { contains: filters.search, mode: "insensitive" } },
+              { notes: { contains: filters.search, mode: "insensitive" } },
+              { category: { name: { contains: filters.search, mode: "insensitive" } } },
+            ],
           }
         : {}),
     };
@@ -406,6 +438,7 @@ export interface UpdateCategoryData {
 
 export interface CategoryFilters {
   type?: string;
+  search?: string;
 }
 
 export const categoryRepo = {
@@ -413,6 +446,9 @@ export const categoryRepo = {
     const where: Prisma.CategoryWhereInput = {
       ...categoryWhereNotDeleted(),
       ...(filters?.type ? { type: filters.type } : {}),
+      ...(filters?.search
+        ? { name: { contains: filters.search, mode: "insensitive" } }
+        : {}),
     };
 
     return prisma.category.findMany({
@@ -477,11 +513,24 @@ export interface UpdateCostCenterData {
   active?: boolean;
 }
 
+export interface CostCenterFilters {
+  includeInactive?: boolean;
+  search?: string;
+}
+
 export const costCenterRepo = {
-  async findAll(includeInactive?: boolean) {
+  async findAll(filters?: CostCenterFilters) {
     const where: Prisma.CostCenterWhereInput = {
       ...costCenterWhereNotDeleted(),
-      ...(includeInactive ? {} : { active: true }),
+      ...(filters?.includeInactive ? {} : { active: true }),
+      ...(filters?.search
+        ? {
+            OR: [
+              { name: { contains: filters.search, mode: "insensitive" } },
+              { code: { contains: filters.search, mode: "insensitive" } },
+            ],
+          }
+        : {}),
     };
 
     return prisma.costCenter.findMany({

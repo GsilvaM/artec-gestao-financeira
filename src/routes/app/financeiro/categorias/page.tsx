@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { FolderTree, MoreHorizontal, Pencil, Tags, Trash2 } from "lucide-react";
 import { FormField as Field } from "@/components/forms/form-field";
@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from "@/domain/financeiro/hooks/use-categories";
-import type { CategoryRow } from "@/domain/financeiro/types";
+import type { CategoryFilters, CategoryRow } from "@/domain/financeiro/types";
 
 export function Component() {
   const [open, setOpen] = useState(false);
@@ -20,8 +20,16 @@ export function Component() {
   const [name, setName] = useState("");
   const [type, setType] = useState<"receita" | "despesa">("receita");
   const [color, setColor] = useState("#3B82F6");
+  const [search, setSearch] = useState("");
 
-  const { data: categories, isLoading } = useCategories();
+  const filters = useMemo<CategoryFilters | undefined>(() => {
+    const f: CategoryFilters = {};
+    if (search) f.search = search;
+    f.type = type;
+    return f;
+  }, [search, type]);
+
+  const { data: categories, isLoading } = useCategories(filters);
   const { mutateAsync: createCategory, isPending: creating } = useCreateCategory();
   const { mutateAsync: updateCategory, isPending: updating } = useUpdateCategory();
   const { mutateAsync: deleteCategory, isPending: deleting } = useDeleteCategory();
@@ -86,7 +94,7 @@ export function Component() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard title="Categorias ativas" value={String(categories?.length ?? 0)} icon={FolderTree} tone="blue" />
       </div>
-      <FilterBar searchPlaceholder="Buscar categoria...">
+      <FilterBar searchPlaceholder="Buscar categoria..." search={search} onSearchChange={setSearch}>
         <Select value={type} onChange={(e) => setType(e.target.value as "receita" | "despesa")} options={[{ value: "receita", label: "Receita" }, { value: "despesa", label: "Despesa" }]} />
       </FilterBar>
       <Card className="overflow-hidden">

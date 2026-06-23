@@ -29,6 +29,7 @@ export async function loader({ request }: RouteArgs) {
       costCenterId: url.searchParams.get("costCenterId") ?? undefined,
       dateFrom: parseDate(url.searchParams.get("dateFrom")),
       dateTo: parseDate(url.searchParams.get("dateTo")),
+      search: url.searchParams.get("search") ?? undefined,
     }));
   } catch (err) {
     return handleRepoError(err);

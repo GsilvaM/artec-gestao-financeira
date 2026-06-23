@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { AlertTriangle, CalendarClock, CreditCard, MoreHorizontal, Pencil, Trash2, WalletCards } from "lucide-react";
 import { FormField as Field } from "@/components/forms/form-field";
@@ -14,7 +14,13 @@ import { useAccountsPayable, useCreateAccountPayable, useUpdateAccountPayable, u
 import { useCategories } from "@/domain/financeiro/hooks/use-categories";
 import { useAuthStore } from "@/lib/supabase/auth-store";
 import { formatDate, formatMoney, parseMoneyInput, toFiniteNumber } from "@/lib/utils";
-import type { AccountPayableRow } from "@/domain/financeiro/types";
+import type { AccountPayableFilters, AccountPayableRow } from "@/domain/financeiro/types";
+
+const AP_STATUS_MAP: Record<string, string> = {
+  aberto: "pending",
+  pago: "paid",
+  vencido: "overdue",
+};
 
 export function Component() {
   const [open, setOpen] = useState(false);
@@ -26,9 +32,18 @@ export function Component() {
   const [supplier, setSupplier] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [status, setStatus] = useState<AccountPayableRow["status"]>("pending");
+  const [search, setSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+
+  const filters = useMemo<AccountPayableFilters | undefined>(() => {
+    const f: AccountPayableFilters = {};
+    if (search) f.search = search;
+    if (filterStatus) f.status = (AP_STATUS_MAP[filterStatus] ?? filterStatus) as AccountPayableFilters["status"];
+    return Object.keys(f).length ? f : undefined;
+  }, [search, filterStatus]);
 
   const user = useAuthStore((state) => state.user);
-  const { data: entries, isLoading } = useAccountsPayable();
+  const { data: entries, isLoading } = useAccountsPayable(filters);
   const { data: categories } = useCategories();
   const { mutateAsync: createEntry, isPending: creating } = useCreateAccountPayable();
   const { mutateAsync: updateEntry, isPending: updating } = useUpdateAccountPayable();
@@ -129,7 +144,7 @@ export function Component() {
         <MetricCard title="Vence hoje" value={String(payableEntries.filter((e) => e.dueDate.slice(0, 10) === new Date().toISOString().slice(0, 10)).length)} icon={CalendarClock} tone="amber" />
         <MetricCard title="Vencidas" value={formatMoney(overdueAmount)} icon={AlertTriangle} tone="red" />
       </div>
-      <FilterBar searchPlaceholder="Buscar conta a pagar..."><StatusSelect /></FilterBar>
+      <FilterBar searchPlaceholder="Buscar conta a pagar..." search={search} onSearchChange={setSearch}><StatusSelect value={filterStatus} onValueChange={setFilterStatus} /></FilterBar>
       <Card className="overflow-hidden">
         <Table>
           <TableHeader>

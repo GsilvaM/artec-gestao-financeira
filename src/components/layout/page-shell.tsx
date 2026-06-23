@@ -137,16 +137,18 @@ export function MetricCard({ title, value, icon: Icon, tone = "blue", helper }: 
 
 interface FilterBarProps {
   searchPlaceholder?: string;
+  search?: string;
+  onSearchChange?: (value: string) => void;
   children?: ReactNode;
 }
 
-export function FilterBar({ searchPlaceholder = "Buscar...", children }: FilterBarProps) {
+export function FilterBar({ searchPlaceholder = "Buscar...", search, onSearchChange, children }: FilterBarProps) {
   return (
     <Card>
       <CardContent className="flex flex-col gap-3 p-4 sm:p-4 md:flex-row md:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#94A3B8]" />
-          <Input className="pl-9" placeholder={searchPlaceholder} aria-label={searchPlaceholder} />
+          <Input className="pl-9" placeholder={searchPlaceholder} aria-label={searchPlaceholder} value={search} onChange={(e) => onSearchChange?.(e.target.value)} />
         </div>
         {children ? <div className="grid gap-3 sm:grid-cols-2 md:flex md:shrink-0">{children}</div> : null}
       </CardContent>
@@ -154,12 +156,19 @@ export function FilterBar({ searchPlaceholder = "Buscar...", children }: FilterB
   );
 }
 
-export function MonthSelect() {
+interface MonthSelectProps {
+  value?: string;
+  onValueChange?: (value: string) => void;
+}
+
+export function MonthSelect({ value, onValueChange }: MonthSelectProps) {
   return (
     <Select
       className="md:w-44"
       aria-label="Filtrar por mes"
       placeholder="Mês"
+      value={value ?? ""}
+      onChange={(e) => onValueChange?.(e.target.value)}
       options={[
         { value: "2026-06", label: "Junho/2026" },
         { value: "2026-05", label: "Maio/2026" },
@@ -169,12 +178,19 @@ export function MonthSelect() {
   );
 }
 
-export function StatusSelect() {
+interface StatusSelectProps {
+  value?: string;
+  onValueChange?: (value: string) => void;
+}
+
+export function StatusSelect({ value, onValueChange }: StatusSelectProps) {
   return (
     <Select
       className="md:w-44"
       aria-label="Filtrar por status"
       placeholder="Status"
+      value={value ?? ""}
+      onChange={(e) => onValueChange?.(e.target.value)}
       options={[
         { value: "aberto", label: "Aberto" },
         { value: "pago", label: "Pago" },

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { ArrowDownCircle, ArrowUpCircle, Banknote, FileText, ListChecks, Loader2, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
@@ -17,7 +17,7 @@ import { useCategories } from "@/domain/financeiro/hooks/use-categories";
 import { useAuthStore } from "@/lib/supabase/auth-store";
 import { calculateFinancialSummary } from "@/domain/financeiro/calculations";
 import { formatDate, formatMoney } from "@/lib/utils";
-import type { FinancialEntryRow } from "@/domain/financeiro/types";
+import type { FinancialEntryRow, FinancialEntryFilters } from "@/domain/financeiro/types";
 
 const schema = z.object({
   data: z.string().min(1, "Informe a data"),
@@ -61,9 +61,24 @@ export function Component() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(initialForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [search, setSearch] = useState("");
+  const [filterMonth, setFilterMonth] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+
+  const filters = useMemo<FinancialEntryFilters | undefined>(() => {
+    const f: FinancialEntryFilters = {};
+    if (search) f.search = search;
+    if (filterStatus) f.status = (STATUS_MAP[filterStatus] ?? filterStatus) as FinancialEntryFilters["status"];
+    if (filterMonth) {
+      const [year, month] = filterMonth.split("-");
+      f.dateFrom = new Date(Number(year), Number(month) - 1, 1);
+      f.dateTo = new Date(Number(year), Number(month), 0, 23, 59, 59, 999);
+    }
+    return Object.keys(f).length ? f : undefined;
+  }, [search, filterMonth, filterStatus]);
 
   const user = useAuthStore((state) => state.user);
-  const { data: entries, isLoading, error } = useFinancialEntries();
+  const { data: entries, isLoading, error } = useFinancialEntries(filters);
   const { data: categories } = useCategories();
   const { mutateAsync: createEntry, isPending: saving } = useCreateFinancialEntry();
   const { mutateAsync: updateEntry, isPending: updating } = useUpdateFinancialEntry();
@@ -194,9 +209,9 @@ export function Component() {
         <MetricCard title="Despesas" value={formatMoney(despesas)} icon={ArrowDownCircle} tone="red" />
         <MetricCard title="Saldo" value={formatMoney(saldo)} icon={Banknote} tone={saldo < 0 ? "red" : "blue"} />
       </div>
-      <FilterBar searchPlaceholder="Buscar por descrição, cliente ou fornecedor...">
-        <MonthSelect />
-        <StatusSelect />
+      <FilterBar searchPlaceholder="Buscar por descrição, cliente ou fornecedor..." search={search} onSearchChange={setSearch}>
+        <MonthSelect value={filterMonth} onValueChange={setFilterMonth} />
+        <StatusSelect value={filterStatus} onValueChange={setFilterStatus} />
       </FilterBar>
       <Card className="overflow-hidden">
         <Table>
