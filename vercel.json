@@ -1,5 +1,5 @@
 {
-  "buildCommand": "prisma generate && prisma migrate deploy && bun run build",
+  "buildCommand": "bun run db:deploy && bun run build",
   "installCommand": "bun install",
   "outputDirectory": "dist",
   "functions": {
@@ -8,7 +8,13 @@
     }
   },
   "rewrites": [
-    { "source": "/api/financeiro/:path*", "destination": "/api/financeiro" },
-    { "source": "/((?!api).*)", "destination": "/index.html" }
+    {
+      "source": "/api/financeiro/:path*",
+      "destination": "/api/financeiro"
+    },
+    {
+      "source": "/((?!api).*)",
+      "destination": "/index.html"
+    }
   ]
 }
