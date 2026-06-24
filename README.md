@@ -89,8 +89,8 @@ DATABASE_URL=postgresql://...
 DIRECT_URL=postgresql://...
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
-E2E_TEST_EMAIL=gmls.dev@gmail.com
-E2E_TEST_PASSWORD=Gm99463683!
+E2E_TEST_EMAIL
+E2E_TEST_PASSWORD
 ```
 
 Importante: variáveis sem prefixo `VITE_` são server-only e não devem ser usadas no frontend.
