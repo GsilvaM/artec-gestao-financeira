@@ -5,7 +5,7 @@ export function Table({ className, ...props }: React.HTMLAttributes<HTMLTableEle
 }
 
 export function TableHeader({ className, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
-  return <thead className={cn("bg-[#F8FAFC] [&_tr]:border-b", className)} {...props} />;
+  return <thead className={cn("bg-muted/70 [&_tr]:border-b", className)} {...props} />;
 }
 
 export function TableBody({ className, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
@@ -17,15 +17,15 @@ export function TableFooter({ className, ...props }: React.HTMLAttributes<HTMLTa
 }
 
 export function TableRow({ className, ...props }: React.HTMLAttributes<HTMLTableRowElement>) {
-  return <tr className={cn("border-b border-[#E2E8F0] transition-colors hover:bg-[#F8FAFC] data-[state=selected]:bg-[#EAF3FB]", className)} {...props} />;
+  return <tr className={cn("border-b border-border transition-colors hover:bg-accent/55 data-[state=selected]:bg-accent", className)} {...props} />;
 }
 
 export function TableHead({ className, ...props }: React.ThHTMLAttributes<HTMLTableCellElement>) {
-  return <th scope="col" className={cn("h-11 px-3 text-left align-middle text-xs font-bold uppercase tracking-wide text-[#475569] sm:px-4 [&:has([role=checkbox])]:pr-0", className)} {...props} />;
+  return <th scope="col" className={cn("h-11 px-3 text-left align-middle text-xs font-bold uppercase text-muted-foreground sm:px-4 [&:has([role=checkbox])]:pr-0", className)} {...props} />;
 }
 
 export function TableCell({ className, ...props }: React.TdHTMLAttributes<HTMLTableCellElement>) {
-  return <td className={cn("px-3 py-3 align-middle text-[#0F172A] sm:px-4 [&:has([role=checkbox])]:pr-0", className)} {...props} />;
+  return <td className={cn("px-3 py-3 align-middle text-foreground sm:px-4 [&:has([role=checkbox])]:pr-0", className)} {...props} />;
 }
 
 export function TableCaption({ className, ...props }: React.HTMLAttributes<HTMLTableCaptionElement>) {

@@ -1,10 +1,9 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Activity, Mail, Search, Shield, UserCog, UserPlus, Users } from "lucide-react";
+import { Activity, CheckCircle2, Search, Shield, UserPlus, Users, XCircle } from "lucide-react";
 import { FormField as Field } from "@/components/forms/form-field";
-import { EmptyState, MetricCard, PageShell } from "@/components/layout/page-shell";
-import { Badge } from "@/components/ui/badge";
+import { EmptyState, MetricCard, PageShell, StatusBadge } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogCloseButton, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -19,14 +18,19 @@ type AdminRole = {
   description: string | null;
 };
 
+type UserStatus = "pending" | "approved" | "rejected" | "disabled";
+
 type AdminUser = {
   id: string;
   email: string;
   name: string;
   phone: string;
+  status: UserStatus;
   roleId: string;
   roleName: string;
   createdAt: string;
+  approvedAt: string | null;
+  rejectedAt: string | null;
   lastSignInAt: string | null;
   emailConfirmedAt: string | null;
 };
@@ -80,6 +84,21 @@ async function createAdminUser(input: CreateUserInput) {
   return payload as { id: string };
 }
 
+async function updateAdminUser(input: { id: string; action: string; roleId?: string }) {
+  const token = await getAccessToken();
+  const response = await fetch(`/api/admin/users/${input.id}`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ action: input.action, roleId: input.roleId }),
+  });
+  const payload = await response.json();
+  if (!response.ok) throw new Error(payload.error ?? "Erro ao atualizar usuario.");
+  return payload as { ok: true };
+}
+
 function formatDateTime(value: string | null) {
   if (!value) return "Nunca";
   const date = new Date(value);
@@ -91,13 +110,22 @@ function formatDateTime(value: string | null) {
 }
 
 function roleLabel(roleName: string) {
-  if (!roleName) return "Sem perfil";
-  return roleName.charAt(0).toUpperCase() + roleName.slice(1);
+  const labels: Record<string, string> = {
+    primary_admin: "Admin principal",
+    admin: "Admin",
+    user: "Usuario",
+    proprietario: "Proprietario",
+    financeiro: "Financeiro",
+    operacional: "Operacional",
+    tecnico: "Tecnico",
+  };
+  return labels[roleName] ?? (roleName || "Sem perfil");
 }
 
 export function Component() {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -105,12 +133,13 @@ export function Component() {
   const [roleId, setRoleId] = useState("");
 
   const queryClient = useQueryClient();
-  const { data, isLoading, error } = useQuery({
-    queryKey,
-    queryFn: fetchAdminUsers,
-  });
-  const { mutateAsync, isPending } = useMutation({
+  const { data, isLoading, error } = useQuery({ queryKey, queryFn: fetchAdminUsers });
+  const createMutation = useMutation({
     mutationFn: createAdminUser,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey }),
+  });
+  const updateMutation = useMutation({
+    mutationFn: updateAdminUser,
     onSuccess: () => queryClient.invalidateQueries({ queryKey }),
   });
 
@@ -119,20 +148,18 @@ export function Component() {
 
   const filteredUsers = useMemo(() => {
     const term = search.trim().toLowerCase();
-    if (!term) return users;
-    return users.filter((user) =>
-      [user.name, user.email, user.phone, user.roleName]
-        .filter(Boolean)
-        .some((value) => value.toLowerCase().includes(term)),
-    );
-  }, [search, users]);
+    return users.filter((user) => {
+      const matchesStatus = statusFilter ? user.status === statusFilter : true;
+      const matchesTerm = term
+        ? [user.name, user.email, user.phone, user.roleName, user.status].filter(Boolean).some((value) => value.toLowerCase().includes(term))
+        : true;
+      return matchesStatus && matchesTerm;
+    });
+  }, [search, statusFilter, users]);
 
-  const confirmedUsers = users.filter((user) => user.emailConfirmedAt).length;
-  const newUsersThisMonth = users.filter((user) => {
-    const created = new Date(user.createdAt);
-    const now = new Date();
-    return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
-  }).length;
+  const pendingUsers = users.filter((user) => user.status === "pending").length;
+  const approvedUsers = users.filter((user) => user.status === "approved").length;
+  const blockedUsers = users.filter((user) => user.status === "rejected" || user.status === "disabled").length;
 
   function resetForm() {
     setEmail("");
@@ -145,37 +172,59 @@ export function Component() {
   async function handleSave(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     try {
-      await mutateAsync({
-        email: email.trim(),
-        password,
-        name: name.trim(),
-        phone: phone.trim(),
-        roleId,
-      });
-      toast.success("Usuario cadastrado");
+      await createMutation.mutateAsync({ email: email.trim(), password, name: name.trim(), phone: phone.trim(), roleId });
+      toast.success("Usuario cadastrado e aprovado.");
       resetForm();
       setOpen(false);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Erro ao cadastrar usuario";
-      toast.error(message);
+      toast.error(err instanceof Error ? err.message : "Erro ao cadastrar usuario");
+    }
+  }
+
+  async function handleAction(user: AdminUser, action: string, roleIdValue?: string) {
+    const labels: Record<string, string> = {
+      approve: "aprovar",
+      reject: "rejeitar",
+      disable: "desativar",
+      reactivate: "reativar",
+      role: "alterar perfil de",
+    };
+    if (action !== "role" && !window.confirm(`Deseja ${labels[action]} ${user.email}?`)) return;
+    try {
+      await updateMutation.mutateAsync({ id: user.id, action, roleId: roleIdValue });
+      toast.success("Usuario atualizado.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao atualizar usuario.");
     }
   }
 
   return (
-    <PageShell icon={Shield} title="Admin" subtitle="Usuarios, perfis e controles administrativos" actionLabel="Novo Usuario" onAction={() => setOpen(true)}>
+    <PageShell icon={Shield} title="Admin" subtitle="Aprovacao de acessos, perfis e controles administrativos" actionLabel="Novo Usuario" onAction={() => setOpen(true)}>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard title="Usuarios" value={String(users.length)} icon={Users} tone="blue" />
-        <MetricCard title="Confirmados" value={String(confirmedUsers)} icon={Mail} tone="green" />
-        <MetricCard title="Perfis" value={String(roles.length)} icon={UserCog} tone="slate" />
-        <MetricCard title="Novos no mes" value={String(newUsersThisMonth)} icon={Activity} tone="amber" />
+        <MetricCard title="Pendentes" value={String(pendingUsers)} icon={Activity} tone="amber" />
+        <MetricCard title="Aprovados" value={String(approvedUsers)} icon={CheckCircle2} tone="green" />
+        <MetricCard title="Bloqueados" value={String(blockedUsers)} icon={XCircle} tone="red" />
       </div>
 
       <Card>
-        <CardContent className="p-4 sm:p-4">
+        <CardContent className="grid gap-3 p-4 sm:p-4 md:grid-cols-[1fr_220px]">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#94A3B8]" />
-            <Input className="pl-9" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Nome, email ou perfil" aria-label="Buscar usuario" />
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input className="pl-9" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Nome, email, telefone ou perfil" aria-label="Buscar usuario" />
           </div>
+          <Select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+            placeholder="Todos os status"
+            aria-label="Filtrar por status"
+            options={[
+              { value: "pending", label: "Pendentes" },
+              { value: "approved", label: "Aprovados" },
+              { value: "rejected", label: "Rejeitados" },
+              { value: "disabled", label: "Desativados" },
+            ]}
+          />
         </CardContent>
       </Card>
 
@@ -183,7 +232,7 @@ export function Component() {
         <Table>
           <TableHeader>
             <TableRow>
-              {["Usuario", "Email", "Perfil", "Status", "Ultimo acesso"].map((column) => (
+              {["Usuario", "Email", "Perfil", "Status", "Solicitado em", "Ultimo acesso", "Acoes"].map((column) => (
                 <TableHead key={column}>{column}</TableHead>
               ))}
             </TableRow>
@@ -191,11 +240,11 @@ export function Component() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={5} className="h-48 text-center text-sm text-[#64748B]">Carregando usuarios...</TableCell>
+                <TableCell colSpan={7} className="h-48 text-center text-sm text-muted-foreground">Carregando usuarios...</TableCell>
               </TableRow>
             ) : error ? (
               <TableRow>
-                <TableCell colSpan={5} className="p-0">
+                <TableCell colSpan={7} className="p-0">
                   <EmptyState title="Nao foi possivel carregar usuarios." description={error instanceof Error ? error.message : "Verifique as credenciais do Supabase e tente novamente."} />
                 </TableCell>
               </TableRow>
@@ -204,22 +253,44 @@ export function Component() {
                 <TableRow key={user.id}>
                   <TableCell>
                     <div className="font-medium">{user.name || "Sem nome"}</div>
-                    {user.phone ? <div className="mt-1 text-xs text-[#64748B]">{user.phone}</div> : null}
+                    {user.phone ? <div className="mt-1 text-xs text-muted-foreground">{user.phone}</div> : null}
                   </TableCell>
                   <TableCell>{user.email}</TableCell>
-                  <TableCell>{roleLabel(user.roleName)}</TableCell>
                   <TableCell>
-                    <Badge variant={user.emailConfirmedAt ? "default" : "secondary"}>
-                      {user.emailConfirmedAt ? "Confirmado" : "Pendente"}
-                    </Badge>
+                    <Select
+                      className="min-w-40"
+                      value={user.roleId}
+                      onChange={(event) => handleAction(user, "role", event.target.value)}
+                      placeholder="Sem perfil"
+                      options={roles.map((role) => ({ value: role.id, label: roleLabel(role.name) }))}
+                      aria-label={`Perfil de ${user.email}`}
+                    />
                   </TableCell>
+                  <TableCell><StatusBadge status={user.status} /></TableCell>
+                  <TableCell>{formatDateTime(user.createdAt)}</TableCell>
                   <TableCell>{formatDateTime(user.lastSignInAt)}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-2">
+                      {user.status !== "approved" ? (
+                        <Button size="sm" onClick={() => handleAction(user, "approve")} disabled={updateMutation.isPending}>Aprovar</Button>
+                      ) : null}
+                      {user.status === "pending" ? (
+                        <Button size="sm" variant="destructive" onClick={() => handleAction(user, "reject")} disabled={updateMutation.isPending}>Rejeitar</Button>
+                      ) : null}
+                      {user.status === "approved" ? (
+                        <Button size="sm" variant="outline" onClick={() => handleAction(user, "disable")} disabled={updateMutation.isPending}>Desativar</Button>
+                      ) : null}
+                      {user.status === "disabled" || user.status === "rejected" ? (
+                        <Button size="sm" variant="secondary" onClick={() => handleAction(user, "reactivate")} disabled={updateMutation.isPending}>Reativar</Button>
+                      ) : null}
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={5} className="p-0">
-                  <EmptyState title="Nenhum usuario encontrado." description="Cadastre usuarios para liberar acesso ao sistema." actionLabel="Novo Usuario" onAction={() => setOpen(true)} />
+                <TableCell colSpan={7} className="p-0">
+                  <EmptyState title="Nenhum usuario encontrado." description="Cadastre usuarios ou aguarde novas solicitacoes de acesso." actionLabel="Novo Usuario" onAction={() => setOpen(true)} />
                 </TableCell>
               </TableRow>
             )}
@@ -232,7 +303,7 @@ export function Component() {
           <DialogCloseButton onClick={() => { resetForm(); setOpen(false); }} />
           <DialogHeader>
             <DialogTitle>Novo Usuario</DialogTitle>
-            <DialogDescription>Cadastre um usuario no Supabase Auth e vincule um perfil do sistema.</DialogDescription>
+            <DialogDescription>Cadastre um usuario ja aprovado no Supabase Auth e vincule um perfil do sistema.</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSave}>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -246,17 +317,17 @@ export function Component() {
                 <Input type="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="usuario@email.com" />
               </Field>
               <Field label="Senha">
-                <Input type="password" required minLength={6} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Minimo 6 caracteres" />
+                <Input type="password" required minLength={8} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Minimo 8 caracteres" />
               </Field>
               <Field label="Perfil">
-                <Select value={roleId} onChange={(event) => setRoleId(event.target.value)} placeholder="Sem perfil" options={roles.map((role) => ({ value: role.id, label: roleLabel(role.name) }))} />
+                <Select value={roleId} onChange={(event) => setRoleId(event.target.value)} placeholder="Perfil padrao" options={roles.map((role) => ({ value: role.id, label: roleLabel(role.name) }))} />
               </Field>
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => { resetForm(); setOpen(false); }}>Cancelar</Button>
-              <Button type="submit" disabled={isPending}>
+              <Button type="submit" disabled={createMutation.isPending}>
                 <UserPlus className="size-4" />
-                {isPending ? "Cadastrando..." : "Cadastrar"}
+                {createMutation.isPending ? "Cadastrando..." : "Cadastrar"}
               </Button>
             </DialogFooter>
           </form>

@@ -22,12 +22,12 @@ export function PageShell({ icon: Icon, title, subtitle, actionLabel, onAction, 
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-3 pb-8 pt-4 sm:gap-6 sm:px-6 sm:pt-6 lg:px-8">
       <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-start gap-3 sm:items-center sm:gap-4">
-          <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-[#EAF3FB] text-[#174E8C] sm:size-12">
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-primary/12 text-primary shadow-sm sm:size-12">
             <Icon className="size-6" />
           </div>
           <div className="min-w-0">
-            <h1 className="text-xl font-bold text-[#0F172A] sm:text-2xl">{title}</h1>
-            <p className="mt-1 max-w-3xl text-sm leading-6 text-[#64748B]">{subtitle}</p>
+            <h1 className="text-xl font-bold text-foreground sm:text-2xl">{title}</h1>
+            <p className="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground">{subtitle}</p>
           </div>
         </div>
         {actionLabel ? (
@@ -51,27 +51,33 @@ interface MetricCardProps {
 }
 
 export function MoneyValue({ value, tone = "neutral" }: { value: string; tone?: "neutral" | "positive" | "negative" }) {
-  const color = tone === "positive" ? "text-[#10B981]" : tone === "negative" ? "text-[#EF4444]" : "text-[#0F172A]";
+  const color = tone === "positive" ? "text-success" : tone === "negative" ? "text-destructive" : "text-foreground";
   return <span className={cn("font-semibold tabular-nums", color)}>{value}</span>;
 }
 
 const statusStyles: Record<string, string> = {
-  aberto: "bg-[#EAF3FB] text-[#174E8C] ring-[#2F73B8]/15",
-  pending: "bg-[#EAF3FB] text-[#174E8C] ring-[#2F73B8]/15",
-  pago: "bg-emerald-50 text-[#10B981] ring-emerald-500/15",
-  confirmed: "bg-emerald-50 text-[#10B981] ring-emerald-500/15",
-  paid: "bg-emerald-50 text-[#10B981] ring-emerald-500/15",
-  received: "bg-emerald-50 text-[#10B981] ring-emerald-500/15",
-  vencido: "bg-red-50 text-[#EF4444] ring-red-500/15",
-  overdue: "bg-red-50 text-[#EF4444] ring-red-500/15",
-  cancelled: "bg-red-50 text-[#EF4444] ring-red-500/15",
-  rascunho: "bg-amber-50 text-[#F59E0B] ring-amber-500/15",
-  ativo: "bg-slate-100 text-slate-700 ring-slate-500/10",
+  aberto: "bg-primary/12 text-primary ring-primary/15",
+  pending: "bg-warning/15 text-warning ring-warning/20",
+  approved: "bg-success/12 text-success ring-success/20",
+  rejected: "bg-destructive/12 text-destructive ring-destructive/20",
+  disabled: "bg-muted text-muted-foreground ring-border",
+  pago: "bg-success/12 text-success ring-success/20",
+  confirmed: "bg-success/12 text-success ring-success/20",
+  paid: "bg-success/12 text-success ring-success/20",
+  received: "bg-success/12 text-success ring-success/20",
+  vencido: "bg-destructive/12 text-destructive ring-destructive/20",
+  overdue: "bg-destructive/12 text-destructive ring-destructive/20",
+  cancelled: "bg-destructive/12 text-destructive ring-destructive/20",
+  rascunho: "bg-warning/15 text-warning ring-warning/20",
+  ativo: "bg-info/12 text-info ring-info/20",
 };
 
 const statusLabels: Record<string, string> = {
   aberto: "Aberto",
   pending: "Pendente",
+  approved: "Aprovado",
+  rejected: "Rejeitado",
+  disabled: "Desativado",
   pago: "Pago",
   confirmed: "Confirmado",
   paid: "Pago",
@@ -97,9 +103,9 @@ export function LoadingState({ label = "Carregando..." }: { label?: string }) {
       {Array.from({ length: 4 }).map((_, index) => (
         <Card key={index} className="overflow-hidden">
           <CardContent className="space-y-4 p-5">
-            <div className="h-3 w-24 animate-pulse rounded-full bg-slate-100" />
-            <div className="h-8 w-32 animate-pulse rounded-full bg-slate-100" />
-            <div className="flex items-center gap-2 text-xs text-[#94A3B8]">
+            <div className="h-3 w-24 animate-pulse rounded-full bg-muted" />
+            <div className="h-8 w-32 animate-pulse rounded-full bg-muted" />
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Loader2 className="size-3 animate-spin" />
               {label}
             </div>
@@ -111,11 +117,11 @@ export function LoadingState({ label = "Carregando..." }: { label?: string }) {
 }
 
 const toneStyles = {
-  blue: "bg-[#EAF3FB] text-[#174E8C]",
-  green: "bg-emerald-50 text-[#10B981]",
-  red: "bg-red-50 text-[#EF4444]",
-  amber: "bg-amber-50 text-[#F59E0B]",
-  slate: "bg-slate-100 text-slate-600",
+  blue: "bg-primary/12 text-primary",
+  green: "bg-success/12 text-success",
+  red: "bg-destructive/12 text-destructive",
+  amber: "bg-warning/15 text-warning",
+  slate: "bg-muted text-muted-foreground",
 };
 
 export function MetricCard({ title, value, icon: Icon, tone = "blue", helper }: MetricCardProps) {
@@ -123,9 +129,9 @@ export function MetricCard({ title, value, icon: Icon, tone = "blue", helper }: 
     <Card>
       <CardContent className="flex min-h-28 items-center justify-between gap-4 p-4 sm:p-5">
         <div className="min-w-0">
-          <p className="text-sm font-medium text-[#64748B]">{title}</p>
-          <p className="mt-2 break-words text-2xl font-bold text-[#0F172A]" title={value}>{value}</p>
-          {helper ? <p className="mt-1 text-xs text-[#94A3B8]">{helper}</p> : null}
+          <p className="text-sm font-medium text-muted-foreground">{title}</p>
+          <p className="mt-2 break-words text-2xl font-bold text-foreground" title={value}>{value}</p>
+          {helper ? <p className="mt-1 text-xs text-muted-foreground">{helper}</p> : null}
         </div>
         <div className={cn("flex size-11 shrink-0 items-center justify-center rounded-lg", toneStyles[tone])}>
           <Icon className="size-5" />
@@ -147,7 +153,7 @@ export function FilterBar({ searchPlaceholder = "Buscar...", search, onSearchCha
     <Card>
       <CardContent className="flex flex-col gap-3 p-4 sm:p-4 md:flex-row md:items-center">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#94A3B8]" />
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input className="pl-9" placeholder={searchPlaceholder} aria-label={searchPlaceholder} value={search} onChange={(e) => onSearchChange?.(e.target.value)} />
         </div>
         {children ? <div className="grid gap-3 sm:grid-cols-2 md:flex md:shrink-0">{children}</div> : null}
@@ -211,12 +217,12 @@ export function EmptyState({ title, description, actionLabel, onAction }: EmptyS
   return (
     <div className="flex min-h-72 items-center justify-center px-4 py-10 text-center sm:px-6 sm:py-14">
       <div className="mx-auto flex w-full max-w-lg flex-col items-center">
-        <div className="relative mb-5 flex size-16 items-center justify-center rounded-lg border border-[#BBD7EF] bg-[#F8FAFC] text-[#174E8C] shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-          <div className="absolute inset-2 rounded-md bg-[#EAF3FB]" />
+        <div className="relative mb-5 flex size-16 items-center justify-center rounded-lg border border-border bg-card text-primary shadow-sm">
+          <div className="absolute inset-2 rounded-md bg-primary/10" />
           <TableProperties className="relative size-7" />
         </div>
-        <h3 className="text-balance text-base font-semibold leading-6 text-[#0F172A] sm:text-lg">{title}</h3>
-        {description ? <p className="mt-2 max-w-md text-pretty text-sm leading-6 text-[#64748B]">{description}</p> : null}
+        <h3 className="text-balance text-base font-semibold leading-6 text-foreground sm:text-lg">{title}</h3>
+        {description ? <p className="mt-2 max-w-md text-pretty text-sm leading-6 text-muted-foreground">{description}</p> : null}
         {actionLabel ? (
           <Button className="mt-6" variant="secondary" onClick={onAction}>
             <Plus className="size-4" />

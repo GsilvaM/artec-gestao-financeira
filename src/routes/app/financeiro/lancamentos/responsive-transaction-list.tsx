@@ -1,6 +1,7 @@
 import { EmptyState } from "@/components/layout/page-shell";
 import { Card, CardContent } from "@/components/ui/card";
 import type { FinancialEntryRow } from "@/domain/financeiro/types";
+import { useEffect, useState } from "react";
 import { TransactionCard } from "./transaction-card";
 import { TransactionTable } from "./transaction-table";
 
@@ -13,9 +14,12 @@ interface ResponsiveTransactionListProps {
 }
 
 export function ResponsiveTransactionList({ entries, isLoading, error, onEdit, onDelete }: ResponsiveTransactionListProps) {
+  const isDesktop = useIsDesktop();
+
   if (isLoading) {
-    return (
-      <>
+    return isDesktop ? (
+      <TransactionTable entries={[]} isLoading error={false} onEdit={onEdit} onDelete={onDelete} />
+    ) : (
         <div className="block md:hidden">
           <div className="space-y-2">
               {Array.from({ length: 4 }).map((_, i) => (
@@ -33,16 +37,13 @@ export function ResponsiveTransactionList({ entries, isLoading, error, onEdit, o
               ))}
           </div>
         </div>
-        <div className="hidden md:block">
-          <TransactionTable entries={[]} isLoading error={false} onEdit={onEdit} onDelete={onDelete} />
-        </div>
-      </>
     );
   }
 
   if (error) {
-    return (
-      <>
+    return isDesktop ? (
+      <TransactionTable entries={[]} isLoading={false} error={true} onEdit={onEdit} onDelete={onDelete} />
+    ) : (
         <div className="block md:hidden">
           <Card className="rounded-lg border shadow-sm">
             <CardContent className="flex items-center justify-center p-8">
@@ -50,16 +51,13 @@ export function ResponsiveTransactionList({ entries, isLoading, error, onEdit, o
             </CardContent>
           </Card>
         </div>
-        <div className="hidden md:block">
-          <TransactionTable entries={[]} isLoading={false} error={true} onEdit={onEdit} onDelete={onDelete} />
-        </div>
-      </>
     );
   }
 
   if (!entries?.length) {
-    return (
-      <>
+    return isDesktop ? (
+      <TransactionTable entries={[]} isLoading={false} error={false} onEdit={onEdit} onDelete={onDelete} />
+    ) : (
         <div className="block md:hidden">
           <Card className="rounded-lg border shadow-sm">
             <CardContent className="p-0">
@@ -70,15 +68,18 @@ export function ResponsiveTransactionList({ entries, isLoading, error, onEdit, o
             </CardContent>
           </Card>
         </div>
-        <div className="hidden md:block">
-          <TransactionTable entries={[]} isLoading={false} error={false} onEdit={onEdit} onDelete={onDelete} />
-        </div>
-      </>
     );
   }
 
-  return (
-    <>
+  return isDesktop ? (
+    <TransactionTable
+      entries={entries}
+      isLoading={false}
+      error={false}
+      onEdit={onEdit}
+      onDelete={onDelete}
+    />
+  ) : (
       <div className="block md:hidden">
         <div className="space-y-2">
           {entries.map((entry) => (
@@ -91,15 +92,20 @@ export function ResponsiveTransactionList({ entries, isLoading, error, onEdit, o
           ))}
         </div>
       </div>
-      <div className="hidden md:block">
-        <TransactionTable
-          entries={entries}
-          isLoading={false}
-          error={false}
-          onEdit={onEdit}
-          onDelete={onDelete}
-        />
-      </div>
-    </>
   );
+}
+
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = useState(() => (typeof window === "undefined" || !window.matchMedia ? true : window.matchMedia("(min-width: 768px)").matches));
+
+  useEffect(() => {
+    if (!window.matchMedia) return;
+    const media = window.matchMedia("(min-width: 768px)");
+    const onChange = () => setIsDesktop(media.matches);
+    onChange();
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+  }, []);
+
+  return isDesktop;
 }

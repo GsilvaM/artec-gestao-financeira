@@ -1,69 +1,24 @@
-import { createClient, type User } from "@supabase/supabase-js";
+import type { User } from "@supabase/supabase-js";
 import { prisma } from "../../../lib/prisma/client.js";
+import {
+  createAdminClient,
+  isValidEmail,
+  json,
+  normalizeText,
+  requireApprovedUser,
+  requireAdminUser,
+  validatePassword,
+} from "../auth-utils.js";
 
-function json(data: unknown, init?: ResponseInit): Response {
-  return new Response(JSON.stringify(data), {
-    ...init,
-    headers: { "Content-Type": "application/json", ...init?.headers },
-  });
-}
-
-function getSupabaseEnv() {
-  const supabaseUrl = process.env.VITE_SUPABASE_URL;
-  const anonKey = process.env.VITE_SUPABASE_ANON_KEY;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl || !anonKey || !serviceRoleKey) {
-    throw Object.assign(
-      new Error("Variaveis VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY e SUPABASE_SERVICE_ROLE_KEY sao obrigatorias."),
-      { status: 500 },
-    );
-  }
-
-  return { supabaseUrl, anonKey, serviceRoleKey };
-}
-
-function getBearerToken(request: Request) {
-  const authorization = request.headers.get("authorization") ?? "";
-  const [type, token] = authorization.split(" ");
-  if (type?.toLowerCase() !== "bearer" || !token) return null;
-  return token;
-}
-
-async function requireAdminUser(request: Request) {
-  const token = getBearerToken(request);
-  if (!token) {
-    throw Object.assign(new Error("Sessao nao informada."), { status: 401 });
-  }
-
-  const { supabaseUrl, anonKey } = getSupabaseEnv();
-  const authClient = createClient(supabaseUrl, anonKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
-
-  const { data, error } = await authClient.auth.getUser(token);
-  if (error || !data.user) {
-    throw Object.assign(new Error("Sessao invalida ou expirada."), { status: 401 });
-  }
-
-  const profile = await prisma.profile.findUnique({
-    where: { userId: data.user.id },
-    include: { role: true },
-  });
-
-  if (profile?.role?.name !== "admin") {
-    throw Object.assign(new Error("Acesso restrito a administradores."), { status: 403 });
-  }
-
-  return data.user;
-}
-
-function createAdminClient() {
-  const { supabaseUrl, serviceRoleKey } = getSupabaseEnv();
-  return createClient(supabaseUrl, serviceRoleKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
-}
+type CreateUserBody = {
+  email?: string;
+  password?: string;
+  confirmPassword?: string;
+  name?: string;
+  phone?: string;
+  message?: string;
+  roleId?: string;
+};
 
 async function listAllUsers() {
   const admin = createAdminClient();
@@ -73,13 +28,24 @@ async function listAllUsers() {
 
   while (true) {
     const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
-    if (error) throw Object.assign(new Error(error.message), { status: 500 });
+    if (error) throw Object.assign(new Error("Nao foi possivel listar usuarios."), { status: 500 });
     users.push(...data.users);
     if (data.users.length < perPage) break;
     page += 1;
   }
 
   return users;
+}
+
+async function findRoleIdByName(name: string) {
+  const role = await prisma.role.findUnique({ where: { name }, select: { id: true } });
+  return role?.id ?? null;
+}
+
+async function assertUniqueEmail(email: string) {
+  const existing = (await listAllUsers()).find((user) => user.email?.toLowerCase() === email);
+  if (existing) return existing;
+  return null;
 }
 
 async function handleGetUsers(request: Request) {
@@ -107,11 +73,14 @@ async function handleGetUsers(request: Request) {
       return {
         id: user.id,
         email: user.email ?? "",
-        name: profile?.name ?? user.user_metadata?.name ?? "",
-        phone: profile?.phone ?? user.user_metadata?.phone ?? "",
+        name: profile?.name ?? normalizeText(user.user_metadata?.name),
+        phone: profile?.phone ?? normalizeText(user.user_metadata?.phone),
+        status: profile?.status ?? "pending",
         roleId: profile?.roleId ?? "",
         roleName: profile?.role?.name ?? "",
         createdAt: user.created_at,
+        approvedAt: profile?.approvedAt?.toISOString() ?? null,
+        rejectedAt: profile?.rejectedAt?.toISOString() ?? null,
         lastSignInAt: user.last_sign_in_at ?? null,
         emailConfirmedAt: user.email_confirmed_at ?? null,
       };
@@ -119,29 +88,39 @@ async function handleGetUsers(request: Request) {
   });
 }
 
+async function handleGetMe(request: Request) {
+  const { user, profile } = await requireApprovedUser(request);
+  return json({
+    id: user.id,
+    email: user.email ?? "",
+    name: profile.name ?? "",
+    phone: profile.phone ?? "",
+    status: profile.status,
+    roleName: profile.role?.name ?? "",
+  });
+}
+
 async function handleCreateUser(request: Request) {
-  const currentUser = await requireAdminUser(request);
-  const body = await request.json().catch(() => null) as {
-    email?: string;
-    password?: string;
-    name?: string;
-    phone?: string;
-    roleId?: string;
-  } | null;
+  const { user: currentUser } = await requireAdminUser(request);
+  const body = (await request.json().catch(() => null)) as CreateUserBody | null;
 
-  const email = body?.email?.trim().toLowerCase();
+  const email = normalizeText(body?.email, 320).toLowerCase();
   const password = body?.password ?? "";
-  const name = body?.name?.trim() ?? "";
-  const phone = body?.phone?.trim() ?? "";
-  const roleId = body?.roleId?.trim() || null;
+  const name = normalizeText(body?.name);
+  const phone = normalizeText(body?.phone, 40);
+  const roleId = normalizeText(body?.roleId) || await findRoleIdByName("user");
 
-  if (!email) return json({ error: "Email e obrigatorio." }, { status: 400 });
-  if (password.length < 6) return json({ error: "A senha deve ter pelo menos 6 caracteres." }, { status: 400 });
+  if (!email || !isValidEmail(email)) return json({ error: "Email invalido." }, { status: 400 });
+  const passwordError = validatePassword(password);
+  if (passwordError) return json({ error: passwordError }, { status: 400 });
 
   if (roleId) {
     const role = await prisma.role.findFirst({ where: { id: roleId, deletedAt: null } });
     if (!role) return json({ error: "Perfil selecionado nao existe." }, { status: 400 });
   }
+
+  const existing = await assertUniqueEmail(email);
+  if (existing) return json({ error: "Ja existe um usuario com este email." }, { status: 409 });
 
   const admin = createAdminClient();
   const { data, error } = await admin.auth.admin.createUser({
@@ -152,14 +131,32 @@ async function handleCreateUser(request: Request) {
   });
 
   if (error || !data.user) {
-    return json({ error: error?.message ?? "Erro ao cadastrar usuario." }, { status: 400 });
+    return json({ error: "Erro ao cadastrar usuario." }, { status: 400 });
   }
 
   try {
     await prisma.profile.upsert({
       where: { userId: data.user.id },
-      update: { name, phone, roleId, deletedAt: null },
-      create: { userId: data.user.id, name, phone, roleId },
+      update: {
+        name,
+        phone,
+        roleId,
+        status: "approved",
+        approvedAt: new Date(),
+        approvedBy: currentUser.id,
+        rejectedAt: null,
+        rejectedBy: null,
+        deletedAt: null,
+      },
+      create: {
+        userId: data.user.id,
+        name,
+        phone,
+        roleId,
+        status: "approved",
+        approvedAt: new Date(),
+        approvedBy: currentUser.id,
+      },
     });
   } catch (err) {
     await admin.auth.admin.deleteUser(data.user.id);
@@ -169,11 +166,130 @@ async function handleCreateUser(request: Request) {
   return json({ id: data.user.id }, { status: 201 });
 }
 
+async function handleRequestAccess(request: Request) {
+  const body = (await request.json().catch(() => null)) as CreateUserBody | null;
+  const email = normalizeText(body?.email, 320).toLowerCase();
+  const password = body?.password ?? "";
+  const confirmPassword = body?.confirmPassword ?? "";
+  const name = normalizeText(body?.name);
+  const phone = normalizeText(body?.phone, 40);
+  const message = normalizeText(body?.message, 1000);
+
+  if (!name) return json({ error: "Nome completo e obrigatorio." }, { status: 400 });
+  if (!email || !isValidEmail(email)) return json({ error: "Email invalido." }, { status: 400 });
+  const passwordError = validatePassword(password);
+  if (passwordError) return json({ error: passwordError }, { status: 400 });
+  if (password !== confirmPassword) return json({ error: "A confirmacao de senha nao confere." }, { status: 400 });
+
+  const existing = await assertUniqueEmail(email);
+  if (existing) return json({ error: "Ja existe uma conta ou solicitacao para este email." }, { status: 409 });
+
+  const roleId = await findRoleIdByName("user");
+  const admin = createAdminClient();
+  const { data, error } = await admin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { name, phone, access_request_message: message },
+  });
+
+  if (error || !data.user) return json({ error: "Nao foi possivel enviar a solicitacao." }, { status: 400 });
+
+  try {
+    await prisma.profile.create({
+      data: {
+        userId: data.user.id,
+        name,
+        phone,
+        roleId,
+        status: "pending",
+      },
+    });
+  } catch (err) {
+    await admin.auth.admin.deleteUser(data.user.id);
+    throw err;
+  }
+
+  return json({ message: "Sua solicitacao foi enviada e esta aguardando aprovacao de um administrador." }, { status: 201 });
+}
+
+async function handleUpdateUser(request: Request, userId: string | undefined) {
+  const { user: currentUser, profile: currentProfile } = await requireAdminUser(request);
+  if (!userId) return json({ error: "Usuario nao informado." }, { status: 400 });
+
+  const body = (await request.json().catch(() => null)) as { action?: string; roleId?: string } | null;
+  const action = normalizeText(body?.action, 32);
+  const now = new Date();
+  const admin = createAdminClient();
+
+  const target = await prisma.profile.findUnique({
+    where: { userId },
+    include: { role: true },
+  });
+  if (!target || target.deletedAt) return json({ error: "Usuario nao encontrado." }, { status: 404 });
+  if (userId === currentUser.id && ["reject", "disable"].includes(action)) {
+    return json({ error: "Voce nao pode bloquear sua propria conta." }, { status: 400 });
+  }
+
+  if (action === "approve") {
+    await prisma.profile.update({
+      where: { userId },
+      data: { status: "approved", approvedAt: now, approvedBy: currentUser.id, rejectedAt: null, rejectedBy: null },
+    });
+    return json({ ok: true });
+  }
+
+  if (action === "reject") {
+    await prisma.profile.update({
+      where: { userId },
+      data: { status: "rejected", rejectedAt: now, rejectedBy: currentUser.id },
+    });
+    await admin.auth.admin.updateUserById(userId, { ban_duration: "876000h" });
+    return json({ ok: true });
+  }
+
+  if (action === "disable") {
+    await prisma.profile.update({ where: { userId }, data: { status: "disabled" } });
+    await admin.auth.admin.updateUserById(userId, { ban_duration: "876000h" });
+    return json({ ok: true });
+  }
+
+  if (action === "reactivate") {
+    await prisma.profile.update({
+      where: { userId },
+      data: { status: "approved", approvedAt: now, approvedBy: currentUser.id, rejectedAt: null, rejectedBy: null },
+    });
+    await admin.auth.admin.updateUserById(userId, { ban_duration: "none" });
+    return json({ ok: true });
+  }
+
+  if (action === "role") {
+    const roleId = normalizeText(body?.roleId) || null;
+    const role = roleId ? await prisma.role.findFirst({ where: { id: roleId, deletedAt: null } }) : null;
+    if (!role) return json({ error: "Perfil selecionado nao existe." }, { status: 400 });
+    if (role.name === "primary_admin" && currentProfile.role?.name !== "primary_admin") {
+      return json({ error: "Somente o administrador principal pode promover outro administrador principal." }, { status: 403 });
+    }
+    await prisma.profile.update({ where: { userId }, data: { roleId } });
+    return json({ ok: true });
+  }
+
+  return json({ error: "Acao administrativa invalida." }, { status: 400 });
+}
+
 export default async function handler(request: Request): Promise<Response> {
   try {
     const url = new URL(request.url);
     const segments = url.pathname.replace(/^\/api\/admin\/?/, "").split("/").filter(Boolean);
     const resource = segments[0];
+
+    if (resource === "me" && request.method === "GET") {
+      return await handleGetMe(request);
+    }
+
+    if (resource === "access-requests" && request.method === "POST") {
+      return await handleRequestAccess(request);
+    }
 
     if (resource !== "users") {
       return json({ error: "Recurso administrativo nao encontrado." }, { status: 404 });
@@ -181,6 +297,7 @@ export default async function handler(request: Request): Promise<Response> {
 
     if (request.method === "GET") return await handleGetUsers(request);
     if (request.method === "POST") return await handleCreateUser(request);
+    if (request.method === "PATCH") return await handleUpdateUser(request, segments[1]);
     return json({ error: "Metodo nao permitido." }, { status: 405 });
   } catch (err) {
     const error = err instanceof Error ? err : new Error("Erro desconhecido.");
@@ -188,6 +305,6 @@ export default async function handler(request: Request): Promise<Response> {
       ? (error as Error & { status: number }).status
       : 500;
     if (status >= 500) console.error("[api/admin]", error);
-    return json({ error: error.message }, { status });
+    return json({ error: status >= 500 ? "Erro interno do servidor." : error.message }, { status });
   }
 }

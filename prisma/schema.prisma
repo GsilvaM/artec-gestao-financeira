@@ -12,12 +12,19 @@ model Profile {
   name      String?
   avatarUrl String?   @map("avatar_url")
   phone     String?
+  status    String    @default("approved")
+  approvedAt DateTime? @map("approved_at")
+  approvedBy String?   @map("approved_by") @db.Uuid
+  rejectedAt DateTime? @map("rejected_at")
+  rejectedBy String?   @map("rejected_by") @db.Uuid
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
   roleId    String?   @map("role_id") @db.Uuid
   role      Role?     @relation(fields: [roleId], references: [id])
 
+  @@index([status])
+  @@index([roleId])
   @@map("profiles")
 }
 

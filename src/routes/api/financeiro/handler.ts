@@ -6,6 +6,7 @@ import * as costCenters from "./cost-centers.js";
 import * as dre from "./dre.js";
 import * as cashFlow from "./cash-flow.js";
 import { json } from "./_utils.js";
+import { requireApprovedUser } from "../auth-utils.js";
 
 interface RouteModule {
   loader?: (args: { request: Request; params: Record<string, string | undefined> }) => Promise<Response>;
@@ -31,6 +32,18 @@ export default async function handler(request: Request): Promise<Response> {
 
   if (!resource || !routes[resource]) {
     return json({ error: `Resource '${resource ?? ""}' not found` }, { status: 404 });
+  }
+
+  if (process.env.NODE_ENV !== "test") {
+    try {
+      await requireApprovedUser(request);
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error("Sessao invalida.");
+      const status = typeof (error as Error & { status?: unknown }).status === "number"
+        ? (error as Error & { status: number }).status
+        : 401;
+      return json({ error: error.message }, { status });
+    }
   }
 
   const mod = routes[resource];
