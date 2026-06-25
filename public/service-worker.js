@@ -1,5 +1,5 @@
 const CACHE_NAME = "artec-gestao-v1";
-const APP_SHELL = ["/", "/app", "/index.html", "/favicon.svg", "/manifest.webmanifest"];
+const APP_SHELL = ["/", "/app", "/index.html", "/favicon.svg"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -42,7 +42,7 @@ self.addEventListener("fetch", (event) => {
           }
           return response;
         })
-        .catch(() => cached);
+        .catch(() => cached ?? new Response("", { status: 504, statusText: "Gateway Timeout" }));
 
       return cached || fetchPromise;
     })

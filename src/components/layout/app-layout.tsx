@@ -77,7 +77,7 @@ function AppSidebar({ collapsed, onCollapsedChange, pathname, userEmail, onSignO
   return (
     <aside className={cn("fixed inset-y-0 left-0 z-40 hidden border-r border-white/10 bg-[#003A70] text-white shadow-[1px_0_0_rgba(15,23,42,0.04)] transition-[width] duration-200 dark:bg-[#071A2F] lg:flex lg:flex-col", collapsed ? "w-[72px]" : "w-[264px]")}>
       <SidebarHeader collapsed={collapsed} onCollapsedChange={onCollapsedChange} />
-      <nav className="flex-1 space-y-1 overflow-y-auto overflow-x-visible px-3 py-4" aria-label="Menu principal">
+      <nav className={cn("flex-1 space-y-1 px-3 py-4", collapsed ? "overflow-visible" : "overflow-y-auto overflow-x-hidden")} aria-label="Menu principal">
         {navigationItems.map((item) => (
           <SidebarGroup
             key={item.title}
@@ -99,7 +99,7 @@ function AppSidebar({ collapsed, onCollapsedChange, pathname, userEmail, onSignO
 
 function SidebarHeader({ collapsed, onCollapsedChange }: { collapsed: boolean; onCollapsedChange: (collapsed: boolean) => void }) {
   return (
-    <div className="flex h-16 items-center gap-3 border-b border-white/10 px-3">
+    <div className="relative flex h-16 items-center gap-3 border-b border-white/10 px-3">
       <NavLink to="/app" className="flex min-w-0 flex-1 items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30" aria-label="Ir para Dashboard">
         <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-white text-sm font-bold text-[#003A70] shadow-sm">AG</span>
         {!collapsed ? <span className="truncate text-sm font-bold tracking-tight text-white">Artec Gestão</span> : null}
@@ -108,7 +108,11 @@ function SidebarHeader({ collapsed, onCollapsedChange }: { collapsed: boolean; o
         type="button"
         onClick={() => onCollapsedChange(!collapsed)}
         aria-label={collapsed ? "Expandir sidebar" : "Recolher sidebar"}
-        className="hidden size-9 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/10 text-white/75 transition hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 xl:flex"
+        title={collapsed ? "Expandir sidebar" : "Recolher sidebar"}
+        className={cn(
+          "flex size-9 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/10 text-white/75 transition hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30",
+          collapsed && "absolute right-0 top-1/2 size-8 -translate-y-1/2 translate-x-1/2 bg-[#003A70] shadow-sm dark:bg-[#071A2F]",
+        )}
       >
         {collapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
       </button>
@@ -137,7 +141,7 @@ function SidebarGroup({ item, pathname, collapsed, expanded, flyoutOpen, onToggl
 
   if (collapsed) {
     return (
-      <div className="relative">
+      <div className="relative" onMouseLeave={onFlyoutClose}>
         <button type="button" title={item.title} aria-label={item.title} aria-expanded={flyoutOpen} onClick={onFlyoutToggle} className={sidebarItemClasses(active, true)}>
           <Icon className="size-5" />
         </button>

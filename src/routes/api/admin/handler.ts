@@ -42,6 +42,37 @@ async function findRoleIdByName(name: string) {
   return role?.id ?? null;
 }
 
+async function findOrCreateProfileForAuthUser(userId: string) {
+  const existing = await prisma.profile.findUnique({
+    where: { userId },
+    include: { role: true },
+  });
+  if (existing && !existing.deletedAt) return existing;
+
+  const admin = createAdminClient();
+  const { data, error } = await admin.auth.admin.getUserById(userId);
+  if (error || !data.user) return null;
+
+  const roleId = await findRoleIdByName("user");
+  return prisma.profile.upsert({
+    where: { userId },
+    update: {
+      deletedAt: null,
+      name: normalizeText(data.user.user_metadata?.name),
+      phone: normalizeText(data.user.user_metadata?.phone, 40),
+      roleId,
+    },
+    create: {
+      userId,
+      name: normalizeText(data.user.user_metadata?.name),
+      phone: normalizeText(data.user.user_metadata?.phone, 40),
+      roleId,
+      status: "pending",
+    },
+    include: { role: true },
+  });
+}
+
 async function assertUniqueEmail(email: string) {
   const existing = (await listAllUsers()).find((user) => user.email?.toLowerCase() === email);
   if (existing) return existing;
@@ -222,11 +253,8 @@ async function handleUpdateUser(request: Request, userId: string | undefined) {
   const now = new Date();
   const admin = createAdminClient();
 
-  const target = await prisma.profile.findUnique({
-    where: { userId },
-    include: { role: true },
-  });
-  if (!target || target.deletedAt) return json({ error: "Usuario nao encontrado." }, { status: 404 });
+  const target = await findOrCreateProfileForAuthUser(userId);
+  if (!target) return json({ error: "Usuario nao encontrado." }, { status: 404 });
   if (userId === currentUser.id && ["reject", "disable"].includes(action)) {
     return json({ error: "Voce nao pode bloquear sua propria conta." }, { status: 400 });
   }
