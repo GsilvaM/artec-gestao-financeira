@@ -8,13 +8,13 @@ import { Component as Lancamentos } from "@/routes/app/financeiro/lancamentos/pa
 const entries = [
   {
     id: "entry-1",
-    description: "Receita instalação",
+    description: "Receita instalacao",
     amount: "1000",
     type: "receita",
     date: "2026-06-10T00:00:00.000Z",
     status: "confirmed",
     categoryId: "cat-r",
-    category: { name: "Serviços", color: "#10B981" },
+    category: { name: "Servicos", color: "#10B981" },
     costCenterId: null,
     costCenter: null,
     userId: "user-1",
@@ -41,7 +41,7 @@ const entries = [
 ];
 
 const categories = [
-  { id: "cat-r", name: "Serviços", type: "receita", color: "#10B981", createdAt: "2026-01-01", updatedAt: "2026-01-01" },
+  { id: "cat-r", name: "Servicos", type: "receita", color: "#10B981", createdAt: "2026-01-01", updatedAt: "2026-01-01" },
   { id: "cat-d", name: "Materiais", type: "despesa", color: "#EF4444", createdAt: "2026-01-01", updatedAt: "2026-01-01" },
 ];
 
@@ -63,6 +63,17 @@ beforeEach(() => {
       if (url.includes("/api/financeiro/entries")) {
         return Promise.resolve(Response.json(entries));
       }
+      if (url.includes("/api/financeiro/dashboard")) {
+        return Promise.resolve(Response.json({
+          totalReceitas: 1000,
+          totalDespesas: 660,
+          saldo: 340,
+          contasAVencer: 1,
+          contasVencidas: 0,
+          contasPagasMes: 0,
+          contasRecebidasMes: 2,
+        }));
+      }
       return Promise.resolve(Response.json([]));
     }),
   );
@@ -76,7 +87,7 @@ describe("financial components", () => {
   it("renders launch cards and table with calculated formatted values", async () => {
     renderWithClient(<Lancamentos />);
 
-    expect((await screen.findAllByText("Receita instalação")).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText("Receita instalacao")).length).toBeGreaterThan(0);
     expect(screen.getAllByText("Compra material").length).toBeGreaterThan(0);
     expect(screen.getAllByText(moneyText("1.000,00")).length).toBeGreaterThan(0);
     expect(screen.getAllByText(moneyText("660,00")).length).toBeGreaterThan(0);
@@ -87,7 +98,7 @@ describe("financial components", () => {
   it("renders dashboard cards from the same calculated totals", async () => {
     renderWithClient(<MemoryRouter><Dashboard /></MemoryRouter>);
 
-    await waitFor(() => expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/api/financeiro/entries?")));
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/api/financeiro/dashboard")));
     expect((await screen.findAllByText(moneyText("1.000,00"))).length).toBeGreaterThan(0);
     expect(screen.getAllByText(moneyText("660,00")).length).toBeGreaterThan(0);
     expect(screen.getAllByText(moneyText("340,00")).length).toBeGreaterThan(0);
@@ -99,7 +110,7 @@ describe("financial components", () => {
     const table = await screen.findByRole("table");
     expect(table.parentElement).toHaveClass("overflow-auto");
 
-    fireEvent.click(screen.getAllByRole("button", { name: /novo lançamento/i })[0]!);
+    fireEvent.click(screen.getAllByRole("button", { name: /novo lancamento/i })[0]!);
     const dialog = await screen.findByRole("dialog");
     expect(dialog).toHaveClass("overflow-y-auto");
     expect(dialog).toHaveClass("max-h-[calc(100dvh-2rem)]");

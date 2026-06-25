@@ -155,4 +155,9 @@ export const clientApi = {
     get: (granularity: string, dateFrom: string, dateTo: string) =>
       getAuthHeaders().then((headers) => apiFetch(`${BASE_URL}/cash-flow?granularity=${granularity}&dateFrom=${dateFrom}&dateTo=${dateTo}`, { headers })).then(handleResponse),
   },
+
+  dashboard: {
+    getKpis: () =>
+      getAuthHeaders().then((headers) => apiFetch(`${BASE_URL}/dashboard`, { headers })).then(handleResponse),
+  },
 };

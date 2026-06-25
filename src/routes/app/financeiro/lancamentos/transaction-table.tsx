@@ -1,4 +1,4 @@
-import { Loader2, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Loader2, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { EmptyState, MoneyValue, StatusBadge } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -15,119 +15,45 @@ interface TransactionTableProps {
   onDelete: (entry: FinancialEntryRow) => void;
 }
 
+const columns = ["Data", "Tipo", "Categoria", "Descricao", "Valor", "Status", "Acoes"];
+
 export function TransactionTable({ entries, isLoading, error, onEdit, onDelete }: TransactionTableProps) {
-  const columns = ["Data", "Tipo", "Categoria", "Descrição", "Valor", "Status", "Ações"];
-
-  if (isLoading) {
-    return (
-      <Card className="overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-[#F8FAFC]">
-              {columns.map((col) => <TableHead key={col}>{col}</TableHead>)}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            <TableRow>
-              <TableCell colSpan={7} className="h-48 text-center">
-                <Loader2 className="mx-auto size-6 animate-spin text-muted-foreground" />
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-      </Card>
-    );
-  }
-
-  if (error) {
-    return (
-      <Card className="overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-[#F8FAFC]">
-              {columns.map((col) => <TableHead key={col}>{col}</TableHead>)}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            <TableRow>
-              <TableCell colSpan={7} className="h-48 text-center text-[#EF4444]">
-                Erro ao carregar lançamentos
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-      </Card>
-    );
-  }
-
-  if (!entries.length) {
-    return (
-      <Card className="overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-[#F8FAFC]">
-              {columns.map((col) => <TableHead key={col}>{col}</TableHead>)}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            <TableRow>
-              <TableCell colSpan={7} className="p-0">
-                <EmptyState
-                  title="Nenhum lançamento encontrado."
-                  description="Use o botão Novo Lançamento para cadastrar receitas, custos ou despesas."
-                />
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-      </Card>
-    );
-  }
+  if (isLoading) return <TableFrame state="loading" />;
+  if (error) return <TableFrame state="error" />;
+  if (!entries.length) return <TableFrame state="empty" />;
 
   return (
     <Card className="overflow-hidden">
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-[#F8FAFC]">
-              {columns.map((col) => (
-                <TableHead key={col} className="sticky top-0 bg-[#F8FAFC]">{col}</TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {entries.map((entry, index) => (
-              <TableRow
-                key={entry.id}
-                className={cn(
-                  "transition-colors duration-150 hover:bg-[#F8FAFC]",
-                  index % 2 === 1 && "bg-[#FAFBFC]",
-                )}
-              >
-                <TableCell>{formatDate(entry.date)}</TableCell>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            {columns.map((col) => (
+              <TableHead key={col}>{col}</TableHead>
+            ))}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {entries.map((entry) => {
+            const isReceita = entry.type === "receita";
+            return (
+              <TableRow key={entry.id}>
+                <TableCell className="whitespace-nowrap text-muted-foreground">{formatDate(entry.date)}</TableCell>
                 <TableCell>
-                  <span className={cn(
-                    "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold",
-                    entry.type === "receita"
-                      ? "bg-green-100 text-green-700"
-                      : "bg-red-100 text-red-700",
-                  )}>
-                    {entry.type === "receita" ? "Receita" : "Despesa"}
+                  <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold", isReceita ? "bg-success/12 text-success" : "bg-destructive/12 text-destructive")}>
+                    {isReceita ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />}
+                    {isReceita ? "Receita" : "Despesa"}
                   </span>
                 </TableCell>
-                <TableCell>{entry.categoryName}</TableCell>
-                <TableCell className="font-medium">{entry.description}</TableCell>
-                <TableCell>
-                  <MoneyValue
-                    value={formatMoney(entry.amount)}
-                    tone={entry.type === "receita" ? "positive" : "negative"}
-                  />
+                <TableCell className="text-muted-foreground">{entry.categoryName}</TableCell>
+                <TableCell className="max-w-[320px] truncate font-medium" title={entry.description}>{entry.description}</TableCell>
+                <TableCell className="whitespace-nowrap">
+                  <MoneyValue value={formatMoney(entry.amount)} tone={isReceita ? "positive" : "negative"} />
                 </TableCell>
                 <TableCell><StatusBadge status={entry.status} /></TableCell>
-                <TableCell>
+                <TableCell className="w-12">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" aria-label="Ações do lançamento">
+                      <Button variant="ghost" size="icon" className="size-8" aria-label="Acoes do lancamento">
                         <MoreHorizontal className="size-4" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -143,10 +69,41 @@ export function TransactionTable({ entries, isLoading, error, onEdit, onDelete }
                   </DropdownMenu>
                 </TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </Card>
+  );
+}
+
+function TableFrame({ state }: { state: "loading" | "error" | "empty" }) {
+  return (
+    <Card className="overflow-hidden">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            {columns.map((col) => <TableHead key={col}>{col}</TableHead>)}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow>
+            <TableCell colSpan={columns.length} className="p-0">
+              {state === "loading" ? (
+                <div className="flex h-48 items-center justify-center text-muted-foreground">
+                  <Loader2 className="size-5 animate-spin" />
+                </div>
+              ) : state === "error" ? (
+                <div className="flex h-48 items-center justify-center text-sm font-medium text-destructive">
+                  Erro ao carregar lancamentos.
+                </div>
+              ) : (
+                <EmptyState title="Nenhum lancamento encontrado." description="Cadastre receitas, custos ou despesas para acompanhar o financeiro." />
+              )}
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
     </Card>
   );
 }

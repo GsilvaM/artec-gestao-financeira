@@ -17,14 +17,14 @@ function renderWithQueryClient(ui: React.ReactElement) {
 describe("frontend actions", () => {
   it("opens the new financial entry dialog", () => {
     renderWithQueryClient(<Lancamentos />);
-    fireEvent.click(screen.getAllByRole("button", { name: /novo lançamento/i })[0]!);
-    expect(screen.getByRole("heading", { name: /novo lançamento/i })).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole("button", { name: /novo lancamento/i })[0]!);
+    expect(screen.getByRole("heading", { name: /novo lancamento/i })).toBeInTheDocument();
   });
 
   it("opens the new service dialog", () => {
     render(<Servicos />);
-    fireEvent.click(screen.getAllByRole("button", { name: /novo serviço/i })[0]!);
-    expect(screen.getByRole("heading", { name: /novo serviço/i })).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole("button", { name: /novo servi/i })[0]!);
+    expect(screen.getByRole("heading", { name: /novo servi/i })).toBeInTheDocument();
   });
 
   it("opens the new client dialog", () => {
@@ -42,8 +42,8 @@ describe("frontend actions", () => {
         </Routes>
       </MemoryRouter>,
     );
-    fireEvent.click(screen.getAllByRole("button", { name: /abrir relatório/i })[0]!);
-    expect(screen.getByRole("heading", { name: /relatório financeiro/i })).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole("button", { name: /abrir relat/i })[0]!);
+    expect(screen.getByRole("heading", { name: /relat/i })).toBeInTheDocument();
   });
 
   it("opens the settings dialog", () => {

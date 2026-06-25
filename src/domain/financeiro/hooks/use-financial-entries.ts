@@ -21,6 +21,9 @@ type EntryApiResponse = {
   updatedAt: string;
 };
 
+const financialEntryListKey = [...financialEntryKeys.all, 'list'] as const;
+const dashboardKey = ['dashboard'] as const;
+
 function toRow(e: EntryApiResponse): FinancialEntryRow {
   return {
     id: e.id,
@@ -66,7 +69,13 @@ export function useCreateFinancialEntry() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: unknown) => clientApi.financialEntries.create(data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: financialEntryKeys.all }),
+    onSuccess: (created) => {
+      const row = toRow(created as EntryApiResponse);
+      qc.setQueriesData<FinancialEntryRow[]>({ queryKey: financialEntryListKey }, (old) => (
+        Array.isArray(old) ? [row, ...old.filter((item) => item.id !== row.id)] : old
+      ));
+      void qc.invalidateQueries({ queryKey: dashboardKey });
+    },
   });
 }
 
@@ -75,7 +84,14 @@ export function useUpdateFinancialEntry() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: FinancialEntryUpdate }) =>
       clientApi.financialEntries.update(id, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: financialEntryKeys.all }),
+    onSuccess: (updated) => {
+      const row = toRow(updated as EntryApiResponse);
+      qc.setQueryData(financialEntryKeys.byId(row.id), row);
+      qc.setQueriesData<FinancialEntryRow[]>({ queryKey: financialEntryListKey }, (old) => (
+        Array.isArray(old) ? old.map((item) => item.id === row.id ? row : item) : old
+      ));
+      void qc.invalidateQueries({ queryKey: dashboardKey });
+    },
   });
 }
 
@@ -83,6 +99,12 @@ export function useDeleteFinancialEntry() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => clientApi.financialEntries.softDelete(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: financialEntryKeys.all }),
+    onSuccess: (_deleted, id) => {
+      qc.removeQueries({ queryKey: financialEntryKeys.byId(id) });
+      qc.setQueriesData<FinancialEntryRow[]>({ queryKey: financialEntryListKey }, (old) => (
+        Array.isArray(old) ? old.filter((item) => item.id !== id) : old
+      ));
+      void qc.invalidateQueries({ queryKey: dashboardKey });
+    },
   });
 }

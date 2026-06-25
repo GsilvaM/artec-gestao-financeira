@@ -5,7 +5,16 @@ import { AuthInit } from "@/lib/supabase/auth-init";
 import { router } from "@/routes";
 import { useThemeStore } from "@/stores/theme";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 20_000,
+      gcTime: 5 * 60_000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 export function App() {
   const theme = useThemeStore((state) => state.theme);

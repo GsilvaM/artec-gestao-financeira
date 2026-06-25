@@ -1,11 +1,11 @@
 import { cn } from "@/lib/utils";
 
 export function Table({ className, ...props }: React.HTMLAttributes<HTMLTableElement>) {
-  return <div className="relative w-full overflow-auto overflow-x-auto overscroll-x-contain"><table className={cn("w-full min-w-[640px] caption-bottom text-sm", className)} {...props} /></div>;
+  return <div className="relative w-full overflow-auto overflow-x-auto overscroll-x-contain rounded-md border border-border/80"><table className={cn("w-full min-w-[640px] caption-bottom text-sm", className)} {...props} /></div>;
 }
 
 export function TableHeader({ className, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
-  return <thead className={cn("bg-muted/70 [&_tr]:border-b", className)} {...props} />;
+  return <thead className={cn("sticky top-0 z-10 bg-muted/80 backdrop-blur [&_tr]:border-b", className)} {...props} />;
 }
 
 export function TableBody({ className, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
@@ -17,15 +17,15 @@ export function TableFooter({ className, ...props }: React.HTMLAttributes<HTMLTa
 }
 
 export function TableRow({ className, ...props }: React.HTMLAttributes<HTMLTableRowElement>) {
-  return <tr className={cn("border-b border-border transition-colors hover:bg-accent/55 data-[state=selected]:bg-accent", className)} {...props} />;
+  return <tr className={cn("border-b border-border/80 transition-colors hover:bg-accent/50 data-[state=selected]:bg-accent", className)} {...props} />;
 }
 
 export function TableHead({ className, ...props }: React.ThHTMLAttributes<HTMLTableCellElement>) {
-  return <th scope="col" className={cn("h-11 px-3 text-left align-middle text-xs font-bold uppercase text-muted-foreground sm:px-4 [&:has([role=checkbox])]:pr-0", className)} {...props} />;
+  return <th scope="col" className={cn("h-10 px-3 text-left align-middle text-[11px] font-bold uppercase text-muted-foreground sm:px-4 [&:has([role=checkbox])]:pr-0", className)} {...props} />;
 }
 
 export function TableCell({ className, ...props }: React.TdHTMLAttributes<HTMLTableCellElement>) {
-  return <td className={cn("px-3 py-3 align-middle text-foreground sm:px-4 [&:has([role=checkbox])]:pr-0", className)} {...props} />;
+  return <td className={cn("px-3 py-2.5 align-middle text-foreground sm:px-4 [&:has([role=checkbox])]:pr-0", className)} {...props} />;
 }
 
 export function TableCaption({ className, ...props }: React.HTMLAttributes<HTMLTableCaptionElement>) {

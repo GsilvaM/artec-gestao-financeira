@@ -25,6 +25,18 @@ export function handleRepoError(err: unknown): Response {
   return json({ error: error.message }, { status: 500 });
 }
 
+export async function measureStep<T>(label: string, fn: () => Promise<T>): Promise<T> {
+  const start = performance.now();
+  try {
+    return await fn();
+  } finally {
+    const duration = performance.now() - start;
+    if (duration > 100 || process.env.PERF_LOG === "1") {
+      console.log(`[PERF] ${label}: ${duration.toFixed(2)}ms`);
+    }
+  }
+}
+
 export interface RouteArgs {
   request: Request;
   params: Record<string, string | undefined>;

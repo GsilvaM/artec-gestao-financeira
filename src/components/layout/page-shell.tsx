@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react";
-import { Loader2, Plus, Search, TableProperties } from "lucide-react";
-import type { ReactNode } from "react";
+import { ChevronDown, Loader2, Plus, Search, SlidersHorizontal, TableProperties } from "lucide-react";
+import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -19,15 +19,15 @@ interface PageShellProps {
 
 export function PageShell({ icon: Icon, title, subtitle, actionLabel, onAction, children }: PageShellProps) {
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-3 pb-8 pt-4 sm:gap-6 sm:px-6 sm:pt-6 lg:px-8">
-      <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-3 pb-8 pt-4 sm:gap-5 sm:px-6 sm:pt-5 lg:px-8">
+      <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-start gap-3 sm:items-center sm:gap-4">
-          <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-primary/12 text-primary shadow-sm sm:size-12">
-            <Icon className="size-6" />
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary shadow-sm">
+            <Icon className="size-5" />
           </div>
           <div className="min-w-0">
             <h1 className="text-xl font-bold text-foreground sm:text-2xl">{title}</h1>
-            <p className="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground">{subtitle}</p>
+            <p className="mt-1 max-w-3xl text-sm leading-5 text-muted-foreground">{subtitle}</p>
           </div>
         </div>
         {actionLabel ? (
@@ -48,6 +48,7 @@ interface MetricCardProps {
   icon: LucideIcon;
   tone?: "blue" | "green" | "red" | "amber" | "slate";
   helper?: string;
+  className?: string;
 }
 
 export function MoneyValue({ value, tone = "neutral" }: { value: string; tone?: "neutral" | "positive" | "negative" }) {
@@ -124,16 +125,16 @@ const toneStyles = {
   slate: "bg-muted text-muted-foreground",
 };
 
-export function MetricCard({ title, value, icon: Icon, tone = "blue", helper }: MetricCardProps) {
+export function MetricCard({ title, value, icon: Icon, tone = "blue", helper, className }: MetricCardProps) {
   return (
-    <Card>
-      <CardContent className="flex min-h-28 items-center justify-between gap-4 p-4 sm:p-5">
+    <Card className={className}>
+      <CardContent className="flex min-h-24 items-center justify-between gap-4 p-4">
         <div className="min-w-0">
-          <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <p className="mt-2 break-words text-2xl font-bold text-foreground" title={value}>{value}</p>
-          {helper ? <p className="mt-1 text-xs text-muted-foreground">{helper}</p> : null}
+          <p className="text-xs font-semibold uppercase text-muted-foreground">{title}</p>
+          <p className="mt-2 break-words text-2xl font-bold text-foreground tabular-nums" title={value}>{value}</p>
+          {helper ? <p className="mt-1 text-xs leading-5 text-muted-foreground">{helper}</p> : null}
         </div>
-        <div className={cn("flex size-11 shrink-0 items-center justify-center rounded-lg", toneStyles[tone])}>
+        <div className={cn("flex size-10 shrink-0 items-center justify-center rounded-md", toneStyles[tone])}>
           <Icon className="size-5" />
         </div>
       </CardContent>
@@ -149,14 +150,33 @@ interface FilterBarProps {
 }
 
 export function FilterBar({ searchPlaceholder = "Buscar...", search, onSearchChange, children }: FilterBarProps) {
+  const [open, setOpen] = useState(true);
+  const hasFilters = Boolean(children);
+
   return (
-    <Card>
-      <CardContent className="flex flex-col gap-3 p-4 sm:p-4 md:flex-row md:items-center">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input className="pl-9" placeholder={searchPlaceholder} aria-label={searchPlaceholder} value={search} onChange={(e) => onSearchChange?.(e.target.value)} />
+    <Card className="overflow-hidden">
+      <CardContent className="p-3 sm:p-4">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input className="pl-9" placeholder={searchPlaceholder} aria-label={searchPlaceholder} value={search} onChange={(e) => onSearchChange?.(e.target.value)} />
+          </div>
+          {hasFilters ? (
+            <Button type="button" variant="outline" className="md:hidden" onClick={() => setOpen((current) => !current)} aria-expanded={open}>
+              <SlidersHorizontal className="size-4" />
+              Filtros
+              <ChevronDown className={cn("ml-auto size-4 transition-transform duration-200 ease-in-out", open && "rotate-180")} />
+            </Button>
+          ) : null}
+          {hasFilters ? (
+            <div className={cn(
+              "grid gap-3 transition-all duration-200 ease-in-out sm:grid-cols-2 md:flex md:shrink-0",
+              open ? "max-h-96 opacity-100" : "max-h-0 overflow-hidden opacity-0 md:max-h-96 md:opacity-100",
+            )}>
+              {children}
+            </div>
+          ) : null}
         </div>
-        {children ? <div className="grid gap-3 sm:grid-cols-2 md:flex md:shrink-0">{children}</div> : null}
       </CardContent>
     </Card>
   );

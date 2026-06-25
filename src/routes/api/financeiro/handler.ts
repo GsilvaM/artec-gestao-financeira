@@ -5,6 +5,7 @@ import * as categories from "./categories.js";
 import * as costCenters from "./cost-centers.js";
 import * as dre from "./dre.js";
 import * as cashFlow from "./cash-flow.js";
+import * as dashboard from "./dashboard.js";
 import { json } from "./_utils.js";
 import { requireApprovedUser } from "../auth-utils.js";
 
@@ -21,9 +22,11 @@ const routes: Record<string, RouteModule> = {
   "cost-centers": costCenters,
   dre,
   "cash-flow": cashFlow,
+  dashboard,
 };
 
 export default async function handler(request: Request): Promise<Response> {
+  const requestStart = performance.now();
   const url = new URL(request.url);
   const segments = url.pathname.replace(/^\/api\/financeiro\/?/, "").split("/").filter(Boolean);
   const resource = segments[0];
@@ -36,7 +39,12 @@ export default async function handler(request: Request): Promise<Response> {
 
   if (process.env.NODE_ENV !== "test") {
     try {
+      const authStart = performance.now();
       await requireApprovedUser(request);
+      const authDuration = performance.now() - authStart;
+      if (authDuration > 100 || process.env.PERF_LOG === "1") {
+        console.log(`[PERF] financeiro.auth: ${authDuration.toFixed(2)}ms`);
+      }
     } catch (err) {
       const error = err instanceof Error ? err : new Error("Sessao invalida.");
       const status = typeof (error as Error & { status?: unknown }).status === "number"
@@ -51,9 +59,19 @@ export default async function handler(request: Request): Promise<Response> {
 
   if (method === "GET") {
     if (!mod.loader) return json({ error: "Method not allowed" }, { status: 405 });
-    return mod.loader(args);
+    const response = await mod.loader(args);
+    const duration = performance.now() - requestStart;
+    if (duration > 150 || process.env.PERF_LOG === "1") {
+      console.log(`[PERF] financeiro.${resource}.GET total: ${duration.toFixed(2)}ms`);
+    }
+    return response;
   }
 
   if (!mod.action) return json({ error: "Method not allowed" }, { status: 405 });
-  return mod.action(args);
+  const response = await mod.action(args);
+  const duration = performance.now() - requestStart;
+  if (duration > 150 || process.env.PERF_LOG === "1") {
+    console.log(`[PERF] financeiro.${resource}.${method} total: ${duration.toFixed(2)}ms`);
+  }
+  return response;
 }

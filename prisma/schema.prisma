@@ -105,6 +105,9 @@ model FinancialEntry {
   costCenter   CostCenter? @relation(fields: [costCenterId], references: [id])
 
   @@index([date])
+  @@index([deletedAt, date])
+  @@index([deletedAt, type, date])
+  @@index([deletedAt, status, date])
   @@index([type])
   @@index([status])
   @@index([categoryId])
@@ -132,6 +135,8 @@ model AccountPayable {
   costCenter   CostCenter? @relation(fields: [costCenterId], references: [id])
 
   @@index([dueDate])
+  @@index([deletedAt, dueDate])
+  @@index([deletedAt, status, dueDate])
   @@index([status])
   @@index([categoryId])
   @@index([costCenterId])
@@ -158,6 +163,8 @@ model AccountReceivable {
   costCenter   CostCenter? @relation(fields: [costCenterId], references: [id])
 
   @@index([dueDate])
+  @@index([deletedAt, dueDate])
+  @@index([deletedAt, status, dueDate])
   @@index([status])
   @@index([categoryId])
   @@index([costCenterId])

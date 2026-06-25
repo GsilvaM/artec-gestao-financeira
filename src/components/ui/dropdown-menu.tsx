@@ -137,7 +137,7 @@ export function DropdownMenuContent({ children, className, ...props }: React.HTM
       tabIndex={-1}
       style={contentStyle}
       className={cn(
-        "min-w-[9rem] origin-top-right animate-in fade-in-0 zoom-in-95 rounded-lg border border-[#E2E8F0] bg-white p-1 shadow-[0_10px_38px_-10px_rgba(15,23,42,0.35),0_0_0_1px_rgba(0,0,0,0.05)] focus:outline-none",
+        "min-w-[9rem] origin-top-right animate-in fade-in-0 zoom-in-95 rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-[var(--shadow-soft)] focus:outline-none",
         className,
       )}
       {...props}
@@ -157,10 +157,10 @@ export function DropdownMenuItem({ children, className, onClick, destructive, ..
       role="menuitem"
       onClick={(e) => { onClick?.(e); close(); }}
       className={cn(
-        "flex w-full cursor-pointer items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm font-medium outline-none transition",
+        "flex w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm font-medium outline-none transition",
         destructive
-          ? "text-[#EF4444] hover:bg-red-50 focus-visible:bg-red-50"
-          : "text-[#0F172A] hover:bg-[#F1F5F9] focus-visible:bg-[#F1F5F9]",
+          ? "text-destructive hover:bg-destructive/10 focus-visible:bg-destructive/10"
+          : "text-foreground hover:bg-accent focus-visible:bg-accent",
         className,
       )}
       {...props}
@@ -171,5 +171,5 @@ export function DropdownMenuItem({ children, className, onClick, destructive, ..
 }
 
 export function DropdownMenuSeparator({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("mx-1 my-1 border-t border-[#E2E8F0]", className)} {...props} />;
+  return <div className={cn("mx-1 my-1 border-t border-border", className)} {...props} />;
 }
