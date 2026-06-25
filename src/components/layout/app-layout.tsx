@@ -306,7 +306,7 @@ function NotificationButton() {
         <Bell className="size-5" />
       </IconButton>
       {open ? (
-        <div className="absolute right-0 top-12 z-50 w-72 rounded-lg border border-border bg-popover p-4 text-popover-foreground shadow-[var(--shadow-soft)]">
+        <div className="fixed right-4 top-16 z-50 w-[min(20rem,calc(100vw-2rem))] rounded-lg border border-border bg-popover p-4 text-popover-foreground shadow-[var(--shadow-soft)]">
           <div className="text-sm font-semibold text-foreground">Notificacoes</div>
           <p className="mt-1 text-sm text-muted-foreground">Nenhuma notificacao nova.</p>
         </div>
