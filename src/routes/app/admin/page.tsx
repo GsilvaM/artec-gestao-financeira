@@ -116,8 +116,6 @@ function roleLabel(roleName: string) {
     user: "Usuario",
     proprietario: "Proprietario",
     financeiro: "Financeiro",
-    operacional: "Operacional",
-    tecnico: "Tecnico",
   };
   return labels[roleName] ?? (roleName || "Sem perfil");
 }

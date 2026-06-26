@@ -6,7 +6,6 @@ import {
   LayoutDashboard,
   Settings,
   Users,
-  Wrench,
 } from "lucide-react";
 
 export interface NavigationChild {
@@ -31,27 +30,14 @@ export const navigationItems: NavigationItem[] = [
     title: "Financeiro",
     icon: DollarSign,
     items: [
-      { title: "Lançamentos", href: "/app/financeiro/lancamentos" },
+      { title: "Lancamentos", href: "/app/financeiro/lancamentos" },
       { title: "Contas a Receber", href: "/app/financeiro/contas-receber" },
       { title: "Contas a Pagar", href: "/app/financeiro/contas-pagar" },
       { title: "Categorias", href: "/app/financeiro/categorias" },
       { title: "Centros de Custo", href: "/app/financeiro/centros-custo" },
       { title: "DRE", href: "/app/financeiro/dre" },
       { title: "Fluxo de Caixa", href: "/app/financeiro/fluxo-caixa" },
-      { title: "Relatórios Financeiros", href: "/app/relatorios/financeiros" },
-    ],
-  },
-  {
-    title: "Operacional",
-    icon: Wrench,
-    items: [
-      { title: "Visão Geral", href: "/app/operacional" },
-      { title: "Serviços", href: "/app/operacional/servicos" },
-      { title: "Cadastro de Serviços", href: "/app/operacional/cadastro-servicos" },
-      { title: "Técnicos", href: "/app/operacional/tecnicos" },
-      { title: "Colaboradores", href: "/app/operacional/colaboradores" },
-      { title: "Produtividade", href: "/app/operacional/produtividade" },
-      { title: "Rentabilidade", href: "/app/operacional/rentabilidade" },
+      { title: "Relatorios Financeiros", href: "/app/relatorios/financeiros" },
     ],
   },
   {
@@ -60,18 +46,15 @@ export const navigationItems: NavigationItem[] = [
     items: [
       { title: "Clientes", href: "/app/cadastros/clientes" },
       { title: "Fornecedores", href: "/app/cadastros/fornecedores" },
-      { title: "Serviços", href: "/app/operacional/cadastro-servicos" },
-      { title: "Técnicos", href: "/app/operacional/tecnicos" },
-      { title: "Colaboradores", href: "/app/operacional/colaboradores" },
     ],
   },
   {
-    title: "Relatórios",
+    title: "Relatorios",
     icon: BarChart3,
     href: "/app/relatorios",
   },
   {
-    title: "Configurações",
+    title: "Configuracoes",
     icon: Settings,
     href: "/app/configuracoes",
   },

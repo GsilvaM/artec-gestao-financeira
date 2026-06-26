@@ -19,15 +19,15 @@ interface PageShellProps {
 
 export function PageShell({ icon: Icon, title, subtitle, actionLabel, onAction, children }: PageShellProps) {
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-3 pb-8 pt-4 sm:gap-5 sm:px-6 sm:pt-5 lg:px-8">
-      <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex min-w-0 items-start gap-3 sm:items-center sm:gap-4">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary shadow-sm">
+    <div className="mx-auto flex w-full max-w-[1380px] flex-col gap-6 px-3 pb-8 pt-6 sm:gap-7 sm:px-6 sm:pt-7 lg:px-8 lg:pt-9">
+      <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex min-w-0 items-start gap-4">
+          <div className="mt-1 flex size-10 shrink-0 items-center justify-center rounded-md bg-accent text-primary ring-1 ring-primary/10">
             <Icon className="size-5" />
           </div>
           <div className="min-w-0">
-            <h1 className="text-xl font-bold text-foreground sm:text-2xl">{title}</h1>
-            <p className="mt-1 max-w-3xl text-sm leading-5 text-muted-foreground">{subtitle}</p>
+            <h1 className="text-3xl font-bold leading-tight text-foreground sm:text-4xl">{title}</h1>
+            <p className="mt-1.5 max-w-3xl text-sm leading-6 text-muted-foreground">{subtitle}</p>
           </div>
         </div>
         {actionLabel ? (
@@ -118,23 +118,23 @@ export function LoadingState({ label = "Carregando..." }: { label?: string }) {
 }
 
 const toneStyles = {
-  blue: "bg-primary/12 text-primary",
-  green: "bg-success/12 text-success",
-  red: "bg-destructive/12 text-destructive",
-  amber: "bg-warning/15 text-warning",
+  blue: "bg-primary/10 text-primary",
+  green: "bg-success/10 text-success",
+  red: "bg-destructive/10 text-destructive",
+  amber: "bg-warning/20 text-[#b16b00]",
   slate: "bg-muted text-muted-foreground",
 };
 
 export function MetricCard({ title, value, icon: Icon, tone = "blue", helper, className }: MetricCardProps) {
   return (
     <Card className={className}>
-      <CardContent className="flex min-h-24 items-center justify-between gap-4 p-4">
+      <CardContent className="flex min-h-32 items-start justify-between gap-4 p-5">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase text-muted-foreground">{title}</p>
-          <p className="mt-2 break-words text-2xl font-bold text-foreground tabular-nums" title={value}>{value}</p>
-          {helper ? <p className="mt-1 text-xs leading-5 text-muted-foreground">{helper}</p> : null}
+          <p className="mt-3 whitespace-nowrap text-[1.375rem] font-bold leading-tight text-foreground tabular-nums sm:text-2xl" title={value}>{value}</p>
+          {helper ? <p className="mt-2 text-xs leading-5 text-muted-foreground">{helper}</p> : null}
         </div>
-        <div className={cn("flex size-10 shrink-0 items-center justify-center rounded-md", toneStyles[tone])}>
+        <div className={cn("flex size-11 shrink-0 items-center justify-center rounded-md ring-1 ring-current/10", toneStyles[tone])}>
           <Icon className="size-5" />
         </div>
       </CardContent>
@@ -159,7 +159,7 @@ export function FilterBar({ searchPlaceholder = "Buscar...", search, onSearchCha
         <div className="flex flex-col gap-3 md:flex-row md:items-center">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input className="pl-9" placeholder={searchPlaceholder} aria-label={searchPlaceholder} value={search} onChange={(e) => onSearchChange?.(e.target.value)} />
+            <Input className="bg-background/50 pl-9" placeholder={searchPlaceholder} aria-label={searchPlaceholder} value={search} onChange={(e) => onSearchChange?.(e.target.value)} />
           </div>
           {hasFilters ? (
             <Button type="button" variant="outline" className="md:hidden" onClick={() => setOpen((current) => !current)} aria-expanded={open}>

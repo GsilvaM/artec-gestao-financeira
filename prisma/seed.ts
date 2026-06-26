@@ -9,8 +9,6 @@ async function main() {
     { name: "user", description: "Usuario padrao aprovado" },
     { name: "proprietario", description: "Proprietario - dashboards executivos" },
     { name: "financeiro", description: "Financeiro - lancamentos, contas, DRE" },
-    { name: "operacional", description: "Operacional - servicos e tecnicos" },
-    { name: "tecnico", description: "Tecnico - proprios servicos" },
   ];
   for (const role of roles) {
     await prisma.role.upsert({

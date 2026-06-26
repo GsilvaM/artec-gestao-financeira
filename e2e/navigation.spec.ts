@@ -7,20 +7,14 @@ test.describe("Sidebar navigation", () => {
 
   const links: { label: string; url: string }[] = [
     { label: "Dashboard", url: "/app" },
-    { label: "Lançamentos", url: "/app/financeiro/lancamentos" },
+    { label: "Lancamentos", url: "/app/financeiro/lancamentos" },
     { label: "Contas a Pagar", url: "/app/financeiro/contas-pagar" },
     { label: "Contas a Receber", url: "/app/financeiro/contas-receber" },
     { label: "Categorias", url: "/app/financeiro/categorias" },
     { label: "Centros de Custo", url: "/app/financeiro/centros-custo" },
     { label: "DRE", url: "/app/financeiro/dre" },
     { label: "Fluxo de Caixa", url: "/app/financeiro/fluxo-caixa" },
-    { label: "Serviços", url: "/app/operacional/servicos" },
-    { label: "Cadastro", url: "/app/operacional/cadastro-servicos" },
-    { label: "Técnicos", url: "/app/operacional/tecnicos" },
-    { label: "Colaboradores", url: "/app/operacional/colaboradores" },
-    { label: "Produtividade", url: "/app/operacional/produtividade" },
-    { label: "Rentabilidade", url: "/app/operacional/rentabilidade" },
-    { label: "Relatórios", url: "/app/relatorios" },
+    { label: "Relatorios", url: "/app/relatorios" },
     { label: "Admin", url: "/app/admin" },
   ];
 

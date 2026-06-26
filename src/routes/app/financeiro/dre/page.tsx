@@ -61,7 +61,7 @@ function buildDre(entries: FinancialEntryRow[]) {
   const categoryRows = new Map<string, DreLine>();
   for (const entry of entries) {
     const category = entry.categoryName || "Sem categoria";
-    const group = entry.type === "receita" ? "Receitas operacionais" : "Despesas operacionais";
+    const group = entry.type === "receita" ? "Receitas" : "Despesas";
     const key = `${entry.type}:${category}`;
     const current = categoryRows.get(key) ?? {
       id: key,

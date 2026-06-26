@@ -38,16 +38,18 @@ export function AppLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground lg:p-5">
       <a href="#conteudo-principal" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-card focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-primary focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-ring/40">
         Pular para o conteudo
       </a>
       <AppSidebar collapsed={collapsed} onCollapsedChange={setCollapsed} pathname={location.pathname} userEmail={user?.email} onSignOut={handleSignOut} />
-      <div className={cn("min-w-0 transition-[padding] duration-200 lg:pl-[264px]", collapsed && "lg:pl-[72px]")}>
-        <Topbar pathname={location.pathname} userEmail={user?.email} mobileOpen={mobileOpen} onOpenMobile={() => setMobileOpen(true)} onSignOut={handleSignOut} />
-        <main id="conteudo-principal" tabIndex={-1} className="min-w-0 pb-20 outline-none lg:pb-16">
-          <Outlet />
-        </main>
+      <div className={cn("min-w-0 transition-[padding] duration-200 lg:pl-[280px]", collapsed && "lg:pl-[80px]")}>
+        <div className="min-w-0 bg-card shadow-[var(--shadow-card)] lg:min-h-[calc(100vh-2.5rem)] lg:rounded-r-lg">
+          <Topbar pathname={location.pathname} userEmail={user?.email} mobileOpen={mobileOpen} onOpenMobile={() => setMobileOpen(true)} onSignOut={handleSignOut} />
+          <main id="conteudo-principal" tabIndex={-1} className="min-w-0 pb-20 outline-none lg:pb-16">
+            <Outlet />
+          </main>
+        </div>
       </div>
       <MobileNavDrawer open={mobileOpen} pathname={location.pathname} userEmail={user?.email} onClose={() => setMobileOpen(false)} onSignOut={handleSignOut} />
     </div>
@@ -63,7 +65,7 @@ interface SidebarProps {
 }
 
 function AppSidebar({ collapsed, onCollapsedChange, pathname, userEmail, onSignOut }: SidebarProps) {
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ Financeiro: true, Operacional: true, Cadastros: true });
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ Financeiro: true, Cadastros: true });
   const [flyout, setFlyout] = useState<string | null>(null);
 
   useEffect(() => {
@@ -75,9 +77,9 @@ function AppSidebar({ collapsed, onCollapsedChange, pathname, userEmail, onSignO
   }, []);
 
   return (
-    <aside className={cn("fixed inset-y-0 left-0 z-40 hidden border-r border-border bg-card text-foreground shadow-[1px_0_0_rgba(15,23,42,0.04)] transition-[width] duration-200 lg:flex lg:flex-col", collapsed ? "w-[72px]" : "w-[264px]")}>
+    <aside className={cn("fixed inset-y-0 left-0 z-40 hidden border-r border-border/70 bg-card text-foreground shadow-[var(--shadow-card)] transition-[width] duration-200 lg:inset-y-5 lg:left-5 lg:flex lg:flex-col lg:rounded-l-lg", collapsed ? "w-[80px]" : "w-[280px]")}>
       <SidebarHeader collapsed={collapsed} onCollapsedChange={onCollapsedChange} />
-      <nav className={cn("flex-1 space-y-1 px-3 py-4", collapsed ? "overflow-visible" : "overflow-y-auto overflow-x-hidden")} aria-label="Menu principal">
+      <nav className={cn("flex-1 space-y-1.5 px-4 py-5", collapsed ? "overflow-visible" : "overflow-y-auto overflow-x-hidden")} aria-label="Menu principal">
         {navigationItems.map((item) => (
           <SidebarGroup
             key={item.title}
@@ -99,10 +101,15 @@ function AppSidebar({ collapsed, onCollapsedChange, pathname, userEmail, onSignO
 
 function SidebarHeader({ collapsed, onCollapsedChange }: { collapsed: boolean; onCollapsedChange: (collapsed: boolean) => void }) {
   return (
-    <div className="relative flex h-16 items-center gap-3 border-b border-border px-3">
+    <div className="relative flex h-20 items-center gap-3 border-b border-border/70 px-4">
       <NavLink to="/app" className="flex min-w-0 flex-1 items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/35" aria-label="Ir para Dashboard">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground shadow-sm">AG</span>
-        {!collapsed ? <span className="truncate text-sm font-bold tracking-tight text-foreground">Artec Gestao</span> : null}
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground shadow-[0_14px_30px_-22px_var(--primary)]">AG</span>
+        {!collapsed ? (
+          <span className="min-w-0">
+            <span className="block truncate text-sm font-bold text-foreground">Artec Gestao</span>
+            <span className="block truncate text-xs font-medium text-muted-foreground">Controle financeiro</span>
+          </span>
+        ) : null}
       </NavLink>
       <button
         type="button"
@@ -110,7 +117,7 @@ function SidebarHeader({ collapsed, onCollapsedChange }: { collapsed: boolean; o
         aria-label={collapsed ? "Expandir sidebar" : "Recolher sidebar"}
         title={collapsed ? "Expandir sidebar" : "Recolher sidebar"}
         className={cn(
-          "flex size-9 shrink-0 items-center justify-center rounded-md border border-border bg-card text-muted-foreground transition hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/35",
+          "flex size-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-card text-muted-foreground transition hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/35",
           collapsed && "absolute right-0 top-1/2 size-8 -translate-y-1/2 translate-x-1/2 shadow-sm",
         )}
       >
@@ -169,9 +176,9 @@ function SidebarGroup({ item, pathname, collapsed, expanded, flyoutOpen, onToggl
 
 function sidebarItemClasses(active: boolean, collapsed = false) {
   return cn(
-    "flex h-10 w-full items-center gap-3 rounded-md px-3 text-sm font-semibold text-muted-foreground transition hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/35",
+    "flex h-11 w-full items-center gap-3 rounded-md px-3 text-sm font-semibold text-muted-foreground transition hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/35",
     collapsed && "justify-center px-0",
-    active && "bg-primary/10 text-primary shadow-sm hover:bg-primary/12 hover:text-primary",
+    active && "bg-primary/10 text-primary shadow-sm ring-1 ring-primary/10 hover:bg-primary/12 hover:text-primary",
   );
 }
 
@@ -211,8 +218,8 @@ function SidebarSubmenu({ items, pathname, onNavigate, popover = false }: { item
 
 function SidebarFooter({ collapsed, userEmail, onSignOut }: { collapsed: boolean; userEmail?: string; onSignOut: () => void }) {
   return (
-    <div className="border-t border-border p-3">
-      <div className={cn("mb-3 flex items-center gap-3 rounded-md bg-muted/60 p-3", collapsed && "justify-center p-2")}>
+    <div className="border-t border-border/70 p-4">
+      <div className={cn("mb-3 flex items-center gap-3 rounded-md bg-muted/60 p-3 ring-1 ring-border/60", collapsed && "justify-center p-2")}>
         <UserCircle className="size-5 shrink-0 text-primary" />
         {!collapsed ? (
           <div className="min-w-0">
@@ -231,9 +238,9 @@ function SidebarFooter({ collapsed, userEmail, onSignOut }: { collapsed: boolean
 
 function Topbar({ pathname, userEmail, mobileOpen, onOpenMobile, onSignOut }: { pathname: string; userEmail?: string; mobileOpen: boolean; onOpenMobile: () => void; onSignOut: () => void }) {
   return (
-    <header className="sticky top-0 z-30 h-16 border-b border-border bg-background/88 backdrop-blur-xl">
-      <div className="flex h-full min-w-0 items-center gap-3 px-4 sm:px-6 lg:px-8">
-        <button type="button" onClick={onOpenMobile} className="flex size-10 shrink-0 items-center justify-center rounded-md border border-border bg-card text-muted-foreground transition hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 lg:hidden" aria-label="Abrir menu" aria-expanded={mobileOpen} aria-controls="menu-mobile">
+    <header className="sticky top-0 z-30 h-16 border-b border-border/60 bg-card/92 backdrop-blur-xl lg:top-5 lg:rounded-tr-lg">
+      <div className="mx-auto flex h-full min-w-0 max-w-[1380px] items-center gap-3 px-4 sm:px-6 lg:px-8">
+        <button type="button" onClick={onOpenMobile} className="flex size-10 shrink-0 items-center justify-center rounded-md border border-border/80 bg-card text-muted-foreground transition hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 lg:hidden" aria-label="Abrir menu" aria-expanded={mobileOpen} aria-controls="menu-mobile">
           <Menu className="size-5" />
         </button>
         <Breadcrumbs pathname={pathname} />
@@ -251,7 +258,7 @@ function Topbar({ pathname, userEmail, mobileOpen, onOpenMobile, onSignOut }: { 
 function Breadcrumbs({ pathname }: { pathname: string }) {
   const trail = useMemo(() => findNavigationTrail(pathname), [pathname]);
   return (
-    <nav className="min-w-0" aria-label="Breadcrumb">
+    <nav className="hidden min-w-0 sm:block" aria-label="Breadcrumb">
       <ol className="flex min-w-0 items-center gap-2 text-sm">
         {trail.map((item, index) => (
           <li key={`${item}-${index}`} className="flex min-w-0 items-center gap-2">
@@ -268,14 +275,14 @@ function GlobalSearch() {
   return (
     <div className="relative ml-2 hidden w-full max-w-sm md:block">
       <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-      <Input className="h-9 bg-card pl-9" placeholder="Buscar no sistema..." aria-label="Busca global" />
+      <Input className="h-9 border-border/70 bg-card/80 pl-9 shadow-none" placeholder="Buscar no sistema..." aria-label="Busca global" />
     </div>
   );
 }
 
 function IconButton({ children, label, onClick, expanded }: { children: React.ReactNode; label: string; onClick?: () => void; expanded?: boolean }) {
   return (
-    <button type="button" onClick={onClick} aria-label={label} aria-expanded={expanded} className="flex size-10 items-center justify-center rounded-md border border-border bg-card text-muted-foreground transition hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40">
+    <button type="button" onClick={onClick} aria-label={label} aria-expanded={expanded} className="flex size-10 items-center justify-center rounded-md border border-border/70 bg-card/85 text-muted-foreground shadow-sm transition hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40">
       {children}
     </button>
   );
@@ -306,7 +313,7 @@ function NotificationButton() {
         <Bell className="size-5" />
       </IconButton>
       {open ? (
-        <div className="fixed right-4 top-16 z-50 w-[min(20rem,calc(100vw-2rem))] rounded-lg border border-border bg-popover p-4 text-popover-foreground shadow-[var(--shadow-soft)]">
+        <div className="fixed right-4 top-16 z-50 w-[min(20rem,calc(100vw-2rem))] rounded-lg border border-border/70 bg-popover p-4 text-popover-foreground shadow-[var(--shadow-soft)]">
           <div className="text-sm font-semibold text-foreground">Notificacoes</div>
           <p className="mt-1 text-sm text-muted-foreground">Nenhuma notificacao nova.</p>
         </div>
@@ -326,13 +333,13 @@ function UserMenu({ userEmail, onSignOut }: { userEmail?: string; onSignOut: () 
   }, []);
   return (
     <div className="relative">
-      <button type="button" onClick={() => setOpen((current) => !current)} aria-label="Menu do usuario" aria-expanded={open} className="flex h-10 items-center gap-2 rounded-md border border-border bg-card px-2.5 text-foreground transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40">
+      <button type="button" onClick={() => setOpen((current) => !current)} aria-label="Menu do usuario" aria-expanded={open} className="flex h-10 items-center gap-2 rounded-md border border-border/70 bg-card/85 px-2.5 text-foreground shadow-sm transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40">
         <UserCircle className="size-5 text-primary" />
         <span className="hidden max-w-40 truncate text-sm font-medium sm:block">{userEmail ?? "Usuario"}</span>
         <ChevronDown className={cn("size-4 text-muted-foreground transition-transform duration-200", open && "rotate-180")} />
       </button>
       {open ? (
-        <div className="absolute right-0 top-12 z-50 w-64 rounded-lg border border-border bg-popover p-2 text-popover-foreground shadow-[var(--shadow-soft)]">
+        <div className="absolute right-0 top-12 z-50 w-64 rounded-lg border border-border/70 bg-popover p-2 text-popover-foreground shadow-[var(--shadow-soft)]">
           <div className="border-b border-border px-3 py-2">
             <div className="truncate text-sm font-semibold text-foreground">{userEmail ?? "Usuario"}</div>
             <div className="text-xs text-muted-foreground">Sessao ativa</div>
@@ -348,7 +355,7 @@ function UserMenu({ userEmail, onSignOut }: { userEmail?: string; onSignOut: () 
 }
 
 function MobileNavDrawer({ open, pathname, userEmail, onClose, onSignOut }: { open: boolean; pathname: string; userEmail?: string; onClose: () => void; onSignOut: () => void }) {
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ Financeiro: true, Operacional: true, Cadastros: true });
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ Financeiro: true, Cadastros: true });
 
   useEffect(() => {
     if (!open) return;
