@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
-import { prisma } from "../src/lib/prisma/client";
+import { prisma } from "../src/lib/prisma/client.js";
 
 async function main() {
   const roles = [

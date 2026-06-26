@@ -20,7 +20,7 @@
       "destination": "/api/financeiro"
     },
     {
-      "source": "/((?!api).*)",
+      "source": "/((?!api/)(?!.*\\.(?:js|css|json|png|svg|ico|webmanifest|txt|xml)$).*)",
       "destination": "/index.html"
     }
   ]
