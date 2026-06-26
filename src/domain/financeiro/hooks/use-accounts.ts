@@ -4,6 +4,8 @@ import { clientApi } from '@/server/financeiro/client-api';
 import { toFiniteNumber } from '@/lib/utils';
 import type { AccountPayableFilters, AccountReceivableFilters, AccountPayableRow, AccountPayableUpdate, AccountReceivableRow, AccountReceivableUpdate } from '../types.js';
 
+const dashboardKey = ['dashboard'] as const;
+
 type AccountPayableApiResponse = {
   id: string;
   description: string;
@@ -93,7 +95,10 @@ export function useCreateAccountPayable() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: unknown) => clientApi.accountsPayable.create(data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: accountPayableKeys.all }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: accountPayableKeys.all });
+      void qc.invalidateQueries({ queryKey: dashboardKey });
+    },
   });
 }
 
@@ -102,7 +107,10 @@ export function useUpdateAccountPayable() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: AccountPayableUpdate }) =>
       clientApi.accountsPayable.update(id, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: accountPayableKeys.all }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: accountPayableKeys.all });
+      void qc.invalidateQueries({ queryKey: dashboardKey });
+    },
   });
 }
 
@@ -110,7 +118,10 @@ export function useDeleteAccountPayable() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => clientApi.accountsPayable.softDelete(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: accountPayableKeys.all }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: accountPayableKeys.all });
+      void qc.invalidateQueries({ queryKey: dashboardKey });
+    },
   });
 }
 
@@ -138,7 +149,10 @@ export function useCreateAccountReceivable() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: unknown) => clientApi.accountsReceivable.create(data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: accountReceivableKeys.all }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: accountReceivableKeys.all });
+      void qc.invalidateQueries({ queryKey: dashboardKey });
+    },
   });
 }
 
@@ -147,7 +161,10 @@ export function useUpdateAccountReceivable() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: AccountReceivableUpdate }) =>
       clientApi.accountsReceivable.update(id, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: accountReceivableKeys.all }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: accountReceivableKeys.all });
+      void qc.invalidateQueries({ queryKey: dashboardKey });
+    },
   });
 }
 
@@ -155,6 +172,9 @@ export function useDeleteAccountReceivable() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => clientApi.accountsReceivable.softDelete(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: accountReceivableKeys.all }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: accountReceivableKeys.all });
+      void qc.invalidateQueries({ queryKey: dashboardKey });
+    },
   });
 }

@@ -33,6 +33,8 @@ export interface DashboardKpis {
   saldo: number;
   contasAVencer: number;
   contasVencidas: number;
+  contasAReceber: number;
+  contasReceberVencidas: number;
   contasPagasMes: number;
   contasRecebidasMes: number;
 }
@@ -151,7 +153,7 @@ export async function getDashboardKpis(): Promise<DashboardKpis> {
     }),
   ]);
 
-  const [contasAVencer, contasVencidas, contasPagasMes, contasRecebidasMes] =
+  const [contasAVencer, contasVencidas, contasAReceber, contasReceberVencidas, contasPagasMes, contasRecebidasMes] =
     await Promise.all([
       prisma.accountPayable.count({
         where: {
@@ -161,6 +163,20 @@ export async function getDashboardKpis(): Promise<DashboardKpis> {
         },
       }),
       prisma.accountPayable.count({
+        where: {
+          deletedAt: null,
+          status: "pending",
+          dueDate: { lt: now },
+        },
+      }),
+      prisma.accountReceivable.count({
+        where: {
+          deletedAt: null,
+          status: "pending",
+          dueDate: { gte: now },
+        },
+      }),
+      prisma.accountReceivable.count({
         where: {
           deletedAt: null,
           status: "pending",
@@ -192,6 +208,8 @@ export async function getDashboardKpis(): Promise<DashboardKpis> {
     saldo: totalReceitas - totalDespesas,
     contasAVencer,
     contasVencidas,
+    contasAReceber,
+    contasReceberVencidas,
     contasPagasMes,
     contasRecebidasMes,
   };

@@ -47,7 +47,7 @@ export function Component() {
               <TableRow key={client.id}>
                 <TableCell className="font-medium">{client.nome}</TableCell>
                 <TableCell>{client.documento}</TableCell>
-                <TableCell><div>{client.telefone}</div><div className="text-xs text-[#64748B]">{client.email}</div></TableCell>
+                <TableCell><div>{client.telefone}</div><div className="text-xs text-muted-foreground">{client.email}</div></TableCell>
                 <TableCell>{client.observacoes || "-"}</TableCell>
                 <TableCell><StatusBadge status={client.status} /></TableCell>
                 <TableCell>

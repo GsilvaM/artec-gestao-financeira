@@ -104,7 +104,7 @@ export function Component() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow><TableCell colSpan={4} className="h-48 text-center text-sm text-[#64748B]">Carregando...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={4} className="h-48 text-center text-sm text-muted-foreground">Carregando...</TableCell></TableRow>
             ) : categories?.length ? categories.map((cat) => (
               <TableRow key={cat.id}>
                 <TableCell className="font-medium"><span className="inline-flex items-center gap-2"><span className="inline-block size-3 rounded-full" style={{ backgroundColor: cat.color ?? "#94A3B8" }} />{cat.name}</span></TableCell>

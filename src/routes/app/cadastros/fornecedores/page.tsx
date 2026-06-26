@@ -47,7 +47,7 @@ export function Component() {
               <TableRow key={supplier.id}>
                 <TableCell className="font-medium">{supplier.nome}</TableCell>
                 <TableCell>{supplier.documento}</TableCell>
-                <TableCell><div>{supplier.telefone}</div><div className="text-xs text-[#64748B]">{supplier.email}</div></TableCell>
+                <TableCell><div>{supplier.telefone}</div><div className="text-xs text-muted-foreground">{supplier.email}</div></TableCell>
                 <TableCell><StatusBadge status={supplier.status} /></TableCell>
                 <TableCell>
                   <DropdownMenu>

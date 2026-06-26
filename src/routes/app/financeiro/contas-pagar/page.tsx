@@ -152,7 +152,7 @@ export function Component() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow><TableCell colSpan={7} className="h-48 text-center text-sm text-[#64748B]">Carregando...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={7} className="h-48 text-center text-sm text-muted-foreground">Carregando...</TableCell></TableRow>
             ) : entries?.length ? entries.map((entry) => (
               <TableRow key={entry.id}>
                 <TableCell>{formatDate(entry.dueDate)}</TableCell>

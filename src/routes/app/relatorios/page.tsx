@@ -15,15 +15,15 @@ export function Component() {
     <PageShell icon={BarChart3} title="Relatorios" subtitle="Paineis e exportacoes para analise gerencial">
       <div className="grid gap-4 md:grid-cols-2">
         {reports.map((report) => (
-          <Card key={report.title} className="group overflow-hidden transition-colors hover:border-[#BBD7EF]">
+          <Card key={report.title} className="group overflow-hidden transition-colors hover:border-primary/25">
             <CardHeader>
-              <div className="mb-3 flex size-12 items-center justify-center rounded-lg bg-[#EAF3FB] text-[#174E8C]">
+              <div className="mb-3 flex size-12 items-center justify-center rounded-lg bg-accent text-primary">
                 <report.icon className="size-6" />
               </div>
               <CardTitle className="text-lg">{report.title}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-sm leading-6 text-[#64748B]">{report.description}</p>
+              <p className="text-sm leading-6 text-muted-foreground">{report.description}</p>
               <Button variant="outline" className="w-full" onClick={() => navigate(report.to)}><PieChart className="size-4" /> Abrir Relatorio</Button>
             </CardContent>
           </Card>

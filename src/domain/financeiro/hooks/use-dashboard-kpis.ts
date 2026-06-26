@@ -8,6 +8,8 @@ export interface DashboardKpis {
   saldo: number;
   contasAVencer: number;
   contasVencidas: number;
+  contasAReceber: number;
+  contasReceberVencidas: number;
   contasPagasMes: number;
   contasRecebidasMes: number;
 }
@@ -20,6 +22,8 @@ function toDashboardKpis(data: unknown): DashboardKpis {
     saldo: toFiniteNumber(raw.saldo),
     contasAVencer: toFiniteNumber(raw.contasAVencer),
     contasVencidas: toFiniteNumber(raw.contasVencidas),
+    contasAReceber: toFiniteNumber(raw.contasAReceber),
+    contasReceberVencidas: toFiniteNumber(raw.contasReceberVencidas),
     contasPagasMes: toFiniteNumber(raw.contasPagasMes),
     contasRecebidasMes: toFiniteNumber(raw.contasRecebidasMes),
   };

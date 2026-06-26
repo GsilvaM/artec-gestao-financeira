@@ -34,15 +34,15 @@ export function Component() {
     <PageShell icon={Settings} title="Configuracoes" subtitle="Ajustes gerais e preferencias do sistema">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {settings.map((item) => (
-          <Card key={item.title} className="group transition-colors hover:border-[#BBD7EF]">
+          <Card key={item.title} className="group transition-colors hover:border-primary/25">
             <CardHeader className="flex-row items-center gap-3 space-y-0">
-              <div className="flex size-11 items-center justify-center rounded-lg bg-[#EAF3FB] text-[#174E8C]">
+              <div className="flex size-11 items-center justify-center rounded-lg bg-accent text-primary">
                 <item.icon className="size-5" />
               </div>
               <CardTitle className="text-base">{item.title}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-sm leading-6 text-[#64748B]">{item.description}</p>
+              <p className="text-sm leading-6 text-muted-foreground">{item.description}</p>
               <Button variant="outline" size="sm" onClick={() => setActive(item)}>Configurar</Button>
             </CardContent>
           </Card>
