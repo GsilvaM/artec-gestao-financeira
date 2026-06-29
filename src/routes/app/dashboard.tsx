@@ -14,7 +14,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { useNavigate } from "react-router";
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -30,7 +30,7 @@ const chartData = [
   { mes: "Abr", receitas: 48000, despesas: 30000 },
   { mes: "Mai", receitas: 57000, despesas: 33000 },
   { mes: "Jun", receitas: 62000, despesas: 35000 },
-];
+].map((item) => ({ ...item, saldo: item.receitas - item.despesas }));
 
 const PENDING_TONE_STYLES = {
   warning: { bg: "bg-warning-light", icon: "text-warning", ring: "ring-warning/20" },
@@ -301,7 +301,7 @@ export function Component() {
               )}
             </div>
 
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3">
               <MetricCard title="Faturamento" value={formatMoney(totalReceitas)} icon={ArrowUpCircle} tone="green" helper="Receitas registradas" />
               <MetricCard title="Lucro" value={formatMoney(saldo)} icon={Banknote} tone={saldo < 0 ? "red" : "blue"} helper="Receitas menos despesas" />
               <MetricCard title="Contas pagas" value={String((kpis?.contasPagasMes ?? 0) + (kpis?.contasRecebidasMes ?? 0))} icon={TrendingUp} tone="blue" helper="Pagas e recebidas no mês" />
@@ -326,22 +326,16 @@ export function Component() {
                 <span className="size-2.5 rounded-full bg-chart-expense" />
                 Despesas
               </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-0.5 w-4 rounded-full bg-chart-balance" />
+                Saldo
+              </span>
             </div>
           </CardHeader>
           <CardContent className="p-5 pt-6 sm:p-6 sm:pt-6">
             <div className="h-72 sm:h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData} margin={{ left: -4, right: 18, top: 12, bottom: 4 }}>
-                  <defs>
-                    <linearGradient id="receitasGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--chart-revenue)" stopOpacity={0.18} />
-                      <stop offset="95%" stopColor="var(--chart-revenue)" stopOpacity={0.01} />
-                    </linearGradient>
-                    <linearGradient id="despesasGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--chart-expense)" stopOpacity={0.14} />
-                      <stop offset="95%" stopColor="var(--chart-expense)" stopOpacity={0.01} />
-                    </linearGradient>
-                  </defs>
+                <ComposedChart data={chartData} margin={{ left: -4, right: 18, top: 18, bottom: 4 }} barGap={8}>
                   <CartesianGrid vertical={false} strokeDasharray="4 6" stroke="color-mix(in srgb, var(--border) 62%, transparent)" />
                   <XAxis dataKey="mes" stroke="var(--muted-foreground)" fontSize={12} tickMargin={8} />
                   <YAxis
@@ -362,9 +356,18 @@ export function Component() {
                     labelStyle={{ color: "var(--muted-foreground)", fontWeight: 600 }}
                     formatter={(value: number) => formatMoney(value)}
                   />
-                  <Area type="monotone" dataKey="receitas" stroke="var(--chart-revenue)" fill="url(#receitasGradient)" strokeWidth={2.5} dot={{ r: 2.5 }} activeDot={{ r: 5 }} />
-                  <Area type="monotone" dataKey="despesas" stroke="var(--chart-expense)" fill="url(#despesasGradient)" strokeWidth={2.5} dot={{ r: 2.5 }} activeDot={{ r: 5 }} />
-                </AreaChart>
+                  <Bar dataKey="receitas" name="Receitas" fill="var(--chart-revenue)" fillOpacity={0.9} radius={[7, 7, 0, 0]} maxBarSize={38} />
+                  <Bar dataKey="despesas" name="Despesas" fill="var(--chart-expense)" fillOpacity={0.82} radius={[7, 7, 0, 0]} maxBarSize={38} />
+                  <Line
+                    type="monotone"
+                    dataKey="saldo"
+                    name="Saldo"
+                    stroke="var(--chart-balance)"
+                    strokeWidth={3}
+                    dot={{ r: 3.5, strokeWidth: 2, fill: "var(--card)" }}
+                    activeDot={{ r: 6, strokeWidth: 2 }}
+                  />
+                </ComposedChart>
               </ResponsiveContainer>
             </div>
           </CardContent>

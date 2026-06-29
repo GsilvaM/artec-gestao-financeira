@@ -176,7 +176,7 @@ function SidebarGroup({ item, pathname, collapsed, expanded, flyoutOpen, onToggl
 
 function sidebarItemClasses(active: boolean, collapsed = false) {
   return cn(
-    "flex h-11 w-full items-center gap-3 rounded-lg px-3 text-sm font-semibold text-sidebar-muted transition hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/35",
+    "motion-sidebar-item flex h-11 w-full items-center gap-3 rounded-lg px-3 text-sm font-semibold text-sidebar-muted transition hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/35",
     collapsed && "justify-center px-0",
     active && "bg-sidebar-active text-sidebar-active-foreground shadow-sm ring-1 ring-primary/15 hover:bg-sidebar-active",
   );
@@ -203,7 +203,7 @@ function SidebarSubmenu({ items, pathname, onNavigate, popover = false }: { item
             aria-current={active ? "page" : undefined}
             onClick={onNavigate}
             className={cn(
-              "block rounded-md px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2",
+              "motion-sidebar-item block rounded-md px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2",
               "text-sidebar-muted hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring/35",
               active && "bg-sidebar-active text-sidebar-active-foreground",
             )}

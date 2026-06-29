@@ -128,13 +128,13 @@ const toneStyles = {
 export function MetricCard({ title, value, icon: Icon, tone = "blue", helper, className }: MetricCardProps) {
   return (
     <Card className={cn("min-w-0 transition duration-200 hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-[var(--shadow-soft)]", className)}>
-      <CardContent className="flex min-h-[9.75rem] items-start justify-between gap-4 p-5 sm:p-6">
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-xs font-semibold uppercase text-muted-foreground">{title}</p>
-          <p className="mt-3 break-words text-2xl font-bold leading-tight text-foreground tabular-nums [overflow-wrap:anywhere] sm:text-[1.7rem]" title={value}>{value}</p>
+      <CardContent className="relative min-h-[9.75rem] p-5 sm:p-6">
+        <div className="min-w-0">
+          <p className="truncate pr-14 text-xs font-semibold uppercase text-muted-foreground">{title}</p>
+          <p className="mt-4 max-w-full whitespace-nowrap text-2xl font-bold leading-tight text-foreground tabular-nums sm:text-[1.6rem]" title={value}>{value}</p>
           {helper ? <p className="mt-2 text-xs leading-5 text-muted-foreground">{helper}</p> : null}
         </div>
-        <div className={cn("flex size-12 shrink-0 items-center justify-center rounded-xl ring-1 ring-current/10", toneStyles[tone])}>
+        <div className={cn("absolute right-5 top-5 flex size-12 items-center justify-center rounded-xl ring-1 ring-current/10 sm:right-6 sm:top-6", toneStyles[tone])}>
           <Icon className="size-5" />
         </div>
       </CardContent>
