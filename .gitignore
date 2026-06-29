@@ -7,5 +7,6 @@ playwright-report
 test-results
 .auth
 coverage
+*.tsbuildinfo
 
 .vercel
