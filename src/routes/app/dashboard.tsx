@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Activity,
   AlertTriangle,
@@ -21,6 +21,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { PageShell } from "@/components/layout/page-shell";
+import { MetricCard as DashboardMetricCard } from "@/components/dashboard/MetricCard";
+import { StatusBanner } from "@/components/dashboard/StatusBanner";
 import { useDashboardKpis } from "@/domain/financeiro/hooks/use-dashboard-kpis";
 import { formatMoney } from "@/lib/utils";
 import { calculateFinancialPercentages, formatCompactMoney, getActivityStatusMeta, type ActivityStatus } from "./dashboard-utils";
@@ -54,31 +56,6 @@ const PENDING_TONE_STYLES = {
   success: { bg: "bg-success-light", icon: "text-success", ring: "ring-success/20" },
 } as const;
 
-function useCountUp(value: number, duration = 600) {
-  const [display, setDisplay] = useState(0);
-  const previous = useRef(0);
-
-  useEffect(() => {
-    let animationFrame = 0;
-    const startedAt = performance.now();
-    const from = previous.current;
-    const diff = value - from;
-
-    function tick(now: number) {
-      const progress = Math.min((now - startedAt) / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setDisplay(from + diff * eased);
-      if (progress < 1) animationFrame = requestAnimationFrame(tick);
-    }
-
-    animationFrame = requestAnimationFrame(tick);
-    previous.current = value;
-    return () => cancelAnimationFrame(animationFrame);
-  }, [duration, value]);
-
-  return display;
-}
-
 function useDataTimeout(isLoading: boolean, timeoutMs = 5_000) {
   const [timedOut, setTimedOut] = useState(false);
 
@@ -92,75 +69,6 @@ function useDataTimeout(isLoading: boolean, timeoutMs = 5_000) {
   }, [isLoading, timeoutMs]);
 
   return timedOut;
-}
-
-function Sparkline({ values, color }: { values: number[]; color: string }) {
-  const max = Math.max(...values, 1);
-  const min = Math.min(...values, 0);
-  const range = Math.max(max - min, 1);
-  const points = values
-    .map((value, index) => {
-      const x = (index / Math.max(values.length - 1, 1)) * 120;
-      const y = 44 - ((value - min) / range) * 36;
-      return `${x},${y}`;
-    })
-    .join(" ");
-
-  return (
-    <svg viewBox="0 0 120 48" className="mt-4 h-12 w-full overflow-visible" aria-hidden="true">
-      <polyline points={points} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" opacity="0.95" />
-    </svg>
-  );
-}
-
-function DashboardKpiCard({
-  title,
-  value,
-  icon: Icon,
-  tone,
-  helper,
-  trend,
-  sparkline,
-  currency = true,
-  unavailable = false,
-}: {
-  title: string;
-  value: number;
-  icon: LucideIcon;
-  tone: "revenue" | "expense" | "balance";
-  helper: string;
-  trend: number;
-  sparkline: number[];
-  currency?: boolean;
-  unavailable?: boolean;
-}) {
-  const colors = {
-    revenue: "var(--color-revenue)",
-    expense: "var(--color-expense)",
-    balance: "var(--color-balance)",
-  };
-  const displayValue = useCountUp(value);
-  const trendPositive = trend >= 0;
-
-  return (
-    <Card className="overflow-hidden" aria-live="polite">
-      <CardContent className="relative min-h-[12.5rem] p-5">
-        <div className="absolute right-5 top-5 flex size-11 items-center justify-center rounded-full" style={{ backgroundColor: `color-mix(in srgb, ${colors[tone]} 12%, transparent)`, color: colors[tone] }}>
-          <Icon className="size-5" />
-        </div>
-        <p className="max-w-[calc(100%-3.5rem)] truncate text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">{title}</p>
-        <p className="mt-4 whitespace-nowrap text-[1.75rem] font-semibold leading-tight tracking-[-0.02em] text-foreground tabular-nums" title={currency ? formatMoney(value) : String(value)}>
-          {unavailable ? "—" : currency ? formatMoney(displayValue) : Math.round(displayValue)}
-        </p>
-        <div className={cn("mt-2 inline-flex items-center gap-1 text-xs font-semibold", unavailable ? "text-muted-foreground" : trendPositive ? "text-[var(--color-revenue)]" : "text-[var(--color-expense)]")}>
-          {trendPositive ? <ArrowUpCircle className="size-3.5" /> : <ArrowDownCircle className="size-3.5" />}
-          {unavailable ? "Aguardando dados" : `${trendPositive ? "+" : ""}${trend.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}% vs. mês anterior`}
-        </div>
-        <Sparkline values={sparkline} color={colors[tone]} />
-        <p className="mt-2 text-[13px] leading-6 text-muted-foreground">{helper}</p>
-      </CardContent>
-    </Card>
-  );
 }
 
 function DashboardKpiSkeleton() {
@@ -449,15 +357,7 @@ export function Component() {
               </div>
 
               {pendenciaData.totalPagar === 0 && pendenciaData.totalReceber === 0 ? (
-                <Card className="overflow-hidden">
-                  <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
-                    <div className="flex size-12 items-center justify-center rounded-lg bg-success-light text-success">
-                      <TrendingUp className="size-6" />
-                    </div>
-                    <p className="text-sm font-semibold text-foreground">Tudo em dia</p>
-                    <p className="text-xs text-muted-foreground">Todas as contas estão dentro do prazo.</p>
-                  </CardContent>
-                </Card>
+                <StatusBanner />
               ) : (
                 <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                   <PendingCard
@@ -511,9 +411,36 @@ export function Component() {
                 </Card>
               ) : (
                 <>
-                  <DashboardKpiCard title="Faturamento" value={totalReceitas} icon={ArrowUpCircle} tone="revenue" helper="Receitas registradas" trend={12.3} sparkline={dashboardKpiSeries.faturamento} />
-                  <DashboardKpiCard title="Lucro" value={saldo} icon={Banknote} tone="balance" helper="Receitas menos despesas" trend={saldo >= 0 ? 8.4 : -6.2} sparkline={dashboardKpiSeries.lucro} />
-                  <DashboardKpiCard title="Contas pagas" value={contasPagas ?? 0} icon={TrendingUp} tone="balance" helper="Pagas e recebidas no mês" trend={-3.1} sparkline={dashboardKpiSeries.contas} currency={false} unavailable={timedOut && !kpis} />
+                  <DashboardMetricCard
+                    label="Faturamento"
+                    value={formatMoney(totalReceitas)}
+                    title={formatMoney(totalReceitas)}
+                    icon={ArrowUpCircle}
+                    iconColor="green"
+                    footer="Receitas registradas"
+                    delta={12.3}
+                    sparklineData={dashboardKpiSeries.faturamento}
+                  />
+                  <DashboardMetricCard
+                    label="Lucro"
+                    value={formatMoney(saldo)}
+                    title={formatMoney(saldo)}
+                    icon={Banknote}
+                    iconColor="blue"
+                    footer="Receitas menos despesas"
+                    delta={saldo >= 0 ? 8.4 : -6.2}
+                    sparklineData={dashboardKpiSeries.lucro}
+                  />
+                  <DashboardMetricCard
+                    label="Contas pagas"
+                    value={timedOut && !kpis ? "—" : String(contasPagas ?? 0)}
+                    icon={ArrowDownCircle}
+                    iconColor="red"
+                    footer={timedOut && !kpis ? "Aguardando dados" : "Pagas e recebidas no mês"}
+                    delta={-3.1}
+                    sparklineData={dashboardKpiSeries.contas}
+                    className="sm:col-span-2 2xl:col-span-3"
+                  />
                   {timedOut && !kpis ? <span className="sr-only" aria-live="polite">Dados de contas pagas indisponíveis após 5 segundos. Valor exibido como traço.</span> : null}
                 </>
               )}

@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { ArrowDownCircle, ArrowUpCircle, Banknote, FileText, ListChecks } from "lucide-react";
 import { FormField as Field } from "@/components/forms/form-field";
-import { FilterBar, MetricCard, MonthSelect, PageShell, StatusSelect } from "@/components/layout/page-shell";
+import { PageShell } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogCloseButton, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,8 @@ import { useCategories } from "@/domain/financeiro/hooks/use-categories";
 import { useAuthStore } from "@/lib/supabase/auth-store";
 import { calculateFinancialSummary } from "@/domain/financeiro/calculations";
 import { formatMoney } from "@/lib/utils";
+import { SummaryCard } from "@/components/lancamentos/SummaryCard";
+import { TransactionFilters } from "@/components/lancamentos/TransactionFilters";
 import { ResponsiveTransactionList } from "./responsive-transaction-list";
 import type { FinancialEntryRow, FinancialEntryFilters } from "@/domain/financeiro/types";
 
@@ -201,16 +203,20 @@ export function Component() {
   return (
     <PageShell icon={FileText} title="Lançamentos" subtitle="Cadastre receitas, custos e despesas com menos cliques." actionLabel="Novo lançamento" onAction={() => { resetForm(); setOpen(true); }}>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard title="Lançamentos" value={String(entries?.length ?? 0)} icon={ListChecks} tone="blue" />
-        <MetricCard title="Receitas" value={formatMoney(receitas)} icon={ArrowUpCircle} tone="green" />
-        <MetricCard title="Despesas" value={formatMoney(despesas)} icon={ArrowDownCircle} tone="red" />
-        <MetricCard title="Saldo" value={formatMoney(saldo)} icon={Banknote} tone={saldo < 0 ? "red" : "blue"} />
+        <SummaryCard label="Lançamentos" value={String(entries?.length ?? 0)} icon={ListChecks} iconColor="blue" footer="Registros encontrados" />
+        <SummaryCard label="Receitas" value={formatMoney(receitas)} icon={ArrowUpCircle} iconColor="green" footer="Entradas confirmadas" />
+        <SummaryCard label="Despesas" value={formatMoney(despesas)} icon={ArrowDownCircle} iconColor="red" footer="Saídas registradas" />
+        <SummaryCard label="Saldo" value={formatMoney(saldo)} icon={Banknote} iconColor={saldo < 0 ? "red" : "blue"} footer="Receitas menos despesas" className="sm:col-span-2 xl:col-span-1" />
       </div>
 
-      <FilterBar searchPlaceholder="Buscar descrição, cliente ou fornecedor..." search={search} onSearchChange={setSearch}>
-        <MonthSelect value={filterMonth} onValueChange={setFilterMonth} />
-        <StatusSelect value={filterStatus} onValueChange={setFilterStatus} />
-      </FilterBar>
+      <TransactionFilters
+        search={search}
+        onSearchChange={setSearch}
+        month={filterMonth}
+        onMonthChange={setFilterMonth}
+        status={filterStatus}
+        onStatusChange={setFilterStatus}
+      />
 
       <ResponsiveTransactionList entries={entries} isLoading={isLoading} error={error} onEdit={handleEdit} onDelete={handleDelete} />
 
