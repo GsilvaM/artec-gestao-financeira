@@ -33,7 +33,7 @@ export function Component() {
   }
 
   return (
-    <PageShell icon={Truck} title="Fornecedores" subtitle="Organize fornecedores, prestadores e parceiros financeiros" actionLabel="Novo Fornecedor" onAction={() => { setEditing(null); setOpen(true); }}>
+    <PageShell icon={Truck} title="Fornecedores" subtitle="Organize fornecedores, prestadores e parceiros financeiros" actionLabel="Novo fornecedor" onAction={() => { setEditing(null); setOpen(true); }}>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard title="Fornecedores ativos" value={String(records.length)} icon={Factory} tone="blue" />
         <MetricCard title="Novos contatos" value="0" icon={UserRoundPlus} tone="slate" />
@@ -41,7 +41,7 @@ export function Component() {
       <FilterBar searchPlaceholder="Buscar fornecedor..."><StatusSelect /></FilterBar>
       <Card className="overflow-hidden">
         <Table>
-          <TableHeader><TableRow>{["Nome/Razão Social", "Documento", "Contato", "Status", "Ações"].map((column) => <TableHead key={column}>{column}</TableHead>)}</TableRow></TableHeader>
+          <TableHeader><TableRow>{["Nome/razão social", "Documento", "Contato", "Status", "Ações"].map((column) => <TableHead key={column}>{column}</TableHead>)}</TableRow></TableHeader>
           <TableBody>
             {records.length ? records.map((supplier) => (
               <TableRow key={supplier.id}>
@@ -63,7 +63,7 @@ export function Component() {
                 </TableCell>
               </TableRow>
             )) : (
-              <TableRow><TableCell colSpan={5} className="p-0"><EmptyState title="Nenhum fornecedor encontrado." description="Cadastre fornecedores para organizar contas a pagar e compras." actionLabel="Novo Fornecedor" onAction={() => { setEditing(null); setOpen(true); }} /></TableCell></TableRow>
+              <TableRow><TableCell colSpan={5} className="p-0"><EmptyState title="Nenhum fornecedor encontrado." description="Cadastre fornecedores para organizar contas a pagar e compras." actionLabel="Novo fornecedor" onAction={() => { setEditing(null); setOpen(true); }} /></TableCell></TableRow>
             )}
           </TableBody>
         </Table>
@@ -73,7 +73,7 @@ export function Component() {
         <DialogContent className="relative">
           <DialogCloseButton onClick={() => setDeleting(null)} />
           <DialogHeader>
-            <DialogTitle>Excluir Fornecedor</DialogTitle>
+            <DialogTitle>Excluir fornecedor</DialogTitle>
             <DialogDescription>Confirma a exclusão de <strong>{deleting?.nome}</strong>? Esta ação não pode ser desfeita.</DialogDescription>
           </DialogHeader>
           <DialogFooter>

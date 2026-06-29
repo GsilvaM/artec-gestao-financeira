@@ -5,33 +5,45 @@
 
 :root {
   color-scheme: light;
-  --background: #f1f1f2;
-  --foreground: #45464b;
+  --background: #f5f6f8;
+  --foreground: #0f172a;
   --card: #ffffff;
-  --card-foreground: #45464b;
+  --card-foreground: #0f172a;
   --popover: #ffffff;
-  --popover-foreground: #111827;
-  --primary: #2388c8;
+  --popover-foreground: #0f172a;
+  --primary: #1e6091;
+  --primary-hover: #184e77;
   --primary-foreground: #ffffff;
-  --secondary: #f7f8fa;
-  --secondary-foreground: #56575d;
-  --muted: #f6f6f7;
-  --muted-foreground: #a8a9ad;
-  --accent: #edf7ff;
-  --accent-foreground: #2388c8;
-  --destructive: #d94f3d;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #334155;
+  --muted: #f3f4f6;
+  --muted-foreground: #64748b;
+  --accent: #e8f2f8;
+  --accent-foreground: #184e77;
+  --destructive: #dc2626;
   --destructive-foreground: #ffffff;
-  --border: #ececef;
-  --input: #dedfe3;
-  --ring: #2388c8;
-  --success: #27ad5f;
-  --warning: #ffbd3e;
-  --info: #6da9ef;
+  --border: #e2e8f0;
+  --input: #cbd5e1;
+  --ring: #1e6091;
+  --success: #15803d;
+  --success-light: #e8f7ee;
+  --warning: #d99718;
+  --warning-light: #fff7df;
+  --info: #1e6091;
+  --primary-light: #e7f1f7;
+  --destructive-light: #fef2f2;
   --violet: #7c3aed;
   --coral: #e35a45;
-  --radius: 0.5rem;
-  --shadow-soft: 0 20px 52px -32px rgba(69, 70, 75, 0.34);
-  --shadow-card: 0 1px 2px rgba(69, 70, 75, 0.04), 0 24px 54px -38px rgba(69, 70, 75, 0.36);
+  --sidebar: #f8fafc;
+  --sidebar-foreground: #334155;
+  --sidebar-active: #e7f1f7;
+  --sidebar-active-foreground: #184e77;
+  --sidebar-muted: #64748b;
+  --chart-revenue: #15803d;
+  --chart-expense: #dc2626;
+  --radius: 0.875rem;
+  --shadow-soft: 0 18px 42px -30px rgba(15, 23, 42, 0.28);
+  --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.05), 0 18px 44px -36px rgba(15, 23, 42, 0.3);
 }
 
 .dark {
@@ -43,6 +55,7 @@
   --popover: #10263d;
   --popover-foreground: #edf6ff;
   --primary: #4dabf7;
+  --primary-hover: #74c0fc;
   --primary-foreground: #061325;
   --secondary: #123455;
   --secondary-foreground: #d9efff;
@@ -56,10 +69,21 @@
   --input: #294968;
   --ring: #60a5fa;
   --success: #4ade80;
+  --success-light: #0d3320;
   --warning: #fbbf24;
+  --warning-light: #3d2e0a;
   --info: #22d3ee;
+  --primary-light: #143a5d;
+  --destructive-light: #3d1a1a;
   --violet: #a78bfa;
   --coral: #fb7185;
+  --sidebar: #0b1b2d;
+  --sidebar-foreground: #d9efff;
+  --sidebar-active: #143a5d;
+  --sidebar-active-foreground: #d9efff;
+  --sidebar-muted: #9fb3c8;
+  --chart-revenue: #4ade80;
+  --chart-expense: #f87171;
   --shadow-soft: 0 18px 44px -26px rgba(0, 0, 0, 0.7);
   --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.04), 0 20px 44px -30px rgba(0, 0, 0, 0.72);
 }
@@ -72,6 +96,7 @@
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
@@ -85,10 +110,21 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-success: var(--success);
+  --color-success-light: var(--success-light);
   --color-warning: var(--warning);
+  --color-warning-light: var(--warning-light);
   --color-info: var(--info);
+  --color-primary-light: var(--primary-light);
+  --color-destructive-light: var(--destructive-light);
   --color-violet: var(--violet);
   --color-coral: var(--coral);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-active-foreground: var(--sidebar-active-foreground);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-chart-revenue: var(--chart-revenue);
+  --color-chart-expense: var(--chart-expense);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -108,7 +144,9 @@
   }
 
   body {
-    background: var(--background);
+    background:
+      radial-gradient(circle at top left, color-mix(in srgb, var(--primary) 9%, transparent), transparent 34rem),
+      var(--background);
     color: var(--foreground);
     font-family:
       Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;

@@ -85,7 +85,7 @@ export function Component() {
   }
 
   return (
-    <PageShell icon={Network} title="Centros de Custo" subtitle="Agrupe receitas e despesas por unidade de operação" actionLabel="Novo Centro" onAction={() => { resetForm(); setOpen(true); }}>
+    <PageShell icon={Network} title="Centros de custo" subtitle="Agrupe receitas e despesas por unidade de operação" actionLabel="Novo centro" onAction={() => { resetForm(); setOpen(true); }}>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard title="Centros ativos" value={String((centers ?? []).filter((c) => c.active).length)} icon={Building} tone="blue" />
       </div>
@@ -117,7 +117,7 @@ export function Component() {
                 </TableCell>
               </TableRow>
             )) : (
-              <TableRow><TableCell colSpan={4} className="p-0"><EmptyState title="Nenhum centro de custo encontrado." description="Cadastre centros para acompanhar rentabilidade e desempenho." actionLabel="Novo Centro" onAction={() => { resetForm(); setOpen(true); }} /></TableCell></TableRow>
+              <TableRow><TableCell colSpan={4} className="p-0"><EmptyState title="Nenhum centro de custo encontrado." description="Cadastre centros para acompanhar rentabilidade e desempenho." actionLabel="Novo centro" onAction={() => { resetForm(); setOpen(true); }} /></TableCell></TableRow>
             )}
           </TableBody>
         </Table>
@@ -126,7 +126,7 @@ export function Component() {
         <DialogContent className="relative">
           <DialogCloseButton onClick={() => { resetForm(); setOpen(false); }} />
           <DialogHeader>
-            <DialogTitle>{isEditing ? "Editar Centro de Custo" : "Novo Centro de Custo"}</DialogTitle>
+            <DialogTitle>{isEditing ? "Editar centro de custo" : "Novo centro de custo"}</DialogTitle>
             <DialogDescription>{isEditing ? "Altere os dados do centro de custo." : "Crie um centro para agrupar lançamentos."}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -143,7 +143,7 @@ export function Component() {
         <DialogContent className="relative">
           <DialogCloseButton onClick={() => setDeletingId(null)} />
           <DialogHeader>
-            <DialogTitle>Excluir Centro de Custo</DialogTitle>
+            <DialogTitle>Excluir centro de custo</DialogTitle>
             <DialogDescription>Esta ação não pode ser desfeita. Confirma a exclusão?</DialogDescription>
           </DialogHeader>
           <DialogFooter>

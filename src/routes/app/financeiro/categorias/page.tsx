@@ -90,7 +90,7 @@ export function Component() {
   }
 
   return (
-    <PageShell icon={Tags} title="Categorias" subtitle="Organize receitas, custos e despesas por classificação" actionLabel="Nova Categoria" onAction={() => { resetForm(); setOpen(true); }}>
+    <PageShell icon={Tags} title="Categorias" subtitle="Organize receitas, custos e despesas por classificação" actionLabel="Nova categoria" onAction={() => { resetForm(); setOpen(true); }}>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard title="Categorias ativas" value={String(categories?.length ?? 0)} icon={FolderTree} tone="blue" />
       </div>
@@ -124,7 +124,7 @@ export function Component() {
                 </TableCell>
               </TableRow>
             )) : (
-              <TableRow><TableCell colSpan={4} className="p-0"><EmptyState title="Nenhuma categoria encontrada." description="Crie categorias para melhorar relatórios, DRE e filtros financeiros." actionLabel="Nova Categoria" onAction={() => { resetForm(); setOpen(true); }} /></TableCell></TableRow>
+              <TableRow><TableCell colSpan={4} className="p-0"><EmptyState title="Nenhuma categoria encontrada." description="Crie categorias para melhorar relatórios, DRE e filtros financeiros." actionLabel="Nova categoria" onAction={() => { resetForm(); setOpen(true); }} /></TableCell></TableRow>
             )}
           </TableBody>
         </Table>
@@ -133,7 +133,7 @@ export function Component() {
         <DialogContent className="relative">
           <DialogCloseButton onClick={() => { resetForm(); setOpen(false); }} />
           <DialogHeader>
-            <DialogTitle>{isEditing ? "Editar Categoria" : "Nova Categoria"}</DialogTitle>
+            <DialogTitle>{isEditing ? "Editar categoria" : "Nova categoria"}</DialogTitle>
             <DialogDescription>{isEditing ? "Altere os dados da categoria." : "Crie uma categoria para classificar lançamentos."}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -151,7 +151,7 @@ export function Component() {
         <DialogContent className="relative">
           <DialogCloseButton onClick={() => setDeletingId(null)} />
           <DialogHeader>
-            <DialogTitle>Excluir Categoria</DialogTitle>
+            <DialogTitle>Excluir categoria</DialogTitle>
             <DialogDescription>Esta ação não pode ser desfeita. Confirma a exclusão?</DialogDescription>
           </DialogHeader>
           <DialogFooter>

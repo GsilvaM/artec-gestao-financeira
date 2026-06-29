@@ -28,7 +28,7 @@ test.describe("Login", () => {
     await page.locator("#password").fill("wrong-password-123");
     await page.getByRole("button", { name: /entrar/i }).click();
 
-    await expect(page.getByText(/invalid/i).first()).toBeVisible();
+    await expect(page.getByText(/inválidos|invalid/i).first()).toBeVisible();
   });
 
   test("successful login redirects to /app", async ({ page }) => {

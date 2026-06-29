@@ -20,7 +20,7 @@ export function getSupabaseEnv() {
 
   if (!supabaseUrl || !anonKey || !serviceRoleKey) {
     throw Object.assign(
-      new Error("Variaveis VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY e SUPABASE_SERVICE_ROLE_KEY sao obrigatorias."),
+      new Error("Variáveis VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY e SUPABASE_SERVICE_ROLE_KEY são obrigatórias."),
       { status: 500 },
     );
   }
@@ -52,12 +52,12 @@ export function createAdminClient() {
 export async function getUserFromRequest(request: Request): Promise<User> {
   const token = getBearerToken(request);
   if (!token) {
-    throw Object.assign(new Error("Sessao nao informada."), { status: 401 });
+    throw Object.assign(new Error("Sessão não informada."), { status: 401 });
   }
 
   const { data, error } = await createAuthClient().auth.getUser(token);
   if (error || !data.user) {
-    throw Object.assign(new Error("Sessao invalida ou expirada."), { status: 401 });
+    throw Object.assign(new Error("Sessão inválida ou expirada."), { status: 401 });
   }
 
   return data.user;
@@ -71,7 +71,7 @@ export async function requireApprovedUser(request: Request) {
   });
 
   if (!profile || profile.deletedAt || profile.status !== "approved") {
-    throw Object.assign(new Error("Acesso bloqueado. Sua conta ainda nao esta aprovada ou foi desativada."), { status: 403 });
+    throw Object.assign(new Error("Acesso bloqueado. Sua conta ainda não está aprovada ou foi desativada."), { status: 403 });
   }
 
   return { user, profile };
@@ -107,7 +107,7 @@ export function normalizeText(value: unknown, maxLength = 255) {
 export function validatePassword(password: string) {
   if (password.length < 8) return "A senha deve ter pelo menos 8 caracteres.";
   if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
-    return "A senha deve conter letras e numeros.";
+    return "A senha deve conter letras e números.";
   }
   return null;
 }

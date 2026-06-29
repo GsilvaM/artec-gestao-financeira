@@ -50,7 +50,7 @@ export function ResponsiveTransactionList({ entries, isLoading, error, onEdit, o
       <div className="block md:hidden">
         <Card>
           <CardContent className="flex items-center justify-center p-8">
-            <p className="text-sm font-medium text-destructive">Erro ao carregar lancamentos.</p>
+            <p className="text-sm font-medium text-destructive">Erro ao carregar lançamentos.</p>
           </CardContent>
         </Card>
       </div>
@@ -64,7 +64,7 @@ export function ResponsiveTransactionList({ entries, isLoading, error, onEdit, o
       <div className="block md:hidden">
         <Card>
           <CardContent className="p-0">
-            <EmptyState title="Nenhum lancamento encontrado." description="Cadastre receitas, custos ou despesas para acompanhar o financeiro." />
+            <EmptyState title="Nenhum lançamento encontrado." description="Cadastre receitas, custos ou despesas para acompanhar o financeiro." />
           </CardContent>
         </Card>
       </div>

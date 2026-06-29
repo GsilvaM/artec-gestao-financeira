@@ -33,7 +33,7 @@ export function Component() {
   }
 
   return (
-    <PageShell icon={Users} title="Clientes" subtitle="Cadastre clientes para lancamentos, contas e relatorios" actionLabel="Novo Cliente" onAction={() => { setEditing(null); setOpen(true); }}>
+    <PageShell icon={Users} title="Clientes" subtitle="Cadastre clientes para lançamentos, contas e relatórios" actionLabel="Novo cliente" onAction={() => { setEditing(null); setOpen(true); }}>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard title="Clientes ativos" value={String(records.length)} icon={UserRoundPlus} tone="blue" />
         <MetricCard title="Empresas" value={String(records.filter((r) => r.documento.length > 11).length)} icon={Building2} tone="slate" />
@@ -41,7 +41,7 @@ export function Component() {
       <FilterBar searchPlaceholder="Buscar cliente, documento ou e-mail..."><StatusSelect /></FilterBar>
       <Card className="overflow-hidden">
         <Table>
-          <TableHeader><TableRow>{["Nome/Razao Social", "Documento", "Contato", "Cidade", "Status", "Acoes"].map((column) => <TableHead key={column}>{column}</TableHead>)}</TableRow></TableHeader>
+          <TableHeader><TableRow>{["Nome/razão social", "Documento", "Contato", "Cidade", "Status", "Ações"].map((column) => <TableHead key={column}>{column}</TableHead>)}</TableRow></TableHeader>
           <TableBody>
             {records.length ? records.map((client) => (
               <TableRow key={client.id}>
@@ -53,7 +53,7 @@ export function Component() {
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" aria-label="Acoes"><MoreHorizontal className="size-4" /></Button>
+                      <Button variant="ghost" size="icon" aria-label="Ações"><MoreHorizontal className="size-4" /></Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
                       <DropdownMenuItem onClick={() => { setEditing(client); setOpen(true); }}><Pencil className="size-4" />Editar</DropdownMenuItem>
@@ -64,7 +64,7 @@ export function Component() {
                 </TableCell>
               </TableRow>
             )) : (
-              <TableRow><TableCell colSpan={6} className="p-0"><EmptyState title="Nenhum cliente encontrado." description="Cadastre clientes para vincular contas e lancamentos." actionLabel="Novo Cliente" onAction={() => { setEditing(null); setOpen(true); }} /></TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="p-0"><EmptyState title="Nenhum cliente encontrado." description="Cadastre clientes para vincular contas e lançamentos." actionLabel="Novo cliente" onAction={() => { setEditing(null); setOpen(true); }} /></TableCell></TableRow>
             )}
           </TableBody>
         </Table>
@@ -74,8 +74,8 @@ export function Component() {
         <DialogContent className="relative">
           <DialogCloseButton onClick={() => setDeleting(null)} />
           <DialogHeader>
-            <DialogTitle>Excluir Cliente</DialogTitle>
-            <DialogDescription>Confirma a exclusao de <strong>{deleting?.nome}</strong>? Esta acao nao pode ser desfeita.</DialogDescription>
+            <DialogTitle>Excluir cliente</DialogTitle>
+            <DialogDescription>Confirma a exclusão de <strong>{deleting?.nome}</strong>? Esta ação não pode ser desfeita.</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleting(null)}>Cancelar</Button>

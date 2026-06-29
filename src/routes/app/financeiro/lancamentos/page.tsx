@@ -21,7 +21,7 @@ const schema = z.object({
   data: z.string().min(1, "Informe a data"),
   tipo: z.enum(["receita", "despesa"], { required_error: "Informe o tipo" }),
   categoria: z.string().min(1, "Selecione a categoria"),
-  descricao: z.string().min(3, "Informe a descricao"),
+  descricao: z.string().min(3, "Informe a descrição"),
   pessoa: z.string().optional(),
   valor: z.coerce.number().positive("Informe um valor maior que zero"),
   status: z.enum(["aberto", "pago", "vencido"]),
@@ -128,9 +128,9 @@ export function Component() {
     if (!deletingId) return;
     try {
       await deleteEntry(deletingId);
-      toast.success("Lancamento excluido");
+      toast.success("Lançamento excluído");
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Erro ao excluir lancamento";
+      const msg = err instanceof Error ? err.message : "Erro ao excluir lançamento";
       console.error("[delete-entry]", msg, err);
       toast.error(msg);
     } finally {
@@ -142,18 +142,18 @@ export function Component() {
     const parsed = schema.safeParse(form);
     if (!parsed.success) {
       setErrors(Object.fromEntries(parsed.error.issues.map((issue) => [String(issue.path[0]), issue.message])));
-      toast.error("Revise os campos do lancamento");
+      toast.error("Revise os campos do lançamento");
       return;
     }
 
     if (!user) {
-      toast.error("Usuario nao autenticado");
+      toast.error("Usuário não autenticado");
       return;
     }
 
     const categoryId = findCategoryId(parsed.data.categoria);
     if (!categoryId) {
-      toast.error("Categoria nao encontrada. Cadastre-a em Financeiro > Categorias primeiro.");
+      toast.error("Categoria não encontrada. Cadastre-a em Financeiro > Categorias primeiro.");
       return;
     }
 
@@ -175,7 +175,7 @@ export function Component() {
             notes,
           },
         });
-        toast.success("Lancamento atualizado");
+        toast.success("Lançamento atualizado");
       } else {
         await createEntry({
           description: parsed.data.descricao,
@@ -187,27 +187,27 @@ export function Component() {
           userId: user.id,
           notes,
         });
-        toast.success("Lancamento criado");
+        toast.success("Lançamento criado");
       }
       setOpen(false);
       resetForm();
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Erro ao salvar lancamento";
+      const msg = err instanceof Error ? err.message : "Erro ao salvar lançamento";
       console.error("[save-entry]", msg, err);
       toast.error(msg);
     }
   }
 
   return (
-    <PageShell icon={FileText} title="Lancamentos" subtitle="Cadastre receitas, custos e despesas com menos cliques." actionLabel="Novo lancamento" onAction={() => { resetForm(); setOpen(true); }}>
+    <PageShell icon={FileText} title="Lançamentos" subtitle="Cadastre receitas, custos e despesas com menos cliques." actionLabel="Novo lançamento" onAction={() => { resetForm(); setOpen(true); }}>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard title="Lancamentos" value={String(entries?.length ?? 0)} icon={ListChecks} tone="blue" />
+        <MetricCard title="Lançamentos" value={String(entries?.length ?? 0)} icon={ListChecks} tone="blue" />
         <MetricCard title="Receitas" value={formatMoney(receitas)} icon={ArrowUpCircle} tone="green" />
         <MetricCard title="Despesas" value={formatMoney(despesas)} icon={ArrowDownCircle} tone="red" />
         <MetricCard title="Saldo" value={formatMoney(saldo)} icon={Banknote} tone={saldo < 0 ? "red" : "blue"} />
       </div>
 
-      <FilterBar searchPlaceholder="Buscar descricao, cliente ou fornecedor..." search={search} onSearchChange={setSearch}>
+      <FilterBar searchPlaceholder="Buscar descrição, cliente ou fornecedor..." search={search} onSearchChange={setSearch}>
         <MonthSelect value={filterMonth} onValueChange={setFilterMonth} />
         <StatusSelect value={filterStatus} onValueChange={setFilterStatus} />
       </FilterBar>
@@ -218,8 +218,8 @@ export function Component() {
         <DialogContent className="relative">
           <DialogCloseButton onClick={() => { resetForm(); setOpen(false); }} />
           <DialogHeader>
-            <DialogTitle>{isEditing ? "Editar lancamento" : "Novo lancamento"}</DialogTitle>
-            <DialogDescription>{isEditing ? "Altere os dados do lancamento selecionado." : "Registre uma receita, custo ou despesa com os dados essenciais."}</DialogDescription>
+            <DialogTitle>{isEditing ? "Editar lançamento" : "Novo lançamento"}</DialogTitle>
+            <DialogDescription>{isEditing ? "Altere os dados do lançamento selecionado." : "Registre uma receita, custo ou despesa com os dados essenciais."}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="Data" error={errors.data}><Input type="date" value={form.data} onChange={(e) => updateField("data", e.target.value)} /></Field>
@@ -232,14 +232,14 @@ export function Component() {
                 placeholder={categories?.length ? "Selecione..." : "Nenhuma categoria"} />
             </Field>
             <Field label="Status" error={errors.status}><Select value={form.status} onChange={(e) => updateField("status", e.target.value)} options={[{ value: "aberto", label: "Aberto" }, { value: "pago", label: "Pago" }, { value: "vencido", label: "Vencido" }]} /></Field>
-            <Field label="Descricao" error={errors.descricao}><Input value={form.descricao} onChange={(e) => updateField("descricao", e.target.value)} placeholder="Descricao do lancamento" /></Field>
+            <Field label="Descrição" error={errors.descricao}><Input value={form.descricao} onChange={(e) => updateField("descricao", e.target.value)} placeholder="Descrição do lançamento" /></Field>
             <Field label="Cliente/Fornecedor"><Input value={form.pessoa ?? ""} onChange={(e) => updateField("pessoa", e.target.value)} placeholder="Nome relacionado" /></Field>
             <Field label="Valor" error={errors.valor}><Input type="number" min="0" step="0.01" value={form.valor} onChange={(e) => updateField("valor", e.target.value)} placeholder="0,00" /></Field>
-            <Field label="Observacoes"><Textarea value={form.observacoes ?? ""} onChange={(e) => updateField("observacoes", e.target.value)} placeholder="Informacoes adicionais" /></Field>
+            <Field label="Observações"><Textarea value={form.observacoes ?? ""} onChange={(e) => updateField("observacoes", e.target.value)} placeholder="Informações adicionais" /></Field>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => { resetForm(); setOpen(false); }}>Cancelar</Button>
-            <Button onClick={handleSave} disabled={isWorking}>{isWorking ? "Salvando..." : isEditing ? "Atualizar lancamento" : "Salvar lancamento"}</Button>
+            <Button onClick={handleSave} disabled={isWorking}>{isWorking ? "Salvando..." : isEditing ? "Atualizar lançamento" : "Salvar lançamento"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -248,8 +248,8 @@ export function Component() {
         <DialogContent className="relative">
           <DialogCloseButton onClick={() => setDeletingId(null)} />
           <DialogHeader>
-            <DialogTitle>Excluir lancamento</DialogTitle>
-            <DialogDescription>Esta acao nao pode ser desfeita. Confirma a exclusao?</DialogDescription>
+            <DialogTitle>Excluir lançamento</DialogTitle>
+            <DialogDescription>Esta ação não pode ser desfeita. Confirma a exclusão?</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeletingId(null)}>Cancelar</Button>

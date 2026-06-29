@@ -48,11 +48,11 @@ for (const viewport of viewports) {
     await expect(page.getByRole("heading", { name: "Lançamentos" })).toBeVisible();
     await expectNoGlobalHorizontalOverflow(page);
 
-    const tableWrapperOverflow = await page.locator("table").evaluate((table) => {
-      const parent = table.parentElement;
-      return parent ? getComputedStyle(parent).overflowX : "";
-    });
-    expect(["auto", "scroll"]).toContain(tableWrapperOverflow);
+    if (viewport.width >= 768) {
+      await expect(page.locator("table")).toBeVisible();
+    } else {
+      await expect(page.locator("table")).toHaveCount(0);
+    }
   });
 
   test(`modal responsivo em ${viewport.name}`, async ({ page }) => {

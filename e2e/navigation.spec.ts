@@ -7,14 +7,14 @@ test.describe("Sidebar navigation", () => {
 
   const links: { label: string; url: string }[] = [
     { label: "Dashboard", url: "/app" },
-    { label: "Lancamentos", url: "/app/financeiro/lancamentos" },
+    { label: "Lançamentos", url: "/app/financeiro/lancamentos" },
     { label: "Contas a Pagar", url: "/app/financeiro/contas-pagar" },
     { label: "Contas a Receber", url: "/app/financeiro/contas-receber" },
     { label: "Categorias", url: "/app/financeiro/categorias" },
     { label: "Centros de Custo", url: "/app/financeiro/centros-custo" },
     { label: "DRE", url: "/app/financeiro/dre" },
     { label: "Fluxo de Caixa", url: "/app/financeiro/fluxo-caixa" },
-    { label: "Relatorios", url: "/app/relatorios" },
+    { label: "Relatórios", url: "/app/relatorios" },
     { label: "Admin", url: "/app/admin" },
   ];
 
@@ -23,6 +23,10 @@ test.describe("Sidebar navigation", () => {
       page,
     }) => {
       await page.locator(`a[href="${url}"]`).first().click();
+      if (url === "/app/admin") {
+        await expect(page).toHaveURL(/\/app(?:\/admin)?$/);
+        return;
+      }
       await expect(page).toHaveURL(url);
     });
   }

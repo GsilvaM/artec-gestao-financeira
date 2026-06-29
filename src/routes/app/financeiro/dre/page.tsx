@@ -37,14 +37,14 @@ export function Component() {
   const dre = useMemo(() => buildDre(entries), [entries]);
 
   return (
-    <PageShell icon={BarChart3} title="DRE" subtitle="Demonstracao de resultado por periodo.">
+    <PageShell icon={BarChart3} title="DRE" subtitle="Demonstração de resultado por período.">
       <div className="grid gap-3 sm:grid-cols-3">
         <MetricCard title="Receitas" value={formatMoney(dre.totalReceitas)} icon={ArrowUpCircle} tone="green" />
         <MetricCard title="Despesas" value={formatMoney(dre.totalDespesas)} icon={ArrowDownCircle} tone="red" />
         <MetricCard title="Resultado" value={formatMoney(dre.resultado)} icon={Scale} tone={dre.resultado < 0 ? "red" : "blue"} />
       </div>
 
-      <FilterBar searchPlaceholder="Buscar categoria ou descricao..." search={search} onSearchChange={setSearch}>
+      <FilterBar searchPlaceholder="Buscar categoria ou descrição..." search={search} onSearchChange={setSearch}>
         <MonthSelect value={filterMonth} onValueChange={setFilterMonth} />
       </FilterBar>
 
@@ -132,7 +132,7 @@ function DreTable({ rows, isLoading, hasError }: { rows: DreLine[]; isLoading: b
             <TableHead>Categoria</TableHead>
             <TableHead>Realizado</TableHead>
             <TableHead>% Receita</TableHead>
-            <TableHead>Variacao</TableHead>
+            <TableHead>Variação</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -163,7 +163,7 @@ function DreTable({ rows, isLoading, hasError }: { rows: DreLine[]; isLoading: b
           ) : (
             <TableRow>
               <TableCell colSpan={5} className="p-0">
-                <EmptyState title="Nenhum lancamento encontrado." description="Cadastre receitas e despesas para visualizar a DRE." />
+                <EmptyState title="Nenhum lançamento encontrado." description="Cadastre receitas e despesas para visualizar a DRE." />
               </TableCell>
             </TableRow>
           )}

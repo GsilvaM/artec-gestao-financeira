@@ -5,14 +5,14 @@ import { Button } from "@/components/ui/button";
 import { PageShell } from "@/components/layout/page-shell";
 
 const reports = [
-  { icon: Landmark, title: "Financeiros", description: "DRE, fluxo de caixa, contas e lancamentos", to: "/app/relatorios/financeiros" },
+  { icon: Landmark, title: "Financeiros", description: "DRE, fluxo de caixa, contas e lançamentos", to: "/app/relatorios/financeiros" },
   { icon: Network, title: "Por centro de custo", description: "Rentabilidade, desempenho e comparativos", to: "/app/relatorios/centros-custo" },
 ];
 
 export function Component() {
   const navigate = useNavigate();
   return (
-    <PageShell icon={BarChart3} title="Relatorios" subtitle="Paineis e exportacoes para analise gerencial">
+    <PageShell icon={BarChart3} title="Relatórios" subtitle="Painéis e exportações para análise gerencial">
       <div className="grid gap-4 md:grid-cols-2">
         {reports.map((report) => (
           <Card key={report.title} className="group overflow-hidden transition-colors hover:border-primary/25">
@@ -24,7 +24,7 @@ export function Component() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm leading-6 text-muted-foreground">{report.description}</p>
-              <Button variant="outline" className="w-full" onClick={() => navigate(report.to)}><PieChart className="size-4" /> Abrir Relatorio</Button>
+              <Button variant="outline" className="w-full" onClick={() => navigate(report.to)}><PieChart className="size-4" /> Abrir relatório</Button>
             </CardContent>
           </Card>
         ))}

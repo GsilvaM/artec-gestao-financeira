@@ -16,7 +16,7 @@ export function Component() {
   const saldo = rows.reduce((sum, row) => sum + toFiniteNumber(row.saldo), 0);
 
   return (
-    <PageShell icon={CalendarDays} title="Fluxo de Caixa" subtitle="Entradas, saídas e saldo previsto por período">
+    <PageShell icon={CalendarDays} title="Fluxo de caixa" subtitle="Entradas, saídas e saldo previsto por período">
       <div className="grid gap-4 sm:grid-cols-3">
         <MetricCard title="Entradas" value={formatMoney(entradas)} icon={TrendingUp} tone="green" />
         <MetricCard title="Saídas" value={formatMoney(saidas)} icon={TrendingDown} tone="red" />

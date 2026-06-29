@@ -15,7 +15,7 @@ interface TransactionTableProps {
   onDelete: (entry: FinancialEntryRow) => void;
 }
 
-const columns = ["Data", "Tipo", "Categoria", "Descricao", "Valor", "Status", "Acoes"];
+const columns = ["Data", "Tipo", "Categoria", "Descrição", "Valor", "Status", "Ações"];
 
 export function TransactionTable({ entries, isLoading, error, onEdit, onDelete }: TransactionTableProps) {
   if (isLoading) return <TableFrame state="loading" />;
@@ -53,7 +53,7 @@ export function TransactionTable({ entries, isLoading, error, onEdit, onDelete }
                 <TableCell className="w-12">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="size-8" aria-label="Acoes do lancamento">
+                      <Button variant="ghost" size="icon" className="size-8" aria-label="Ações do lançamento">
                         <MoreHorizontal className="size-4" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -95,10 +95,10 @@ function TableFrame({ state }: { state: "loading" | "error" | "empty" }) {
                 </div>
               ) : state === "error" ? (
                 <div className="flex h-48 items-center justify-center text-sm font-medium text-destructive">
-                  Erro ao carregar lancamentos.
+                  Erro ao carregar lançamentos.
                 </div>
               ) : (
-                <EmptyState title="Nenhum lancamento encontrado." description="Cadastre receitas, custos ou despesas para acompanhar o financeiro." />
+                <EmptyState title="Nenhum lançamento encontrado." description="Cadastre receitas, custos ou despesas para acompanhar o financeiro." />
               )}
             </TableCell>
           </TableRow>

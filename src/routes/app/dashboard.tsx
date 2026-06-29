@@ -33,9 +33,9 @@ const chartData = [
 ];
 
 const PENDING_TONE_STYLES = {
-  warning: { bg: "bg-warning/15", icon: "text-warning", ring: "ring-warning/20" },
-  danger: { bg: "bg-destructive/15", icon: "text-destructive", ring: "ring-destructive/20" },
-  success: { bg: "bg-success/15", icon: "text-success", ring: "ring-success/20" },
+  warning: { bg: "bg-warning-light", icon: "text-warning", ring: "ring-warning/20" },
+  danger: { bg: "bg-destructive-light", icon: "text-destructive", ring: "ring-destructive/20" },
+  success: { bg: "bg-success-light", icon: "text-success", ring: "ring-success/20" },
 } as const;
 
 function PendingCard({
@@ -54,45 +54,43 @@ function PendingCard({
   const styles = PENDING_TONE_STYLES[tone];
   return (
     <Card className="overflow-hidden transition-shadow duration-200 hover:shadow-md">
-      <CardContent className="p-5">
+      <CardContent className="flex flex-col gap-3 p-5">
         <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <p className="text-2xl font-bold tabular-nums text-foreground sm:text-3xl">{value}</p>
-            {details?.length ? (
-              <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1">
-                {details.map((d) => (
-                  <span
-                    key={d.label}
-                    className={cn(
-                      "text-xs",
-                      d.highlight ? "font-semibold text-destructive" : "text-muted-foreground",
-                    )}
-                  >
-                    {d.label}
-                  </span>
-                ))}
-              </div>
-            ) : null}
-          </div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</p>
           <div className={cn("flex size-10 shrink-0 items-center justify-center rounded-lg ring-1", styles.bg, styles.icon, styles.ring)}>
             <Icon className="size-5" />
           </div>
         </div>
-        <p className="mt-4 text-xs font-semibold uppercase text-muted-foreground">{title}</p>
+        <p className="text-2xl font-bold tabular-nums text-foreground sm:text-3xl">{value}</p>
+        {details?.length ? (
+          <div className="flex flex-wrap gap-x-3 gap-y-1">
+            {details.map((d) => (
+              <span
+                key={d.label}
+                className={cn(
+                  "text-xs",
+                  d.highlight ? "font-semibold text-destructive" : "text-muted-foreground",
+                )}
+              >
+                {d.label}
+              </span>
+            ))}
+          </div>
+        ) : null}
       </CardContent>
     </Card>
   );
 }
 
-function StatisticBar({ icon: Icon, label, value, tone }: { icon: typeof ArrowUpCircle; label: string; value: number; tone: "green" | "orange" | "blue" }) {
+function StatisticBar({ icon: Icon, label, value, tone }: { icon: typeof ArrowUpCircle; label: string; value: number; tone: "green" | "red" | "blue" }) {
   const colors = {
-    green: { icon: "bg-success/15 text-success", bar: "bg-success" },
-    orange: { icon: "bg-warning/15 text-warning", bar: "bg-warning" },
-    blue: { icon: "bg-info/15 text-info", bar: "bg-info" },
+    green: { icon: "bg-success-light text-success", bar: "bg-success" },
+    red: { icon: "bg-destructive-light text-destructive", bar: "bg-destructive" },
+    blue: { icon: "bg-primary-light text-primary", bar: "bg-primary" },
   };
 
   return (
-    <div className="grid grid-cols-[2.75rem_1fr_3rem] items-center gap-4">
+    <div className="grid grid-cols-[2.75rem_1fr_auto] items-center gap-4">
       <div className={cn("flex size-11 items-center justify-center rounded-md", colors[tone].icon)}>
         <Icon className="size-5" />
       </div>
@@ -102,7 +100,7 @@ function StatisticBar({ icon: Icon, label, value, tone }: { icon: typeof ArrowUp
         </div>
         <p className="mt-2 text-sm text-muted-foreground">{label}</p>
       </div>
-      <div className="text-right text-xl font-bold tabular-nums text-foreground">{value}%</div>
+      <div className="whitespace-nowrap text-right text-xl font-bold tabular-nums text-foreground">{value}%</div>
     </div>
   );
 }
@@ -163,19 +161,19 @@ export function Component() {
   }, [kpis]);
 
   const shortcuts = [
-    { label: "Novo lancamento", to: "/app/financeiro/lancamentos" },
+    { label: "Novo lançamento", to: "/app/financeiro/lancamentos" },
     { label: "Nova conta a pagar", to: "/app/financeiro/contas-pagar" },
-    { label: "Emitir relatorio", to: "/app/relatorios" },
+    { label: "Emitir relatório", to: "/app/relatorios" },
   ];
 
   return (
     <PageShell
       icon={LayoutDashboard}
       title="Dashboard"
-      subtitle="Visao executiva para decidir rapido: caixa, lucro, despesas e pendencias."
+      subtitle="Visão executiva para acompanhar caixa, lucro, despesas e pendências."
     >
       {isLoading ? (
-        <div className="grid gap-6 lg:grid-cols-[1fr_1.1fr]">
+        <div className="grid gap-6 xl:grid-cols-[0.95fr_1.35fr]">
           <Card className="overflow-hidden">
             <CardContent className="space-y-6 p-5 sm:p-6">
               <div className="h-5 w-40 animate-pulse rounded bg-muted" />
@@ -184,12 +182,12 @@ export function Component() {
             </CardContent>
           </Card>
           <div className="grid gap-6">
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <SkeletonCard />
               <SkeletonCard />
               <SkeletonCard />
             </div>
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <SkeletonCard />
               <SkeletonCard />
               <SkeletonCard />
@@ -197,32 +195,32 @@ export function Component() {
           </div>
         </div>
       ) : (
-        <div className="grid gap-6 lg:grid-cols-[1fr_1.1fr]">
+        <div className="grid gap-6 xl:grid-cols-[1fr_1.2fr]">
           <Card className="overflow-hidden">
             <CardContent className="p-5 sm:p-6">
               <div className="mb-5 flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-lg font-bold text-foreground">Cartao financeiro</p>
+                <div className="min-w-0">
+                  <p className="text-lg font-bold text-foreground">Cartão financeiro</p>
                   <p className="text-sm text-muted-foreground">Resumo do caixa financeiro</p>
                 </div>
-                <CreditCard className="size-5 text-primary shrink-0" />
+                <CreditCard className="size-5 shrink-0 text-primary" />
               </div>
-              <div className="relative overflow-hidden rounded-xl bg-primary p-6 text-white shadow-[0_26px_52px_-32px_var(--primary)] sm:p-7">
-                <div className="absolute -right-16 -top-14 size-40 rounded-full bg-white/16" />
-                <div className="absolute -bottom-20 right-8 size-44 rounded-full bg-white/14" />
-                <div className="relative flex flex-col gap-6">
+              <div className="relative overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#1E6091,#184E77)] p-6 text-white shadow-[0_28px_60px_-34px_rgba(30,96,145,0.9)] sm:p-7">
+                <div className="absolute -right-16 -top-14 size-44 rounded-full bg-white/[0.08]" />
+                <div className="absolute -bottom-24 right-8 size-52 rounded-full bg-white/10" />
+                <div className="relative flex min-h-[21rem] flex-col gap-6">
                   <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="text-xl font-bold">Artec Gestao</p>
-                      <p className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-white/65">Conta financeira</p>
+                    <div className="min-w-0">
+                      <p className="text-xl font-bold">Artec Gestão</p>
+                      <p className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-white/[0.65]">Conta financeira</p>
                     </div>
-                    <span className="rounded-md bg-white/16 px-3 py-1 text-xs font-semibold text-white/80 shrink-0">Ativo</span>
+                    <span className="shrink-0 rounded-full bg-white/[0.16] px-3 py-1 text-xs font-semibold text-white ring-1 ring-white/20">Ativo</span>
                   </div>
-                  <div>
+                  <div className="mt-auto">
                     <p className="text-xs font-medium text-white/70">Saldo atual</p>
                     <p className="mt-1.5 text-3xl font-bold tabular-nums sm:text-4xl">{formatMoney(saldo)}</p>
                   </div>
-                  <div className="grid grid-cols-2 gap-4 rounded-lg bg-white/8 p-4 text-sm">
+                  <div className="grid grid-cols-2 gap-4 rounded-xl bg-white/10 p-4 text-sm ring-1 ring-white/10">
                     <div>
                       <p className="text-[10px] font-semibold uppercase tracking-wider text-white/60">Receitas</p>
                       <p className="mt-1 font-semibold tabular-nums">{formatMoney(totalReceitas)}</p>
@@ -235,11 +233,11 @@ export function Component() {
                 </div>
               </div>
               <div className="mt-5">
-                <div className="flex items-center justify-between text-sm mb-2">
-                  <span className="text-muted-foreground">Participacao das receitas</span>
-                  <span className="font-semibold tabular-nums text-foreground">{receitaPercent}%</span>
+                <div className="mb-2 flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Participação das receitas</span>
+                  <span className="whitespace-nowrap font-semibold tabular-nums text-foreground">{receitaPercent}%</span>
                 </div>
-                <div className="h-2 overflow-hidden rounded-full bg-muted">
+                <div className="h-2.5 overflow-hidden rounded-full bg-muted">
                   <div className={cn("h-full rounded-full bg-primary transition-all duration-500", percentWidthClass(receitaPercent))} />
                 </div>
               </div>
@@ -249,7 +247,7 @@ export function Component() {
           <div className="grid gap-6">
             <div>
               <div className="mb-4 flex items-center gap-2">
-                <h2 className="text-lg font-bold text-foreground">Pendencias</h2>
+                <h2 className="text-lg font-bold text-foreground">Pendências</h2>
                 {pendenciaData.totalVencidas > 0 ? (
                   <span className="inline-flex size-6 items-center justify-center rounded-full bg-destructive/15 text-xs font-bold text-destructive">
                     {pendenciaData.totalVencidas}
@@ -260,15 +258,15 @@ export function Component() {
               {pendenciaData.totalPagar === 0 && pendenciaData.totalReceber === 0 ? (
                 <Card className="overflow-hidden">
                   <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
-                    <div className="flex size-12 items-center justify-center rounded-lg bg-success/15 text-success">
+                    <div className="flex size-12 items-center justify-center rounded-lg bg-success-light text-success">
                       <TrendingUp className="size-6" />
                     </div>
-                    <p className="text-sm font-semibold text-foreground">Nenhuma pendencia</p>
-                    <p className="text-xs text-muted-foreground">Todas as contas estao em dia.</p>
+                    <p className="text-sm font-semibold text-foreground">Nenhuma pendência</p>
+                    <p className="text-xs text-muted-foreground">Todas as contas estão em dia.</p>
                   </CardContent>
                 </Card>
               ) : (
-                <div className="grid gap-4 sm:grid-cols-3">
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                   <PendingCard
                     title="A Pagar"
                     value={pendenciaData.totalPagar}
@@ -303,10 +301,10 @@ export function Component() {
               )}
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
               <MetricCard title="Faturamento" value={formatMoney(totalReceitas)} icon={ArrowUpCircle} tone="green" helper="Receitas registradas" />
-              <MetricCard title="Lucro" value={formatMoney(saldo)} icon={Banknote} tone={saldo < 0 ? "red" : "blue"} helper="Receitas - despesas" />
-              <MetricCard title="Contas Pagas" value={String((kpis?.contasPagasMes ?? 0) + (kpis?.contasRecebidasMes ?? 0))} icon={TrendingUp} tone="blue" helper="Pagas e recebidas no mes" />
+              <MetricCard title="Lucro" value={formatMoney(saldo)} icon={Banknote} tone={saldo < 0 ? "red" : "blue"} helper="Receitas menos despesas" />
+              <MetricCard title="Contas pagas" value={String((kpis?.contasPagasMes ?? 0) + (kpis?.contasRecebidasMes ?? 0))} icon={TrendingUp} tone="blue" helper="Pagas e recebidas no mês" />
             </div>
           </div>
         </div>
@@ -321,11 +319,11 @@ export function Component() {
             </CardTitle>
             <div className="flex gap-3 text-xs font-semibold text-muted-foreground">
               <span className="inline-flex items-center gap-1.5">
-                <span className="size-2.5 rounded-full bg-success" />
+                <span className="size-2.5 rounded-full bg-chart-revenue" />
                 Receitas
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <span className="size-2.5 rounded-full bg-destructive" />
+                <span className="size-2.5 rounded-full bg-chart-expense" />
                 Despesas
               </span>
             </div>
@@ -333,31 +331,39 @@ export function Component() {
           <CardContent className="p-5 pt-6 sm:p-6 sm:pt-6">
             <div className="h-72 sm:h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData} margin={{ left: -15, right: 8, top: 8, bottom: 4 }}>
+                <AreaChart data={chartData} margin={{ left: -4, right: 18, top: 12, bottom: 4 }}>
                   <defs>
                     <linearGradient id="receitasGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--success)" stopOpacity={0.2} />
-                      <stop offset="95%" stopColor="var(--success)" stopOpacity={0.02} />
+                      <stop offset="5%" stopColor="var(--chart-revenue)" stopOpacity={0.18} />
+                      <stop offset="95%" stopColor="var(--chart-revenue)" stopOpacity={0.01} />
                     </linearGradient>
                     <linearGradient id="despesasGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--destructive)" stopOpacity={0.15} />
-                      <stop offset="95%" stopColor="var(--destructive)" stopOpacity={0.02} />
+                      <stop offset="5%" stopColor="var(--chart-expense)" stopOpacity={0.14} />
+                      <stop offset="95%" stopColor="var(--chart-expense)" stopOpacity={0.01} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="color-mix(in srgb, var(--border) 72%, transparent)" />
+                  <CartesianGrid vertical={false} strokeDasharray="4 6" stroke="color-mix(in srgb, var(--border) 62%, transparent)" />
                   <XAxis dataKey="mes" stroke="var(--muted-foreground)" fontSize={12} tickMargin={8} />
-                  <YAxis stroke="var(--muted-foreground)" fontSize={12} tickMargin={8} />
+                  <YAxis
+                    stroke="var(--muted-foreground)"
+                    fontSize={12}
+                    tickMargin={8}
+                    tickFormatter={(v: number) => `R$${(v / 1000).toFixed(0)}k`}
+                  />
                   <Tooltip
                     contentStyle={{
                       background: "var(--card)",
                       border: "1px solid var(--border)",
                       borderRadius: "var(--radius)",
                       boxShadow: "var(--shadow-soft)",
+                      color: "var(--foreground)",
+                      fontSize: "12px",
                     }}
+                    labelStyle={{ color: "var(--muted-foreground)", fontWeight: 600 }}
                     formatter={(value: number) => formatMoney(value)}
                   />
-                  <Area type="monotone" dataKey="receitas" stroke="var(--success)" fill="url(#receitasGradient)" strokeWidth={2} />
-                  <Area type="monotone" dataKey="despesas" stroke="var(--destructive)" fill="url(#despesasGradient)" strokeWidth={2} />
+                  <Area type="monotone" dataKey="receitas" stroke="var(--chart-revenue)" fill="url(#receitasGradient)" strokeWidth={2.5} dot={{ r: 2.5 }} activeDot={{ r: 5 }} />
+                  <Area type="monotone" dataKey="despesas" stroke="var(--chart-expense)" fill="url(#despesasGradient)" strokeWidth={2.5} dot={{ r: 2.5 }} activeDot={{ r: 5 }} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -368,19 +374,24 @@ export function Component() {
           <CardHeader className="border-b border-border/60 pb-4">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Activity className="size-5 text-primary" />
-              Atalhos rapidos
+              Atalhos rápidos
             </CardTitle>
           </CardHeader>
           <CardContent className="grid gap-3 pt-5">
             {shortcuts.map((item, index) => (
-              <Button key={item.label} variant={index === 0 ? "default" : "outline"} className="min-h-12 w-full justify-start gap-3" onClick={() => navigate(item.to)}>
+              <Button
+                key={item.label}
+                variant={index === 0 ? "default" : "outline"}
+                className="min-h-12 w-full justify-start gap-3 px-4"
+                onClick={() => navigate(item.to)}
+              >
                 <span className={cn(
                   "flex size-8 shrink-0 items-center justify-center rounded-md",
-                  index === 0 ? "bg-white/20" : "bg-muted",
+                  index === 0 ? "bg-white/20" : "bg-primary/10",
                 )}>
-                  <Plus className={cn("size-4", index === 0 ? "text-[#3f4147]" : "text-primary")} />
+                  <Plus className={cn("size-4", index === 0 ? "text-primary-foreground" : "text-primary")} />
                 </span>
-                {item.label}
+                <span className="truncate">{item.label}</span>
               </Button>
             ))}
           </CardContent>
@@ -396,12 +407,12 @@ export function Component() {
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-5">
-            {["Lancamentos aguardando integracao", "Contas a pagar sem vencimentos cadastrados", "Relatorios pendentes de revisao"].length ? (
+            {["Lançamentos aguardando integração", "Contas a pagar sem vencimentos cadastrados", "Relatórios pendentes de revisão"].length ? (
               <div className="space-y-1">
-                {["Lancamentos aguardando integracao", "Contas a pagar sem vencimentos cadastrados", "Relatorios pendentes de revisao"].map((item) => (
+                {["Lançamentos aguardando integração", "Contas a pagar sem vencimentos cadastrados", "Relatórios pendentes de revisão"].map((item) => (
                   <div key={item} className="flex items-center justify-between gap-4 border-b border-border/60 py-3 last:border-0">
-                    <span className="text-sm text-foreground">{item}</span>
-                    <Badge variant="secondary" className="shrink-0">Pendente</Badge>
+                    <span className="min-w-0 text-sm text-foreground">{item}</span>
+                    <Badge variant="secondary" className="shrink-0 whitespace-nowrap">Pendente</Badge>
                   </div>
                 ))}
               </div>
@@ -420,13 +431,13 @@ export function Component() {
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Activity className="size-5 text-primary" />
-              Estatisticas
+              Estatísticas
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-2">
             <div className="space-y-5">
               <StatisticBar icon={ArrowUpCircle} label="Receitas" value={receitaPercent} tone="green" />
-              <StatisticBar icon={ArrowDownCircle} label="Despesas" value={despesaPercent} tone="orange" />
+              <StatisticBar icon={ArrowDownCircle} label="Despesas" value={despesaPercent} tone="red" />
               <StatisticBar icon={TrendingUp} label="Saldo" value={saldoPercent} tone="blue" />
             </div>
           </CardContent>

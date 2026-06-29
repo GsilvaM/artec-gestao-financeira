@@ -44,8 +44,8 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
   signIn: async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) return { error: "Email ou senha invalidos." };
-    if (!data.session) return { error: "Sessao nao retornada pelo provedor de autenticacao." };
+    if (error) return { error: "Email ou senha inválidos." };
+    if (!data.session) return { error: "Sessão não retornada pelo provedor de autenticação." };
     const result = await validateApprovedSession(data.session.access_token);
     if (result.error) {
       await supabase.auth.signOut();
@@ -70,5 +70,5 @@ async function validateApprovedSession(token: string) {
     return { error: null, profile: { status: payload?.status ?? "", roleName: payload?.roleName ?? "" } };
   }
   const payload = await response.json().catch(() => null);
-  return { error: payload?.error ?? "Acesso bloqueado. Aguarde aprovacao de um administrador.", profile: null };
+  return { error: payload?.error ?? "Acesso bloqueado. Aguarde aprovação de um administrador.", profile: null };
 }

@@ -46,7 +46,7 @@ export function TransactionCard({ transaction, onEdit, onDelete }: TransactionCa
           <span className="text-xs font-medium text-muted-foreground">{isReceita ? "Receita" : "Despesa"}</span>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="size-8" aria-label="Acoes do lancamento">
+              <Button variant="ghost" size="icon" className="size-8" aria-label="Ações do lançamento">
                 <MoreHorizontal className="size-4" />
               </Button>
             </DropdownMenuTrigger>

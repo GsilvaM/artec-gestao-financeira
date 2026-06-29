@@ -40,11 +40,11 @@ export function AppLayout() {
   return (
     <div className="min-h-screen bg-background text-foreground lg:p-5">
       <a href="#conteudo-principal" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-card focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-primary focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-ring/40">
-        Pular para o conteudo
+        Pular para o conteúdo
       </a>
       <AppSidebar collapsed={collapsed} onCollapsedChange={setCollapsed} pathname={location.pathname} userEmail={user?.email} onSignOut={handleSignOut} />
       <div className={cn("min-w-0 transition-[padding] duration-200 lg:pl-[280px]", collapsed && "lg:pl-[80px]")}>
-        <div className="min-w-0 bg-card shadow-[var(--shadow-card)] lg:min-h-[calc(100vh-2.5rem)] lg:rounded-r-lg">
+        <div className="min-w-0 bg-background/95 backdrop-blur lg:min-h-[calc(100vh-2.5rem)] lg:rounded-r-xl">
           <Topbar pathname={location.pathname} userEmail={user?.email} mobileOpen={mobileOpen} onOpenMobile={() => setMobileOpen(true)} onSignOut={handleSignOut} />
           <main id="conteudo-principal" tabIndex={-1} className="min-w-0 pb-20 outline-none lg:pb-16">
             <Outlet />
@@ -77,7 +77,7 @@ function AppSidebar({ collapsed, onCollapsedChange, pathname, userEmail, onSignO
   }, []);
 
   return (
-    <aside className={cn("fixed inset-y-0 left-0 z-40 hidden border-r border-border/70 bg-card text-foreground shadow-[var(--shadow-card)] transition-[width] duration-200 lg:inset-y-5 lg:left-5 lg:flex lg:flex-col lg:rounded-l-lg", collapsed ? "w-[80px]" : "w-[280px]")}>
+    <aside className={cn("fixed inset-y-0 left-0 z-40 hidden border-r border-border bg-sidebar text-sidebar-foreground shadow-[var(--shadow-card)] transition-[width] duration-200 lg:inset-y-5 lg:left-5 lg:flex lg:flex-col lg:rounded-l-xl", collapsed ? "w-[80px]" : "w-[280px]")}>
       <SidebarHeader collapsed={collapsed} onCollapsedChange={onCollapsedChange} />
       <nav className={cn("flex-1 space-y-1.5 px-4 py-5", collapsed ? "overflow-visible" : "overflow-y-auto overflow-x-hidden")} aria-label="Menu principal">
         {navigationItems.map((item) => (
@@ -103,10 +103,10 @@ function SidebarHeader({ collapsed, onCollapsedChange }: { collapsed: boolean; o
   return (
     <div className="relative flex h-20 items-center gap-3 border-b border-border/70 px-4">
       <NavLink to="/app" className="flex min-w-0 flex-1 items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/35" aria-label="Ir para Dashboard">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground shadow-[0_14px_30px_-22px_var(--primary)]">AG</span>
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground shadow-[0_14px_30px_-22px_var(--primary)]">AG</span>
         {!collapsed ? (
           <span className="min-w-0">
-            <span className="block truncate text-sm font-bold text-foreground">Artec Gestao</span>
+            <span className="block truncate text-sm font-bold text-foreground">Artec Gestão</span>
             <span className="block truncate text-xs font-medium text-muted-foreground">Controle financeiro</span>
           </span>
         ) : null}
@@ -117,7 +117,7 @@ function SidebarHeader({ collapsed, onCollapsedChange }: { collapsed: boolean; o
         aria-label={collapsed ? "Expandir sidebar" : "Recolher sidebar"}
         title={collapsed ? "Expandir sidebar" : "Recolher sidebar"}
         className={cn(
-          "flex size-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-card text-muted-foreground transition hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/35",
+          "flex size-9 shrink-0 items-center justify-center rounded-lg border border-border/80 bg-card text-muted-foreground transition hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/35",
           collapsed && "absolute right-0 top-1/2 size-8 -translate-y-1/2 translate-x-1/2 shadow-sm",
         )}
       >
@@ -148,13 +148,13 @@ function SidebarGroup({ item, pathname, collapsed, expanded, flyoutOpen, onToggl
 
   if (collapsed) {
     return (
-      <div className="relative" onMouseLeave={onFlyoutClose}>
+      <div className="relative">
         <button type="button" title={item.title} aria-label={item.title} aria-expanded={flyoutOpen} onClick={onFlyoutToggle} className={sidebarItemClasses(active, true)}>
           <Icon className="size-5" />
         </button>
         {flyoutOpen ? (
-          <div className="absolute left-[calc(100%+0.75rem)] top-0 z-50 w-64 rounded-lg border border-border bg-popover p-2 text-popover-foreground shadow-[var(--shadow-soft)]">
-            <div className="px-3 py-2 text-xs font-semibold uppercase text-muted-foreground">{item.title}</div>
+          <div className="absolute left-full top-0 z-50 ml-2 w-64 rounded-xl border border-border bg-popover p-2 text-popover-foreground shadow-[var(--shadow-soft)] before:absolute before:-left-2 before:top-0 before:h-full before:w-2 before:content-['']">
+            <div className="px-3 py-2 text-xs font-semibold uppercase text-sidebar-muted">{item.title}</div>
             <SidebarSubmenu items={item.items ?? []} pathname={pathname} onNavigate={onFlyoutClose} popover />
           </div>
         ) : null}
@@ -176,9 +176,9 @@ function SidebarGroup({ item, pathname, collapsed, expanded, flyoutOpen, onToggl
 
 function sidebarItemClasses(active: boolean, collapsed = false) {
   return cn(
-    "flex h-11 w-full items-center gap-3 rounded-md px-3 text-sm font-semibold text-muted-foreground transition hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/35",
+    "flex h-11 w-full items-center gap-3 rounded-lg px-3 text-sm font-semibold text-sidebar-muted transition hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/35",
     collapsed && "justify-center px-0",
-    active && "bg-primary/10 text-primary shadow-sm ring-1 ring-primary/10 hover:bg-primary/12 hover:text-primary",
+    active && "bg-sidebar-active text-sidebar-active-foreground shadow-sm ring-1 ring-primary/15 hover:bg-sidebar-active",
   );
 }
 
@@ -204,8 +204,8 @@ function SidebarSubmenu({ items, pathname, onNavigate, popover = false }: { item
             onClick={onNavigate}
             className={cn(
               "block rounded-md px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2",
-              "text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring/35",
-              active && "bg-primary/10 text-primary",
+              "text-sidebar-muted hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring/35",
+              active && "bg-sidebar-active text-sidebar-active-foreground",
             )}
           >
             {subitem.title}
@@ -219,12 +219,12 @@ function SidebarSubmenu({ items, pathname, onNavigate, popover = false }: { item
 function SidebarFooter({ collapsed, userEmail, onSignOut }: { collapsed: boolean; userEmail?: string; onSignOut: () => void }) {
   return (
     <div className="border-t border-border/70 p-4">
-      <div className={cn("mb-3 flex items-center gap-3 rounded-md bg-muted/60 p-3 ring-1 ring-border/60", collapsed && "justify-center p-2")}>
+      <div className={cn("mb-3 flex items-center gap-3 rounded-xl bg-card p-3 shadow-sm ring-1 ring-border/70", collapsed && "justify-center p-2")}>
         <UserCircle className="size-5 shrink-0 text-primary" />
         {!collapsed ? (
           <div className="min-w-0">
-            <div className="truncate text-sm font-semibold text-foreground">{userEmail ?? "Usuario"}</div>
-            <div className="text-xs text-muted-foreground">v0.0.1</div>
+            <div className="truncate text-sm font-semibold text-foreground">{userEmail ?? "Usuário"}</div>
+            <div className="text-xs text-muted-foreground">v1.02</div>
           </div>
         ) : null}
       </div>
@@ -238,8 +238,8 @@ function SidebarFooter({ collapsed, userEmail, onSignOut }: { collapsed: boolean
 
 function Topbar({ pathname, userEmail, mobileOpen, onOpenMobile, onSignOut }: { pathname: string; userEmail?: string; mobileOpen: boolean; onOpenMobile: () => void; onSignOut: () => void }) {
   return (
-    <header className="sticky top-0 z-30 h-16 border-b border-border/60 bg-card/92 backdrop-blur-xl lg:top-5 lg:rounded-tr-lg">
-      <div className="mx-auto flex h-full min-w-0 max-w-[1380px] items-center gap-3 px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-30 h-16 border-b border-border/60 bg-card/92 backdrop-blur-xl lg:top-5 lg:rounded-tr-xl">
+      <div className="mx-auto flex h-full min-w-0 max-w-[1560px] items-center gap-3 px-4 sm:px-6 lg:px-10 2xl:px-12">
         <button type="button" onClick={onOpenMobile} className="flex size-10 shrink-0 items-center justify-center rounded-md border border-border/80 bg-card text-muted-foreground transition hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 lg:hidden" aria-label="Abrir menu" aria-expanded={mobileOpen} aria-controls="menu-mobile">
           <Menu className="size-5" />
         </button>
@@ -275,7 +275,7 @@ function GlobalSearch() {
   return (
     <div className="relative ml-2 hidden w-full max-w-sm md:block">
       <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-      <Input className="h-9 border-border/70 bg-card/80 pl-9 shadow-none" placeholder="Buscar no sistema..." aria-label="Busca global" />
+      <Input className="h-10 min-h-10 border-border/70 bg-card/80 pl-9 shadow-none" placeholder="Buscar no sistema..." aria-label="Busca global" />
     </div>
   );
 }
@@ -309,13 +309,13 @@ function NotificationButton() {
   }, []);
   return (
     <div className="relative">
-      <IconButton label="Notificacoes" expanded={open} onClick={() => setOpen((current) => !current)}>
+      <IconButton label="Notificações" expanded={open} onClick={() => setOpen((current) => !current)}>
         <Bell className="size-5" />
       </IconButton>
       {open ? (
         <div className="fixed right-4 top-16 z-50 w-[min(20rem,calc(100vw-2rem))] rounded-lg border border-border/70 bg-popover p-4 text-popover-foreground shadow-[var(--shadow-soft)]">
-          <div className="text-sm font-semibold text-foreground">Notificacoes</div>
-          <p className="mt-1 text-sm text-muted-foreground">Nenhuma notificacao nova.</p>
+          <div className="text-sm font-semibold text-foreground">Notificações</div>
+          <p className="mt-1 text-sm text-muted-foreground">Nenhuma notificação nova.</p>
         </div>
       ) : null}
     </div>
@@ -333,16 +333,16 @@ function UserMenu({ userEmail, onSignOut }: { userEmail?: string; onSignOut: () 
   }, []);
   return (
     <div className="relative">
-      <button type="button" onClick={() => setOpen((current) => !current)} aria-label="Menu do usuario" aria-expanded={open} className="flex h-10 items-center gap-2 rounded-md border border-border/70 bg-card/85 px-2.5 text-foreground shadow-sm transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40">
+      <button type="button" onClick={() => setOpen((current) => !current)} aria-label="Menu do usuário" aria-expanded={open} className="flex h-10 items-center gap-2 rounded-lg border border-border/70 bg-card/85 px-2.5 text-foreground shadow-sm transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40">
         <UserCircle className="size-5 text-primary" />
-        <span className="hidden max-w-40 truncate text-sm font-medium sm:block">{userEmail ?? "Usuario"}</span>
+        <span className="hidden max-w-40 truncate text-sm font-medium sm:block">{userEmail ?? "Usuário"}</span>
         <ChevronDown className={cn("size-4 text-muted-foreground transition-transform duration-200", open && "rotate-180")} />
       </button>
       {open ? (
         <div className="absolute right-0 top-12 z-50 w-64 rounded-lg border border-border/70 bg-popover p-2 text-popover-foreground shadow-[var(--shadow-soft)]">
           <div className="border-b border-border px-3 py-2">
-            <div className="truncate text-sm font-semibold text-foreground">{userEmail ?? "Usuario"}</div>
-            <div className="text-xs text-muted-foreground">Sessao ativa</div>
+            <div className="truncate text-sm font-semibold text-foreground">{userEmail ?? "Usuário"}</div>
+            <div className="text-xs text-muted-foreground">Sessão ativa</div>
           </div>
           <button type="button" onClick={onSignOut} className="mt-2 flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40">
             <LogOut className="size-4" />
@@ -373,8 +373,8 @@ function MobileNavDrawer({ open, pathname, userEmail, onClose, onSignOut }: { op
       <aside id="menu-mobile" role="dialog" aria-modal="true" aria-label="Menu principal" className="relative flex h-full w-80 max-w-[88vw] flex-col border-r border-border bg-card text-foreground shadow-2xl">
         <div className="flex h-16 items-center justify-between border-b border-border px-4">
           <div className="flex items-center gap-3">
-            <span className="flex size-10 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground">AG</span>
-            <span className="font-bold text-foreground">Artec Gestao</span>
+            <span className="flex size-10 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground">AG</span>
+            <span className="font-bold text-foreground">Artec Gestão</span>
           </div>
           <button type="button" onClick={onClose} aria-label="Fechar menu" className="rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30">
             <X className="size-5" />
@@ -386,7 +386,10 @@ function MobileNavDrawer({ open, pathname, userEmail, onClose, onSignOut }: { op
           ))}
         </nav>
         <div className="border-t border-border p-4">
-          <div className="mb-3 truncate text-sm font-medium text-muted-foreground">{userEmail ?? "Usuario"}</div>
+          <div className="mb-3 min-w-0">
+            <div className="truncate text-sm font-medium text-muted-foreground">{userEmail ?? "Usuário"}</div>
+            <div className="text-xs text-muted-foreground">v1.02</div>
+          </div>
           <Button onClick={onSignOut} className="w-full">
             <LogOut className="size-4" />
             Sair

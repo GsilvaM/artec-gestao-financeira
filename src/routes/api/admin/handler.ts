@@ -28,7 +28,7 @@ async function listAllUsers() {
 
   while (true) {
     const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
-    if (error) throw Object.assign(new Error("Nao foi possivel listar usuarios."), { status: 500 });
+    if (error) throw Object.assign(new Error("Não foi possível listar usuários."), { status: 500 });
     users.push(...data.users);
     if (data.users.length < perPage) break;
     page += 1;
@@ -141,17 +141,17 @@ async function handleCreateUser(request: Request) {
   const phone = normalizeText(body?.phone, 40);
   const roleId = normalizeText(body?.roleId) || await findRoleIdByName("user");
 
-  if (!email || !isValidEmail(email)) return json({ error: "Email invalido." }, { status: 400 });
+  if (!email || !isValidEmail(email)) return json({ error: "Email inválido." }, { status: 400 });
   const passwordError = validatePassword(password);
   if (passwordError) return json({ error: passwordError }, { status: 400 });
 
   if (roleId) {
     const role = await prisma.role.findFirst({ where: { id: roleId, deletedAt: null } });
-    if (!role) return json({ error: "Perfil selecionado nao existe." }, { status: 400 });
+    if (!role) return json({ error: "Perfil selecionado não existe." }, { status: 400 });
   }
 
   const existing = await assertUniqueEmail(email);
-  if (existing) return json({ error: "Ja existe um usuario com este email." }, { status: 409 });
+  if (existing) return json({ error: "Já existe um usuário com este email." }, { status: 409 });
 
   const admin = createAdminClient();
   const { data, error } = await admin.auth.admin.createUser({
@@ -162,7 +162,7 @@ async function handleCreateUser(request: Request) {
   });
 
   if (error || !data.user) {
-    return json({ error: "Erro ao cadastrar usuario." }, { status: 400 });
+    return json({ error: "Erro ao cadastrar usuário." }, { status: 400 });
   }
 
   try {
@@ -206,14 +206,14 @@ async function handleRequestAccess(request: Request) {
   const phone = normalizeText(body?.phone, 40);
   const message = normalizeText(body?.message, 1000);
 
-  if (!name) return json({ error: "Nome completo e obrigatorio." }, { status: 400 });
-  if (!email || !isValidEmail(email)) return json({ error: "Email invalido." }, { status: 400 });
+  if (!name) return json({ error: "Nome completo é obrigatório." }, { status: 400 });
+  if (!email || !isValidEmail(email)) return json({ error: "Email inválido." }, { status: 400 });
   const passwordError = validatePassword(password);
   if (passwordError) return json({ error: passwordError }, { status: 400 });
-  if (password !== confirmPassword) return json({ error: "A confirmacao de senha nao confere." }, { status: 400 });
+  if (password !== confirmPassword) return json({ error: "A confirmação de senha não confere." }, { status: 400 });
 
   const existing = await assertUniqueEmail(email);
-  if (existing) return json({ error: "Ja existe uma conta ou solicitacao para este email." }, { status: 409 });
+  if (existing) return json({ error: "Já existe uma conta ou solicitação para este email." }, { status: 409 });
 
   const roleId = await findRoleIdByName("user");
   const admin = createAdminClient();
@@ -224,7 +224,7 @@ async function handleRequestAccess(request: Request) {
     user_metadata: { name, phone, access_request_message: message },
   });
 
-  if (error || !data.user) return json({ error: "Nao foi possivel enviar a solicitacao." }, { status: 400 });
+  if (error || !data.user) return json({ error: "Não foi possível enviar a solicitação." }, { status: 400 });
 
   try {
     await prisma.profile.create({
@@ -241,12 +241,12 @@ async function handleRequestAccess(request: Request) {
     throw err;
   }
 
-  return json({ message: "Sua solicitacao foi enviada e esta aguardando aprovacao de um administrador." }, { status: 201 });
+  return json({ message: "Sua solicitação foi enviada e está aguardando aprovação de um administrador." }, { status: 201 });
 }
 
 async function handleUpdateUser(request: Request, userId: string | undefined) {
   const { user: currentUser, profile: currentProfile } = await requireAdminUser(request);
-  if (!userId) return json({ error: "Usuario nao informado." }, { status: 400 });
+  if (!userId) return json({ error: "Usuário não informado." }, { status: 400 });
 
   const body = (await request.json().catch(() => null)) as { action?: string; roleId?: string } | null;
   const action = normalizeText(body?.action, 32);
@@ -254,9 +254,9 @@ async function handleUpdateUser(request: Request, userId: string | undefined) {
   const admin = createAdminClient();
 
   const target = await findOrCreateProfileForAuthUser(userId);
-  if (!target) return json({ error: "Usuario nao encontrado." }, { status: 404 });
+  if (!target) return json({ error: "Usuário não encontrado." }, { status: 404 });
   if (userId === currentUser.id && ["reject", "disable"].includes(action)) {
-    return json({ error: "Voce nao pode bloquear sua propria conta." }, { status: 400 });
+    return json({ error: "Você não pode bloquear sua própria conta." }, { status: 400 });
   }
 
   if (action === "approve") {
@@ -294,7 +294,7 @@ async function handleUpdateUser(request: Request, userId: string | undefined) {
   if (action === "role") {
     const roleId = normalizeText(body?.roleId) || null;
     const role = roleId ? await prisma.role.findFirst({ where: { id: roleId, deletedAt: null } }) : null;
-    if (!role) return json({ error: "Perfil selecionado nao existe." }, { status: 400 });
+    if (!role) return json({ error: "Perfil selecionado não existe." }, { status: 400 });
     if (role.name === "primary_admin" && currentProfile.role?.name !== "primary_admin") {
       return json({ error: "Somente o administrador principal pode promover outro administrador principal." }, { status: 403 });
     }
@@ -302,7 +302,7 @@ async function handleUpdateUser(request: Request, userId: string | undefined) {
     return json({ ok: true });
   }
 
-  return json({ error: "Acao administrativa invalida." }, { status: 400 });
+  return json({ error: "Ação administrativa inválida." }, { status: 400 });
 }
 
 export default async function handler(request: Request): Promise<Response> {
@@ -320,13 +320,13 @@ export default async function handler(request: Request): Promise<Response> {
     }
 
     if (resource !== "users") {
-      return json({ error: "Recurso administrativo nao encontrado." }, { status: 404 });
+      return json({ error: "Recurso administrativo não encontrado." }, { status: 404 });
     }
 
     if (request.method === "GET") return await handleGetUsers(request);
     if (request.method === "POST") return await handleCreateUser(request);
     if (request.method === "PATCH") return await handleUpdateUser(request, segments[1]);
-    return json({ error: "Metodo nao permitido." }, { status: 405 });
+    return json({ error: "Método não permitido." }, { status: 405 });
   } catch (err) {
     const error = err instanceof Error ? err : new Error("Erro desconhecido.");
     const status = typeof (error as Error & { status?: unknown }).status === "number"

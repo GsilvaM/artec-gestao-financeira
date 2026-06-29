@@ -44,7 +44,7 @@ export function Component() {
   const { receitas, despesas, saldo, rows, periodLabel } = useMemo(() => buildReport(entries, filterMonth), [entries, filterMonth]);
 
   return (
-    <PageShell icon={FileBarChart} title="Relatorio Financeiro" subtitle="Analise consolidada de receitas, despesas e saldo.">
+    <PageShell icon={FileBarChart} title="Relatório financeiro" subtitle="Análise consolidada de receitas, despesas e saldo.">
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard title="Receitas" value={formatMoney(receitas)} icon={ArrowUpCircle} tone="green" />
         <MetricCard title="Despesas" value={formatMoney(despesas)} icon={ArrowDownCircle} tone="red" />
@@ -106,7 +106,7 @@ function buildReport(entries: FinancialEntryRow[], filterMonth: string) {
 }
 
 function formatPeriod(filterMonth: string) {
-  if (!filterMonth) return "Periodo atual";
+  if (!filterMonth) return "Período atual";
   const [year, month] = filterMonth.split("-");
   const date = new Date(Number(year), Number(month) - 1, 1);
   return date.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
@@ -119,11 +119,11 @@ function FinancialReportTable({ rows, isLoading, hasError, periodLabel }: { rows
         <TableHeader>
           <TableRow>
             <TableHead>Indicador</TableHead>
-            <TableHead>Periodo</TableHead>
+            <TableHead>Período</TableHead>
             <TableHead>Tipo</TableHead>
             <TableHead>Realizado</TableHead>
             <TableHead>Meta</TableHead>
-            <TableHead>Variacao</TableHead>
+            <TableHead>Variação</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -159,7 +159,7 @@ function FinancialReportTable({ rows, isLoading, hasError, periodLabel }: { rows
               <TableCell colSpan={6} className="p-0">
                 <EmptyState
                   title="Nenhum dado financeiro encontrado."
-                  description={`Nao ha lancamentos para ${periodLabel.toLowerCase()} com os filtros atuais.`}
+                  description={`Não há lançamentos para ${periodLabel.toLowerCase()} com os filtros atuais.`}
                 />
               </TableCell>
             </TableRow>

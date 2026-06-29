@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { defineConfig, env } from "prisma/config";
 
 export default defineConfig({
@@ -7,6 +8,6 @@ export default defineConfig({
     seed: "bun run prisma/seed.ts",
   },
   datasource: {
-    url: env("DIRECT_URL") || env("DATABASE_URL"),
+    url: process.env.DIRECT_URL ?? env("DATABASE_URL"),
   },
 });

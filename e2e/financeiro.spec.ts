@@ -7,7 +7,7 @@ test.describe("Lançamentos Financeiros", () => {
 
   test("page loads with title and empty state", async ({ page }) => {
     await expect(page.getByRole("heading", { name: "Lançamentos" })).toBeVisible();
-    await expect(page.getByText(/Nenhum lançamento encontrado|Total Lançamentos/)).toBeVisible();
+    await expect(page.getByText(/Nenhum lançamento encontrado|Receitas/)).toBeVisible();
   });
 
   test("novo lançamento button is present and enabled", async ({ page }) => {

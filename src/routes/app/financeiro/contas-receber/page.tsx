@@ -138,7 +138,7 @@ export function Component() {
   ];
 
   return (
-    <PageShell icon={CircleDollarSign} title="Contas a Receber" subtitle="Controle recebíveis, clientes e previsões de entrada" actionLabel="Nova Conta" onAction={() => { resetForm(); setOpen(true); }}>
+    <PageShell icon={CircleDollarSign} title="Contas a receber" subtitle="Controle recebíveis, clientes e previsões de entrada" actionLabel="Nova conta" onAction={() => { resetForm(); setOpen(true); }}>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard title="A receber" value={formatMoney(openAmount)} icon={Banknote} tone="green" helper={`${openEntries.length} conta(s)`} />
         <MetricCard title="Recebidas" value={formatMoney(receivedAmount)} icon={CalendarCheck} tone="blue" />
@@ -175,7 +175,7 @@ export function Component() {
                 </TableCell>
               </TableRow>
             )) : (
-              <TableRow><TableCell colSpan={7} className="p-0"><EmptyState title="Nenhuma conta a receber encontrada." description="Cadastre receitas previstas para acompanhar entradas futuras." actionLabel="Nova Conta" onAction={() => { resetForm(); setOpen(true); }} /></TableCell></TableRow>
+              <TableRow><TableCell colSpan={7} className="p-0"><EmptyState title="Nenhuma conta a receber encontrada." description="Cadastre receitas previstas para acompanhar entradas futuras." actionLabel="Nova conta" onAction={() => { resetForm(); setOpen(true); }} /></TableCell></TableRow>
             )}
           </TableBody>
         </Table>
@@ -184,7 +184,7 @@ export function Component() {
         <DialogContent className="relative">
           <DialogCloseButton onClick={() => { resetForm(); setOpen(false); }} />
           <DialogHeader>
-            <DialogTitle>{isEditing ? "Editar Conta a Receber" : "Nova Conta a Receber"}</DialogTitle>
+            <DialogTitle>{isEditing ? "Editar conta a receber" : "Nova conta a receber"}</DialogTitle>
             <DialogDescription>{isEditing ? "Altere os dados da conta." : "Registre uma receita prevista."}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -209,7 +209,7 @@ export function Component() {
         <DialogContent className="relative">
           <DialogCloseButton onClick={() => setDeletingId(null)} />
           <DialogHeader>
-            <DialogTitle>Excluir Conta a Receber</DialogTitle>
+            <DialogTitle>Excluir conta a receber</DialogTitle>
             <DialogDescription>Esta ação não pode ser desfeita. Confirma a exclusão?</DialogDescription>
           </DialogHeader>
           <DialogFooter>

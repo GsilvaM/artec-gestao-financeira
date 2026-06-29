@@ -46,7 +46,7 @@ export default async function handler(request: Request): Promise<Response> {
         console.log(`[PERF] financeiro.auth: ${authDuration.toFixed(2)}ms`);
       }
     } catch (err) {
-      const error = err instanceof Error ? err : new Error("Sessao invalida.");
+      const error = err instanceof Error ? err : new Error("Sessão inválida.");
       const status = typeof (error as Error & { status?: unknown }).status === "number"
         ? (error as Error & { status: number }).status
         : 401;
@@ -58,7 +58,7 @@ export default async function handler(request: Request): Promise<Response> {
   const args = { request, params: { id } };
 
   if (method === "GET") {
-    if (!mod.loader) return json({ error: "Method not allowed" }, { status: 405 });
+    if (!mod.loader) return json({ error: "Método não permitido." }, { status: 405 });
     const response = await mod.loader(args);
     const duration = performance.now() - requestStart;
     if (duration > 150 || process.env.PERF_LOG === "1") {
@@ -67,7 +67,7 @@ export default async function handler(request: Request): Promise<Response> {
     return response;
   }
 
-  if (!mod.action) return json({ error: "Method not allowed" }, { status: 405 });
+  if (!mod.action) return json({ error: "Método não permitido." }, { status: 405 });
   const response = await mod.action(args);
   const duration = performance.now() - requestStart;
   if (duration > 150 || process.env.PERF_LOG === "1") {

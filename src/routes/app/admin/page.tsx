@@ -55,7 +55,7 @@ const emptyRoles: AdminRole[] = [];
 async function getAccessToken() {
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
-  if (!token) throw new Error("Sessao expirada. Entre novamente.");
+  if (!token) throw new Error("Sessão expirada. Entre novamente.");
   return token;
 }
 
@@ -65,7 +65,7 @@ async function fetchAdminUsers(): Promise<AdminUsersResponse> {
     headers: { Authorization: `Bearer ${token}` },
   });
   const payload = await response.json();
-  if (!response.ok) throw new Error(payload.error ?? "Erro ao carregar usuarios.");
+  if (!response.ok) throw new Error(payload.error ?? "Erro ao carregar usuários.");
   return payload;
 }
 
@@ -80,7 +80,7 @@ async function createAdminUser(input: CreateUserInput) {
     body: JSON.stringify(input),
   });
   const payload = await response.json();
-  if (!response.ok) throw new Error(payload.error ?? "Erro ao cadastrar usuario.");
+  if (!response.ok) throw new Error(payload.error ?? "Erro ao cadastrar usuário.");
   return payload as { id: string };
 }
 
@@ -95,7 +95,7 @@ async function updateAdminUser(input: { id: string; action: string; roleId?: str
     body: JSON.stringify({ action: input.action, roleId: input.roleId }),
   });
   const payload = await response.json();
-  if (!response.ok) throw new Error(payload.error ?? "Erro ao atualizar usuario.");
+  if (!response.ok) throw new Error(payload.error ?? "Erro ao atualizar usuário.");
   return payload as { ok: true };
 }
 
@@ -113,8 +113,8 @@ function roleLabel(roleName: string) {
   const labels: Record<string, string> = {
     primary_admin: "Admin principal",
     admin: "Admin",
-    user: "Usuario",
-    proprietario: "Proprietario",
+    user: "Usuário",
+    proprietario: "Proprietário",
     financeiro: "Financeiro",
   };
   return labels[roleName] ?? (roleName || "Sem perfil");
@@ -171,11 +171,11 @@ export function Component() {
     event.preventDefault();
     try {
       await createMutation.mutateAsync({ email: email.trim(), password, name: name.trim(), phone: phone.trim(), roleId });
-      toast.success("Usuario cadastrado e aprovado.");
+      toast.success("Usuário cadastrado e aprovado.");
       resetForm();
       setOpen(false);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Erro ao cadastrar usuario");
+      toast.error(err instanceof Error ? err.message : "Erro ao cadastrar usuário");
     }
   }
 
@@ -190,16 +190,16 @@ export function Component() {
     if (action !== "role" && !window.confirm(`Deseja ${labels[action]} ${user.email}?`)) return;
     try {
       await updateMutation.mutateAsync({ id: user.id, action, roleId: roleIdValue });
-      toast.success("Usuario atualizado.");
+      toast.success("Usuário atualizado.");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Erro ao atualizar usuario.");
+      toast.error(err instanceof Error ? err.message : "Erro ao atualizar usuário.");
     }
   }
 
   return (
-    <PageShell icon={Shield} title="Admin" subtitle="Aprovacao de acessos, perfis e controles administrativos" actionLabel="Novo Usuario" onAction={() => setOpen(true)}>
+    <PageShell icon={Shield} title="Admin" subtitle="Aprovação de acessos, perfis e controles administrativos" actionLabel="Novo usuário" onAction={() => setOpen(true)}>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard title="Usuarios" value={String(users.length)} icon={Users} tone="blue" />
+        <MetricCard title="Usuários" value={String(users.length)} icon={Users} tone="blue" />
         <MetricCard title="Pendentes" value={String(pendingUsers)} icon={Activity} tone="amber" />
         <MetricCard title="Aprovados" value={String(approvedUsers)} icon={CheckCircle2} tone="green" />
         <MetricCard title="Bloqueados" value={String(blockedUsers)} icon={XCircle} tone="red" />
@@ -209,7 +209,7 @@ export function Component() {
         <CardContent className="grid gap-3 p-4 sm:p-4 md:grid-cols-[1fr_220px]">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input className="pl-9" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Nome, email, telefone ou perfil" aria-label="Buscar usuario" />
+            <Input className="pl-9" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Nome, e-mail, telefone ou perfil" aria-label="Buscar usuário" />
           </div>
           <Select
             value={statusFilter}
@@ -230,7 +230,7 @@ export function Component() {
         <Table>
           <TableHeader>
             <TableRow>
-              {["Usuario", "Email", "Perfil", "Status", "Solicitado em", "Ultimo acesso", "Acoes"].map((column) => (
+              {["Usuário", "E-mail", "Perfil", "Status", "Solicitado em", "Último acesso", "Ações"].map((column) => (
                 <TableHead key={column}>{column}</TableHead>
               ))}
             </TableRow>
@@ -238,12 +238,12 @@ export function Component() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-48 text-center text-sm text-muted-foreground">Carregando usuarios...</TableCell>
+                <TableCell colSpan={7} className="h-48 text-center text-sm text-muted-foreground">Carregando usuários...</TableCell>
               </TableRow>
             ) : error ? (
               <TableRow>
                 <TableCell colSpan={7} className="p-0">
-                  <EmptyState title="Nao foi possivel carregar usuarios." description={error instanceof Error ? error.message : "Verifique as credenciais do Supabase e tente novamente."} />
+                  <EmptyState title="Não foi possível carregar usuários." description={error instanceof Error ? error.message : "Verifique as credenciais do Supabase e tente novamente."} />
                 </TableCell>
               </TableRow>
             ) : filteredUsers.length ? (
@@ -288,7 +288,7 @@ export function Component() {
             ) : (
               <TableRow>
                 <TableCell colSpan={7} className="p-0">
-                  <EmptyState title="Nenhum usuario encontrado." description="Cadastre usuarios ou aguarde novas solicitacoes de acesso." actionLabel="Novo Usuario" onAction={() => setOpen(true)} />
+                  <EmptyState title="Nenhum usuário encontrado." description="Cadastre usuários ou aguarde novas solicitações de acesso." actionLabel="Novo usuário" onAction={() => setOpen(true)} />
                 </TableCell>
               </TableRow>
             )}
@@ -300,13 +300,13 @@ export function Component() {
         <DialogContent className="relative">
           <DialogCloseButton onClick={() => { resetForm(); setOpen(false); }} />
           <DialogHeader>
-            <DialogTitle>Novo Usuario</DialogTitle>
-            <DialogDescription>Cadastre um usuario ja aprovado no Supabase Auth e vincule um perfil do sistema.</DialogDescription>
+            <DialogTitle>Novo usuário</DialogTitle>
+            <DialogDescription>Cadastre um usuário já aprovado no Supabase Auth e vincule um perfil do sistema.</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSave}>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Nome">
-                <Input value={name} onChange={(event) => setName(event.target.value)} placeholder="Nome do usuario" />
+                <Input value={name} onChange={(event) => setName(event.target.value)} placeholder="Nome do usuário" />
               </Field>
               <Field label="Telefone">
                 <Input value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="(00) 00000-0000" />
@@ -315,7 +315,7 @@ export function Component() {
                 <Input type="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="usuario@email.com" />
               </Field>
               <Field label="Senha">
-                <Input type="password" required minLength={8} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Minimo 8 caracteres" />
+                <Input type="password" required minLength={8} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Mínimo 8 caracteres" />
               </Field>
               <Field label="Perfil">
                 <Select value={roleId} onChange={(event) => setRoleId(event.target.value)} placeholder="Perfil padrao" options={roles.map((role) => ({ value: role.id, label: roleLabel(role.name) }))} />

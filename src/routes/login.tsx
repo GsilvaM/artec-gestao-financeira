@@ -53,10 +53,10 @@ export function Component() {
     const payload = await response.json().catch(() => null);
     setSubmitting(false);
     if (!response.ok) {
-      toast.error(payload?.error ?? "Nao foi possivel enviar a solicitacao.");
+      toast.error(payload?.error ?? "Não foi possível enviar a solicitação.");
       return;
     }
-    toast.success(payload?.message ?? "Solicitacao enviada. Aguarde aprovacao.");
+    toast.success(payload?.message ?? "Solicitação enviada. Aguarde aprovação.");
     setMode("login");
     setPassword("");
     setConfirmPassword("");
@@ -79,7 +79,7 @@ export function Component() {
           </div>
           <h1 className="text-2xl font-bold leading-none text-foreground">Artec Gestão</h1>
           <CardDescription>
-            {mode === "login" ? "Entre com sua conta aprovada para acessar o painel." : "Solicite acesso. A entrada depende da aprovacao de um administrador."}
+            {mode === "login" ? "Entre com sua conta aprovada para acessar o painel." : "Solicite acesso. A entrada depende da aprovação de um administrador."}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -118,20 +118,20 @@ export function Component() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="request-password">Senha</Label>
-                  <Input id="request-password" type="password" autoComplete="new-password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Minimo 8 caracteres" />
+                  <Input id="request-password" type="password" autoComplete="new-password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mínimo 8 caracteres" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="request-confirm-password">Confirmar senha</Label>
                   <Input id="request-confirm-password" type="password" autoComplete="new-password" required minLength={8} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Repita a senha" />
                 </div>
                 <div className="space-y-2 sm:col-span-2">
-                  <Label htmlFor="request-message">Observacao</Label>
+                  <Label htmlFor="request-message">Observação</Label>
                   <Textarea id="request-message" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Explique brevemente por que precisa acessar o sistema." />
                 </div>
               </div>
               <Button type="submit" disabled={submitting} className="w-full">
                 <Send className="size-4" />
-                {submitting ? "Enviando..." : "Enviar solicitacao"}
+                {submitting ? "Enviando..." : "Enviar solicitação"}
               </Button>
               <Button type="button" variant="ghost" className="w-full" onClick={() => setMode("login")}>
                 <ArrowLeft className="size-4" />

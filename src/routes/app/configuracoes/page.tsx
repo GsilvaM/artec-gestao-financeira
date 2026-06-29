@@ -11,11 +11,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { PageShell } from "@/components/layout/page-shell";
 
 const settings = [
-  { icon: Building2, title: "Empresa", description: "Dados comerciais, CNPJ, endereco e contatos" },
-  { icon: UserCog, title: "Usuario", description: "Perfil, preferencias de sessao e identificacao" },
-  { icon: Palette, title: "Preferencias", description: "Tema visual, idioma e formato de exibicao" },
-  { icon: Bell, title: "Notificacoes", description: "Alertas de vencimentos, contas e relatorios" },
-  { icon: CreditCard, title: "Financeiro", description: "Parametros financeiros, centros e categorias padrao" },
+  { icon: Building2, title: "Empresa", description: "Dados comerciais, CNPJ, endereço e contatos" },
+  { icon: UserCog, title: "Usuário", description: "Perfil, preferências de sessão e identificação" },
+  { icon: Palette, title: "Preferências", description: "Tema visual, idioma e formato de exibição" },
+  { icon: Bell, title: "Notificações", description: "Alertas de vencimentos, contas e relatórios" },
+  { icon: CreditCard, title: "Financeiro", description: "Parâmetros financeiros, centros e categorias padrão" },
 ];
 
 export function Component() {
@@ -27,11 +27,11 @@ export function Component() {
     await new Promise((resolve) => setTimeout(resolve, 250));
     setSaving(false);
     setActive(null);
-    toast.success("Configuracao salva");
+    toast.success("Configuração salva");
   }
 
   return (
-    <PageShell icon={Settings} title="Configuracoes" subtitle="Ajustes gerais e preferencias do sistema">
+    <PageShell icon={Settings} title="Configurações" subtitle="Ajustes gerais e preferências do sistema">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {settings.map((item) => (
           <Card key={item.title} className="group transition-colors hover:border-primary/25">
@@ -56,15 +56,15 @@ export function Component() {
             <DialogDescription>{active?.description}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Nome/Identificacao"><Input placeholder={active?.title === "Empresa" ? "Artec Climatizados" : active?.title} /></Field>
+            <Field label="Nome/identificação"><Input placeholder={active?.title === "Empresa" ? "Artec Climatizados" : active?.title} /></Field>
             <Field label="Status"><Select options={[{ value: "ativo", label: "Ativo" }, { value: "rascunho", label: "Rascunho" }]} placeholder="Selecione" /></Field>
-            <Field label="E-mail de referencia"><Input type="email" placeholder="contato@empresa.com" /></Field>
+            <Field label="E-mail de referência"><Input type="email" placeholder="contato@empresa.com" /></Field>
             <Field label="Telefone"><Input placeholder="(00) 00000-0000" /></Field>
-            <div className="sm:col-span-2"><Field label="Observacoes"><Textarea placeholder="Notas internas para esta configuracao" /></Field></div>
+            <div className="sm:col-span-2"><Field label="Observações"><Textarea placeholder="Notas internas para esta configuração" /></Field></div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setActive(null)}>Cancelar</Button>
-            <Button onClick={handleSave} disabled={saving}>{saving ? "Salvando..." : "Salvar Configuracao"}</Button>
+            <Button onClick={handleSave} disabled={saving}>{saving ? "Salvando..." : "Salvar configuração"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -8,7 +8,7 @@ function createPrismaClient() {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
     throw Object.assign(
-      new Error("DATABASE_URL nao configurada. Defina a variavel de ambiente DATABASE_URL."),
+      new Error("DATABASE_URL não configurada. Defina a variável de ambiente DATABASE_URL."),
       { status: 500 },
     );
   }
