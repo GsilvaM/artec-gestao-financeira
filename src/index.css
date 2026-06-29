@@ -5,6 +5,13 @@
 
 :root {
   color-scheme: light;
+  /* Dashboard semantic tokens: keep financial meaning separate from component usage. */
+  --color-revenue: #1d9e75;
+  --color-expense: #d85a30;
+  --color-balance: #185fa5;
+  --color-pending: #ba7517;
+  --color-surface: #f7f8fa;
+  --color-card-bg: #1a3557;
   --background: #f5f6f8;
   --foreground: #0f172a;
   --card: #ffffff;
@@ -39,9 +46,9 @@
   --sidebar-active: #e7f1f7;
   --sidebar-active-foreground: #184e77;
   --sidebar-muted: #64748b;
-  --chart-revenue: #2f9e71;
-  --chart-expense: #e06a4f;
-  --chart-balance: #1e6091;
+  --chart-revenue: var(--color-revenue);
+  --chart-expense: var(--color-expense);
+  --chart-balance: var(--color-balance);
   --radius: 0.875rem;
   --shadow-soft: 0 18px 42px -30px rgba(15, 23, 42, 0.28);
   --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.05), 0 18px 44px -36px rgba(15, 23, 42, 0.3);
@@ -49,6 +56,12 @@
 
 .dark {
   color-scheme: dark;
+  --color-revenue: #63e6be;
+  --color-expense: #ff9f7d;
+  --color-balance: #74c0fc;
+  --color-pending: #fbbf24;
+  --color-surface: #1e2a3b;
+  --color-card-bg: #102a48;
   --background: #081525;
   --foreground: #edf6ff;
   --card: #0d1f33;
@@ -83,9 +96,9 @@
   --sidebar-active: #143a5d;
   --sidebar-active-foreground: #d9efff;
   --sidebar-muted: #9fb3c8;
-  --chart-revenue: #63e6be;
-  --chart-expense: #ff9f7d;
-  --chart-balance: #74c0fc;
+  --chart-revenue: var(--color-revenue);
+  --chart-expense: var(--color-expense);
+  --chart-balance: var(--color-balance);
   --shadow-soft: 0 18px 44px -26px rgba(0, 0, 0, 0.7);
   --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.04), 0 20px 44px -30px rgba(0, 0, 0, 0.72);
 }

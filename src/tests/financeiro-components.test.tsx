@@ -104,6 +104,13 @@ describe("financial components", () => {
     expect(screen.getAllByText(moneyText("340,00")).length).toBeGreaterThan(0);
   });
 
+  it("shows dashboard skeletons while KPI data is loading", () => {
+    vi.stubGlobal("fetch", vi.fn(() => new Promise(() => undefined)));
+    const { container } = renderWithClient(<MemoryRouter><Dashboard /></MemoryRouter>);
+
+    expect(container.querySelectorAll(".animate-pulse").length).toBeGreaterThan(0);
+  });
+
   it("keeps tables and modals inside responsive containers", async () => {
     renderWithClient(<Lancamentos />);
 

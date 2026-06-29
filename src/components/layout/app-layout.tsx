@@ -178,13 +178,13 @@ function sidebarItemClasses(active: boolean, collapsed = false) {
   return cn(
     "motion-sidebar-item flex h-11 w-full items-center gap-3 rounded-lg px-3 text-sm font-semibold text-sidebar-muted transition hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/35",
     collapsed && "justify-center px-0",
-    active && "bg-sidebar-active text-sidebar-active-foreground shadow-sm ring-1 ring-primary/15 hover:bg-sidebar-active",
+    active && "border-l-2 border-primary bg-sidebar-active text-sidebar-active-foreground shadow-sm ring-1 ring-primary/15 hover:bg-sidebar-active",
   );
 }
 
 function SidebarItem({ href, title, icon: Icon, active, collapsed, onNavigate }: { href: string; title: string; icon: NavigationItem["icon"]; active: boolean; collapsed: boolean; onNavigate?: () => void }) {
   return (
-    <NavLink to={href} end={href === "/app"} title={collapsed ? title : undefined} aria-current={active ? "page" : undefined} onClick={onNavigate} className={sidebarItemClasses(active, collapsed)}>
+    <NavLink to={href} end={href === "/app"} title={title} aria-label={title} aria-current={active ? "page" : undefined} onClick={onNavigate} className={sidebarItemClasses(active, collapsed)}>
       <Icon className="size-5 shrink-0" />
       {!collapsed ? <span className="truncate">{title}</span> : null}
     </NavLink>
@@ -200,6 +200,8 @@ function SidebarSubmenu({ items, pathname, onNavigate, popover = false }: { item
           <NavLink
             key={subitem.href}
             to={subitem.href}
+            title={subitem.title}
+            aria-label={subitem.title}
             aria-current={active ? "page" : undefined}
             onClick={onNavigate}
             className={cn(
@@ -275,7 +277,7 @@ function GlobalSearch() {
   return (
     <div className="relative ml-2 hidden w-full max-w-sm md:block">
       <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-      <Input className="h-10 min-h-10 border-border/70 bg-card/80 pl-9 shadow-none" placeholder="Buscar no sistema..." aria-label="Busca global" />
+      <Input className="h-10 min-h-10 border-transparent bg-[#F1F5F9] pl-9 shadow-none focus-visible:ring-2 focus-visible:ring-primary/35 dark:bg-muted" placeholder="Buscar lançamentos, relatórios..." aria-label="Busca global" />
     </div>
   );
 }
@@ -334,7 +336,7 @@ function UserMenu({ userEmail, onSignOut }: { userEmail?: string; onSignOut: () 
   return (
     <div className="relative">
       <button type="button" onClick={() => setOpen((current) => !current)} aria-label="Menu do usuário" aria-expanded={open} className="flex h-10 items-center gap-2 rounded-lg border border-border/70 bg-card/85 px-2.5 text-foreground shadow-sm transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40">
-        <UserCircle className="size-5 text-primary" />
+        <UserAvatar label={userEmail ?? "Usuário"} />
         <span className="hidden max-w-40 truncate text-sm font-medium sm:block">{userEmail ?? "Usuário"}</span>
         <ChevronDown className={cn("size-4 text-muted-foreground transition-transform duration-200", open && "rotate-180")} />
       </button>
@@ -351,6 +353,23 @@ function UserMenu({ userEmail, onSignOut }: { userEmail?: string; onSignOut: () 
         </div>
       ) : null}
     </div>
+  );
+}
+
+function UserAvatar({ label }: { label: string }) {
+  const palette = ["#185FA5", "#1D9E75", "#D85A30", "#7C3AED", "#BA7517"];
+  const hash = Array.from(label).reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const initials = label
+    .split(/[\s@._-]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("") || "U";
+
+  return (
+    <span className="flex size-7 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white" style={{ backgroundColor: palette[hash % palette.length] }}>
+      {initials}
+    </span>
   );
 }
 
