@@ -35,10 +35,10 @@ export function TransactionCard({
   const isReceita = transaction.type === "receita";
 
   return (
-    <Card className="overflow-hidden rounded-[10px] border-[0.5px] border-border/70 bg-[var(--surface-card)] transition duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-[var(--shadow-soft)]">
+    <Card className="overflow-hidden rounded-[10px] border-[0.5px] border-border/70 bg-[var(--surface-card)] transition duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-[var(--shadow-soft)] dark:border-white/10 dark:bg-[linear-gradient(180deg,#292925_0%,#22221f_100%)]">
       <CardContent className="px-4 py-3.5">
         <div className="flex items-start gap-2.5">
-          <span className={cn("mt-px flex size-7 shrink-0 items-center justify-center rounded-full", isReceita ? "bg-[var(--bg-success)] text-[var(--text-success)]" : "bg-[var(--bg-danger)] text-[var(--text-danger)]")}>
+          <span className={cn("mt-px flex size-7 shrink-0 items-center justify-center rounded-full shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]", isReceita ? "bg-[var(--bg-success)] text-[var(--text-success)] dark:bg-[#073a1c]" : "bg-[var(--bg-danger)] text-[var(--text-danger)] dark:bg-[#4a1010]")}>
             {isReceita ? <ArrowUp className="size-[13px]" /> : <ArrowDown className="size-[13px]" />}
           </span>
           <div className="min-w-0 flex-1">
@@ -46,6 +46,11 @@ export function TransactionCard({
             <p className="mt-px truncate text-[11px] leading-4 text-[var(--text-muted)]">
               {[transaction.categoryName, formatDate(transaction.date)].filter(Boolean).join(" · ")}
             </p>
+            {transaction.clientName || transaction.collaboratorName ? (
+              <p className="mt-px truncate text-[11px] leading-4 text-[var(--text-muted)]">
+                {[transaction.clientName, transaction.collaboratorName].filter(Boolean).join(" / ")}
+              </p>
+            ) : null}
           </div>
           <div className="shrink-0 text-right">
             <p className={cn("text-sm font-medium leading-5 tabular-nums", isReceita ? "text-[var(--text-success)]" : "text-[var(--text-danger)]")}>
@@ -80,3 +85,4 @@ export function TransactionCard({
     </Card>
   );
 }
+

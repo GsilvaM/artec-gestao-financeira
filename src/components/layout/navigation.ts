@@ -46,6 +46,7 @@ export const navigationItems: NavigationItem[] = [
     items: [
       { title: "Clientes", href: "/app/cadastros/clientes" },
       { title: "Fornecedores", href: "/app/cadastros/fornecedores" },
+      { title: "Colaboradores", href: "/app/cadastros/colaboradores" },
     ],
   },
   {

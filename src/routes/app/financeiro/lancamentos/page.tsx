@@ -11,6 +11,7 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useFinancialEntries, useCreateFinancialEntry, useUpdateFinancialEntry, useDeleteFinancialEntry } from "@/domain/financeiro/hooks/use-financial-entries";
 import { useCategories } from "@/domain/financeiro/hooks/use-categories";
+import { useCollaborators } from "@/domain/financeiro/hooks/use-collaborators";
 import { useAuthStore } from "@/lib/supabase/auth-store";
 import { calculateFinancialSummary } from "@/domain/financeiro/calculations";
 import { formatMoney } from "@/lib/utils";
@@ -24,7 +25,8 @@ const schema = z.object({
   tipo: z.enum(["receita", "despesa"], { required_error: "Informe o tipo" }),
   categoria: z.string().min(1, "Selecione a categoria"),
   descricao: z.string().min(3, "Informe a descrição"),
-  pessoa: z.string().optional(),
+  cliente: z.string().optional(),
+  colaborador: z.string().optional(),
   valor: z.coerce.number().positive("Informe um valor maior que zero"),
   status: z.enum(["aberto", "pago", "vencido"]),
   observacoes: z.string().optional(),
@@ -37,7 +39,8 @@ const initialForm: FormState = {
   tipo: "receita",
   categoria: "",
   descricao: "",
-  pessoa: "",
+  cliente: "",
+  colaborador: "",
   valor: 0,
   status: "aberto",
   observacoes: "",
@@ -80,6 +83,7 @@ export function Component() {
   const user = useAuthStore((state) => state.user);
   const { data: entries, isLoading, error } = useFinancialEntries(filters);
   const { data: categories } = useCategories();
+  const { data: collaborators } = useCollaborators();
   const { mutateAsync: createEntry, isPending: saving } = useCreateFinancialEntry();
   const { mutateAsync: updateEntry, isPending: updating } = useUpdateFinancialEntry();
   const { mutateAsync: deleteEntry, isPending: deleting } = useDeleteFinancialEntry();
@@ -113,7 +117,8 @@ export function Component() {
       tipo: entry.type,
       categoria: entry.categoryName,
       descricao: entry.description,
-      pessoa: entry.notes?.startsWith("Cliente/Fornecedor: ") ? entry.notes.replace("Cliente/Fornecedor: ", "").split(" | ")[0] : "",
+      cliente: entry.clientName ?? (entry.notes?.startsWith("Cliente/Fornecedor: ") ? entry.notes.replace("Cliente/Fornecedor: ", "").split(" | ")[0] : ""),
+      colaborador: entry.collaboratorId ?? "",
       valor: entry.amount,
       status: (STATUS_REVERSE[entry.status] ?? "aberto") as "aberto" | "pago" | "vencido",
       observacoes: entry.notes?.startsWith("Cliente/Fornecedor: ") ? entry.notes.split(" | ").slice(1).join(" | ") : entry.notes ?? "",
@@ -159,9 +164,9 @@ export function Component() {
       return;
     }
 
-    const parts = [parsed.data.observacoes];
-    if (parsed.data.pessoa) parts.unshift(`Cliente/Fornecedor: ${parsed.data.pessoa}`);
-    const notes = parts.filter(Boolean).join(" | ") || undefined;
+    const notes = parsed.data.observacoes?.trim() || undefined;
+    const clientName = parsed.data.cliente?.trim() || null;
+    const collaboratorId = parsed.data.colaborador || null;
 
     try {
       if (editingId) {
@@ -174,6 +179,8 @@ export function Component() {
             date: new Date(parsed.data.data + "T00:00:00"),
             status: (STATUS_MAP[parsed.data.status] ?? "pending") as "pending" | "confirmed" | "cancelled",
             categoryId,
+            clientName,
+            collaboratorId,
             notes,
           },
         });
@@ -186,6 +193,8 @@ export function Component() {
           date: new Date(parsed.data.data + "T00:00:00"),
           status: STATUS_MAP[parsed.data.status] ?? "pending",
           categoryId,
+          clientName,
+          collaboratorId,
           userId: user.id,
           notes,
         });
@@ -239,7 +248,15 @@ export function Component() {
             </Field>
             <Field label="Status" error={errors.status}><Select value={form.status} onChange={(e) => updateField("status", e.target.value)} options={[{ value: "aberto", label: "Aberto" }, { value: "pago", label: "Pago" }, { value: "vencido", label: "Vencido" }]} /></Field>
             <Field label="Descrição" error={errors.descricao}><Input value={form.descricao} onChange={(e) => updateField("descricao", e.target.value)} placeholder="Descrição do lançamento" /></Field>
-            <Field label="Cliente/Fornecedor"><Input value={form.pessoa ?? ""} onChange={(e) => updateField("pessoa", e.target.value)} placeholder="Nome relacionado" /></Field>
+            <Field label="Cliente"><Input value={form.cliente ?? ""} onChange={(e) => updateField("cliente", e.target.value)} placeholder="Cliente relacionado (opcional)" /></Field>
+            <Field label="Colaborador">
+              <Select
+                value={form.colaborador ?? ""}
+                onChange={(e) => updateField("colaborador", e.target.value)}
+                placeholder="Nenhum colaborador"
+                options={(collaborators ?? []).map((collaborator) => ({ value: collaborator.id, label: collaborator.name }))}
+              />
+            </Field>
             <Field label="Valor" error={errors.valor}><Input type="number" min="0" step="0.01" value={form.valor} onChange={(e) => updateField("valor", e.target.value)} placeholder="0,00" /></Field>
             <Field label="Observações"><Textarea value={form.observacoes ?? ""} onChange={(e) => updateField("observacoes", e.target.value)} placeholder="Informações adicionais" /></Field>
           </div>

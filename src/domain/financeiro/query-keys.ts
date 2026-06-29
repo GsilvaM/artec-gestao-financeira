@@ -4,6 +4,7 @@ import type {
   AccountReceivableFilters,
   CategoryFilters,
   CostCenterFilters,
+  CollaboratorFilters,
 } from './types.js';
 
 export const financialEntryKeys = {
@@ -39,6 +40,13 @@ export const costCenterKeys = {
   byId: (id: string) => [...costCenterKeys.all, id] as const,
   list: (filters?: CostCenterFilters) =>
     [...costCenterKeys.all, 'list', ...(filters ? [filters] : [])] as const,
+};
+
+export const collaboratorKeys = {
+  all: ['collaborators'] as const,
+  byId: (id: string) => [...collaboratorKeys.all, id] as const,
+  list: (filters?: CollaboratorFilters) =>
+    [...collaboratorKeys.all, 'list', ...(filters ? [filters] : [])] as const,
 };
 
 export const dreKeys = {

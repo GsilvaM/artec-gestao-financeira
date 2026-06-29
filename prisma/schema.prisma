@@ -96,6 +96,8 @@ model FinancialEntry {
   status       String      @default("pending")
   categoryId   String      @map("category_id") @db.Uuid
   costCenterId String?     @map("cost_center_id") @db.Uuid
+  collaboratorId String?   @map("collaborator_id") @db.Uuid
+  clientName   String?     @map("client_name")
   userId       String      @map("user_id") @db.Uuid
   notes        String?
   createdAt    DateTime    @default(now()) @map("created_at")
@@ -103,6 +105,7 @@ model FinancialEntry {
   deletedAt    DateTime?   @map("deleted_at")
   category     Category    @relation(fields: [categoryId], references: [id])
   costCenter   CostCenter? @relation(fields: [costCenterId], references: [id])
+  collaborator Collaborator? @relation(fields: [collaboratorId], references: [id])
 
   @@index([date])
   @@index([deletedAt, date])
@@ -112,6 +115,7 @@ model FinancialEntry {
   @@index([status])
   @@index([categoryId])
   @@index([costCenterId])
+  @@index([collaboratorId])
   @@index([userId])
   @@map("financial_entries")
 }
@@ -242,6 +246,7 @@ model Collaborator {
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
+  financialEntries FinancialEntry[]
 
   @@index([active])
   @@map("collaborators")

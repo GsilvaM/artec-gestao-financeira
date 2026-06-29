@@ -44,11 +44,19 @@ vi.mock("@/server/financeiro/repositories.js", () => ({
     update: vi.fn(),
     softDelete: vi.fn(),
   },
+  collaboratorRepo: {
+    findAll: vi.fn(),
+    findById: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    softDelete: vi.fn(),
+  },
 }));
 
 vi.mock("@/server/financeiro/queries.js", () => ({
   getDre: vi.fn(),
   getCashFlow: vi.fn(),
+  getDashboardKpis: vi.fn(),
 }));
 
 import { financialEntryRepo, categoryRepo } from "@/server/financeiro/repositories.js";
@@ -62,6 +70,8 @@ const MOCK_ENTRY = {
   status: "confirmed",
   categoryId: "00000000-0000-0000-0000-000000000001",
   costCenterId: null,
+  collaboratorId: null,
+  clientName: null,
   userId: "00000000-0000-0000-0000-000000000002",
   notes: null,
   createdAt: new Date("2026-06-10"),
@@ -69,6 +79,7 @@ const MOCK_ENTRY = {
   deletedAt: null,
   category: { id: "00000000-0000-0000-0000-000000000001", name: "Serviços", type: "receita", color: "#10B981", createdAt: new Date("2026-01-01"), updatedAt: new Date("2026-06-10"), deletedAt: null },
   costCenter: null,
+  collaborator: null,
 };
 
 const MOCK_CATEGORY = {

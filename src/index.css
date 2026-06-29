@@ -67,39 +67,39 @@
 
 .dark {
   color-scheme: dark;
-  --color-revenue: #63e6be;
-  --color-expense: #ff9f7d;
-  --color-balance: #74c0fc;
-  --color-pending: #fbbf24;
-  --color-surface: #1e2a3b;
-  --color-card-bg: #102a48;
-  --background: #081525;
-  --foreground: #edf6ff;
-  --card: #0d1f33;
-  --card-foreground: #edf6ff;
-  --popover: #10263d;
-  --popover-foreground: #edf6ff;
-  --primary: #4dabf7;
-  --primary-hover: #74c0fc;
-  --primary-foreground: #061325;
-  --secondary: #123455;
-  --secondary-foreground: #d9efff;
-  --muted: #10263d;
-  --muted-foreground: #9fb3c8;
-  --accent: #143a5d;
-  --accent-foreground: #d9efff;
-  --destructive: #f87171;
-  --destructive-foreground: #180808;
-  --border: #203b59;
-  --input: #294968;
-  --ring: #60a5fa;
-  --success: #4ade80;
-  --success-light: #0d3320;
-  --warning: #fbbf24;
-  --warning-light: #3d2e0a;
-  --info: #22d3ee;
-  --primary-light: #143a5d;
-  --destructive-light: #3d1a1a;
+  --color-revenue: #28d17c;
+  --color-expense: #ff5f5f;
+  --color-balance: #4da3ff;
+  --color-pending: #f8c453;
+  --color-surface: #151515;
+  --color-card-bg: #111820;
+  --background: #070707;
+  --foreground: #f7f7f7;
+  --card: #1f1f1d;
+  --card-foreground: #f7f7f7;
+  --popover: #232321;
+  --popover-foreground: #f7f7f7;
+  --primary: #4da3ff;
+  --primary-hover: #74b7ff;
+  --primary-foreground: #050505;
+  --secondary: #2a2a27;
+  --secondary-foreground: #f1f5f9;
+  --muted: #292926;
+  --muted-foreground: #aaa9a3;
+  --accent: #102f4f;
+  --accent-foreground: #dcefff;
+  --destructive: #ff5f5f;
+  --destructive-foreground: #160404;
+  --border: #3d3d38;
+  --input: #484842;
+  --ring: #4da3ff;
+  --success: #28d17c;
+  --success-light: #0f321f;
+  --warning: #f8c453;
+  --warning-light: #35280b;
+  --info: #4da3ff;
+  --primary-light: #0f2b48;
+  --destructive-light: #3b1414;
   --violet: #a78bfa;
   --coral: #fb7185;
   --sidebar: #0b1b2d;
@@ -110,19 +110,19 @@
   --chart-revenue: var(--color-revenue);
   --chart-expense: var(--color-expense);
   --chart-balance: var(--color-balance);
-  --surface-card: var(--card);
+  --surface-card: linear-gradient(180deg, #252522 0%, #20201d 100%);
   --text-primary: var(--foreground);
   --text-muted: var(--muted-foreground);
   --text-success: var(--color-revenue);
   --text-danger: var(--color-expense);
   --text-accent: var(--color-balance);
   --text-warning: var(--color-pending);
-  --bg-success: color-mix(in srgb, var(--color-revenue) 16%, transparent);
-  --bg-danger: color-mix(in srgb, var(--color-expense) 16%, transparent);
-  --bg-accent: color-mix(in srgb, var(--color-balance) 16%, transparent);
-  --bg-warning: color-mix(in srgb, var(--color-pending) 16%, transparent);
-  --shadow-soft: 0 18px 44px -26px rgba(0, 0, 0, 0.7);
-  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.04), 0 20px 44px -30px rgba(0, 0, 0, 0.72);
+  --bg-success: color-mix(in srgb, var(--color-revenue) 18%, transparent);
+  --bg-danger: color-mix(in srgb, var(--color-expense) 18%, transparent);
+  --bg-accent: color-mix(in srgb, var(--color-balance) 18%, transparent);
+  --bg-warning: color-mix(in srgb, var(--color-pending) 18%, transparent);
+  --shadow-soft: 0 20px 54px -28px rgba(0, 0, 0, 0.86), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.05), 0 20px 46px -32px rgba(0, 0, 0, 0.86);
 }
 
 @theme inline {
@@ -191,6 +191,7 @@
   body {
     background:
       radial-gradient(circle at top left, color-mix(in srgb, var(--primary) 9%, transparent), transparent 34rem),
+      radial-gradient(circle at bottom right, color-mix(in srgb, var(--color-revenue) 5%, transparent), transparent 28rem),
       var(--background);
     color: var(--foreground);
     font-family:

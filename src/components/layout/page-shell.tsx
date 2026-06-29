@@ -188,6 +188,15 @@ interface MonthSelectProps {
 }
 
 export function MonthSelect({ value, onValueChange }: MonthSelectProps) {
+  const monthOptions = Array.from({ length: 12 }, (_, index) => {
+    const date = new Date();
+    date.setDate(1);
+    date.setMonth(date.getMonth() - index);
+    const optionValue = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    const label = date.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+    return { value: optionValue, label: label.charAt(0).toUpperCase() + label.slice(1) };
+  });
+
   return (
     <Select
       className="md:w-44"
@@ -195,11 +204,7 @@ export function MonthSelect({ value, onValueChange }: MonthSelectProps) {
       placeholder="Mês"
       value={value ?? ""}
       onChange={(e) => onValueChange?.(e.target.value)}
-      options={[
-        { value: "2026-06", label: "Junho/2026" },
-        { value: "2026-05", label: "Maio/2026" },
-        { value: "2026-04", label: "Abril/2026" },
-      ]}
+      options={monthOptions}
     />
   );
 }

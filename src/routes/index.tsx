@@ -38,6 +38,7 @@ export const router = createBrowserRouter([
           { path: "/app/relatorios/centros-custo", lazy: () => import("./app/relatorios/centros-custo/page") },
           { path: "/app/cadastros/clientes", lazy: () => import("./app/cadastros/clientes/page") },
           { path: "/app/cadastros/fornecedores", lazy: () => import("./app/cadastros/fornecedores/page") },
+          { path: "/app/cadastros/colaboradores", lazy: () => import("./app/cadastros/colaboradores/page") },
           { path: "/app/configuracoes", lazy: () => import("./app/configuracoes/page") },
           { path: "/app/admin", lazy: () => import("./app/admin/page") },
         ],

@@ -146,6 +146,27 @@ export const clientApi = {
       getAuthHeaders().then((headers) => apiFetch(`${BASE_URL}/cost-centers/${id}`, { method: 'DELETE', headers })).then(handleResponse),
   },
 
+  collaborators: {
+    findAll: (filters?: Record<string, unknown>) =>
+      getAuthHeaders().then((headers) => apiFetch(`${BASE_URL}/collaborators?${toSearchParams(filters)}`, { headers })).then(handleResponse),
+    findById: (id: string) =>
+      getAuthHeaders().then((headers) => apiFetch(`${BASE_URL}/collaborators/${id}`, { headers })).then(handleResponse),
+    create: (data: unknown) =>
+      getAuthHeaders(true).then((headers) => apiFetch(`${BASE_URL}/collaborators`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(data),
+      })).then(handleResponse),
+    update: (id: string, data: unknown) =>
+      getAuthHeaders(true).then((headers) => apiFetch(`${BASE_URL}/collaborators/${id}`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify(data),
+      })).then(handleResponse),
+    softDelete: (id: string) =>
+      getAuthHeaders().then((headers) => apiFetch(`${BASE_URL}/collaborators/${id}`, { method: 'DELETE', headers })).then(handleResponse),
+  },
+
   dre: {
     getByYear: (year: number) =>
       getAuthHeaders().then((headers) => apiFetch(`${BASE_URL}/dre?year=${year}`, { headers })).then(handleResponse),

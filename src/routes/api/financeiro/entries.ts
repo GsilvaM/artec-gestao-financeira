@@ -27,6 +27,7 @@ export async function loader({ request }: RouteArgs) {
       status: url.searchParams.get("status") ?? undefined,
       categoryId: url.searchParams.get("categoryId") ?? undefined,
       costCenterId: url.searchParams.get("costCenterId") ?? undefined,
+      collaboratorId: url.searchParams.get("collaboratorId") ?? undefined,
       dateFrom: parseDate(url.searchParams.get("dateFrom")),
       dateTo: parseDate(url.searchParams.get("dateTo")),
       search: url.searchParams.get("search") ?? undefined,

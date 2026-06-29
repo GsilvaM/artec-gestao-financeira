@@ -10,11 +10,14 @@ import {
   categoryUpdateSchema,
   costCenterSchema,
   costCenterUpdateSchema,
+  collaboratorSchema,
+  collaboratorUpdateSchema,
   financialEntryFilterSchema,
   accountPayableFilterSchema,
   accountReceivableFilterSchema,
   categoryFilterSchema,
   costCenterFilterSchema,
+  collaboratorFilterSchema,
 } from './schemas.js';
 
 // ── Inferred from Zod schemas ────────────────────────────────────────
@@ -33,12 +36,15 @@ export type CategoryUpdate = z.infer<typeof categoryUpdateSchema>;
 
 export type CostCenterCreate = z.infer<typeof costCenterSchema>;
 export type CostCenterUpdate = z.infer<typeof costCenterUpdateSchema>;
+export type CollaboratorCreate = z.infer<typeof collaboratorSchema>;
+export type CollaboratorUpdate = z.infer<typeof collaboratorUpdateSchema>;
 
 export type FinancialEntryFilters = z.infer<typeof financialEntryFilterSchema>;
 export type AccountPayableFilters = z.infer<typeof accountPayableFilterSchema>;
 export type AccountReceivableFilters = z.infer<typeof accountReceivableFilterSchema>;
 export type CategoryFilters = z.infer<typeof categoryFilterSchema>;
 export type CostCenterFilters = z.infer<typeof costCenterFilterSchema>;
+export type CollaboratorFilters = z.infer<typeof collaboratorFilterSchema>;
 
 // ── Row / query result types ─────────────────────────────────────────
 
@@ -54,6 +60,9 @@ export interface FinancialEntryRow {
   categoryColor: string | null;
   costCenterId: string | null;
   costCenterName: string | null;
+  collaboratorId: string | null;
+  collaboratorName: string | null;
+  clientName: string | null;
   userId: string;
   notes: string | null;
   createdAt: string;
@@ -114,6 +123,17 @@ export interface CostCenterRow {
   code: string | null;
   active: boolean;
   entryCount?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CollaboratorRow {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  role: string | null;
+  active: boolean;
   createdAt: string;
   updatedAt: string;
 }

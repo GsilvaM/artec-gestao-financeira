@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { financialEntryKeys } from '../query-keys.js';
+import { cashFlowKeys, financialEntryKeys } from '../query-keys.js';
 import { clientApi } from '@/server/financeiro/client-api';
 import { toFiniteNumber } from '@/lib/utils';
 import type { FinancialEntryRow, FinancialEntryFilters, FinancialEntryUpdate } from '../types.js';
@@ -15,6 +15,9 @@ type EntryApiResponse = {
   category: { name: string; color: string | null } | null;
   costCenterId: string | null;
   costCenter: { name: string } | null;
+  collaboratorId: string | null;
+  collaborator: { name: string } | null;
+  clientName: string | null;
   userId: string;
   notes: string | null;
   createdAt: string;
@@ -23,6 +26,11 @@ type EntryApiResponse = {
 
 const financialEntryListKey = [...financialEntryKeys.all, 'list'] as const;
 const dashboardKey = ['dashboard'] as const;
+
+function invalidateFinancialSummaries(qc: ReturnType<typeof useQueryClient>) {
+  void qc.invalidateQueries({ queryKey: dashboardKey });
+  void qc.invalidateQueries({ queryKey: cashFlowKeys.all });
+}
 
 function toRow(e: EntryApiResponse): FinancialEntryRow {
   return {
@@ -37,6 +45,9 @@ function toRow(e: EntryApiResponse): FinancialEntryRow {
     categoryColor: e.category?.color ?? null,
     costCenterId: e.costCenterId,
     costCenterName: e.costCenter?.name ?? null,
+    collaboratorId: e.collaboratorId,
+    collaboratorName: e.collaborator?.name ?? null,
+    clientName: e.clientName ?? null,
     userId: e.userId,
     notes: e.notes,
     createdAt: e.createdAt,
@@ -74,7 +85,7 @@ export function useCreateFinancialEntry() {
       qc.setQueriesData<FinancialEntryRow[]>({ queryKey: financialEntryListKey }, (old) => (
         Array.isArray(old) ? [row, ...old.filter((item) => item.id !== row.id)] : old
       ));
-      void qc.invalidateQueries({ queryKey: dashboardKey });
+      invalidateFinancialSummaries(qc);
     },
   });
 }
@@ -90,7 +101,7 @@ export function useUpdateFinancialEntry() {
       qc.setQueriesData<FinancialEntryRow[]>({ queryKey: financialEntryListKey }, (old) => (
         Array.isArray(old) ? old.map((item) => item.id === row.id ? row : item) : old
       ));
-      void qc.invalidateQueries({ queryKey: dashboardKey });
+      invalidateFinancialSummaries(qc);
     },
   });
 }
@@ -104,7 +115,7 @@ export function useDeleteFinancialEntry() {
       qc.setQueriesData<FinancialEntryRow[]>({ queryKey: financialEntryListKey }, (old) => (
         Array.isArray(old) ? old.filter((item) => item.id !== id) : old
       ));
-      void qc.invalidateQueries({ queryKey: dashboardKey });
+      invalidateFinancialSummaries(qc);
     },
   });
 }

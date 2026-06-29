@@ -15,7 +15,7 @@ interface TransactionTableProps {
   onDelete: (entry: FinancialEntryRow) => void;
 }
 
-const columns = ["Data", "Tipo", "Categoria", "Descrição", "Valor", "Status", "Ações"];
+const columns = ["Data", "Tipo", "Categoria", "Descricao", "Vinculos", "Valor", "Status", "Acoes"];
 
 export function TransactionTable({ entries, isLoading, error, onEdit, onDelete }: TransactionTableProps) {
   if (isLoading) return <TableFrame state="loading" />;
@@ -46,6 +46,9 @@ export function TransactionTable({ entries, isLoading, error, onEdit, onDelete }
                 </TableCell>
                 <TableCell className="text-muted-foreground">{entry.categoryName}</TableCell>
                 <TableCell className="max-w-[320px] truncate font-medium" title={entry.description}>{entry.description}</TableCell>
+                <TableCell className="max-w-[220px] truncate text-xs text-muted-foreground">
+                  {[entry.clientName, entry.collaboratorName].filter(Boolean).join(" / ") || "-"}
+                </TableCell>
                 <TableCell className="whitespace-nowrap">
                   <MoneyValue value={formatMoney(entry.amount)} tone={isReceita ? "positive" : "negative"} />
                 </TableCell>
@@ -107,3 +110,4 @@ function TableFrame({ state }: { state: "loading" | "error" | "empty" }) {
     </Card>
   );
 }
+

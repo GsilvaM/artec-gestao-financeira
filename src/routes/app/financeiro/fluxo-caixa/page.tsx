@@ -1,29 +1,90 @@
+import { useMemo, useState } from "react";
 import { Banknote, CalendarDays, TrendingDown, TrendingUp } from "lucide-react";
-import { EmptyTable, FilterBar, MetricCard, MonthSelect, PageShell } from "@/components/layout/page-shell";
+import { EmptyState, FilterBar, MetricCard, MonthSelect, PageShell } from "@/components/layout/page-shell";
+import { Card } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useCashFlow } from "@/domain/financeiro/hooks/use-cash-flow";
 import { formatMoney, toFiniteNumber } from "@/lib/utils";
 
-type CashFlowRow = { receitas?: number; despesas?: number; saldo?: number };
+type CashFlowRow = { period?: string; receitas?: number; despesas?: number; saldo?: number };
 
 export function Component() {
-  const now = new Date();
-  const start = new Date(now.getFullYear(), now.getMonth(), 1);
-  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-  const { data } = useCashFlow("month", start, end);
+  const [filterMonth, setFilterMonth] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  });
+  const [start, end] = useMemo(() => {
+    const [year, month] = filterMonth.split("-");
+    return [
+      new Date(Number(year), Number(month) - 1, 1),
+      new Date(Number(year), Number(month), 0, 23, 59, 59, 999),
+    ];
+  }, [filterMonth]);
+  const { data, isLoading, error } = useCashFlow("month", start, end);
   const rows = (data as CashFlowRow[] | undefined) ?? [];
   const entradas = rows.reduce((sum, row) => sum + toFiniteNumber(row.receitas), 0);
   const saidas = rows.reduce((sum, row) => sum + toFiniteNumber(row.despesas), 0);
   const saldo = rows.reduce((sum, row) => sum + toFiniteNumber(row.saldo), 0);
 
   return (
-    <PageShell icon={CalendarDays} title="Fluxo de caixa" subtitle="Entradas, saídas e saldo previsto por período">
+    <PageShell icon={CalendarDays} title="Fluxo de caixa" subtitle="Entradas, saidas e saldo previsto por periodo">
       <div className="grid gap-4 sm:grid-cols-3">
         <MetricCard title="Entradas" value={formatMoney(entradas)} icon={TrendingUp} tone="green" />
-        <MetricCard title="Saídas" value={formatMoney(saidas)} icon={TrendingDown} tone="red" />
+        <MetricCard title="Saidas" value={formatMoney(saidas)} icon={TrendingDown} tone="red" />
         <MetricCard title="Saldo previsto" value={formatMoney(saldo)} icon={Banknote} tone={saldo < 0 ? "red" : "blue"} />
       </div>
-      <FilterBar searchPlaceholder="Buscar movimentações..."><MonthSelect /></FilterBar>
-      <EmptyTable columns={["Data", "Descrição", "Entrada", "Saída", "Saldo"]} emptyTitle="Selecione um período para visualizar o fluxo de caixa." />
+      <FilterBar>
+        <MonthSelect value={filterMonth} onValueChange={setFilterMonth} />
+      </FilterBar>
+      <CashFlowTable rows={rows} isLoading={isLoading} hasError={Boolean(error)} />
     </PageShell>
   );
+}
+
+function CashFlowTable({ rows, isLoading, hasError }: { rows: CashFlowRow[]; isLoading: boolean; hasError: boolean }) {
+  return (
+    <Card className="overflow-hidden">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Periodo</TableHead>
+            <TableHead>Entrada</TableHead>
+            <TableHead>Saida</TableHead>
+            <TableHead>Saldo</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {isLoading ? (
+            <TableRow><TableCell colSpan={4} className="h-48 text-center text-sm text-muted-foreground">Carregando...</TableCell></TableRow>
+          ) : hasError ? (
+            <TableRow><TableCell colSpan={4} className="h-48 text-center text-sm font-medium text-destructive">Erro ao carregar fluxo de caixa.</TableCell></TableRow>
+          ) : rows.length ? rows.map((row) => {
+            const saldo = toFiniteNumber(row.saldo);
+            return (
+              <TableRow key={row.period}>
+                <TableCell className="font-medium">{formatPeriod(row.period)}</TableCell>
+                <TableCell className="font-semibold tabular-nums text-success">{formatMoney(row.receitas ?? 0)}</TableCell>
+                <TableCell className="font-semibold tabular-nums text-destructive">{formatMoney(row.despesas ?? 0)}</TableCell>
+                <TableCell className="font-semibold tabular-nums">{formatMoney(saldo)}</TableCell>
+              </TableRow>
+            );
+          }) : (
+            <TableRow>
+              <TableCell colSpan={4} className="p-0">
+                <EmptyState title="Nenhum fluxo de caixa encontrado." description="Nao ha movimentacoes financeiras no periodo selecionado." />
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </Card>
+  );
+}
+
+function formatPeriod(period?: string) {
+  if (!period) return "-";
+  const date = new Date(period);
+  if (Number.isNaN(date.getTime())) return period;
+  const label = date.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+  return label.charAt(0).toUpperCase() + label.slice(1);
 }

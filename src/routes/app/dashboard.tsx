@@ -24,36 +24,30 @@ import { PageShell } from "@/components/layout/page-shell";
 import { MetricCard as DashboardMetricCard } from "@/components/dashboard/MetricCard";
 import { StatusBanner } from "@/components/dashboard/StatusBanner";
 import { useDashboardKpis } from "@/domain/financeiro/hooks/use-dashboard-kpis";
-import { formatMoney } from "@/lib/utils";
+import { useCashFlow } from "@/domain/financeiro/hooks/use-cash-flow";
+import { formatMoney, toFiniteNumber } from "@/lib/utils";
 import { calculateFinancialPercentages, formatCompactMoney, getActivityStatusMeta, type ActivityStatus } from "./dashboard-utils";
-
-const chartData = [
-  { mes: "Jan", receitas: 42000, despesas: 26000 },
-  { mes: "Fev", receitas: 46000, despesas: 29000 },
-  { mes: "Mar", receitas: 51000, despesas: 31000 },
-  { mes: "Abr", receitas: 48000, despesas: 30000 },
-  { mes: "Mai", receitas: 57000, despesas: 33000 },
-  { mes: "Jun", receitas: 62000, despesas: 35000 },
-].map((item) => ({ ...item, saldo: item.receitas - item.despesas }));
-
-const dashboardKpiSeries = {
-  faturamento: [7200, 8100, 7600, 9000, 9400, 10169],
-  lucro: [5100, 5900, 5400, 6900, 7400, 8962],
-  contas: [2, 1, 3, 4, 2, 0],
-};
-
-const activityItems: { id: string; label: string; status: ActivityStatus }[] = [
-  { id: "integracao", label: "Lançamentos aguardando integração", status: "pending" },
-  { id: "vencimentos", label: "Contas a pagar sem vencimentos cadastrados", status: "overdue" },
-  { id: "relatorios", label: "Relatórios pendentes de revisão", status: "completed" },
-];
 
 type ChartSeries = "receitas" | "despesas" | "saldo";
 
+type FinancialChartPoint = {
+  mes: string;
+  receitas: number;
+  despesas: number;
+  saldo: number;
+};
+
+type CashFlowApiRow = {
+  period?: unknown;
+  receitas?: unknown;
+  despesas?: unknown;
+  saldo?: unknown;
+};
+
 const PENDING_TONE_STYLES = {
-  warning: { bg: "bg-warning-light", icon: "text-warning", ring: "ring-warning/20" },
-  danger: { bg: "bg-destructive-light", icon: "text-destructive", ring: "ring-destructive/20" },
-  success: { bg: "bg-success-light", icon: "text-success", ring: "ring-success/20" },
+  warning: { bg: "bg-warning-light dark:bg-[#3a2908]", icon: "text-warning", ring: "ring-warning/20", accent: "from-[var(--color-pending)]/45" },
+  danger: { bg: "bg-destructive-light dark:bg-[#4a1010]", icon: "text-destructive", ring: "ring-destructive/20", accent: "from-[var(--color-expense)]/45" },
+  success: { bg: "bg-success-light dark:bg-[#073a1c]", icon: "text-success", ring: "ring-success/20", accent: "from-[var(--color-revenue)]/45" },
 } as const;
 
 function useDataTimeout(isLoading: boolean, timeoutMs = 5_000) {
@@ -135,6 +129,62 @@ function FinancialTooltip({ active, payload }: { active?: boolean; payload?: Cha
   );
 }
 
+function getDashboardCashFlowRange(referenceDate = new Date()) {
+  const start = new Date(referenceDate.getFullYear(), referenceDate.getMonth() - 5, 1);
+  const end = new Date(referenceDate.getFullYear(), referenceDate.getMonth() + 1, 0, 23, 59, 59, 999);
+  return { start, end };
+}
+
+function monthKey(date: Date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function monthLabel(date: Date) {
+  const label = date.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "");
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+function buildFinancialChartData(rows: CashFlowApiRow[] | undefined, start: Date, months = 6): FinancialChartPoint[] {
+  const totalsByMonth = new Map<string, Omit<FinancialChartPoint, "mes">>();
+  for (const row of rows ?? []) {
+    if (!row.period) continue;
+    const period = new Date(String(row.period));
+    if (Number.isNaN(period.getTime())) continue;
+    totalsByMonth.set(monthKey(period), {
+      receitas: toFiniteNumber(row.receitas),
+      despesas: toFiniteNumber(row.despesas),
+      saldo: toFiniteNumber(row.saldo),
+    });
+  }
+
+  return Array.from({ length: months }, (_, index) => {
+    const date = new Date(start.getFullYear(), start.getMonth() + index, 1);
+    const current = totalsByMonth.get(monthKey(date)) ?? { receitas: 0, despesas: 0, saldo: 0 };
+    return { mes: monthLabel(date), ...current };
+  });
+}
+
+function getSeriesDelta(values: number[]) {
+  const current = values.at(-1);
+  const previous = values.at(-2);
+  if (typeof current !== "number" || typeof previous !== "number" || previous === 0) return undefined;
+  return Number((((current - previous) / Math.abs(previous)) * 100).toFixed(1));
+}
+
+function getActivityItems(pendenciaData: {
+  contasAVencer: number;
+  contasVencidas: number;
+  contasAReceber: number;
+  contasReceberVencidas: number;
+}): { id: string; label: string; status: ActivityStatus }[] {
+  const items: { id: string; label: string; status: ActivityStatus }[] = [];
+  if (pendenciaData.contasVencidas > 0) items.push({ id: "contas-pagar-vencidas", label: `${pendenciaData.contasVencidas} contas a pagar vencidas`, status: "overdue" });
+  if (pendenciaData.contasReceberVencidas > 0) items.push({ id: "contas-receber-vencidas", label: `${pendenciaData.contasReceberVencidas} contas a receber vencidas`, status: "overdue" });
+  if (pendenciaData.contasAVencer > 0) items.push({ id: "contas-pagar-pendentes", label: `${pendenciaData.contasAVencer} contas a pagar pendentes`, status: "pending" });
+  if (pendenciaData.contasAReceber > 0) items.push({ id: "contas-receber-pendentes", label: `${pendenciaData.contasAReceber} contas a receber pendentes`, status: "pending" });
+  return items;
+}
+
 function PendingCard({
   title,
   value,
@@ -150,11 +200,12 @@ function PendingCard({
 }) {
   const styles = PENDING_TONE_STYLES[tone];
   return (
-    <Card className="overflow-hidden transition-shadow duration-200 hover:shadow-md">
+    <Card className="relative overflow-hidden transition-shadow duration-200 hover:shadow-md dark:border-white/10 dark:bg-[linear-gradient(180deg,#292925_0%,#22221f_100%)]">
+      <div className={cn("pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r to-transparent", styles.accent)} />
       <CardContent className="flex flex-col gap-3 p-5">
         <div className="flex items-start justify-between gap-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</p>
-          <div className={cn("flex size-10 shrink-0 items-center justify-center rounded-lg ring-1", styles.bg, styles.icon, styles.ring)}>
+          <div className={cn("flex size-10 shrink-0 items-center justify-center rounded-lg shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] ring-1", styles.bg, styles.icon, styles.ring)}>
             <Icon className="size-5" />
           </div>
         </div>
@@ -233,6 +284,8 @@ function SkeletonCard({ className }: { className?: string }) {
 export function Component() {
   const navigate = useNavigate();
   const { data: kpis, isLoading, isError, refetch } = useDashboardKpis();
+  const cashFlowRange = useMemo(() => getDashboardCashFlowRange(), []);
+  const { data: cashFlowRows } = useCashFlow("month", cashFlowRange.start, cashFlowRange.end);
   const timedOut = useDataTimeout(isLoading);
   const [hiddenSeries, setHiddenSeries] = useState<Record<ChartSeries, boolean>>({ receitas: false, despesas: false, saldo: false });
   const saldo = kpis?.saldo ?? 0;
@@ -240,6 +293,16 @@ export function Component() {
   const totalDespesas = kpis?.totalDespesas ?? 0;
   const { receitaPercent, despesaPercent, saldoPercent } = calculateFinancialPercentages(totalReceitas, totalDespesas, saldo);
   const contasPagas = kpis ? (kpis.contasPagasMes ?? 0) + (kpis.contasRecebidasMes ?? 0) : null;
+  const chartData = useMemo(
+    () => buildFinancialChartData(cashFlowRows as CashFlowApiRow[] | undefined, cashFlowRange.start),
+    [cashFlowRange.start, cashFlowRows],
+  );
+  const dashboardKpiSeries = useMemo(() => ({
+    faturamento: chartData.map((item) => item.receitas),
+    lucro: chartData.map((item) => item.saldo),
+  }), [chartData]);
+  const faturamentoDelta = getSeriesDelta(dashboardKpiSeries.faturamento);
+  const lucroDelta = getSeriesDelta(dashboardKpiSeries.lucro);
 
   const pendenciaData = useMemo(() => {
     const contasAVencer = kpis?.contasAVencer ?? 0;
@@ -256,6 +319,7 @@ export function Component() {
       contasReceberVencidas,
     };
   }, [kpis]);
+  const activityItems = useMemo(() => getActivityItems(pendenciaData), [pendenciaData]);
 
   const shortcuts = [
     { label: "Novo lançamento", to: "/app/financeiro/lancamentos", hint: "⌘ N", tone: "primary" },
@@ -275,7 +339,7 @@ export function Component() {
     >
       {isLoading ? (
         <div className="grid gap-6 xl:grid-cols-[0.95fr_1.35fr]">
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden dark:border-white/10">
             <CardContent className="space-y-6 p-5 sm:p-6">
               <div className="h-5 w-40 animate-pulse rounded bg-muted" />
               <div className="h-64 animate-pulse rounded-lg bg-muted" />
@@ -306,9 +370,9 @@ export function Component() {
                 </div>
                 <CreditCard className="size-5 shrink-0 text-primary" />
               </div>
-              <div className="relative overflow-hidden rounded-2xl bg-[radial-gradient(circle_at_18px_18px,rgba(255,255,255,0.06)_2px,transparent_2px),linear-gradient(135deg,var(--color-card-bg),#174a78)] bg-[length:34px_34px,auto] p-6 text-white shadow-[0_28px_60px_-34px_rgba(30,96,145,0.9)] sm:p-7">
-                <div className="absolute -right-16 -top-14 size-44 rounded-full bg-white/[0.08]" />
-                <div className="absolute -bottom-24 right-8 size-52 rounded-full bg-white/10" />
+              <div className="relative overflow-hidden rounded-2xl bg-[radial-gradient(circle_at_18px_18px,rgba(255,255,255,0.05)_2px,transparent_2px),linear-gradient(135deg,var(--color-card-bg),#174a78)] bg-[length:34px_34px,auto] p-6 text-white shadow-[0_28px_60px_-34px_rgba(30,96,145,0.9)] ring-1 ring-white/10 dark:bg-[radial-gradient(circle_at_18px_18px,rgba(255,255,255,0.035)_2px,transparent_2px),linear-gradient(135deg,#141b22,#0d2a45_58%,#111111)] dark:shadow-[0_28px_70px_-38px_rgba(0,0,0,0.95)] sm:p-7">
+                <div className="absolute -right-16 -top-14 size-44 rounded-full bg-white/[0.06]" />
+                <div className="absolute -bottom-24 right-8 size-52 rounded-full bg-[var(--color-balance)]/10" />
                 <div className="relative flex min-h-[21rem] flex-col gap-6">
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
@@ -321,7 +385,7 @@ export function Component() {
                     <p className="text-xs font-medium text-white/70">Saldo atual</p>
                     <p className="mt-1.5 text-3xl font-bold tabular-nums sm:text-4xl">{formatMoney(saldo)}</p>
                   </div>
-                  <div className="grid grid-cols-2 gap-4 rounded-xl bg-white/10 p-4 text-sm ring-1 ring-white/10">
+                  <div className="grid grid-cols-2 gap-4 rounded-xl bg-white/10 p-4 text-sm ring-1 ring-white/10 backdrop-blur dark:bg-black/18">
                     <div>
                       <p className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-white/60"><ArrowUpCircle className="size-3 text-[var(--color-revenue)]" />Receitas</p>
                       <p className="mt-1 font-semibold tabular-nums">{formatMoney(totalReceitas)}</p>
@@ -418,7 +482,7 @@ export function Component() {
                     icon={ArrowUpCircle}
                     iconColor="green"
                     footer="Receitas registradas"
-                    delta={12.3}
+                    delta={faturamentoDelta}
                     sparklineData={dashboardKpiSeries.faturamento}
                   />
                   <DashboardMetricCard
@@ -428,7 +492,7 @@ export function Component() {
                     icon={Banknote}
                     iconColor="blue"
                     footer="Receitas menos despesas"
-                    delta={saldo >= 0 ? 8.4 : -6.2}
+                    delta={lucroDelta}
                     sparklineData={dashboardKpiSeries.lucro}
                   />
                   <DashboardMetricCard
@@ -437,8 +501,6 @@ export function Component() {
                     icon={ArrowDownCircle}
                     iconColor="red"
                     footer={timedOut && !kpis ? "Aguardando dados" : "Pagas e recebidas no mês"}
-                    delta={-3.1}
-                    sparklineData={dashboardKpiSeries.contas}
                     className="sm:col-span-2 2xl:col-span-3"
                   />
                   {timedOut && !kpis ? <span className="sr-only" aria-live="polite">Dados de contas pagas indisponíveis após 5 segundos. Valor exibido como traço.</span> : null}
@@ -581,3 +643,4 @@ export function Component() {
     </PageShell>
   );
 }
+

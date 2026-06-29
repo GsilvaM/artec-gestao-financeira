@@ -41,6 +41,10 @@ function costCenterWhereNotDeleted(): Prisma.CostCenterWhereInput {
   return { deletedAt: null };
 }
 
+function collaboratorWhereNotDeleted(): Prisma.CollaboratorWhereInput {
+  return { deletedAt: null };
+}
+
 // ---------------------------------------------------------------------------
 // FinancialEntry
 // ---------------------------------------------------------------------------
@@ -53,6 +57,8 @@ export interface CreateFinancialEntryData {
   status?: string;
   categoryId: string;
   costCenterId?: string | null;
+  collaboratorId?: string | null;
+  clientName?: string | null;
   userId: string;
   notes?: string | null;
 }
@@ -65,6 +71,8 @@ export interface UpdateFinancialEntryData {
   status?: string;
   categoryId?: string;
   costCenterId?: string | null;
+  collaboratorId?: string | null;
+  clientName?: string | null;
   notes?: string | null;
 }
 
@@ -73,6 +81,7 @@ export interface FinancialEntryFilters {
   status?: string;
   categoryId?: string;
   costCenterId?: string;
+  collaboratorId?: string;
   userId?: string;
   dateFrom?: Date;
   dateTo?: Date;
@@ -87,6 +96,7 @@ export const financialEntryRepo = {
       ...(filters?.status ? { status: filters.status } : {}),
       ...(filters?.categoryId ? { categoryId: filters.categoryId } : {}),
       ...(filters?.costCenterId ? { costCenterId: filters.costCenterId } : {}),
+      ...(filters?.collaboratorId ? { collaboratorId: filters.collaboratorId } : {}),
       ...(filters?.userId ? { userId: filters.userId } : {}),
       ...(filters?.dateFrom || filters?.dateTo
         ? {
@@ -101,7 +111,9 @@ export const financialEntryRepo = {
             OR: [
               { description: { contains: filters.search, mode: "insensitive" } },
               { notes: { contains: filters.search, mode: "insensitive" } },
+              { clientName: { contains: filters.search, mode: "insensitive" } },
               { category: { name: { contains: filters.search, mode: "insensitive" } } },
+              { collaborator: { name: { contains: filters.search, mode: "insensitive" } } },
             ],
           }
         : {}),
@@ -109,7 +121,7 @@ export const financialEntryRepo = {
 
     return prisma.financialEntry.findMany({
       where,
-      include: { category: true, costCenter: true },
+      include: { category: true, costCenter: true, collaborator: true },
       orderBy: { date: "desc" },
     });
   },
@@ -117,7 +129,7 @@ export const financialEntryRepo = {
   async findById(id: string) {
     const entry = await prisma.financialEntry.findFirst({
       where: { id, deletedAt: null },
-      include: { category: true, costCenter: true },
+      include: { category: true, costCenter: true, collaborator: true },
     });
     if (!entry) throw new NotFoundError("FinancialEntry", id);
     return entry;
@@ -133,10 +145,12 @@ export const financialEntryRepo = {
         status: data.status ?? "pending",
         categoryId: data.categoryId,
         costCenterId: data.costCenterId ?? null,
+        collaboratorId: data.collaboratorId ?? null,
+        clientName: data.clientName ?? null,
         userId: data.userId,
         notes: data.notes ?? null,
       },
-      include: { category: true, costCenter: true },
+      include: { category: true, costCenter: true, collaborator: true },
     });
   },
 
@@ -149,7 +163,7 @@ export const financialEntryRepo = {
     return prisma.financialEntry.update({
       where: { id },
       data,
-      include: { category: true, costCenter: true },
+      include: { category: true, costCenter: true, collaborator: true },
     });
   },
 
@@ -162,6 +176,104 @@ export const financialEntryRepo = {
     return prisma.financialEntry.update({
       where: { id },
       data: { deletedAt: new Date() },
+    });
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Collaborator
+// ---------------------------------------------------------------------------
+
+export interface CreateCollaboratorData {
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  role?: string | null;
+  active?: boolean;
+}
+
+export interface UpdateCollaboratorData {
+  name?: string;
+  email?: string | null;
+  phone?: string | null;
+  role?: string | null;
+  active?: boolean;
+}
+
+export interface CollaboratorFilters {
+  includeInactive?: boolean;
+  search?: string;
+}
+
+export const collaboratorRepo = {
+  async findAll(filters?: CollaboratorFilters) {
+    const where: Prisma.CollaboratorWhereInput = {
+      ...collaboratorWhereNotDeleted(),
+      ...(filters?.includeInactive ? {} : { active: true }),
+      ...(filters?.search
+        ? {
+            OR: [
+              { name: { contains: filters.search, mode: "insensitive" } },
+              { email: { contains: filters.search, mode: "insensitive" } },
+              { phone: { contains: filters.search, mode: "insensitive" } },
+              { role: { contains: filters.search, mode: "insensitive" } },
+            ],
+          }
+        : {}),
+    };
+
+    return prisma.collaborator.findMany({
+      where,
+      orderBy: { name: "asc" },
+    });
+  },
+
+  async findById(id: string) {
+    const collaborator = await prisma.collaborator.findFirst({
+      where: { id, deletedAt: null },
+    });
+    if (!collaborator) throw new NotFoundError("Collaborator", id);
+    return collaborator;
+  },
+
+  async create(data: CreateCollaboratorData) {
+    return prisma.collaborator.create({
+      data: {
+        name: data.name,
+        email: data.email || null,
+        phone: data.phone || null,
+        role: data.role || null,
+        active: data.active ?? true,
+      },
+    });
+  },
+
+  async update(id: string, data: UpdateCollaboratorData) {
+    const existing = await prisma.collaborator.findFirst({
+      where: { id, deletedAt: null },
+    });
+    if (!existing) throw new NotFoundError("Collaborator", id);
+
+    return prisma.collaborator.update({
+      where: { id },
+      data: {
+        ...data,
+        email: data.email === "" ? null : data.email,
+        phone: data.phone === "" ? null : data.phone,
+        role: data.role === "" ? null : data.role,
+      },
+    });
+  },
+
+  async softDelete(id: string) {
+    const existing = await prisma.collaborator.findFirst({
+      where: { id, deletedAt: null },
+    });
+    if (!existing) throw new NotFoundError("Collaborator", id);
+
+    return prisma.collaborator.update({
+      where: { id },
+      data: { deletedAt: new Date(), active: false },
     });
   },
 };

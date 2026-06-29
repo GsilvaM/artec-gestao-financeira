@@ -31,6 +31,8 @@ export const financialEntryCreateSchema = z.object({
   status: z.enum(["pending", "confirmed", "cancelled"]).default("pending"),
   categoryId: uuidField,
   costCenterId: uuidField.optional(),
+  collaboratorId: uuidField.nullable().optional(),
+  clientName: z.string().nullable().optional(),
   notes: z.string().optional(),
 });
 
@@ -102,6 +104,7 @@ export const financialEntryFilterSchema = z.object({
     .optional(),
   categoryId: uuidField.optional(),
   costCenterId: uuidField.optional(),
+  collaboratorId: uuidField.optional(),
   dateFrom: dateField.optional(),
   dateTo: dateField.optional(),
   search: z.string().optional(),
@@ -145,6 +148,22 @@ export const categoryFilterSchema = z.object({
 });
 
 export const costCenterFilterSchema = z.object({
+  includeInactive: z.boolean().optional(),
+  search: z.string().optional(),
+});
+
+export const collaboratorCreateSchema = z.object({
+  name: z.string().min(1),
+  email: z.string().email().optional().or(z.literal("")),
+  phone: z.string().optional(),
+  role: z.string().optional(),
+  active: z.boolean().default(true),
+});
+
+export const collaboratorSchema = collaboratorCreateSchema;
+export const collaboratorUpdateSchema = collaboratorCreateSchema.partial();
+
+export const collaboratorFilterSchema = z.object({
   includeInactive: z.boolean().optional(),
   search: z.string().optional(),
 });
