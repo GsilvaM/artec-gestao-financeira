@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { PageShell } from "@/components/layout/page-shell";
 import { MetricCard as DashboardMetricCard } from "@/components/dashboard/MetricCard";
+import { SparklineChart } from "@/components/dashboard/SparklineChart";
 import { StatusBanner } from "@/components/dashboard/StatusBanner";
 import { useDashboardKpis } from "@/domain/financeiro/hooks/use-dashboard-kpis";
 import { useCashFlow } from "@/domain/financeiro/hooks/use-cash-flow";
@@ -391,6 +392,9 @@ export function Component() {
                   <div className="mt-auto">
                     <p className="text-xs font-medium text-white/70">Saldo atual</p>
                     <p className="mt-1 text-3xl font-bold tabular-nums sm:text-4xl">{formatMoney(saldo)}</p>
+                    <div className="mt-3 max-w-40 opacity-85">
+                      <SparklineChart data={chartData.map((item) => item.saldo)} color="blue" />
+                    </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4 rounded-xl bg-white/10 p-4 text-sm ring-1 ring-white/10 backdrop-blur dark:bg-black/18">
                     <div>
