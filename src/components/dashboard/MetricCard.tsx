@@ -56,7 +56,7 @@ export function MetricCard({
   return (
     <div
       className={cn(
-        "relative flex min-w-0 flex-col gap-1.5 overflow-hidden rounded-xl border-[0.5px] border-border/70 bg-[var(--surface-card)] px-5 py-4 transition duration-200 hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-[var(--shadow-soft)] dark:border-white/10 dark:bg-[linear-gradient(180deg,#292925_0%,#22221f_100%)] dark:shadow-[0_18px_42px_-32px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.05)]",
+        "relative flex h-full min-w-0 flex-col gap-1.5 overflow-hidden rounded-xl border-[0.5px] border-border/70 bg-[var(--surface-card)] px-5 py-4 transition duration-200 hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-[var(--shadow-soft)] dark:border-white/10 dark:bg-[linear-gradient(180deg,#292925_0%,#22221f_100%)] dark:shadow-[0_18px_42px_-32px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.05)]",
         className,
       )}
     >
@@ -69,7 +69,9 @@ export function MetricCard({
         <p className="min-w-0 flex-1 truncate text-[22px] font-semibold leading-[1.1] text-[var(--text-primary)] tabular-nums" title={title ?? String(value)}>{value}</p>
         {deltaContent}
       </div>
-      {sparklineData?.length ? <SparklineChart data={sparklineData} color={iconColor} /> : null}
+      <div className="h-8">
+        {sparklineData?.length ? <SparklineChart data={sparklineData} color={iconColor} /> : null}
+      </div>
       {footer ? <p className="mt-0.5 truncate text-[11px] text-[var(--text-muted)]">{footer}</p> : null}
     </div>
   );
