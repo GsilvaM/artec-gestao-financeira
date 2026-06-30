@@ -1,10 +1,10 @@
 import { useMemo, useState } from "react";
-import { ArrowDownCircle, ArrowUpCircle, BarChart3, Loader2, Scale } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, BarChart3, Scale } from "lucide-react";
 import { EmptyState, FilterBar, MetricCard, MonthSelect, PageShell } from "@/components/layout/page-shell";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useFinancialEntries } from "@/domain/financeiro/hooks/use-financial-entries";
-import { formatMoney } from "@/lib/utils";
+import { cn, formatMoney } from "@/lib/utils";
 import type { FinancialEntryFilters, FinancialEntryRow } from "@/domain/financeiro/types";
 
 interface DreLine {
@@ -38,7 +38,7 @@ export function Component() {
 
   return (
     <PageShell icon={BarChart3} title="DRE" subtitle="Demonstração de resultado por período.">
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="stats-grid">
         <MetricCard title="Receitas" value={formatMoney(dre.totalReceitas)} icon={ArrowUpCircle} tone="green" />
         <MetricCard title="Despesas" value={formatMoney(dre.totalDespesas)} icon={ArrowDownCircle} tone="red" />
         <MetricCard title="Resultado" value={formatMoney(dre.resultado)} icon={Scale} tone={dre.resultado < 0 ? "red" : "blue"} />
@@ -48,7 +48,13 @@ export function Component() {
         <MonthSelect value={filterMonth} onValueChange={setFilterMonth} />
       </FilterBar>
 
-      <DreTable rows={dre.rows} isLoading={isLoading} hasError={Boolean(error)} />
+      <div className="desktop-table">
+        <DreTable rows={dre.rows} isLoading={isLoading} hasError={Boolean(error)} />
+      </div>
+
+      <div className="mobile-list">
+        <DreMobileList rows={dre.rows} isLoading={isLoading} hasError={Boolean(error)} />
+      </div>
     </PageShell>
   );
 }
@@ -139,7 +145,7 @@ function DreTable({ rows, isLoading, hasError }: { rows: DreLine[]; isLoading: b
           {isLoading ? (
             <TableRow>
               <TableCell colSpan={5} className="h-56 text-center text-muted-foreground">
-                <Loader2 className="mx-auto size-5 animate-spin" />
+                Carregando...
               </TableCell>
             </TableRow>
           ) : hasError ? (
@@ -170,5 +176,60 @@ function DreTable({ rows, isLoading, hasError }: { rows: DreLine[]; isLoading: b
         </TableBody>
       </Table>
     </Card>
+  );
+}
+
+function DreMobileList({ rows, isLoading, hasError }: { rows: DreLine[]; isLoading: boolean; hasError: boolean }) {
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="dre-mobile-card">
+            <div className="h-3 w-20 animate-pulse rounded-full bg-surface-muted" />
+            <div className="mt-2 h-4 w-40 animate-pulse rounded-full bg-surface-muted" />
+            <div className="mt-3 flex items-center justify-between">
+              <div className="h-5 w-24 animate-pulse rounded-full bg-surface-muted" />
+              <div className="h-3 w-16 animate-pulse rounded-full bg-surface-muted" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (hasError) {
+    return (
+      <div className="rounded-2xl border border-dashed border-destructive/30 bg-danger-50 p-8 text-center text-sm font-medium text-destructive">
+        Erro ao carregar DRE.
+      </div>
+    );
+  }
+
+  if (!rows.length) {
+    return (
+      <EmptyState title="Nenhum lançamento encontrado." description="Cadastre receitas e despesas para visualizar a DRE." />
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {rows.map((row) => (
+        <article key={row.id} className={cn("dre-mobile-card", row.emphasis && "border-primary-100 bg-primary-50/30")}>
+          <div>
+            <span className="dre-group-label">{row.group}</span>
+            <h3>{row.category}</h3>
+          </div>
+          <div className="dre-values">
+            <strong className={cn(
+              "money",
+              row.type === "receita" ? "money-income" : row.type === "despesa" ? "money-expense" : row.amount < 0 ? "money-expense" : "money-balance"
+            )}>
+              {formatMoney(row.amount)}
+            </strong>
+            <span>{row.revenueShare.toFixed(1)}% da receita</span>
+          </div>
+        </article>
+      ))}
+    </div>
   );
 }

@@ -4,7 +4,7 @@ import { EmptyState, FilterBar, MetricCard, MonthSelect, PageShell } from "@/com
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useCashFlow } from "@/domain/financeiro/hooks/use-cash-flow";
-import { formatMoney, toFiniteNumber } from "@/lib/utils";
+import { cn, formatMoney, toFiniteNumber } from "@/lib/utils";
 
 type CashFlowRow = { period?: string; receitas?: number; despesas?: number; saldo?: number };
 
@@ -28,15 +28,23 @@ export function Component() {
 
   return (
     <PageShell icon={CalendarDays} title="Fluxo de caixa" subtitle="Entradas, saidas e saldo previsto por periodo">
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="stats-grid">
         <MetricCard title="Entradas" value={formatMoney(entradas)} icon={TrendingUp} tone="green" />
         <MetricCard title="Saidas" value={formatMoney(saidas)} icon={TrendingDown} tone="red" />
         <MetricCard title="Saldo previsto" value={formatMoney(saldo)} icon={Banknote} tone={saldo < 0 ? "red" : "blue"} />
       </div>
+
       <FilterBar>
         <MonthSelect value={filterMonth} onValueChange={setFilterMonth} />
       </FilterBar>
-      <CashFlowTable rows={rows} isLoading={isLoading} hasError={Boolean(error)} />
+
+      <div className="desktop-table">
+        <CashFlowTable rows={rows} isLoading={isLoading} hasError={Boolean(error)} />
+      </div>
+
+      <div className="mobile-list">
+        <CashFlowMobileList rows={rows} isLoading={isLoading} hasError={Boolean(error)} />
+      </div>
     </PageShell>
   );
 }
@@ -78,6 +86,69 @@ function CashFlowTable({ rows, isLoading, hasError }: { rows: CashFlowRow[]; isL
         </TableBody>
       </Table>
     </Card>
+  );
+}
+
+function CashFlowMobileList({ rows, isLoading, hasError }: { rows: CashFlowRow[]; isLoading: boolean; hasError: boolean }) {
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="cashflow-card">
+            <div className="h-3 w-32 animate-pulse rounded-full bg-surface-muted" />
+            <div className="mt-3 space-y-2">
+              <div className="h-4 w-full animate-pulse rounded-full bg-surface-muted" />
+              <div className="h-4 w-full animate-pulse rounded-full bg-surface-muted" />
+              <div className="h-4 w-full animate-pulse rounded-full bg-surface-muted" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (hasError) {
+    return (
+      <div className="rounded-2xl border border-dashed border-destructive/30 bg-danger-50 p-8 text-center text-sm font-medium text-destructive">
+        Erro ao carregar fluxo de caixa.
+      </div>
+    );
+  }
+
+  if (!rows.length) {
+    return (
+      <EmptyState title="Nenhum fluxo de caixa encontrado." description="Nao ha movimentacoes financeiras no periodo selecionado." />
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {rows.map((row) => {
+        const saldo = toFiniteNumber(row.saldo);
+        return (
+          <article key={row.period} className="cashflow-card">
+            <header>
+              <span>Período</span>
+              <strong>{formatPeriod(row.period)}</strong>
+            </header>
+            <div className="cashflow-values">
+              <div>
+                <span>Entrada</span>
+                <strong className="money money-income">{formatMoney(row.receitas ?? 0)}</strong>
+              </div>
+              <div>
+                <span>Saída</span>
+                <strong className="money money-expense">{formatMoney(row.despesas ?? 0)}</strong>
+              </div>
+              <div>
+                <span>Saldo</span>
+                <strong className={cn("money", saldo < 0 ? "money-expense" : "money-balance")}>{formatMoney(saldo)}</strong>
+              </div>
+            </div>
+          </article>
+        );
+      })}
+    </div>
   );
 }
 

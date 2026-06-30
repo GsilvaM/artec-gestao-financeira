@@ -151,7 +151,7 @@ function KpiCard({
     <section className="metric-card card-hover">
       <div>
         <div className={cn("metric-icon", iconColors[tone])}>
-          <Icon />
+          <Icon size={20} />
         </div>
         <div>
           <p className="metric-title">{title}</p>
@@ -527,7 +527,7 @@ const dashboardStyles = `
 
 .dashboard-top-grid {
   display: grid;
-  grid-template-columns: minmax(360px, 0.92fr) minmax(640px, 1.58fr);
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.58fr);
   gap: 22px;
   align-items: stretch;
 }
@@ -541,9 +541,9 @@ const dashboardStyles = `
 
 .dashboard-kpi-panel > h2 {
   margin: 4px 0 0;
-  color: var(--color-text-primary);
+  color: var(--text-strong);
   font-size: 18px;
-  font-weight: 850;
+  font-weight: 750;
   letter-spacing: -0.025em;
 }
 
@@ -555,7 +555,7 @@ const dashboardStyles = `
 
 .dashboard-middle-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(360px, 0.95fr);
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 0.95fr);
   gap: 22px;
 }
 
@@ -576,9 +576,12 @@ const dashboardStyles = `
   .dashboard-metrics-grid { grid-template-columns: 1fr; }
 }
 
+@media (max-width: 480px) {
+  .dashboard-page { gap: 16px; }
+}
+
 /* Financial Hero Card */
 .financial-hero-card {
-  min-height: 338px;
   padding: 26px 28px;
   border-radius: 24px;
   color: #ffffff;
@@ -588,6 +591,7 @@ const dashboardStyles = `
     radial-gradient(circle at 85% 10%, rgba(96, 165, 250, 0.38), transparent 170px),
     linear-gradient(135deg, #03152e 0%, #06244a 48%, #0f4fa8 100%);
   box-shadow: 0 24px 58px rgba(6, 26, 56, 0.28);
+  height: fit-content;
 }
 
 .financial-hero-glow {
@@ -612,7 +616,7 @@ const dashboardStyles = `
 .financial-hero-header h2 {
   margin: 0;
   font-size: 17px;
-  font-weight: 850;
+  font-weight: 700;
 }
 
 .financial-hero-header p {
@@ -627,7 +631,7 @@ const dashboardStyles = `
   background: rgba(34, 197, 94, 0.9);
   color: #ffffff;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .financial-hero-body {
@@ -639,13 +643,13 @@ const dashboardStyles = `
 .financial-company {
   margin: 0;
   font-size: 20px;
-  font-weight: 850;
+  font-weight: 750;
 }
 
 .financial-label {
   margin: 4px 0 28px;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.04em;
   color: rgba(255, 255, 255, 0.78);
 }
@@ -658,10 +662,10 @@ const dashboardStyles = `
 
 .financial-balance {
   display: block;
-  font-size: 34px;
+  font-size: clamp(1.7rem, 4vw, 2.5rem);
   line-height: 1.1;
-  font-weight: 900;
-  letter-spacing: -0.05em;
+  font-weight: 750;
+  letter-spacing: -0.04em;
 }
 
 .financial-hero-footer {
@@ -689,7 +693,7 @@ const dashboardStyles = `
 
 .financial-mini-label {
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
   text-transform: uppercase;
 }
 
@@ -703,13 +707,35 @@ const dashboardStyles = `
 
 .financial-hero-footer strong {
   font-size: 16px;
-  font-weight: 850;
+  font-weight: 750;
 }
 
-/* Metric Cards */
+@media (max-width: 768px) {
+  .financial-hero-card {
+    border-radius: 24px;
+    padding: 22px;
+  }
+
+  .financial-balance {
+    font-size: clamp(1.7rem, 8vw, 2.3rem);
+  }
+
+  .financial-hero-footer {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .financial-hero-footer > div + div {
+    padding-left: 0;
+    border-left: none;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.16);
+  }
+}
+
+/* Dashboard Metric Cards (replace old .metric-card) */
 .metric-card {
-  min-height: 302px;
-  padding: 22px;
+  padding: 20px;
   border-radius: 18px;
   border: 1px solid var(--color-border);
   background: color-mix(in srgb, var(--color-surface) 90%, transparent);
@@ -717,7 +743,7 @@ const dashboardStyles = `
   backdrop-filter: blur(14px);
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  gap: 16px;
 }
 
 .card-hover {
@@ -731,34 +757,35 @@ const dashboardStyles = `
 }
 
 .metric-icon {
-  width: 52px;
-  height: 52px;
-  border-radius: 16px;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
   display: grid;
   place-items: center;
-  margin-bottom: 12px;
 }
 
 .metric-icon svg {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
 }
 
 .metric-title {
   margin: 0;
-  color: var(--color-text-secondary);
-  font-size: 14px;
-  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .metric-value {
   display: block;
-  margin-top: 8px;
-  color: var(--color-text-primary);
-  font-size: 24px;
+  margin-top: 6px;
+  color: var(--text-strong);
+  font-size: clamp(1.25rem, 2vw, 1.75rem);
   line-height: 1.1;
-  font-weight: 900;
-  letter-spacing: -0.04em;
+  font-weight: 750;
+  letter-spacing: -0.03em;
 }
 
 .metric-trend {
@@ -769,12 +796,11 @@ const dashboardStyles = `
 }
 
 .metric-trend small {
-  color: var(--color-text-muted);
+  color: var(--text-muted);
 }
 
 /* Chart card */
 .chart-card {
-  min-height: 342px;
   padding: 24px;
   border-radius: 20px;
   border: 1px solid var(--color-border);
@@ -794,15 +820,15 @@ const dashboardStyles = `
 .chart-card-header h2 {
   margin: 0;
   font-size: 17px;
-  font-weight: 850;
-  color: var(--color-text-primary);
+  font-weight: 700;
+  color: var(--text-strong);
 }
 
 .chart-legend {
   display: flex;
   align-items: center;
   gap: 18px;
-  color: var(--color-text-secondary);
+  color: var(--text-secondary);
   font-size: 12px;
   font-weight: 600;
 }
@@ -842,8 +868,8 @@ const dashboardStyles = `
 .quick-actions-card h2 {
   margin: 0 0 18px;
   font-size: 17px;
-  font-weight: 850;
-  color: var(--color-text-primary);
+  font-weight: 700;
+  color: var(--text-strong);
 }
 
 .quick-actions-list {
@@ -914,20 +940,20 @@ const dashboardStyles = `
 .quick-action-left strong {
   display: block;
   font-size: 14px;
-  font-weight: 850;
-  color: var(--color-text-primary);
+  font-weight: 700;
+  color: var(--text-strong);
 }
 
 .quick-action-left p {
   margin: 4px 0 0;
   font-size: 12px;
-  color: var(--color-text-secondary);
+  color: var(--text-secondary);
 }
 
 .quick-action-chevron {
   width: 18px;
   height: 18px;
-  color: var(--color-text-muted);
+  color: var(--text-muted);
   flex-shrink: 0;
 }
 
@@ -952,8 +978,8 @@ const dashboardStyles = `
 .table-card-header h2 {
   margin: 0;
   font-size: 17px;
-  font-weight: 850;
-  color: var(--color-text-primary);
+  font-weight: 700;
+  color: var(--text-strong);
 }
 
 .table-wrapper {
@@ -971,9 +997,9 @@ const dashboardStyles = `
 .data-table thead th {
   padding: 13px 16px;
   background: var(--color-surface-soft);
-  color: var(--color-text-secondary);
+  color: var(--text-secondary);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
   text-align: left;
   white-space: nowrap;
 }
@@ -1014,7 +1040,7 @@ const dashboardStyles = `
   gap: 8px;
   color: var(--color-primary);
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 700;
   text-decoration: none;
   background: none;
   border: none;

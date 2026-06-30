@@ -4,7 +4,6 @@ import { FolderTree, MoreHorizontal, Pencil, Tags, Trash2 } from "lucide-react";
 import { FormField as Field } from "@/components/forms/form-field";
 import { EmptyState, FilterBar, MetricCard, PageShell, StatusBadge } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Dialog, DialogCloseButton, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -91,44 +90,34 @@ export function Component() {
 
   return (
     <PageShell icon={Tags} title="Categorias" subtitle="Organize receitas, custos e despesas por classificação" actionLabel="Nova categoria" onAction={() => { resetForm(); setOpen(true); }}>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="stats-grid">
         <MetricCard title="Categorias ativas" value={String(categories?.length ?? 0)} icon={FolderTree} tone="blue" />
       </div>
+
       <FilterBar searchPlaceholder="Buscar categoria..." search={search} onSearchChange={setSearch}>
         <Select value={type} onChange={(e) => setType(e.target.value as "receita" | "despesa")} options={[{ value: "receita", label: "Receita" }, { value: "despesa", label: "Despesa" }]} />
       </FilterBar>
-      <Card className="overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>{["Nome", "Tipo", "Status", "Ações"].map((column) => <TableHead key={column}>{column}</TableHead>)}</TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow><TableCell colSpan={4} className="h-48 text-center text-sm text-muted-foreground">Carregando...</TableCell></TableRow>
-            ) : categories?.length ? categories.map((cat) => (
-              <TableRow key={cat.id}>
-                <TableCell className="font-medium"><span className="inline-flex items-center gap-2"><span className="inline-block size-3 rounded-full" style={{ backgroundColor: cat.color ?? "#94A3B8" }} />{cat.name}</span></TableCell>
-                <TableCell>{cat.type === "receita" ? "Receita" : "Despesa"}</TableCell>
-                <TableCell><StatusBadge status="ativo" /></TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" aria-label="Ações"><MoreHorizontal className="size-4" /></Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuItem onClick={() => handleEdit(cat)}><Pencil className="size-4" />Editar</DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem destructive onClick={() => handleDelete(cat)}><Trash2 className="size-4" />Excluir</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            )) : (
-              <TableRow><TableCell colSpan={4} className="p-0"><EmptyState title="Nenhuma categoria encontrada." description="Crie categorias para melhorar relatórios, DRE e filtros financeiros." actionLabel="Nova categoria" onAction={() => { resetForm(); setOpen(true); }} /></TableCell></TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </Card>
+
+      <div className="desktop-table">
+        <DesktopCategoryTable
+          categories={categories}
+          isLoading={isLoading}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onNew={() => { resetForm(); setOpen(true); }}
+        />
+      </div>
+
+      <div className="mobile-list">
+        <MobileCategoryList
+          categories={categories}
+          isLoading={isLoading}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onNew={() => { resetForm(); setOpen(true); }}
+        />
+      </div>
+
       <Dialog open={open} onOpenChange={(v) => { if (!v) resetForm(); setOpen(v); }}>
         <DialogContent className="relative">
           <DialogCloseButton onClick={() => { resetForm(); setOpen(false); }} />
@@ -147,6 +136,7 @@ export function Component() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
       <Dialog open={!!deletingId} onOpenChange={(v) => { if (!v) setDeletingId(null); }}>
         <DialogContent className="relative">
           <DialogCloseButton onClick={() => setDeletingId(null)} />
@@ -161,5 +151,124 @@ export function Component() {
         </DialogContent>
       </Dialog>
     </PageShell>
+  );
+}
+
+function DesktopCategoryTable({
+  categories,
+  isLoading,
+  onEdit,
+  onDelete,
+  onNew,
+}: {
+  categories: CategoryRow[] | undefined;
+  isLoading: boolean;
+  onEdit: (cat: CategoryRow) => void;
+  onDelete: (cat: CategoryRow) => void;
+  onNew: () => void;
+}) {
+  return (
+    <div className="table-card" style={{ padding: 0 }}>
+      <Table>
+        <TableHeader>
+          <TableRow>{["Nome", "Tipo", "Status", "Ações"].map((column) => <TableHead key={column}>{column}</TableHead>)}</TableRow>
+        </TableHeader>
+        <TableBody>
+          {isLoading ? (
+            <TableRow><TableCell colSpan={4} className="h-48 text-center text-sm text-muted-foreground">Carregando...</TableCell></TableRow>
+          ) : categories?.length ? categories.map((cat) => (
+            <TableRow key={cat.id}>
+              <TableCell className="font-medium"><span className="inline-flex items-center gap-2"><span className="inline-block size-3 rounded-full" style={{ backgroundColor: cat.color ?? "#94A3B8" }} />{cat.name}</span></TableCell>
+              <TableCell>{cat.type === "receita" ? "Receita" : "Despesa"}</TableCell>
+              <TableCell><StatusBadge status="ativo" /></TableCell>
+              <TableCell>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" aria-label="Ações"><MoreHorizontal className="size-4" /></Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => onEdit(cat)}><Pencil className="size-4" />Editar</DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem destructive onClick={() => onDelete(cat)}><Trash2 className="size-4" />Excluir</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
+            </TableRow>
+          )) : (
+            <TableRow><TableCell colSpan={4} className="p-0"><EmptyState title="Nenhuma categoria encontrada." description="Crie categorias para melhorar relatórios, DRE e filtros financeiros." actionLabel="Nova categoria" onAction={onNew} /></TableCell></TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
+function MobileCategoryList({
+  categories,
+  isLoading,
+  onEdit,
+  onDelete,
+  onNew,
+}: {
+  categories: CategoryRow[] | undefined;
+  isLoading: boolean;
+  onEdit: (cat: CategoryRow) => void;
+  onDelete: (cat: CategoryRow) => void;
+  onNew: () => void;
+}) {
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="category-card">
+            <div className="flex items-center gap-3">
+              <div className="size-5 animate-pulse rounded-full bg-surface-muted" />
+              <div className="space-y-2">
+                <div className="h-4 w-32 animate-pulse rounded-full bg-surface-muted" />
+                <div className="h-3 w-20 animate-pulse rounded-full bg-surface-muted" />
+              </div>
+            </div>
+            <div className="h-5 w-16 animate-pulse rounded-full bg-surface-muted" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (!categories?.length) {
+    return (
+      <EmptyState title="Nenhuma categoria encontrada." description="Crie categorias para melhorar relatórios, DRE e filtros financeiros." actionLabel="Nova categoria" onAction={onNew} />
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {categories.map((cat) => (
+        <article key={cat.id} className="category-card">
+          <div className="category-main">
+            <span className="category-dot" style={{ backgroundColor: cat.color ?? "#94A3B8" }} />
+            <div>
+              <h3>{cat.name}</h3>
+              <p>{cat.type === "receita" ? "Receita" : "Despesa"}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <StatusBadge status="ativo" />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label="Ações">
+                  <MoreHorizontal className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => onEdit(cat)}><Pencil className="size-4" />Editar</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem destructive onClick={() => onDelete(cat)}><Trash2 className="size-4" />Excluir</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </article>
+      ))}
+    </div>
   );
 }

@@ -304,14 +304,16 @@ const sidebarStyles = `
 .app-main {
   flex: 1;
   min-width: 0;
-  padding: 0 clamp(20px, 2vw, 32px) 32px;
+  display: flex;
+  flex-direction: column;
 }
 
 #conteudo-principal {
   width: 100%;
   max-width: 1480px;
   margin-inline: auto;
-  padding-top: 22px;
+  padding: 22px clamp(20px, 2vw, 32px) 32px;
+  flex: 1;
 }
 
 @media (max-width: 767px) {
@@ -319,10 +321,11 @@ const sidebarStyles = `
     display: block;
   }
   .app-main {
-    padding: 0 var(--page-padding-mobile) var(--page-padding-mobile);
+    padding: 0;
   }
   #conteudo-principal {
-    padding-top: 18px;
+    padding: 12px 12px 32px;
+    max-width: 100%;
   }
 }
 
@@ -461,7 +464,7 @@ const sidebarStyles = `
   align-items: center;
   gap: 12px;
   min-height: 58px;
-  padding: 0;
+  padding: 0 clamp(20px, 2vw, 32px);
 }
 
 @media (max-width: 767px) {
@@ -469,8 +472,11 @@ const sidebarStyles = `
     position: sticky;
     top: 0;
     z-index: 30;
-    background: var(--color-surface);
+    background: rgba(255, 255, 255, 0.82);
     border-bottom: 1px solid var(--color-border);
+    backdrop-filter: blur(12px);
+    padding: 0 12px;
+    min-height: 52px;
   }
 }
 
