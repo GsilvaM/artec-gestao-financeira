@@ -189,7 +189,7 @@ const clientStyles = `
   background: var(--color-surface-soft);
   color: var(--color-text-secondary);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
   text-align: left;
   white-space: nowrap;
 }

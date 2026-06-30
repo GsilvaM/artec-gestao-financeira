@@ -216,7 +216,7 @@ const loginStyles = `
 
 .login-title {
   font-size: 26px;
-  font-weight: 950;
+  font-weight: 800;
   color: var(--color-text-primary);
   line-height: 1.2;
   letter-spacing: -0.035em;

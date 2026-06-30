@@ -370,7 +370,7 @@ const sidebarStyles = `
 
 .sidebar-logo-text {
   font-size: 16px;
-  font-weight: 950;
+  font-weight: 800;
   color: #ffffff;
   letter-spacing: -0.035em;
 }
@@ -450,12 +450,13 @@ const sidebarStyles = `
 
 .sidebar-user-name {
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 700;
   color: #ffffff;
 }
 
 .sidebar-user-role {
   font-size: 12px;
+  font-weight: 500;
   color: rgba(255, 255, 255, 0.68);
 }
 
