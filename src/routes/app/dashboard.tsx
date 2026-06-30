@@ -250,8 +250,8 @@ function StatisticBar({ icon: Icon, label, value, amount, tone, delay = 0 }: { i
         <Icon className="size-5" />
       </div>
       <div className="min-w-0">
-        <div className="h-1.5 overflow-hidden rounded-[3px] bg-[#E2E8F0] dark:bg-[#2D3748]" title={`${label}: ${formatMoney(amount)}`}>
-          <div className={cn("h-full rounded-[3px] transition-[width] duration-[600ms] ease-out", colors[tone].bar, percentWidthClass(value))} style={{ transitionDelay: `${delay}ms` }} />
+        <div className="h-2.5 overflow-hidden rounded-full bg-muted" title={`${label}: ${formatMoney(amount)}`}>
+          <div className={cn("h-full rounded-full transition-[width] duration-[600ms] ease-out", colors[tone].bar, percentWidthClass(value))} style={{ transitionDelay: `${delay}ms` }} />
         </div>
         <p className="mt-2 text-sm text-muted-foreground">{label}</p>
       </div>
@@ -409,7 +409,7 @@ export function Component() {
                   <span className="text-muted-foreground">Participação das receitas</span>
                   <span className="whitespace-nowrap font-semibold tabular-nums text-foreground">{receitaPercent}%</span>
                 </div>
-                <div className="h-2.5 overflow-hidden rounded-full bg-muted">
+                <div className="h-3 overflow-hidden rounded-full bg-muted">
                   <div className={cn("h-full rounded-full bg-primary transition-[width] duration-[800ms] ease-in-out", percentWidthClass(receitaPercent))} />
                 </div>
               </div>
@@ -539,7 +539,7 @@ export function Component() {
                       <stop offset="100%" stopColor="var(--chart-balance)" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid vertical={false} strokeDasharray="4 6" stroke="color-mix(in srgb, var(--border) 62%, transparent)" />
+                  <CartesianGrid vertical={false} strokeDasharray="4 6" stroke="color-mix(in srgb, var(--border) 36%, transparent)" />
                   <XAxis dataKey="mes" stroke="var(--muted-foreground)" fontSize={12} tickMargin={8} />
                   <YAxis
                     stroke="var(--muted-foreground)"
@@ -586,7 +586,7 @@ export function Component() {
                   "group min-h-11 w-full justify-start gap-3 rounded-[10px] px-4 transition duration-150",
                   item.tone === "primary"
                     ? "border-transparent bg-[var(--color-card-bg)] text-white hover:bg-[#24476f] hover:text-white"
-                    : "border-border bg-card text-foreground hover:bg-secondary",
+                    : "border-border bg-card text-foreground hover:bg-secondary hover:shadow-[var(--shadow-soft)]",
                 )}
                 onClick={() => navigate(item.to)}
               >

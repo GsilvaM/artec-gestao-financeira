@@ -46,7 +46,7 @@ export function MetricCard({
   return (
     <div
       className={cn(
-        "relative flex min-w-0 flex-col gap-1.5 overflow-hidden rounded-[12px] border-[0.5px] border-border/70 bg-[var(--surface-card)] px-5 py-4 transition duration-200 hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-[var(--shadow-soft)] dark:border-white/10 dark:bg-[linear-gradient(180deg,#292925_0%,#22221f_100%)] dark:shadow-[0_18px_42px_-32px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.05)]",
+        "relative flex min-w-0 flex-col gap-1.5 overflow-hidden rounded-xl border-[0.5px] border-border/70 bg-[var(--surface-card)] px-5 py-4 transition duration-200 hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-[var(--shadow-soft)] dark:border-white/10 dark:bg-[linear-gradient(180deg,#292925_0%,#22221f_100%)] dark:shadow-[0_18px_42px_-32px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.05)]",
         className,
       )}
     >
