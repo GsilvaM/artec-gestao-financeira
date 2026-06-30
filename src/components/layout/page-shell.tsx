@@ -32,21 +32,21 @@ export const pageHeaderStyles = `
   align-items: flex-start;
   justify-content: space-between;
   gap: 20px;
-  margin-bottom: 24px;
+  margin-bottom: 26px;
 }
 
 .page-header-title {
   margin: 0;
-  font-size: 30px;
+  font-size: clamp(28px, 2.2vw, 36px);
   line-height: 1.2;
-  font-weight: 850;
-  letter-spacing: -0.04em;
+  font-weight: 900;
+  letter-spacing: -0.035em;
   color: var(--color-text-primary);
 }
 
 .page-header-desc {
   margin: 8px 0 0;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.55;
   color: var(--color-text-secondary);
 }

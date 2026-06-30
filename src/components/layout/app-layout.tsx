@@ -126,7 +126,7 @@ function SidebarFooter({ userEmail, onSignOut }: { userEmail?: string; onSignOut
       <div className="sidebar-user-avatar">{initials}</div>
       <div className="min-w-0 flex-1">
         <div className="sidebar-user-name truncate">{userEmail?.split("@")[0] ?? "Usuário"}</div>
-        <div className="sidebar-user-role truncate">Administrador</div>
+        <div className="sidebar-user-role truncate">{userEmail ?? "Administrador"}</div>
       </div>
       <button type="button" onClick={onSignOut} aria-label="Sair" className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-white/70 transition hover:bg-white/20 hover:text-white">
         <LogOut size={16} />
@@ -280,7 +280,7 @@ function MobileNavDrawer({ open, pathname, userEmail, onClose, onSignOut }: { op
           <div className="sidebar-user-avatar">{initials}</div>
           <div className="min-w-0 flex-1">
             <div className="sidebar-user-name truncate">{userEmail?.split("@")[0] ?? "Usuário"}</div>
-            <div className="sidebar-user-role truncate">Administrador</div>
+            <div className="sidebar-user-role truncate">{userEmail ?? "Administrador"}</div>
           </div>
           <button type="button" onClick={onSignOut} aria-label="Sair" className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-white/70 transition hover:bg-white/20 hover:text-white">
             <LogOut size={16} />
@@ -295,16 +295,22 @@ const sidebarStyles = `
 .app-shell {
   min-height: 100vh;
   display: flex;
-  background: var(--color-background);
+  background:
+    radial-gradient(circle at top left, rgba(21, 94, 239, 0.07), transparent 360px),
+    var(--color-background);
 }
 
 .app-main {
   flex: 1;
   min-width: 0;
-  padding: 0 var(--page-padding-desktop) var(--page-padding-desktop);
-  background:
-    radial-gradient(circle at top left, rgba(21, 94, 239, 0.06), transparent 320px),
-    var(--color-background);
+  padding: 0 clamp(20px, 2vw, 32px) 32px;
+}
+
+#conteudo-principal {
+  width: 100%;
+  max-width: 1500px;
+  margin-inline: auto;
+  padding-top: 22px;
 }
 
 @media (max-width: 767px) {
@@ -314,12 +320,15 @@ const sidebarStyles = `
   .app-main {
     padding: 0 var(--page-padding-mobile) var(--page-padding-mobile);
   }
+  #conteudo-principal {
+    padding-top: 18px;
+  }
 }
 
 .sidebar {
-  width: 248px;
+  width: 216px;
   min-height: 100vh;
-  padding: 18px 16px;
+  padding: 18px 12px;
   display: flex;
   flex-direction: column;
   background:
@@ -330,6 +339,7 @@ const sidebarStyles = `
   position: sticky;
   top: 0;
   flex-shrink: 0;
+  border-radius: 0 28px 28px 0;
 }
 
 @media (max-width: 767px) {
@@ -343,17 +353,17 @@ const sidebarStyles = `
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  padding: 10px 0 26px;
+  padding: 12px 0 28px;
 }
 
 .sidebar-logo-mark {
-  width: 64px;
-  height: 64px;
+  width: 62px;
+  height: 62px;
   color: #ffffff;
 }
 
 .sidebar-logo-text {
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 800;
   color: #ffffff;
   letter-spacing: -0.02em;
@@ -362,7 +372,7 @@ const sidebarStyles = `
 .sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 20px;
   flex: 1;
   overflow-y: auto;
 }
@@ -377,16 +387,16 @@ const sidebarStyles = `
 }
 
 .sidebar-link {
-  height: 50px;
-  padding: 0 14px;
-  border-radius: 13px;
+  min-height: 48px;
+  padding: 0 12px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   gap: 12px;
   color: rgba(255, 255, 255, 0.84);
   text-decoration: none;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 700;
   transition: background-color 180ms ease, color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
 }
 
@@ -447,8 +457,8 @@ const sidebarStyles = `
   display: flex;
   align-items: center;
   gap: 12px;
-  min-height: 64px;
-  padding: 0 8px;
+  min-height: 58px;
+  padding: 0;
 }
 
 @media (max-width: 767px) {
@@ -504,9 +514,9 @@ const sidebarStyles = `
 }
 
 .topbar-icon-btn {
-  width: 42px;
-  height: 42px;
-  border-radius: 14px;
+  width: 44px;
+  height: 44px;
+  border-radius: 16px;
   border: 1px solid var(--color-border);
   background: var(--color-surface);
   color: var(--color-text-primary);
@@ -525,9 +535,9 @@ const sidebarStyles = `
   display: flex;
   align-items: center;
   gap: 8px;
-  height: 42px;
-  padding: 0 10px;
-  border-radius: 14px;
+  height: 44px;
+  padding: 0 12px;
+  border-radius: 16px;
   border: 1px solid var(--color-border);
   background: var(--color-surface);
   transition: background-color 160ms ease, border-color 160ms ease;

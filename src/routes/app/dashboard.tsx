@@ -466,11 +466,14 @@ export function Component() {
             <div className="dashboard-top-grid">
               <FinancialHeroCard balance={saldo} revenue={totalReceitas} expenses={totalDespesas} />
 
-              <div className="dashboard-metrics-grid">
-                <KpiCard title="Faturamento" value={formatMoney(totalReceitas)} icon={Banknote} tone="green" delta={getSeriesDelta(kpiSeries.faturamento)} sparklineData={kpiSeries.faturamento} />
-                <KpiCard title="Lucro" value={formatMoney(saldo)} icon={TrendingUp} tone="blue" delta={getSeriesDelta(kpiSeries.lucro)} sparklineData={kpiSeries.lucro} />
-                <KpiCard title="Contas pagas" value={timedOut && !kpis ? "—" : String(contasPagas ?? 0)} icon={ReceiptText} tone="orange" sparklineData={kpiSeries.contasPagas} />
-                <PendingKpiCard total={pendenciaData.total} overdue={pendenciaData.overdue} />
+              <div className="dashboard-kpi-panel">
+                <h2>Resumo financeiro</h2>
+                <div className="dashboard-metrics-grid">
+                  <KpiCard title="Faturamento" value={formatMoney(totalReceitas)} icon={Banknote} tone="green" delta={getSeriesDelta(kpiSeries.faturamento)} sparklineData={kpiSeries.faturamento} />
+                  <KpiCard title="Lucro" value={formatMoney(saldo)} icon={TrendingUp} tone="blue" delta={getSeriesDelta(kpiSeries.lucro)} sparklineData={kpiSeries.lucro} />
+                  <KpiCard title="Contas pagas" value={timedOut && !kpis ? "—" : String(contasPagas ?? 0)} icon={ReceiptText} tone="orange" sparklineData={kpiSeries.contasPagas} />
+                  <PendingKpiCard total={pendenciaData.total} overdue={pendenciaData.overdue} />
+                </div>
               </div>
             </div>
 
@@ -519,14 +522,29 @@ const dashboardStyles = `
 .dashboard-page {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 22px;
 }
 
 .dashboard-top-grid {
   display: grid;
-  grid-template-columns: minmax(360px, 1.05fr) minmax(600px, 1.7fr);
-  gap: 24px;
+  grid-template-columns: minmax(360px, 0.92fr) minmax(640px, 1.58fr);
+  gap: 22px;
   align-items: stretch;
+}
+
+.dashboard-kpi-panel {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.dashboard-kpi-panel > h2 {
+  margin: 4px 0 0;
+  color: var(--color-text-primary);
+  font-size: 18px;
+  font-weight: 850;
+  letter-spacing: -0.025em;
 }
 
 .dashboard-metrics-grid {
@@ -538,13 +556,13 @@ const dashboardStyles = `
 .dashboard-middle-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.45fr) minmax(360px, 0.95fr);
-  gap: 24px;
+  gap: 22px;
 }
 
 .dashboard-bottom-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 24px;
+  gap: 22px;
 }
 
 @media (max-width: 1279px) {
@@ -560,8 +578,8 @@ const dashboardStyles = `
 
 /* Financial Hero Card */
 .financial-hero-card {
-  min-height: 330px;
-  padding: 26px;
+  min-height: 338px;
+  padding: 26px 28px;
   border-radius: 24px;
   color: #ffffff;
   position: relative;
@@ -615,7 +633,7 @@ const dashboardStyles = `
 .financial-hero-body {
   position: relative;
   z-index: 1;
-  margin-top: 34px;
+  margin-top: 32px;
 }
 
 .financial-company {
@@ -649,7 +667,7 @@ const dashboardStyles = `
 .financial-hero-footer {
   position: relative;
   z-index: 1;
-  margin-top: 28px;
+  margin-top: 26px;
   padding: 16px;
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.11);
@@ -690,9 +708,9 @@ const dashboardStyles = `
 
 /* Metric Cards */
 .metric-card {
-  min-height: 292px;
+  min-height: 302px;
   padding: 22px;
-  border-radius: 20px;
+  border-radius: 18px;
   border: 1px solid var(--color-border);
   background: var(--color-surface);
   box-shadow: var(--shadow-card);
@@ -755,7 +773,7 @@ const dashboardStyles = `
 
 /* Chart card */
 .chart-card {
-  min-height: 330px;
+  min-height: 342px;
   padding: 24px;
   border-radius: 20px;
   border: 1px solid var(--color-border);
@@ -806,13 +824,13 @@ const dashboardStyles = `
 }
 
 .chart-card-body {
-  min-height: 250px;
+  min-height: 262px;
 }
 
 /* Quick actions */
 .quick-actions-card {
   padding: 24px;
-  border-radius: 20px;
+  border-radius: 22px;
   border: 1px solid var(--color-border);
   background: var(--color-surface);
   box-shadow: var(--shadow-card);
@@ -913,7 +931,7 @@ const dashboardStyles = `
 /* Table cards */
 .table-card {
   padding: 20px;
-  border-radius: 20px;
+  border-radius: 22px;
   border: 1px solid var(--color-border);
   background: var(--color-surface);
   box-shadow: var(--shadow-card);

@@ -6,8 +6,8 @@
 :root {
   color-scheme: light;
 
-  --color-background: #f7faff;
-  --color-background-soft: #eef4fb;
+  --color-background: #f6f9ff;
+  --color-background-soft: #edf4fc;
 
   --color-surface: #ffffff;
   --color-surface-soft: #f8fafc;
@@ -17,8 +17,8 @@
   --color-text-secondary: #53657d;
   --color-text-muted: #7a8ca5;
 
-  --color-border: #e4eaf2;
-  --color-border-strong: #d6dfea;
+  --color-border: #dfe7f2;
+  --color-border-strong: #cbd8e8;
 
   --color-primary: #155eef;
   --color-primary-hover: #0f4fd8;
@@ -50,9 +50,9 @@
   --radius-2xl: 24px;
   --radius-full: 999px;
 
-  --shadow-card: 0 12px 32px rgba(15, 23, 42, 0.06);
-  --shadow-card-hover: 0 18px 42px rgba(15, 23, 42, 0.1);
-  --shadow-elevated: 0 20px 60px rgba(15, 23, 42, 0.14);
+  --shadow-card: 0 12px 34px rgba(15, 23, 42, 0.07);
+  --shadow-card-hover: 0 18px 46px rgba(15, 23, 42, 0.11);
+  --shadow-elevated: 0 22px 68px rgba(15, 23, 42, 0.16);
 
   --page-padding-desktop: 28px;
   --page-padding-mobile: 16px;
@@ -302,7 +302,9 @@
 
   body {
     margin: 0;
-    background: var(--color-background);
+    background:
+      radial-gradient(circle at top left, color-mix(in srgb, var(--primary) 10%, transparent), transparent 34rem),
+      var(--color-background);
     color: var(--color-text-primary);
     font-family:
       Inter, Geist, Manrope, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -359,12 +361,13 @@
 
 @layer components {
   .motion-card {
-    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background-color 180ms ease;
   }
 
   .motion-card:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-card-hover);
+    border-color: color-mix(in srgb, var(--primary) 20%, var(--color-border));
   }
 
   .motion-control {
