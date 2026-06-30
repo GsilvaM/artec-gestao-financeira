@@ -157,10 +157,17 @@ function buildFinancialChartData(rows: CashFlowApiRow[] | undefined, start: Date
     });
   }
 
-  return Array.from({ length: months }, (_, index) => {
+  const monthlyData = Array.from({ length: months }, (_, index) => {
     const date = new Date(start.getFullYear(), start.getMonth() + index, 1);
     const current = totalsByMonth.get(monthKey(date)) ?? { receitas: 0, despesas: 0, saldo: 0 };
     return { mes: monthLabel(date), ...current };
+  });
+
+  let accumulatedBalance = 0;
+  return monthlyData.map((item) => {
+    // The balance line is cumulative across the visible period; bars remain monthly totals.
+    accumulatedBalance += item.saldo;
+    return { ...item, saldo: accumulatedBalance };
   });
 }
 
