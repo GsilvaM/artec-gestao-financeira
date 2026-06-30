@@ -581,7 +581,7 @@ export function Component() {
               Atalhos rápidos
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-1 flex-col justify-between gap-3 pt-5">
+          <CardContent className="flex flex-1 flex-col gap-3 pt-5">
             {shortcuts.map((item) => (
               <Button
                 key={item.label}
