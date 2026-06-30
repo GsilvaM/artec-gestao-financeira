@@ -192,8 +192,8 @@ const filterStyles = `
   height: 44px;
   width: 100%;
   border-radius: 16px;
-  border: 1px solid var(--border-default);
-  background: white;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
   color: var(--text-primary);
   font-size: 0.875rem;
   padding: 0 14px 0 38px;
@@ -209,8 +209,8 @@ const filterStyles = `
   height: 44px;
   width: 100%;
   border-radius: 16px;
-  border: 1px solid var(--border-default);
-  background: white;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
   color: var(--text-primary);
   font-size: 0.875rem;
   padding: 0 14px;

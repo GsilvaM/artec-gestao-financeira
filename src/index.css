@@ -515,9 +515,9 @@
   .stat-card {
     min-width: 0;
     min-height: 128px;
-    border: 1px solid var(--border-soft);
+    border: 1px solid var(--color-border);
     border-radius: 22px;
-    background: rgba(255, 255, 255, 0.86);
+    background: color-mix(in srgb, var(--color-surface) 92%, transparent);
     box-shadow: var(--shadow-sm);
     padding: 20px;
     overflow: hidden;
@@ -557,11 +557,13 @@
     display: block;
     margin-top: 14px;
     color: var(--text-strong);
-    font-size: clamp(1.25rem, 2vw, 1.75rem);
+    font-size: clamp(1.1rem, 1.5vw, 1.5rem);
     font-weight: 750;
     letter-spacing: -0.03em;
     line-height: 1.1;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .stat-description {
@@ -614,9 +616,9 @@
 
   /* === Filter Card === */
   .filter-card {
-    border: 1px solid var(--border-soft);
+    border: 1px solid var(--color-border);
     border-radius: 22px;
-    background: rgba(255, 255, 255, 0.86);
+    background: color-mix(in srgb, var(--color-surface) 92%, transparent);
     box-shadow: var(--shadow-sm);
     padding: 12px;
   }
@@ -635,8 +637,8 @@
     justify-content: center;
     gap: 8px;
     border-radius: 16px;
-    border: 1px solid var(--border-default);
-    background: white;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
     color: var(--text-strong);
     padding: 0 14px;
     font-size: 0.875rem;
@@ -798,9 +800,9 @@
   /* === Empty State === */
   .empty-state {
     min-height: 220px;
-    border: 1px dashed var(--border-default);
+    border: 1px dashed var(--color-border);
     border-radius: 22px;
-    background: rgba(255, 255, 255, 0.72);
+    background: color-mix(in srgb, var(--color-surface) 90%, transparent);
     display: flex;
     flex-direction: column;
     align-items: center;

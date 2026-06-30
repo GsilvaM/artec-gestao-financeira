@@ -15,7 +15,7 @@ interface TransactionTableProps {
   onDelete: (entry: FinancialEntryRow) => void;
 }
 
-const columns = ["Data", "Tipo", "Categoria", "Descricao", "Vinculos", "Valor", "Status", "Acoes"];
+const columns = ["Data", "Tipo", "Categoria", "Descrição", "Vínculos", "Valor", "Status", "Ações"];
 
 export function TransactionTable({ entries, isLoading, error, onEdit, onDelete }: TransactionTableProps) {
   if (isLoading) return <TableFrame state="loading" />;

@@ -312,7 +312,7 @@ const sidebarStyles = `
   width: 100%;
   max-width: 1480px;
   margin-inline: auto;
-  padding: 22px clamp(20px, 2vw, 32px) 32px;
+  padding: 32px clamp(20px, 2vw, 32px) 32px;
   flex: 1;
 }
 

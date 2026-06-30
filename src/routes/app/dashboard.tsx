@@ -118,7 +118,7 @@ function formatLongDate(date = new Date()) {
 
 function DeltaBadge({ value }: { value?: number }) {
   if (typeof value !== "number") {
-    return <span className="text-xs font-medium text-text-muted">Sem dados</span>;
+    return <span className="text-xs font-medium text-text-muted">Sem dados do mês anterior</span>;
   }
   const positive = value >= 0;
   return (
@@ -163,11 +163,13 @@ function KpiCard({
         </div>
       </div>
       <div>
-        <div className="metric-trend">
-          <DeltaBadge value={delta} />
-          <small>vs. mês anterior</small>
-        </div>
-        <div className="h-10 mt-2">
+        {delta !== undefined && (
+          <div className="metric-trend">
+            <DeltaBadge value={delta} />
+            <small>vs. mês anterior</small>
+          </div>
+        )}
+        <div className={cn(delta !== undefined ? "h-10 mt-2" : "h-10")}>
           <SparklineChart data={sparklineData.length ? sparklineData : [0, 0, 0, 0, 0, 0]} color={sparklineColor} />
         </div>
       </div>
