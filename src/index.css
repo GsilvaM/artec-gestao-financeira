@@ -192,8 +192,8 @@
   --color-text-secondary: #aab8cc;
   --color-text-muted: #7f90a8;
 
-  --color-border: rgba(148, 163, 184, 0.18);
-  --color-border-strong: rgba(148, 163, 184, 0.28);
+  --color-border: rgba(148, 163, 184, 0.30);
+  --color-border-strong: rgba(148, 163, 184, 0.42);
 
   --color-primary: #3b82f6;
   --color-primary-hover: #2563eb;
@@ -267,6 +267,7 @@
   --chart-balance: var(--color-balance);
   --surface-card: var(--card);
   --text-primary: var(--color-text-primary);
+  --text-secondary: var(--color-text-secondary);
   --text-strong: var(--color-text-primary);
   --text-muted: var(--color-text-muted);
   --text-success: var(--color-success);
