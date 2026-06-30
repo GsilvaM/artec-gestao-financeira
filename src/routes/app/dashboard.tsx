@@ -586,8 +586,8 @@ const dashboardStyles = `
   overflow: hidden;
   background:
     radial-gradient(circle at 85% 10%, rgba(96, 165, 250, 0.38), transparent 170px),
-    linear-gradient(135deg, #002b5c 0%, #003d82 45%, #0057c2 100%);
-  box-shadow: 0 24px 55px rgba(0, 51, 130, 0.32);
+    linear-gradient(135deg, #03152e 0%, #06244a 48%, #0f4fa8 100%);
+  box-shadow: 0 24px 58px rgba(6, 26, 56, 0.28);
 }
 
 .financial-hero-glow {
@@ -712,8 +712,9 @@ const dashboardStyles = `
   padding: 22px;
   border-radius: 18px;
   border: 1px solid var(--color-border);
-  background: var(--color-surface);
+  background: color-mix(in srgb, var(--color-surface) 90%, transparent);
   box-shadow: var(--shadow-card);
+  backdrop-filter: blur(14px);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -777,8 +778,9 @@ const dashboardStyles = `
   padding: 24px;
   border-radius: 20px;
   border: 1px solid var(--color-border);
-  background: var(--color-surface);
+  background: color-mix(in srgb, var(--color-surface) 90%, transparent);
   box-shadow: var(--shadow-card);
+  backdrop-filter: blur(14px);
 }
 
 .chart-card-header {
@@ -832,8 +834,9 @@ const dashboardStyles = `
   padding: 24px;
   border-radius: 22px;
   border: 1px solid var(--color-border);
-  background: var(--color-surface);
+  background: color-mix(in srgb, var(--color-surface) 90%, transparent);
   box-shadow: var(--shadow-card);
+  backdrop-filter: blur(14px);
 }
 
 .quick-actions-card h2 {
@@ -855,7 +858,7 @@ const dashboardStyles = `
   padding: 14px 16px;
   border-radius: 15px;
   border: 1px solid var(--color-border);
-  background: var(--color-surface);
+  background: color-mix(in srgb, var(--color-surface) 84%, transparent);
   color: inherit;
   text-decoration: none;
   display: flex;
@@ -933,8 +936,9 @@ const dashboardStyles = `
   padding: 20px;
   border-radius: 22px;
   border: 1px solid var(--color-border);
-  background: var(--color-surface);
+  background: color-mix(in srgb, var(--color-surface) 90%, transparent);
   box-shadow: var(--shadow-card);
+  backdrop-filter: blur(14px);
 }
 
 .table-card-header {

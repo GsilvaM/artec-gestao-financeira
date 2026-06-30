@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { ArrowLeft, LockKeyhole, Moon, Send, ShieldCheck, Sun } from "lucide-react";
+import { ArrowLeft, LockKeyhole, Moon, Send, Sun } from "lucide-react";
+import { ArtecLogoMark } from "@/components/brand/ArtecLogoMark";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
@@ -73,7 +74,7 @@ export function Component() {
       <Card className="login-card">
         <CardHeader className="items-center text-center">
           <div className="login-icon">
-            <ShieldCheck className="size-7" />
+            <ArtecLogoMark className="size-11" />
           </div>
           <h1 className="login-title">Artec Gestão</h1>
           <CardDescription>
@@ -199,21 +200,26 @@ const loginStyles = `
 
 .login-icon {
   display: flex;
-  width: 56px;
-  height: 56px;
+  width: 72px;
+  height: 72px;
   align-items: center;
   justify-content: center;
-  border-radius: 16px;
-  background: var(--color-primary-soft);
-  color: var(--color-primary);
-  margin: 0 auto 12px;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.18), transparent 32px),
+    linear-gradient(135deg, #03152e 0%, #06244a 52%, #0f4fa8 100%);
+  color: #ffffff;
+  --logo-accent: #bfd9ff;
+  margin: 0 auto 14px;
+  box-shadow: 0 18px 40px rgba(6, 26, 56, 0.22);
 }
 
 .login-title {
-  font-size: 24px;
-  font-weight: 850;
+  font-size: 26px;
+  font-weight: 950;
   color: var(--color-text-primary);
   line-height: 1.2;
+  letter-spacing: -0.035em;
 }
 
 .login-form {

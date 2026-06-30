@@ -241,7 +241,7 @@ function MobileNavDrawer({ open, pathname, userEmail, onClose, onSignOut }: { op
       <aside id="menu-mobile" className="sidebar-mobile-drawer">
         <div className="flex items-center justify-between px-4 py-5">
           <NavLink to="/app" onClick={onClose} className="flex items-center gap-3">
-            <ArtecLogoMark className="size-10" />
+            <ArtecLogoMark className="size-11 [--logo-accent:#bfd9ff]" />
             <span className="font-bold text-lg text-white">Artec Gestão</span>
           </NavLink>
           <button type="button" onClick={onClose} aria-label="Fechar menu" className="flex size-10 items-center justify-center rounded-xl bg-white/10 text-white/70 hover:bg-white/20 hover:text-white">
@@ -296,8 +296,9 @@ const sidebarStyles = `
   min-height: 100vh;
   display: flex;
   background:
-    radial-gradient(circle at top left, rgba(21, 94, 239, 0.07), transparent 360px),
-    var(--color-background);
+    radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 360px),
+    radial-gradient(circle at top right, rgba(18, 183, 106, 0.04), transparent 340px),
+    linear-gradient(180deg, var(--color-background) 0%, var(--color-background-soft) 100%);
 }
 
 .app-main {
@@ -308,7 +309,7 @@ const sidebarStyles = `
 
 #conteudo-principal {
   width: 100%;
-  max-width: 1500px;
+  max-width: 1480px;
   margin-inline: auto;
   padding-top: 22px;
 }
@@ -333,9 +334,9 @@ const sidebarStyles = `
   flex-direction: column;
   background:
     radial-gradient(circle at top, rgba(255, 255, 255, 0.12), transparent 260px),
-    linear-gradient(180deg, var(--sidebar-start) 0%, var(--sidebar-mid) 48%, var(--sidebar-end) 100%);
+    linear-gradient(180deg, #03152e 0%, #06244a 45%, #073b78 100%);
   color: #ffffff;
-  box-shadow: 0 24px 60px rgba(0, 31, 84, 0.28);
+  box-shadow: 18px 0 46px rgba(6, 26, 56, 0.2);
   position: sticky;
   top: 0;
   flex-shrink: 0;
@@ -357,16 +358,18 @@ const sidebarStyles = `
 }
 
 .sidebar-logo-mark {
-  width: 62px;
-  height: 62px;
+  width: 66px;
+  height: 66px;
   color: #ffffff;
+  --logo-accent: #bfd9ff;
+  filter: drop-shadow(0 12px 22px rgba(0, 0, 0, 0.18));
 }
 
 .sidebar-logo-text {
   font-size: 16px;
-  font-weight: 800;
+  font-weight: 950;
   color: #ffffff;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.035em;
 }
 
 .sidebar-nav {
@@ -407,9 +410,9 @@ const sidebarStyles = `
 }
 
 .sidebar-link-active {
-  background: linear-gradient(135deg, #155eef 0%, #0f4fd8 100%);
+  background: linear-gradient(135deg, #155eef 0%, #2563eb 100%);
   color: #ffffff;
-  box-shadow: 0 12px 28px rgba(21, 94, 239, 0.36);
+  box-shadow: 0 12px 26px rgba(21, 94, 239, 0.3);
 }
 
 .sidebar-link svg {
@@ -518,7 +521,7 @@ const sidebarStyles = `
   height: 44px;
   border-radius: 16px;
   border: 1px solid var(--color-border);
-  background: var(--color-surface);
+  background: color-mix(in srgb, var(--color-surface) 86%, transparent);
   color: var(--color-text-primary);
   display: grid;
   place-items: center;
@@ -539,7 +542,7 @@ const sidebarStyles = `
   padding: 0 12px;
   border-radius: 16px;
   border: 1px solid var(--color-border);
-  background: var(--color-surface);
+  background: color-mix(in srgb, var(--color-surface) 86%, transparent);
   transition: background-color 160ms ease, border-color 160ms ease;
 }
 

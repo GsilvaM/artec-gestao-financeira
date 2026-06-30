@@ -10,36 +10,21 @@ export function ArtecLogoMark(props: SVGProps<SVGSVGElement>) {
       {...props}
     >
       <path
-        d="M15.5 48L32.5 17"
-        stroke="currentColor"
-        strokeWidth="8.75"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        d="M10.35 50.58 29.12 13.8c1.25-2.45 4.75-2.45 6 0l3.15 6.17-17.1 32.52a3.32 3.32 0 0 1-2.94 1.78h-5.55c-2.48 0-3.46-1.48-2.33-3.69Z"
+        fill="currentColor"
       />
       <path
-        d="M36.5 18.5L47 40"
-        stroke="var(--logo-accent, currentColor)"
-        strokeWidth="8.75"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        d="M35.62 24.86 49.9 50.58c1.23 2.21.24 3.69-2.23 3.69h-5.92a3.32 3.32 0 0 1-2.91-1.71L31.5 39.42l4.12-14.56Z"
+        fill="currentColor"
       />
       <path
-        d="M37.5 48H51.5"
-        stroke="currentColor"
-        strokeWidth="8.75"
-        strokeLinecap="round"
+        d="M27.25 36.45c.45-1.07 1.5-1.76 2.66-1.76h12.16c1.43 0 2.6 1.16 2.6 2.6v2.15c0 1.43-1.17 2.6-2.6 2.6H25.82c-1.67 0-2.8-1.72-2.14-3.25l.88-2.04a2.9 2.9 0 0 1 2.69-1.8Z"
+        fill="var(--logo-accent, currentColor)"
       />
       <path
-        d="M30.8 36H43.5"
-        stroke="var(--logo-accent, currentColor)"
-        strokeWidth="7.75"
-        strokeLinecap="round"
-      />
-      <path
-        d="M31 48H39"
-        stroke="currentColor"
-        strokeWidth="8.75"
-        strokeLinecap="round"
+        d="M32.17 16.94 22.9 35.12h7.38l5.5-10.74-2.53-5.01c-.42-.84-.67-1.5-1.08-2.43Z"
+        fill="var(--logo-accent, currentColor)"
+        opacity="0.92"
       />
     </svg>
   );

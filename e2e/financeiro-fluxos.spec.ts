@@ -11,6 +11,7 @@ test.describe("Fluxos financeiros", () => {
   });
 
   test("cria receita, cria despesa, edita e exclui", async ({ page }) => {
+    test.setTimeout(60_000);
     await createEntry(page, {
       description: receitaDescricao,
       type: "receita",

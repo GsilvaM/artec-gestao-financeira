@@ -137,7 +137,7 @@ export function DropdownMenuContent({ children, className, ...props }: React.HTM
       tabIndex={-1}
       style={contentStyle}
       className={cn(
-        "min-w-[9rem] origin-top-right animate-in fade-in-0 zoom-in-95 rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-[var(--shadow-soft)] focus:outline-none",
+        "min-w-[10rem] origin-top-right animate-in fade-in-0 zoom-in-95 rounded-2xl border border-border/90 bg-popover/95 p-1.5 text-popover-foreground shadow-elevated backdrop-blur focus:outline-none",
         className,
       )}
       {...props}
@@ -157,7 +157,7 @@ export function DropdownMenuItem({ children, className, onClick, destructive, ..
       role="menuitem"
       onClick={(e) => { onClick?.(e); close(); }}
       className={cn(
-        "flex w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm font-medium outline-none transition",
+        "flex w-full cursor-pointer items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-bold outline-none transition",
         destructive
           ? "text-destructive hover:bg-destructive/10 focus-visible:bg-destructive/10"
           : "text-foreground hover:bg-accent focus-visible:bg-accent",

@@ -8,7 +8,7 @@ export function Card({ elevated = false, className, ...props }: CardProps) {
   return (
     <div
       className={cn(
-        "motion-card rounded-[22px] border border-border bg-surface/95 text-text-primary shadow-card",
+        "motion-card rounded-[24px] border border-border/90 bg-surface/90 text-text-primary shadow-card backdrop-blur",
         elevated && "shadow-elevated",
         className
       )}

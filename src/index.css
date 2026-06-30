@@ -6,42 +6,42 @@
 :root {
   color-scheme: light;
 
-  --color-background: #f6f9ff;
-  --color-background-soft: #edf4fc;
+  --color-background: #eef4fb;
+  --color-background-soft: #f6f9fd;
 
   --color-surface: #ffffff;
-  --color-surface-soft: #f8fafc;
-  --color-surface-muted: #f1f6ff;
+  --color-surface-soft: #f8fbff;
+  --color-surface-muted: #f1f6fc;
 
-  --color-text-primary: #071b3a;
-  --color-text-secondary: #53657d;
-  --color-text-muted: #7a8ca5;
+  --color-text-primary: #061a38;
+  --color-text-secondary: #435979;
+  --color-text-muted: #71829d;
 
-  --color-border: #dfe7f2;
-  --color-border-strong: #cbd8e8;
+  --color-border: #d7e2f0;
+  --color-border-strong: #c8d6e8;
 
   --color-primary: #155eef;
   --color-primary-hover: #0f4fd8;
   --color-primary-soft: #dbeafe;
 
-  --color-success: #16a34a;
-  --color-success-soft: #dcfce7;
-  --color-success-strong: #047857;
+  --color-success: #079455;
+  --color-success-soft: #ecfdf3;
+  --color-success-strong: #079455;
 
-  --color-danger: #f04438;
-  --color-danger-soft: #fee4e2;
-  --color-danger-strong: #b42318;
+  --color-danger: #d92d20;
+  --color-danger-soft: #fef3f2;
+  --color-danger-strong: #d92d20;
 
-  --color-warning: #f97316;
-  --color-warning-soft: #ffedd5;
-  --color-warning-strong: #c2410c;
+  --color-warning: #f79009;
+  --color-warning-soft: #fffaeb;
+  --color-warning-strong: #dc6803;
 
   --color-purple: #7c3aed;
   --color-purple-soft: #ede9fe;
 
-  --sidebar-start: #001a3a;
-  --sidebar-mid: #002b5c;
-  --sidebar-end: #003d82;
+  --sidebar-start: #03152e;
+  --sidebar-mid: #06244a;
+  --sidebar-end: #073b78;
 
   --radius-sm: 10px;
   --radius-md: 14px;
@@ -50,9 +50,12 @@
   --radius-2xl: 24px;
   --radius-full: 999px;
 
-  --shadow-card: 0 12px 34px rgba(15, 23, 42, 0.07);
-  --shadow-card-hover: 0 18px 46px rgba(15, 23, 42, 0.11);
-  --shadow-elevated: 0 22px 68px rgba(15, 23, 42, 0.16);
+  --shadow-xs: 0 1px 2px rgba(16, 24, 40, 0.05);
+  --shadow-sm: 0 4px 12px rgba(6, 26, 56, 0.06);
+  --shadow-card: 0 12px 28px rgba(6, 26, 56, 0.1);
+  --shadow-card-hover: 0 18px 42px rgba(6, 26, 56, 0.13);
+  --shadow-elevated: 0 22px 60px rgba(6, 26, 56, 0.14);
+  --shadow-blue: 0 18px 40px rgba(21, 94, 239, 0.18);
 
   --page-padding-desktop: 28px;
   --page-padding-mobile: 16px;
@@ -61,10 +64,10 @@
   --surface: var(--color-surface);
   --surface-soft: var(--color-surface-soft);
   --border-soft: var(--color-border);
-  --navy-950: #001a3a;
-  --navy-900: #002b5c;
-  --navy-800: #003d82;
-  --navy-700: #0057c2;
+  --navy-950: #03152e;
+  --navy-900: #06244a;
+  --navy-800: #0a3a78;
+  --navy-700: #0f4fa8;
   --blue-600: var(--color-primary);
   --blue-500: #1d74ff;
   --blue-soft: var(--color-primary-soft);
@@ -133,22 +136,22 @@
   --bg-accent: color-mix(in srgb, var(--color-primary) 14%, transparent);
   --bg-warning: color-mix(in srgb, var(--color-pending) 14%, transparent);
   --radius: var(--radius-lg);
-  --shadow-soft: 0 8px 22px rgba(15, 23, 42, 0.05);
+  --shadow-soft: var(--shadow-sm);
 }
 
 .dark {
   color-scheme: dark;
 
-  --color-background: #06111f;
-  --color-background-soft: #081827;
+  --color-background: #071426;
+  --color-background-soft: #0b1b31;
 
-  --color-surface: #0d1b2e;
-  --color-surface-soft: #10243b;
-  --color-surface-muted: #132b46;
+  --color-surface: #0f223a;
+  --color-surface-soft: #132b47;
+  --color-surface-muted: #10233c;
 
-  --color-text-primary: #f8fafc;
-  --color-text-secondary: #b6c2d2;
-  --color-text-muted: #8796aa;
+  --color-text-primary: #e5eef9;
+  --color-text-secondary: #aab8cc;
+  --color-text-muted: #7f90a8;
 
   --color-border: rgba(148, 163, 184, 0.18);
   --color-border-strong: rgba(148, 163, 184, 0.28);
@@ -172,8 +175,8 @@
   --color-purple: #a78bfa;
   --color-purple-soft: rgba(167, 139, 250, 0.16);
 
-  --shadow-card: 0 18px 45px rgba(0, 0, 0, 0.28);
-  --shadow-card-hover: 0 22px 60px rgba(0, 0, 0, 0.36);
+  --shadow-card: 0 18px 45px rgba(0, 0, 0, 0.26);
+  --shadow-card-hover: 0 22px 60px rgba(0, 0, 0, 0.34);
   --shadow-elevated: 0 24px 70px rgba(0, 0, 0, 0.45);
 
   --app-bg: var(--color-background);
@@ -303,8 +306,9 @@
   body {
     margin: 0;
     background:
-      radial-gradient(circle at top left, color-mix(in srgb, var(--primary) 10%, transparent), transparent 34rem),
-      var(--color-background);
+      radial-gradient(circle at top left, color-mix(in srgb, var(--primary) 10%, transparent), transparent 30rem),
+      radial-gradient(circle at top right, color-mix(in srgb, var(--success) 5%, transparent), transparent 28rem),
+      linear-gradient(180deg, var(--color-background) 0%, var(--color-background-soft) 100%);
     color: var(--color-text-primary);
     font-family:
       Inter, Geist, Manrope, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -372,6 +376,38 @@
 
   .motion-control {
     transition: transform 170ms ease, box-shadow 170ms ease, border-color 170ms ease, background-color 170ms ease, color 170ms ease;
+  }
+
+  .filter-bar {
+    border-color: color-mix(in srgb, var(--color-border) 86%, transparent) !important;
+    background: color-mix(in srgb, var(--color-surface) 86%, transparent) !important;
+    box-shadow: var(--shadow-sm) !important;
+    backdrop-filter: blur(14px);
+  }
+
+  .table-card {
+    overflow: hidden;
+    border-color: color-mix(in srgb, var(--color-border) 86%, transparent) !important;
+    background: color-mix(in srgb, var(--color-surface) 90%, transparent) !important;
+    box-shadow: var(--shadow-card) !important;
+    backdrop-filter: blur(14px);
+  }
+
+  .data-table thead th {
+    background: color-mix(in srgb, var(--color-surface-muted) 92%, transparent) !important;
+    color: var(--color-text-muted) !important;
+    font-size: 11px !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .data-table tbody td {
+    border-bottom-color: color-mix(in srgb, var(--color-border) 72%, transparent) !important;
+  }
+
+  .data-table tbody tr:hover {
+    background: color-mix(in srgb, var(--primary) 6%, var(--color-surface)) !important;
   }
 
   @media (prefers-reduced-motion: reduce) {

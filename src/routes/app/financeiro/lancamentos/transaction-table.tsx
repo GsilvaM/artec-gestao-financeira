@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, Loader2, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { EmptyState, MoneyValue, StatusBadge } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -93,8 +93,18 @@ function TableFrame({ state }: { state: "loading" | "error" | "empty" }) {
           <TableRow>
             <TableCell colSpan={columns.length} className="p-0">
               {state === "loading" ? (
-                <div className="flex h-48 items-center justify-center text-muted-foreground">
-                  <Loader2 className="size-5 animate-spin" />
+                <div className="space-y-3 p-5">
+                  {Array.from({ length: 5 }).map((_, index) => (
+                    <div key={index} className="grid grid-cols-8 gap-4">
+                      <div className="h-4 animate-pulse rounded-full bg-surface-muted" />
+                      <div className="h-4 animate-pulse rounded-full bg-surface-muted" />
+                      <div className="h-4 animate-pulse rounded-full bg-surface-muted" />
+                      <div className="col-span-2 h-4 animate-pulse rounded-full bg-surface-muted" />
+                      <div className="h-4 animate-pulse rounded-full bg-surface-muted" />
+                      <div className="h-4 animate-pulse rounded-full bg-surface-muted" />
+                      <div className="h-4 animate-pulse rounded-full bg-surface-muted" />
+                    </div>
+                  ))}
                 </div>
               ) : state === "error" ? (
                 <div className="flex h-48 items-center justify-center text-sm font-medium text-destructive">

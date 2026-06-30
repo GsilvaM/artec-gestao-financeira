@@ -1,9 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 64 64" fill="none">
-  <rect width="64" height="64" fill="#061A3A"/>
-  <path d="M15.5 48L32.5 17" stroke="#FFFFFF" stroke-width="8.75" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M36.5 18.5L47 40" stroke="#DDEBFF" stroke-width="8.75" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M37.5 48H51.5" stroke="#FFFFFF" stroke-width="8.75" stroke-linecap="round"/>
-  <path d="M30.8 36H43.5" stroke="#DDEBFF" stroke-width="7.75" stroke-linecap="round"/>
-  <path d="M31 48H39" stroke="#FFFFFF" stroke-width="8.75" stroke-linecap="round"/>
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+  <path d="M10.35 50.58 29.12 13.8c1.25-2.45 4.75-2.45 6 0l3.15 6.17-17.1 32.52a3.32 3.32 0 0 1-2.94 1.78h-5.55c-2.48 0-3.46-1.48-2.33-3.69Z" fill="#FFFFFF"/>
+  <path d="M35.62 24.86 49.9 50.58c1.23 2.21.24 3.69-2.23 3.69h-5.92a3.32 3.32 0 0 1-2.91-1.71L31.5 39.42l4.12-14.56Z" fill="#FFFFFF"/>
+  <path d="M27.25 36.45c.45-1.07 1.5-1.76 2.66-1.76h12.16c1.43 0 2.6 1.16 2.6 2.6v2.15c0 1.43-1.17 2.6-2.6 2.6H25.82c-1.67 0-2.8-1.72-2.14-3.25l.88-2.04a2.9 2.9 0 0 1 2.69-1.8Z" fill="#BFD9FF"/>
+  <path d="M32.17 16.94 22.9 35.12h7.38l5.5-10.74-2.53-5.01c-.42-.84-.67-1.5-1.08-2.43Z" fill="#DDEBFF" opacity=".92"/>
+  <defs>
+    <linearGradient id="bg" x1="7" y1="5" x2="58" y2="60" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#03152E"/>
+      <stop offset=".52" stop-color="#06244A"/>
+      <stop offset="1" stop-color="#0F4FA8"/>
+    </linearGradient>
+  </defs>
 </svg>

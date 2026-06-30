@@ -132,10 +132,11 @@ export function LoadingState({ label = "Carregando..." }: { label?: string }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {Array.from({ length: 4 }).map((_, index) => (
-        <Card key={index}>
-          <CardContent className="space-y-4 p-5">
+        <Card key={index} className="overflow-hidden">
+          <CardContent className="space-y-4 p-6">
             <div className="h-3 w-24 animate-pulse rounded-full bg-surface-muted" />
-            <div className="h-8 w-32 animate-pulse rounded-full bg-surface-muted" />
+            <div className="h-8 w-36 animate-pulse rounded-full bg-surface-muted" />
+            <div className="h-3 w-44 animate-pulse rounded-full bg-surface-muted" />
             <div className="flex items-center gap-2 text-xs text-text-muted">
               <Loader2 className="size-3 animate-spin" />
               {label}
@@ -158,13 +159,13 @@ const toneStyles = {
 export function MetricCard({ title, value, icon: Icon, tone = "blue", helper, className }: MetricCardProps) {
   return (
     <Card className={cn("card-hover min-w-0", className)}>
-      <CardContent className="relative min-h-[156px] p-5 sm:p-6">
+      <CardContent className="relative min-h-[166px] p-6">
         <div className="min-w-0">
-          <p className="truncate pr-14 text-xs font-bold uppercase text-text-secondary">{title}</p>
-          <p className="mt-4 text-2xl font-bold text-text-primary tabular-nums sm:text-[1.6rem]" title={value}>{value}</p>
-          {helper ? <p className="mt-2 text-xs text-text-secondary">{helper}</p> : null}
+          <p className="truncate pr-14 text-[11px] font-black uppercase tracking-[0.08em] text-text-muted">{title}</p>
+          <p className="mt-4 text-2xl font-black tracking-[-0.035em] text-text-primary tabular-nums sm:text-[1.65rem]" title={value}>{value}</p>
+          {helper ? <p className="mt-3 text-sm font-semibold text-text-secondary">{helper}</p> : null}
         </div>
-        <div className={cn("absolute right-5 top-5 flex size-12 items-center justify-center rounded-xl sm:right-6 sm:top-6", toneStyles[tone])}>
+        <div className={cn("absolute right-5 top-5 flex size-12 items-center justify-center rounded-2xl border sm:right-6 sm:top-6", toneStyles[tone])}>
           <Icon className="size-5" />
         </div>
       </CardContent>
@@ -299,27 +300,33 @@ export function EmptyState({ icon, title, description, action, actionLabel, onAc
 
 export const emptyStateStyles = `
 .empty-state {
-  padding: 48px 24px;
+  min-height: 240px;
+  margin: 16px;
+  padding: 42px 24px;
   text-align: center;
   display: grid;
   place-items: center;
+  border: 1px dashed var(--color-border-strong);
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--color-surface) 72%, transparent);
 }
 
 .empty-state-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 20px;
+  width: 68px;
+  height: 68px;
+  border-radius: 22px;
   display: grid;
   place-items: center;
   background: var(--color-primary-soft);
   color: var(--color-primary);
   margin-bottom: 16px;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 12%, transparent);
 }
 
 .empty-state h3 {
   margin: 0;
-  font-size: 18px;
-  font-weight: 850;
+  font-size: 17px;
+  font-weight: 900;
   color: var(--color-text-primary);
 }
 
@@ -328,7 +335,7 @@ export const emptyStateStyles = `
   margin: 8px 0 0;
   color: var(--color-text-secondary);
   font-size: 14px;
-  line-height: 1.55;
+  line-height: 1.65;
 }
 
 .empty-state-action {
