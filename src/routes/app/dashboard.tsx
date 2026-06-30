@@ -96,8 +96,12 @@ function buildFinancialChartData(rows: CashFlowApiRow[] | undefined, start: Date
 }
 
 function getSeriesDelta(values: number[]) {
-  const current = values.at(-1);
-  const previous = values.at(-2);
+  const trimmed = [...values];
+  while (trimmed.length > 0 && trimmed.at(-1) === 0) {
+    trimmed.pop();
+  }
+  const current = trimmed.at(-1);
+  const previous = trimmed.at(-2);
   if (typeof current !== "number" || typeof previous !== "number" || previous === 0) return undefined;
   return Number((((current - previous) / Math.abs(previous)) * 100).toFixed(1));
 }

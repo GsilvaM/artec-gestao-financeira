@@ -267,6 +267,7 @@
   --chart-balance: var(--color-balance);
   --surface-card: var(--card);
   --text-primary: var(--color-text-primary);
+  --text-strong: var(--color-text-primary);
   --text-muted: var(--color-text-muted);
   --text-success: var(--color-success);
   --text-danger: var(--color-danger);
