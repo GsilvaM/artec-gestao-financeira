@@ -158,10 +158,10 @@ function KpiCard({
   const sparklineColor = tone === "orange" ? "red" : tone;
 
   return (
-    <Card className="min-h-[260px] overflow-hidden transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(15,23,42,0.08)]">
-      <CardContent className="flex h-full min-h-[260px] flex-col justify-between p-5 lg:p-6">
-        <div className="space-y-5">
-          <div className={cn("flex size-12 items-center justify-center rounded-2xl", toneStyles[tone])}>
+    <Card className="min-h-[248px] overflow-hidden transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(15,23,42,0.08)]">
+      <CardContent className="flex h-full min-h-[248px] flex-col justify-between p-5">
+        <div className="space-y-4">
+          <div className={cn("flex size-11 items-center justify-center rounded-2xl", toneStyles[tone])}>
             <Icon className="size-5" />
           </div>
           <div>
@@ -173,7 +173,7 @@ function KpiCard({
             <p className="text-xs text-muted-foreground">{footer ?? "vs. mês anterior"}</p>
           </div>
         </div>
-        <div className="h-14">
+        <div className="h-12">
           <SparklineChart data={sparklineData.length ? sparklineData : [0, 0, 0, 0, 0, 0]} color={sparklineColor} />
         </div>
       </CardContent>
@@ -184,10 +184,10 @@ function KpiCard({
 function PendingKpiCard({ total, overdue }: { total: number; overdue: number }) {
   const hasPending = total > 0;
   return (
-    <Card className="relative min-h-[260px] overflow-hidden border-purple-200/70 bg-[linear-gradient(180deg,var(--surface)_0%,var(--purple-soft)_160%)]">
-      <CardContent className="relative z-10 flex h-full min-h-[260px] flex-col justify-between p-5 lg:p-6">
-        <div className="space-y-5">
-          <div className="flex size-12 items-center justify-center rounded-2xl bg-[var(--purple-soft)] text-[var(--purple-600)]">
+    <Card className="relative min-h-[248px] overflow-hidden border-purple-200/70 bg-[linear-gradient(180deg,var(--surface)_0%,var(--purple-soft)_160%)]">
+      <CardContent className="relative z-10 flex h-full min-h-[248px] flex-col justify-between p-5">
+        <div className="space-y-4">
+          <div className="flex size-11 items-center justify-center rounded-2xl bg-[var(--purple-soft)] text-[var(--purple-600)]">
             <Bell className="size-5" />
           </div>
           <div>
@@ -411,7 +411,7 @@ export function Component() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-6 px-4 pb-8 pt-6 sm:px-6 lg:px-8 xl:px-10">
+    <div className="mx-auto flex w-full max-w-[1360px] flex-col gap-5 px-4 pb-8 pt-6 sm:px-6 lg:px-7 xl:px-8">
       <header className="flex min-w-0 flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div className="min-w-0">
           <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-foreground sm:text-4xl">Dashboard</h1>
@@ -445,15 +445,15 @@ export function Component() {
           </CardContent>
         </Card>
       ) : (
-        <section className="grid gap-6 xl:grid-cols-[minmax(360px,1.05fr)_minmax(0,1.95fr)]">
-          <Card className="overflow-hidden">
-            <CardContent className="p-5 lg:p-6">
-              <div className="relative min-h-[304px] overflow-hidden rounded-[20px] bg-[radial-gradient(circle_at_88%_12%,rgba(255,255,255,0.16),transparent_9rem),linear-gradient(135deg,var(--navy-900)_0%,#073B78_55%,#0B63C7_100%)] p-6 text-white shadow-[0_24px_55px_rgba(6,26,58,0.26)] lg:p-7">
+        <section className="grid gap-5 xl:grid-cols-[minmax(360px,0.98fr)_minmax(0,1.98fr)]">
+          <Card className="overflow-hidden border-0 bg-transparent shadow-none">
+            <CardContent className="p-0">
+              <div className="relative min-h-[300px] overflow-hidden rounded-[22px] bg-[radial-gradient(circle_at_88%_12%,rgba(255,255,255,0.16),transparent_9rem),linear-gradient(135deg,var(--navy-900)_0%,#073B78_55%,#0B63C7_100%)] p-6 text-white shadow-[0_24px_55px_rgba(6,26,58,0.26)] lg:p-7">
                 <div className="absolute -right-20 -top-20 size-56 rounded-full bg-white/10" />
                 <div className="absolute bottom-20 right-7 w-44 opacity-80">
                   <SparklineChart data={chartData.map((item) => item.saldo)} color="blue" />
                 </div>
-                <div className="relative z-10 flex min-h-[250px] flex-col">
+                <div className="relative z-10 flex min-h-[246px] flex-col">
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <p className="text-lg font-extrabold">Cartão financeiro</p>
@@ -496,14 +496,14 @@ export function Component() {
         </section>
       )}
 
-      <section className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(360px,1fr)]">
+      <section className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1.42fr)_minmax(360px,1fr)]">
         <Card className="min-w-0">
           <CardHeader className="gap-4 pb-2 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle className="text-lg font-extrabold">Resumo financeiro</CardTitle>
             <ChartLegend hiddenSeries={hiddenSeries} onToggle={toggleSeries} />
           </CardHeader>
           <CardContent className="pt-0">
-            <div className="h-[320px] min-w-0 w-full">
+            <div className="h-[292px] min-w-0 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={chartData} margin={{ left: 54, right: 18, top: 18, bottom: 6 }} barGap={8}>
                   <defs>
@@ -528,7 +528,7 @@ export function Component() {
         <QuickActionsCard onNavigate={navigate} />
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-2">
+      <section className="grid gap-5 xl:grid-cols-2">
         <RecentMovementsTable entries={entries} />
         <AccountsPayableTable entries={payables} />
       </section>

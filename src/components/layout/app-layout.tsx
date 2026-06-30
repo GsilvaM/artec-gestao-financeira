@@ -105,7 +105,7 @@ function SidebarHeader({ collapsed, onCollapsedChange }: { collapsed: boolean; o
   return (
     <div className={cn("relative flex px-4 pb-5 pt-7", collapsed ? "justify-center" : "justify-center text-center")}>
       <NavLink to="/app" className={cn("flex min-w-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/35", collapsed ? "items-center justify-center" : "flex-col items-center gap-2")} aria-label="Ir para Dashboard">
-        <span className="flex shrink-0 items-center justify-center text-white" style={{ "--logo-cutout": "#061A3A" } as React.CSSProperties}>
+        <span className="flex shrink-0 items-center justify-center text-white" style={{ "--logo-accent": "#DDEBFF" } as React.CSSProperties}>
           <ArtecLogoMark className={cn(collapsed ? "size-10" : "size-14")} />
         </span>
         {!collapsed ? (
@@ -170,12 +170,12 @@ function SidebarGroup({ item, pathname, collapsed, expanded, flyoutOpen, onToggl
 
   return (
     <div>
-      <button type="button" aria-expanded={expanded} onClick={onToggle} className={sidebarItemClasses(active)}>
+      <div className="px-3 pb-2 text-[11px] font-bold uppercase tracking-[0.14em] text-white/45">{item.title}</div>
+      <SidebarSubmenu items={item.items ?? []} pathname={pathname} />
+      <button type="button" aria-expanded={expanded} onClick={onToggle} className="sr-only">
         <Icon className="size-5 shrink-0" />
-        <span className="min-w-0 flex-1 truncate text-left">{item.title}</span>
-        <ChevronDown className={cn("size-4 shrink-0 transition-transform duration-200 ease-in-out", expanded && "rotate-180")} />
+        {item.title}
       </button>
-      {expanded ? <SidebarSubmenu items={item.items ?? []} pathname={pathname} /> : null}
     </div>
   );
 }
@@ -239,7 +239,9 @@ function SidebarFooter({ collapsed, userEmail, onSignOut }: { collapsed: boolean
   return (
     <div className="p-3">
       <div className={cn("mb-3 flex items-center gap-3 rounded-2xl bg-white/10 p-3 text-white shadow-sm ring-1 ring-white/10", collapsed && "justify-center p-2")}>
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-300 to-cyan-500 text-xs font-bold text-white">AG</span>
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#061A3A] text-white ring-1 ring-white/12" style={{ "--logo-accent": "#DDEBFF" } as React.CSSProperties}>
+          <ArtecLogoMark className="size-7" />
+        </span>
         {!collapsed ? (
           <div className="min-w-0 [&>div:not(.user-label)]:sr-only">
             <div className="user-label truncate text-sm font-semibold text-white">Artec Gestão</div>
@@ -259,7 +261,7 @@ function SidebarFooter({ collapsed, userEmail, onSignOut }: { collapsed: boolean
 
 function Topbar({ pathname, userEmail, mobileOpen, onOpenMobile, onSignOut }: { pathname: string; userEmail?: string; mobileOpen: boolean; onOpenMobile: () => void; onSignOut: () => void }) {
   return (
-    <header className="sticky top-0 z-30 h-16 border-b border-border/60 bg-card/92 backdrop-blur-xl lg:top-5 lg:rounded-tr-xl">
+    <header className="sticky top-0 z-30 h-16 border-b border-border/60 bg-card/92 backdrop-blur-xl lg:hidden">
       <div className="mx-auto flex h-full min-w-0 max-w-[1560px] items-center gap-3 px-4 sm:px-6 lg:px-10 2xl:px-12">
         <button type="button" onClick={onOpenMobile} className="flex size-10 shrink-0 items-center justify-center rounded-md border border-border/80 bg-card text-muted-foreground transition hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 lg:hidden" aria-label="Abrir menu" aria-expanded={mobileOpen} aria-controls="menu-mobile">
           <Menu className="size-5" />
@@ -411,7 +413,9 @@ function MobileNavDrawer({ open, pathname, userEmail, onClose, onSignOut }: { op
       <aside id="menu-mobile" role="dialog" aria-modal="true" aria-label="Menu principal" className="relative flex h-full w-80 max-w-[88vw] flex-col border-r border-border bg-card text-foreground shadow-2xl">
         <div className="flex h-16 items-center justify-between border-b border-border px-4">
           <div className="flex items-center gap-3">
-            <span className="flex size-10 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground">AG</span>
+            <span className="flex size-10 items-center justify-center rounded-lg bg-[#061A3A] text-white" style={{ "--logo-accent": "#DDEBFF" } as React.CSSProperties}>
+              <ArtecLogoMark className="size-8" />
+            </span>
             <span className="font-bold text-foreground">Artec Gestão</span>
           </div>
           <button type="button" onClick={onClose} aria-label="Fechar menu" className="rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30">
