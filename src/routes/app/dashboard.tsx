@@ -579,12 +579,12 @@ export function Component() {
                   "group min-h-11 w-full justify-start gap-3 rounded-[10px] px-4 transition duration-150",
                   item.tone === "primary"
                     ? "border-transparent bg-[var(--color-card-bg)] text-white hover:bg-[#24476f] hover:text-white"
-                    : "border-[#CBD5E1] bg-card text-foreground hover:bg-secondary",
+                    : "border-border bg-card text-foreground hover:bg-secondary",
                 )}
                 onClick={() => navigate(item.to)}
               >
-                <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-white/15">
-                  <Plus className={cn("size-4", item.tone === "expense" ? "text-[var(--color-expense)]" : item.tone === "balance" ? "text-[var(--color-balance)]" : "text-current")} />
+                <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-md", item.tone === "primary" ? "bg-white/15" : "bg-primary/10 text-primary")}>
+                  <Plus className="size-4" />
                 </span>
                 <span className="truncate">{item.label}</span>
                 <span className="ml-auto rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100">{item.hint}</span>
