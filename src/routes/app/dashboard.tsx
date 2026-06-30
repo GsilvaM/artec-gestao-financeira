@@ -10,7 +10,6 @@ import {
   CreditCard,
   FileBarChart,
   Filter,
-  MoreVertical,
   Plus,
   ReceiptText,
   TrendingUp,
@@ -20,8 +19,7 @@ import { useNavigate } from "react-router";
 import { Area, Bar, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Card, CardContent } from "@/components/ui/card";
 import { SparklineChart } from "@/components/dashboard/SparklineChart";
 import { useAccountsPayable } from "@/domain/financeiro/hooks/use-accounts";
 import { useCashFlow } from "@/domain/financeiro/hooks/use-cash-flow";
@@ -30,6 +28,7 @@ import { useFinancialEntries } from "@/domain/financeiro/hooks/use-financial-ent
 import type { AccountPayableRow, FinancialEntryRow } from "@/domain/financeiro/types";
 import { cn, formatMoney, toFiniteNumber } from "@/lib/utils";
 import { formatCompactMoney } from "./dashboard-utils";
+import { pageHeaderStyles } from "@/components/layout/page-shell";
 
 type ChartSeries = "receitas" | "despesas" | "saldo";
 
@@ -49,16 +48,11 @@ type CashFlowApiRow = {
 
 function useDataTimeout(isLoading: boolean, timeoutMs = 5_000) {
   const [timedOut, setTimedOut] = useState(false);
-
   useEffect(() => {
-    if (!isLoading) {
-      setTimedOut(false);
-      return;
-    }
+    if (!isLoading) { setTimedOut(false); return; }
     const timeout = window.setTimeout(() => setTimedOut(true), timeoutMs);
     return () => window.clearTimeout(timeout);
   }, [isLoading, timeoutMs]);
-
   return timedOut;
 }
 
@@ -89,13 +83,11 @@ function buildFinancialChartData(rows: CashFlowApiRow[] | undefined, start: Date
       saldo: toFiniteNumber(row.saldo),
     });
   }
-
   const monthlyData = Array.from({ length: months }, (_, index) => {
     const date = new Date(start.getFullYear(), start.getMonth() + index, 1);
     const current = totalsByMonth.get(monthKey(date)) ?? { receitas: 0, despesas: 0, saldo: 0 };
     return { mes: monthLabel(date), ...current };
   });
-
   let accumulatedBalance = 0;
   return monthlyData.map((item) => {
     accumulatedBalance += item.saldo;
@@ -122,11 +114,11 @@ function formatLongDate(date = new Date()) {
 
 function DeltaBadge({ value }: { value?: number }) {
   if (typeof value !== "number") {
-    return <span className="text-xs font-medium text-muted-foreground">Sem dados</span>;
+    return <span className="text-xs font-medium text-text-muted">Sem dados</span>;
   }
   const positive = value >= 0;
   return (
-    <span className={cn("inline-flex items-center gap-1 text-xs font-bold", positive ? "text-success" : "text-destructive")}>
+    <span className={cn("inline-flex items-center gap-1 text-xs font-bold", positive ? "text-success" : "text-danger")}>
       {positive ? <ArrowUpCircle className="size-3.5" /> : <ArrowDownCircle className="size-3.5" />}
       {positive ? "+" : ""}{value.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%
     </span>
@@ -140,7 +132,6 @@ function KpiCard({
   tone,
   delta,
   sparklineData,
-  footer,
 }: {
   title: string;
   value: string | number;
@@ -148,83 +139,76 @@ function KpiCard({
   tone: "green" | "blue" | "orange";
   delta?: number;
   sparklineData: number[];
-  footer?: string;
 }) {
-  const toneStyles = {
-    green: "bg-[var(--green-soft)] text-[var(--green-600)]",
-    blue: "bg-[var(--blue-soft)] text-[var(--blue-600)]",
-    orange: "bg-[var(--orange-soft)] text-[var(--orange-600)]",
+  const iconColors: Record<string, string> = {
+    green: "bg-success-soft text-success",
+    blue: "bg-primary-soft text-primary",
+    orange: "bg-warning-soft text-warning",
   };
   const sparklineColor = tone === "orange" ? "red" : tone;
 
   return (
-    <Card className="min-h-[248px] overflow-hidden transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(15,23,42,0.08)]">
-      <CardContent className="flex h-full min-h-[248px] flex-col justify-between p-5">
-        <div className="space-y-4">
-          <div className={cn("flex size-11 items-center justify-center rounded-2xl", toneStyles[tone])}>
-            <Icon className="size-5" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <p className="mt-2 truncate text-2xl font-extrabold tracking-tight text-foreground tabular-nums" title={String(value)}>{value}</p>
-          </div>
-          <div className="space-y-1">
-            <DeltaBadge value={delta} />
-            <p className="text-xs text-muted-foreground">{footer ?? "vs. mês anterior"}</p>
-          </div>
+    <section className="metric-card card-hover">
+      <div>
+        <div className={cn("metric-icon", iconColors[tone])}>
+          <Icon />
         </div>
-        <div className="h-12">
+        <div>
+          <p className="metric-title">{title}</p>
+          <strong className="metric-value">{value}</strong>
+        </div>
+      </div>
+      <div>
+        <div className="metric-trend">
+          <DeltaBadge value={delta} />
+          <small>vs. mês anterior</small>
+        </div>
+        <div className="h-10 mt-2">
           <SparklineChart data={sparklineData.length ? sparklineData : [0, 0, 0, 0, 0, 0]} color={sparklineColor} />
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 }
 
 function PendingKpiCard({ total, overdue }: { total: number; overdue: number }) {
   const hasPending = total > 0;
   return (
-    <Card className="relative min-h-[248px] overflow-hidden border-purple-200/70 bg-[linear-gradient(180deg,var(--surface)_0%,var(--purple-soft)_160%)]">
-      <CardContent className="relative z-10 flex h-full min-h-[248px] flex-col justify-between p-5">
-        <div className="space-y-4">
-          <div className="flex size-11 items-center justify-center rounded-2xl bg-[var(--purple-soft)] text-[var(--purple-600)]">
-            <Bell className="size-5" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">Pendências</p>
-            <p className="mt-2 text-2xl font-extrabold text-foreground">{hasPending ? total : "0"}</p>
-          </div>
-          <div className="space-y-2">
-            <p className={cn("inline-flex items-center gap-1.5 text-sm font-bold", hasPending ? "text-warning" : "text-success")}>
-              <CheckCircle2 className="size-4" />
-              {hasPending ? `${overdue} vencidas` : "Tudo em dia"}
-            </p>
-            <p className="max-w-40 text-xs leading-5 text-muted-foreground">
-              {hasPending ? "Revise as contas pendentes no financeiro." : "Todas as contas estão dentro do prazo."}
-            </p>
-          </div>
+    <section className="metric-card card-hover">
+      <div>
+        <div className="metric-icon bg-purple-soft text-purple">
+          <Bell />
         </div>
-      </CardContent>
-      <CheckCircle2 className="absolute -bottom-4 -right-4 size-24 text-[var(--purple-600)]/18" />
-    </Card>
+        <div>
+          <p className="metric-title">Pendências</p>
+          <strong className="metric-value">{hasPending ? total : "0"}</strong>
+        </div>
+      </div>
+      <div>
+        <p className={cn("flex items-center gap-1.5 text-sm font-bold", hasPending ? "text-warning" : "text-success")}>
+          <CheckCircle2 className="size-4" />
+          {hasPending ? `${overdue} vencidas` : "Tudo em dia"}
+        </p>
+        <p className="text-xs text-text-secondary mt-1">
+          {hasPending ? "Revise as contas pendentes no financeiro." : "Todas as contas estão dentro do prazo."}
+        </p>
+      </div>
+    </section>
   );
 }
 
-type ChartPayload = {
-  payload?: { receitas: number; despesas: number; saldo: number; mes: string };
-};
+type ChartPayload = { payload?: { receitas: number; despesas: number; saldo: number; mes: string } };
 
 function FinancialTooltip({ active, payload }: { active?: boolean; payload?: ChartPayload[] }) {
   const item = payload?.[0]?.payload;
   if (!active || !item) return null;
-
   return (
-    <div className="rounded-2xl border border-border bg-card p-3 text-xs text-card-foreground shadow-[var(--shadow-card)]">
-      <p className="mb-2 font-semibold text-foreground">{item.mes}</p>
+    <div className="rounded-2xl border border-border bg-surface p-3 text-xs text-text-primary shadow-card">
+      <p className="mb-2 font-bold text-text-primary">{item.mes}</p>
       <div className="space-y-1.5">
-        <p className="flex items-center justify-between gap-8"><span className="text-muted-foreground">Receitas</span><strong className="text-[var(--color-revenue)]">{formatMoney(item.receitas)}</strong></p>
-        <p className="flex items-center justify-between gap-8"><span className="text-muted-foreground">Despesas</span><strong className="text-[var(--color-expense)]">{formatMoney(item.despesas)}</strong></p>
-        <p className="flex items-center justify-between gap-8"><span className="text-muted-foreground">Saldo</span><strong className="text-[var(--color-balance)]">{formatMoney(item.saldo)}</strong></p>
+        <p className="flex items-center justify-between gap-8"><span className="text-text-secondary">Receitas</span><strong className="text-success">{formatMoney(item.receitas)}</strong></p>
+        <p className="flex items-center justify-between gap-8"><span className="text-text-secondary">Despesas</span><strong className="text-danger">{formatMoney(item.despesas)}</strong></p>
+        <p className="flex items-center justify-between gap-8"><span className="text-text-secondary">Saldo</span><strong className="text-primary">{formatMoney(item.saldo)}</strong></p>
       </div>
     </div>
   );
@@ -237,10 +221,10 @@ function ChartLegend({ hiddenSeries, onToggle }: { hiddenSeries: Record<ChartSer
     { id: "saldo", label: "Saldo", className: "bg-chart-balance" },
   ];
   return (
-    <div className="flex flex-wrap gap-3 text-xs font-semibold text-muted-foreground">
+    <div className="chart-legend">
       {items.map((item) => (
-        <button key={item.id} type="button" onClick={() => onToggle(item.id)} className={cn("inline-flex items-center gap-2 rounded-full px-2 py-1 transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/35", hiddenSeries[item.id] && "opacity-45")} aria-pressed={!hiddenSeries[item.id]}>
-          <span className={cn(item.id === "saldo" ? "h-0.5 w-4 rounded-full" : "size-2.5 rounded-full", item.className)} />
+        <button key={item.id} type="button" onClick={() => onToggle(item.id)} className={cn("inline-flex items-center gap-2", hiddenSeries[item.id] && "opacity-45")} aria-pressed={!hiddenSeries[item.id]}>
+          <span className={cn(item.id === "saldo" ? "legend-line" : "legend-dot", item.className)} />
           {item.label}
         </button>
       ))}
@@ -248,126 +232,162 @@ function ChartLegend({ hiddenSeries, onToggle }: { hiddenSeries: Record<ChartSer
   );
 }
 
+function FinancialHeroCard({ balance, revenue, expenses }: { balance: number; revenue: number; expenses: number }) {
+  return (
+    <section className="financial-hero-card">
+      <div className="financial-hero-glow" aria-hidden="true" />
+      <div className="financial-hero-header">
+        <div>
+          <h2>Cartão financeiro</h2>
+          <p>Resumo do caixa financeiro.</p>
+        </div>
+        <span className="financial-hero-status">Ativo</span>
+      </div>
+      <div className="financial-hero-body">
+        <p className="financial-company">Artec Gestão</p>
+        <p className="financial-label">CONTA FINANCEIRA</p>
+        <p className="financial-balance-label">Saldo atual</p>
+        <strong className="financial-balance">{formatMoney(balance)}</strong>
+      </div>
+      <div className="financial-hero-footer">
+        <div>
+          <span className="financial-mini-label financial-income">Receitas</span>
+          <strong>{formatMoney(revenue)}</strong>
+        </div>
+        <div>
+          <span className="financial-mini-label financial-expense">Despesas</span>
+          <strong>{formatMoney(expenses)}</strong>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function QuickActionsCard({ onNavigate }: { onNavigate: (to: string) => void }) {
   const actions = [
-    { label: "Novo lançamento", description: "Registre uma nova receita ou despesa", icon: Plus, to: "/app/financeiro/lancamentos", tone: "bg-[var(--purple-soft)] text-[var(--purple-600)]" },
-    { label: "Nova conta a pagar", description: "Adicione uma nova conta para pagamento", icon: CreditCard, to: "/app/financeiro/contas-pagar", tone: "bg-[var(--blue-soft)] text-[var(--blue-600)]" },
-    { label: "Emitir relatório", description: "Gere relatórios financeiros", icon: FileBarChart, to: "/app/relatorios", tone: "bg-[var(--green-soft)] text-[var(--green-600)]" },
+    { label: "Novo lançamento", description: "Registre receita ou despesa", icon: Plus, to: "/app/financeiro/lancamentos", tone: "purple" as const },
+    { label: "Nova conta a pagar", description: "Adicione conta para pagamento", icon: CreditCard, to: "/app/financeiro/contas-pagar", tone: "blue" as const },
+    { label: "Emitir relatório", description: "Gere relatórios financeiros", icon: FileBarChart, to: "/app/relatorios", tone: "green" as const },
   ];
 
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-4">
-        <CardTitle className="text-lg font-extrabold text-foreground">Atalhos rápidos</CardTitle>
-      </CardHeader>
-      <CardContent className="grid gap-4 pt-0">
+    <section className="quick-actions-card">
+      <h2>Atalhos rápidos</h2>
+      <div className="quick-actions-list">
         {actions.map((action) => {
           const Icon = action.icon;
           return (
-            <button
-              key={action.label}
-              type="button"
-              onClick={() => onNavigate(action.to)}
-              className="group flex min-h-[68px] w-full items-center gap-4 rounded-[16px] border border-border bg-card px-4 py-3 text-left transition duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-[var(--shadow-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/35"
-            >
-              <span className={cn("flex size-12 shrink-0 items-center justify-center rounded-2xl", action.tone)}>
-                <Icon className="size-5" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-bold text-foreground">{action.label}</span>
-                <span className="block truncate text-xs text-muted-foreground">{action.description}</span>
-              </span>
-              <ChevronRight className="size-5 shrink-0 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-primary" />
+            <button key={action.label} type="button" onClick={() => onNavigate(action.to)} className="quick-action-card">
+              <div className="quick-action-left">
+                <div className={`quick-action-icon quick-action-icon-${action.tone}`}>
+                  <Icon />
+                </div>
+                <div>
+                  <strong>{action.label}</strong>
+                  <p>{action.description}</p>
+                </div>
+              </div>
+              <ChevronRight className="quick-action-chevron" />
             </button>
           );
         })}
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 }
 
 function RecentMovementsTable({ entries }: { entries: FinancialEntryRow[] }) {
-  const rows = entries.slice(0, 3);
+  const rows = entries.slice(0, 4);
   return (
-    <Card>
-      <CardHeader className="flex-row items-center justify-between pb-3">
-        <CardTitle className="text-lg font-extrabold">Últimas movimentações</CardTitle>
-        <Button variant="outline" size="sm">Ver todas</Button>
-      </CardHeader>
-      <CardContent className="pt-0">
-        {rows.length ? (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Descrição</TableHead>
-                <TableHead>Categoria</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Valor</TableHead>
-                <TableHead>Data</TableHead>
-                <TableHead className="w-10">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+    <section className="table-card">
+      <div className="table-card-header">
+        <h2>Últimas movimentações</h2>
+        <Button variant="ghost" size="sm" className="text-primary font-bold">Ver todas</Button>
+      </div>
+      {rows.length ? (
+        <div className="table-wrapper">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Descrição</th>
+                <th>Categoria</th>
+                <th>Tipo</th>
+                <th>Valor</th>
+                <th>Data</th>
+              </tr>
+            </thead>
+            <tbody>
               {rows.map((entry) => {
                 const receita = entry.type === "receita";
                 return (
-                  <TableRow key={entry.id}>
-                    <TableCell className="font-medium">{entry.description}</TableCell>
-                    <TableCell><Badge className={cn("border-transparent", receita ? "bg-success-light text-success" : "bg-[var(--orange-soft)] text-[var(--orange-600)]")}>{entry.categoryName || (receita ? "Receita" : "Despesa")}</Badge></TableCell>
-                    <TableCell className={cn("font-medium", receita ? "text-success" : "text-[var(--orange-600)]")}>{receita ? "↑ Receita" : "↓ Despesa"}</TableCell>
-                    <TableCell className={cn("font-bold tabular-nums", receita ? "text-success" : "text-[var(--orange-600)]")}>{formatMoney(entry.amount)}</TableCell>
-                    <TableCell>{formatDate(entry.date)}</TableCell>
-                    <TableCell><MoreVertical className="size-4 text-muted-foreground" /></TableCell>
-                  </TableRow>
+                  <tr key={entry.id}>
+                    <td className="font-medium">{entry.description}</td>
+                    <td><Badge variant={receita ? "success" : "warning"}>{entry.categoryName || (receita ? "Receita" : "Despesa")}</Badge></td>
+                    <td className={cn("font-medium", receita ? "text-success" : "text-danger")}>{receita ? "↑ Receita" : "↓ Despesa"}</td>
+                    <td className={cn("font-bold", receita ? "text-success" : "text-danger")}>{formatMoney(entry.amount)}</td>
+                    <td className="text-text-secondary">{formatDate(entry.date)}</td>
+                  </tr>
                 );
               })}
-            </TableBody>
-          </Table>
-        ) : (
-          <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">Nenhuma movimentação encontrada.</div>
-        )}
-        <button type="button" className="mx-auto mt-4 flex items-center gap-2 text-sm font-bold text-primary">Ver todas as movimentações <ChevronRight className="size-4" /></button>
-      </CardContent>
-    </Card>
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-text-muted">Nenhuma movimentação encontrada.</div>
+      )}
+      <button type="button" className="table-footer-link">Ver todas as movimentações <ChevronRight className="size-4" /></button>
+    </section>
   );
 }
 
 function AccountsPayableTable({ entries }: { entries: AccountPayableRow[] }) {
-  const rows = entries.slice(0, 3);
+  const rows = entries.slice(0, 4);
+  const badgeMap: Record<string, "warning" | "success" | "destructive" | "default"> = {
+    paid: "success",
+    overdue: "destructive",
+    cancelled: "default",
+    pending: "warning",
+  };
+  const labelMap: Record<string, string> = {
+    paid: "Pago",
+    overdue: "Vencido",
+    cancelled: "Cancelado",
+    pending: "Pendente",
+  };
   return (
-    <Card>
-      <CardHeader className="flex-row items-center justify-between pb-3">
-        <CardTitle className="text-lg font-extrabold">Contas a pagar</CardTitle>
-        <Button variant="outline" size="sm">Ver todas</Button>
-      </CardHeader>
-      <CardContent className="pt-0">
-        {rows.length ? (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Descrição</TableHead>
-                <TableHead>Vencimento</TableHead>
-                <TableHead>Valor</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+    <section className="table-card">
+      <div className="table-card-header">
+        <h2>Contas a pagar</h2>
+        <Button variant="ghost" size="sm" className="text-primary font-bold">Ver todas</Button>
+      </div>
+      {rows.length ? (
+        <div className="table-wrapper">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Descrição</th>
+                <th>Vencimento</th>
+                <th>Valor</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
               {rows.map((entry) => (
-                <TableRow key={entry.id}>
-                  <TableCell className="font-medium">{entry.description}</TableCell>
-                  <TableCell>{formatDate(entry.dueDate)}</TableCell>
-                  <TableCell className="font-bold tabular-nums">{formatMoney(entry.amount)}</TableCell>
-                  <TableCell><Badge className="border-transparent bg-[var(--orange-soft)] text-[var(--orange-600)]">{entry.status === "paid" ? "Pago" : entry.status === "overdue" ? "Vencido" : entry.status === "cancelled" ? "Cancelado" : "Pendente"}</Badge></TableCell>
-                </TableRow>
+                <tr key={entry.id}>
+                  <td className="font-medium">{entry.description}</td>
+                  <td className="text-text-secondary">{formatDate(entry.dueDate)}</td>
+                  <td className="font-bold">{formatMoney(entry.amount)}</td>
+                  <td><Badge variant={badgeMap[entry.status] ?? "default"}>{labelMap[entry.status] ?? entry.status}</Badge></td>
+                </tr>
               ))}
-            </TableBody>
-          </Table>
-        ) : (
-          <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">Nenhuma conta a pagar encontrada.</div>
-        )}
-        <button type="button" className="mx-auto mt-4 flex items-center gap-2 text-sm font-bold text-primary">Ver todas as contas a pagar <ChevronRight className="size-4" /></button>
-      </CardContent>
-    </Card>
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-text-muted">Nenhuma conta a pagar encontrada.</div>
+      )}
+      <button type="button" className="table-footer-link">Ver todas as contas a pagar <ChevronRight className="size-4" /></button>
+    </section>
   );
 }
 
@@ -385,16 +405,10 @@ export function Component() {
   const totalReceitas = kpis?.totalReceitas ?? 0;
   const totalDespesas = kpis?.totalDespesas ?? 0;
   const contasPagas = kpis ? (kpis.contasPagasMes ?? 0) + (kpis.contasRecebidasMes ?? 0) : null;
-  const pendenciaData = useMemo(() => {
-    const contasAVencer = kpis?.contasAVencer ?? 0;
-    const contasVencidas = kpis?.contasVencidas ?? 0;
-    const contasAReceber = kpis?.contasAReceber ?? 0;
-    const contasReceberVencidas = kpis?.contasReceberVencidas ?? 0;
-    return {
-      total: contasAVencer + contasVencidas + contasAReceber + contasReceberVencidas,
-      overdue: contasVencidas + contasReceberVencidas,
-    };
-  }, [kpis]);
+  const pendenciaData = useMemo(() => ({
+    total: (kpis?.contasAVencer ?? 0) + (kpis?.contasVencidas ?? 0) + (kpis?.contasAReceber ?? 0) + (kpis?.contasReceberVencidas ?? 0),
+    overdue: (kpis?.contasVencidas ?? 0) + (kpis?.contasReceberVencidas ?? 0),
+  }), [kpis]);
 
   const chartData = useMemo(
     () => buildFinancialChartData(cashFlowRows as CashFlowApiRow[] | undefined, cashFlowRange.start),
@@ -411,127 +425,577 @@ export function Component() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-[1360px] flex-col gap-5 px-4 pb-8 pt-6 sm:px-6 lg:px-7 xl:px-8">
-      <header className="flex min-w-0 flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div className="min-w-0">
-          <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-foreground sm:text-4xl">Dashboard</h1>
-          <p className="mt-2 text-sm text-muted-foreground sm:text-base">Visão executiva para acompanhar caixa, lucro, despesas e pendências.</p>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <Button variant="outline" className="h-11 rounded-xl bg-card px-4">
-            {formatLongDate()}
-            <CalendarDays className="size-4" />
-          </Button>
-          <Button variant="outline" className="h-11 rounded-xl bg-card px-4">
-            <Filter className="size-4" />
-            Filtros
-          </Button>
-        </div>
-      </header>
-
-      {isLoading && !timedOut ? (
-        <div className="grid gap-6 xl:grid-cols-[minmax(360px,1.05fr)_minmax(0,1.95fr)]">
-          <Card><CardContent className="h-[360px] animate-pulse bg-muted/50" /></Card>
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, index) => <Card key={index}><CardContent className="h-[260px] animate-pulse bg-muted/50" /></Card>)}
+    <>
+      <style>{pageHeaderStyles}</style>
+      <style>{dashboardStyles}</style>
+      <div className="dashboard-page">
+        <header className="page-header">
+          <div>
+            <h1 className="page-header-title">Dashboard</h1>
+            <p className="page-header-desc">Visão executiva para acompanhar caixa, lucro, despesas e pendências.</p>
           </div>
-        </div>
-      ) : isError ? (
-        <Card>
-          <CardContent className="flex min-h-56 flex-col items-center justify-center gap-3 p-8 text-center">
-            <p className="font-bold text-foreground">Não foi possível carregar os KPIs.</p>
-            <p className="text-sm text-muted-foreground">Verifique sua conexão e tente novamente.</p>
-            <Button type="button" onClick={() => void refetch()}>Tentar novamente</Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <section className="grid gap-5 xl:grid-cols-[minmax(360px,0.98fr)_minmax(0,1.98fr)]">
-          <Card className="overflow-hidden border-0 bg-transparent shadow-none">
-            <CardContent className="p-0">
-              <div className="relative min-h-[300px] overflow-hidden rounded-[22px] bg-[radial-gradient(circle_at_88%_12%,rgba(255,255,255,0.16),transparent_9rem),linear-gradient(135deg,var(--navy-900)_0%,#073B78_55%,#0B63C7_100%)] p-6 text-white shadow-[0_24px_55px_rgba(6,26,58,0.26)] lg:p-7">
-                <div className="absolute -right-20 -top-20 size-56 rounded-full bg-white/10" />
-                <div className="absolute bottom-20 right-7 w-44 opacity-80">
-                  <SparklineChart data={chartData.map((item) => item.saldo)} color="blue" />
-                </div>
-                <div className="relative z-10 flex min-h-[246px] flex-col">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="text-lg font-extrabold">Cartão financeiro</p>
-                      <p className="mt-1 text-sm text-white/78">Resumo do caixa financeiro.</p>
-                    </div>
-                    <span className="rounded-full bg-success/25 px-4 py-1.5 text-xs font-bold text-emerald-100 ring-1 ring-white/15">Ativo</span>
-                  </div>
-                  <div className="mt-8">
-                    <p className="text-xl font-extrabold">Artec Gestão</p>
-                    <p className="mt-1 text-xs font-bold uppercase tracking-wider text-white/75">Conta financeira</p>
-                  </div>
-                  <div className="mt-auto">
-                    <p className="text-sm text-white/72">Saldo atual</p>
-                    <p className="mt-2 text-4xl font-extrabold tracking-tight tabular-nums">{formatMoney(saldo)}</p>
-                  </div>
-                  <div className="mt-6 grid grid-cols-2 overflow-hidden rounded-2xl border border-white/10 bg-white/10 backdrop-blur">
-                    <div className="p-4">
-                      <p className="flex items-center gap-2 text-xs font-bold uppercase text-white/70"><ArrowUpCircle className="size-4 text-[var(--green-500)]" />Receitas</p>
-                      <p className="mt-2 font-extrabold tabular-nums">{formatMoney(totalReceitas)}</p>
-                    </div>
-                    <div className="border-l border-white/10 p-4">
-                      <p className="flex items-center gap-2 text-xs font-bold uppercase text-white/70"><ArrowDownCircle className="size-4 text-[var(--orange-500)]" />Despesas</p>
-                      <p className="mt-2 font-extrabold tabular-nums">{formatMoney(totalDespesas)}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+          <div className="page-header-actions">
+            <Button variant="outline">
+              {formatLongDate()}
+              <CalendarDays className="size-4" />
+            </Button>
+            <Button variant="outline">
+              <Filter className="size-4" />
+              Filtros
+            </Button>
+          </div>
+        </header>
+
+        {isLoading && !timedOut ? (
+          <div className="dashboard-top-grid">
+            <Card><CardContent className="h-[330px] animate-pulse bg-surface-muted rounded-[20px]" /></Card>
+            <div className="dashboard-metrics-grid">
+              {Array.from({ length: 4 }).map((_, i) => <Card key={i}><CardContent className="h-[292px] animate-pulse bg-surface-muted rounded-[20px]" /></Card>)}
+            </div>
+          </div>
+        ) : isError ? (
+          <Card elevated>
+            <CardContent className="flex min-h-56 flex-col items-center justify-center gap-3 p-8 text-center">
+              <p className="font-bold text-text-primary">Não foi possível carregar os KPIs.</p>
+              <p className="text-sm text-text-secondary">Verifique sua conexão e tente novamente.</p>
+              <Button onClick={() => void refetch()}>Tentar novamente</Button>
             </CardContent>
           </Card>
+        ) : (
+          <>
+            <div className="dashboard-top-grid">
+              <FinancialHeroCard balance={saldo} revenue={totalReceitas} expenses={totalDespesas} />
 
-          <div>
-            <h2 className="mb-4 text-lg font-extrabold text-foreground">Resumo financeiro</h2>
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <KpiCard title="Faturamento" value={formatMoney(totalReceitas)} icon={Banknote} tone="green" delta={getSeriesDelta(kpiSeries.faturamento)} sparklineData={kpiSeries.faturamento} />
-              <KpiCard title="Lucro" value={formatMoney(saldo)} icon={TrendingUp} tone="blue" delta={getSeriesDelta(kpiSeries.lucro)} sparklineData={kpiSeries.lucro} />
-              <KpiCard title="Contas pagas" value={timedOut && !kpis ? "—" : String(contasPagas ?? 0)} icon={ReceiptText} tone="orange" sparklineData={kpiSeries.contasPagas} />
-              <PendingKpiCard total={pendenciaData.total} overdue={pendenciaData.overdue} />
+              <div className="dashboard-metrics-grid">
+                <KpiCard title="Faturamento" value={formatMoney(totalReceitas)} icon={Banknote} tone="green" delta={getSeriesDelta(kpiSeries.faturamento)} sparklineData={kpiSeries.faturamento} />
+                <KpiCard title="Lucro" value={formatMoney(saldo)} icon={TrendingUp} tone="blue" delta={getSeriesDelta(kpiSeries.lucro)} sparklineData={kpiSeries.lucro} />
+                <KpiCard title="Contas pagas" value={timedOut && !kpis ? "—" : String(contasPagas ?? 0)} icon={ReceiptText} tone="orange" sparklineData={kpiSeries.contasPagas} />
+                <PendingKpiCard total={pendenciaData.total} overdue={pendenciaData.overdue} />
+              </div>
             </div>
-          </div>
-        </section>
-      )}
 
-      <section className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1.42fr)_minmax(360px,1fr)]">
-        <Card className="min-w-0">
-          <CardHeader className="gap-4 pb-2 sm:flex-row sm:items-center sm:justify-between">
-            <CardTitle className="text-lg font-extrabold">Resumo financeiro</CardTitle>
-            <ChartLegend hiddenSeries={hiddenSeries} onToggle={toggleSeries} />
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="h-[292px] min-w-0 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={chartData} margin={{ left: 54, right: 18, top: 18, bottom: 6 }} barGap={8}>
-                  <defs>
-                    <linearGradient id="saldoAreaGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="var(--chart-balance)" stopOpacity={0.16} />
-                      <stop offset="100%" stopColor="var(--chart-balance)" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid vertical={false} strokeDasharray="4 6" stroke="color-mix(in srgb, var(--border) 54%, transparent)" />
-                  <XAxis dataKey="mes" stroke="var(--muted-foreground)" fontSize={12} tickMargin={10} />
-                  <YAxis stroke="var(--muted-foreground)" fontSize={12} tickMargin={8} tickFormatter={(v: number) => formatCompactMoney(v)} />
-                  <Tooltip content={(props) => <FinancialTooltip active={props.active} payload={props.payload as ChartPayload[] | undefined} />} />
-                  {!hiddenSeries.saldo ? <Area type="monotone" dataKey="saldo" fill="url(#saldoAreaGradient)" stroke="none" /> : null}
-                  {!hiddenSeries.receitas ? <Bar dataKey="receitas" name="Receitas" fill="var(--chart-revenue)" fillOpacity={0.92} radius={[7, 7, 0, 0]} maxBarSize={40} /> : null}
-                  {!hiddenSeries.despesas ? <Bar dataKey="despesas" name="Despesas" fill="var(--chart-expense)" fillOpacity={0.9} radius={[7, 7, 0, 0]} maxBarSize={40} /> : null}
-                  {!hiddenSeries.saldo ? <Line type="monotone" dataKey="saldo" name="Saldo" stroke="var(--chart-balance)" strokeWidth={3.2} dot={{ r: 4, strokeWidth: 2, stroke: "var(--card)", fill: "var(--chart-balance)" }} activeDot={{ r: 6, strokeWidth: 2, stroke: "var(--card)" }} /> : null}
-                </ComposedChart>
-              </ResponsiveContainer>
+            <div className="dashboard-middle-grid">
+              <section className="chart-card">
+                <div className="chart-card-header">
+                  <h2>Resumo financeiro</h2>
+                  <ChartLegend hiddenSeries={hiddenSeries} onToggle={toggleSeries} />
+                </div>
+                <div className="chart-card-body">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <ComposedChart data={chartData} margin={{ left: 54, right: 18, top: 18, bottom: 6 }} barGap={8}>
+                      <defs>
+                        <linearGradient id="saldoAreaGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="var(--chart-balance)" stopOpacity={0.16} />
+                          <stop offset="100%" stopColor="var(--chart-balance)" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid vertical={false} strokeDasharray="4 6" stroke="color-mix(in srgb, var(--border) 54%, transparent)" />
+                      <XAxis dataKey="mes" stroke="var(--color-text-muted)" fontSize={12} tickMargin={10} />
+                      <YAxis stroke="var(--color-text-muted)" fontSize={12} tickMargin={8} tickFormatter={(v: number) => formatCompactMoney(v)} />
+                      <Tooltip content={(props) => <FinancialTooltip active={props.active} payload={props.payload as ChartPayload[] | undefined} />} />
+                      {!hiddenSeries.saldo ? <Area type="monotone" dataKey="saldo" fill="url(#saldoAreaGradient)" stroke="none" /> : null}
+                      {!hiddenSeries.receitas ? <Bar dataKey="receitas" name="Receitas" fill="var(--chart-revenue)" fillOpacity={0.92} radius={[7, 7, 0, 0]} maxBarSize={40} /> : null}
+                      {!hiddenSeries.despesas ? <Bar dataKey="despesas" name="Despesas" fill="var(--chart-expense)" fillOpacity={0.9} radius={[7, 7, 0, 0]} maxBarSize={40} /> : null}
+                      {!hiddenSeries.saldo ? <Line type="monotone" dataKey="saldo" name="Saldo" stroke="var(--chart-balance)" strokeWidth={3.2} dot={{ r: 4, strokeWidth: 2, stroke: "var(--card)", fill: "var(--chart-balance)" }} activeDot={{ r: 6, strokeWidth: 2, stroke: "var(--card)" }} /> : null}
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                </div>
+              </section>
+              <QuickActionsCard onNavigate={navigate} />
             </div>
-          </CardContent>
-        </Card>
-        <QuickActionsCard onNavigate={navigate} />
-      </section>
 
-      <section className="grid gap-5 xl:grid-cols-2">
-        <RecentMovementsTable entries={entries} />
-        <AccountsPayableTable entries={payables} />
-      </section>
-    </div>
+            <div className="dashboard-bottom-grid">
+              <RecentMovementsTable entries={entries} />
+              <AccountsPayableTable entries={payables} />
+            </div>
+          </>
+        )}
+      </div>
+    </>
   );
 }
+
+const dashboardStyles = `
+.dashboard-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.dashboard-top-grid {
+  display: grid;
+  grid-template-columns: minmax(360px, 1.05fr) minmax(600px, 1.7fr);
+  gap: 24px;
+  align-items: stretch;
+}
+
+.dashboard-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.dashboard-middle-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(360px, 0.95fr);
+  gap: 24px;
+}
+
+.dashboard-bottom-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+@media (max-width: 1279px) {
+  .dashboard-top-grid { grid-template-columns: 1fr; }
+  .dashboard-metrics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dashboard-middle-grid,
+  .dashboard-bottom-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 639px) {
+  .dashboard-metrics-grid { grid-template-columns: 1fr; }
+}
+
+/* Financial Hero Card */
+.financial-hero-card {
+  min-height: 330px;
+  padding: 26px;
+  border-radius: 24px;
+  color: #ffffff;
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 85% 10%, rgba(96, 165, 250, 0.38), transparent 170px),
+    linear-gradient(135deg, #002b5c 0%, #003d82 45%, #0057c2 100%);
+  box-shadow: 0 24px 55px rgba(0, 51, 130, 0.32);
+}
+
+.financial-hero-glow {
+  position: absolute;
+  width: 230px;
+  height: 230px;
+  right: -70px;
+  top: -70px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.financial-hero-header {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.financial-hero-header h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 850;
+}
+
+.financial-hero-header p {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.financial-hero-status {
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.9);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.financial-hero-body {
+  position: relative;
+  z-index: 1;
+  margin-top: 34px;
+}
+
+.financial-company {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 850;
+}
+
+.financial-label {
+  margin: 4px 0 28px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.financial-balance-label {
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.financial-balance {
+  display: block;
+  font-size: 34px;
+  line-height: 1.1;
+  font-weight: 900;
+  letter-spacing: -0.05em;
+}
+
+.financial-hero-footer {
+  position: relative;
+  z-index: 1;
+  margin-top: 28px;
+  padding: 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.11);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.financial-hero-footer > div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.financial-hero-footer > div + div {
+  padding-left: 18px;
+  border-left: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.financial-mini-label {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.financial-income {
+  color: #86efac;
+}
+
+.financial-expense {
+  color: #fdba74;
+}
+
+.financial-hero-footer strong {
+  font-size: 16px;
+  font-weight: 850;
+}
+
+/* Metric Cards */
+.metric-card {
+  min-height: 292px;
+  padding: 22px;
+  border-radius: 20px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.card-hover {
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card-hover);
+  border-color: var(--color-border-strong);
+}
+
+.metric-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 12px;
+}
+
+.metric-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.metric-title {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.metric-value {
+  display: block;
+  margin-top: 8px;
+  color: var(--color-text-primary);
+  font-size: 24px;
+  line-height: 1.1;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
+
+.metric-trend {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.metric-trend small {
+  color: var(--color-text-muted);
+}
+
+/* Chart card */
+.chart-card {
+  min-height: 330px;
+  padding: 24px;
+  border-radius: 20px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.chart-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.chart-card-header h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 850;
+  color: var(--color-text-primary);
+}
+
+.chart-legend {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.chart-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+}
+
+.legend-line {
+  width: 18px;
+  height: 2px;
+  border-radius: 999px;
+}
+
+.chart-card-body {
+  min-height: 250px;
+}
+
+/* Quick actions */
+.quick-actions-card {
+  padding: 24px;
+  border-radius: 20px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.quick-actions-card h2 {
+  margin: 0 0 18px;
+  font-size: 17px;
+  font-weight: 850;
+  color: var(--color-text-primary);
+}
+
+.quick-actions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.quick-action-card {
+  width: 100%;
+  min-height: 76px;
+  padding: 14px 16px;
+  border-radius: 15px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: inherit;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  transition: background-color 180ms ease, border-color 180ms ease, transform 180ms ease;
+  cursor: pointer;
+}
+
+.quick-action-card:hover {
+  background: var(--color-surface-muted);
+  border-color: var(--color-border-strong);
+  transform: translateX(2px);
+}
+
+.quick-action-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.quick-action-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 15px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.quick-action-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.quick-action-icon-purple {
+  background: var(--color-purple-soft);
+  color: var(--color-purple);
+}
+
+.quick-action-icon-blue {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.quick-action-icon-green {
+  background: var(--color-success-soft);
+  color: var(--color-success);
+}
+
+.quick-action-left strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 850;
+  color: var(--color-text-primary);
+}
+
+.quick-action-left p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.quick-action-chevron {
+  width: 18px;
+  height: 18px;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+/* Table cards */
+.table-card {
+  padding: 20px;
+  border-radius: 20px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.table-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.table-card-header h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 850;
+  color: var(--color-text-primary);
+}
+
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 14px;
+}
+
+.data-table thead th {
+  padding: 13px 16px;
+  background: var(--color-surface-soft);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 800;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.data-table thead th:first-child {
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
+}
+
+.data-table thead th:last-child {
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+.data-table tbody td {
+  padding: 15px 16px;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  vertical-align: middle;
+}
+
+.data-table tbody tr {
+  transition: background-color 160ms ease;
+}
+
+.data-table tbody tr:hover {
+  background: var(--color-surface-muted);
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table-footer-link {
+  margin-top: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+`;

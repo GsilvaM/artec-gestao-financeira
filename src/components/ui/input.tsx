@@ -7,7 +7,7 @@ export function Input({ className, type, ...props }: InputProps) {
     <input
       type={type}
       className={cn(
-        "motion-control flex min-h-11 w-full rounded-lg border border-input bg-card px-3.5 py-2 text-sm text-foreground shadow-sm transition-all duration-200 ease-in-out file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground hover:border-primary/35 focus-visible:border-primary/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 disabled:cursor-not-allowed disabled:opacity-50 aria-[invalid=true]:border-destructive aria-[invalid=true]:ring-destructive/20 dark:border-white/10 dark:bg-[#1b1b19] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] dark:hover:border-white/20",
+        "flex w-full min-h-[44px] rounded-[14px] border border-border bg-surface text-text-primary px-[14px] py-2 text-sm font-medium transition-all duration-160 ease-in-out placeholder:text-text-muted hover:border-border-strong focus-visible:border-primary focus-visible:outline-none focus-visible:ring-[4px] focus-visible:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-50 aria-[invalid=true]:border-danger aria-[invalid=true]:ring-danger/10",
         className
       )}
       {...props}

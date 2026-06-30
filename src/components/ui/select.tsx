@@ -9,8 +9,8 @@ export function Select({ className, options, placeholder, ...props }: SelectProp
   return (
     <select
       className={cn(
-        "flex min-h-10 w-full rounded-md border border-input bg-card px-3 py-2 text-sm text-foreground shadow-sm transition-all duration-200 ease-in-out focus-visible:border-primary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50 aria-[invalid=true]:border-destructive aria-[invalid=true]:ring-destructive/20 dark:border-white/10 dark:bg-[#1b1b19] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]",
-        props.value === "" ? "text-muted-foreground" : "text-foreground",
+        "flex w-full min-h-[44px] rounded-[14px] border border-border bg-surface text-text-primary px-[14px] text-sm font-medium transition-all duration-160 ease-in-out hover:border-border-strong focus-visible:border-primary focus-visible:outline-none focus-visible:ring-[4px] focus-visible:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-50",
+        props.value === "" ? "text-text-muted" : "text-text-primary",
         className
       )}
       {...props}

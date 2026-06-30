@@ -64,32 +64,30 @@ export function Component() {
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 py-10 text-foreground">
-      <div className="absolute inset-x-0 top-0 h-[42vh] bg-[#003A70] dark:bg-[#061A31]" />
-      <div className="absolute inset-x-0 top-0 h-[42vh] bg-[linear-gradient(135deg,rgba(30,136,229,0.78),rgba(245,53,53,0.62)_58%,rgba(6,182,212,0.46))]" />
-      <button type="button" onClick={toggleTheme} className="absolute right-4 top-4 z-10 flex size-10 items-center justify-center rounded-lg border border-white/20 bg-white/12 text-white shadow-sm backdrop-blur transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40" aria-label={theme === "dark" ? "Ativar modo claro" : "Ativar modo escuro"}>
+    <div className="login-page">
+      <div className="login-bg" />
+      <button type="button" onClick={toggleTheme} className="login-theme-btn" aria-label={theme === "dark" ? "Ativar modo claro" : "Ativar modo escuro"}>
         {theme === "dark" ? <Sun className="size-5" /> : <Moon className="size-5" />}
       </button>
 
-      <Card className="relative w-full max-w-md overflow-hidden">
-        <div className="h-1.5 bg-[linear-gradient(90deg,#005AA8,#1E88E5,#06B6D4,#F53535)]" />
+      <Card className="login-card">
         <CardHeader className="items-center text-center">
-          <div className="mb-2 flex size-14 items-center justify-center rounded-lg bg-primary/12 text-primary">
+          <div className="login-icon">
             <ShieldCheck className="size-7" />
           </div>
-          <h1 className="text-2xl font-bold leading-none text-foreground">Artec Gestão</h1>
+          <h1 className="login-title">Artec Gestão</h1>
           <CardDescription>
             {mode === "login" ? "Entre com sua conta aprovada para acessar o painel." : "Solicite acesso. A entrada depende da aprovação de um administrador."}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {mode === "login" ? (
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
+            <form onSubmit={handleLogin} className="login-form">
+              <div className="form-field">
                 <Label htmlFor="email">Email</Label>
                 <Input id="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@email.com" />
               </div>
-              <div className="space-y-2">
+              <div className="form-field">
                 <Label htmlFor="password">Senha</Label>
                 <Input id="password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="********" />
               </div>
@@ -102,29 +100,29 @@ export function Component() {
               </Button>
             </form>
           ) : (
-            <form onSubmit={handleAccessRequest} className="space-y-4">
+            <form onSubmit={handleAccessRequest} className="login-form">
               <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2 sm:col-span-2">
+                <div className="form-field sm:col-span-2">
                   <Label htmlFor="request-name">Nome completo</Label>
                   <Input id="request-name" required value={name} onChange={(e) => setName(e.target.value)} placeholder="Seu nome" />
                 </div>
-                <div className="space-y-2 sm:col-span-2">
+                <div className="form-field sm:col-span-2">
                   <Label htmlFor="request-email">Email</Label>
                   <Input id="request-email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@email.com" />
                 </div>
-                <div className="space-y-2 sm:col-span-2">
+                <div className="form-field sm:col-span-2">
                   <Label htmlFor="request-phone">Telefone</Label>
                   <Input id="request-phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(00) 00000-0000" />
                 </div>
-                <div className="space-y-2">
+                <div className="form-field">
                   <Label htmlFor="request-password">Senha</Label>
                   <Input id="request-password" type="password" autoComplete="new-password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mínimo 8 caracteres" />
                 </div>
-                <div className="space-y-2">
+                <div className="form-field">
                   <Label htmlFor="request-confirm-password">Confirmar senha</Label>
                   <Input id="request-confirm-password" type="password" autoComplete="new-password" required minLength={8} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Repita a senha" />
                 </div>
-                <div className="space-y-2 sm:col-span-2">
+                <div className="form-field sm:col-span-2">
                   <Label htmlFor="request-message">Observação</Label>
                   <Textarea id="request-message" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Explique brevemente por que precisa acessar o sistema." />
                 </div>
@@ -141,6 +139,92 @@ export function Component() {
           )}
         </CardContent>
       </Card>
+      <style>{loginStyles}</style>
     </div>
   );
 }
+
+const loginStyles = `
+.login-page {
+  position: relative;
+  display: flex;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 40px 16px;
+  background: var(--color-background);
+}
+
+.login-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% -20%, rgba(21, 94, 239, 0.15), transparent),
+    var(--sidebar-start);
+}
+
+.dark .login-bg {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% -20%, rgba(59, 130, 246, 0.12), transparent),
+    #06111f;
+}
+
+.login-theme-btn {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  z-index: 10;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  transition: background-color 160ms ease;
+}
+
+.login-theme-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.login-card {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  border-radius: 24px;
+}
+
+.login-icon {
+  display: flex;
+  width: 56px;
+  height: 56px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  margin: 0 auto 12px;
+}
+
+.login-title {
+  font-size: 24px;
+  font-weight: 850;
+  color: var(--color-text-primary);
+  line-height: 1.2;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+`;

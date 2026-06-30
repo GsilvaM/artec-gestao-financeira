@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { ChevronDown, Loader2, Plus, Search, SlidersHorizontal, TableProperties } from "lucide-react";
+import { ChevronDown, Loader2, Plus, Search, SlidersHorizontal } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,39 +8,69 @@ import { Select } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
-interface PageShellProps {
-  icon: LucideIcon;
+interface PageHeaderProps {
   title: string;
-  subtitle: string;
-  actionLabel?: string;
-  onAction?: () => void;
-  children: ReactNode;
+  description?: string;
+  actions?: ReactNode;
 }
 
-export function PageShell({ icon: Icon, title, subtitle, actionLabel, onAction, children }: PageShellProps) {
+export function PageHeader({ title, description, actions }: PageHeaderProps) {
   return (
-    <div className="mx-auto flex w-full max-w-[1560px] flex-col gap-6 px-4 pb-8 pt-6 sm:gap-7 sm:px-6 sm:pt-7 lg:px-10 lg:pt-9 2xl:px-12">
-      <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="flex min-w-0 items-start gap-4">
-          <div className="mt-1 flex size-11 shrink-0 items-center justify-center rounded-xl bg-accent text-primary ring-1 ring-primary/10">
-            <Icon className="size-5" />
-          </div>
-          <div className="min-w-0">
-            <h1 className="text-3xl font-bold leading-tight text-foreground sm:text-4xl">{title}</h1>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground sm:text-base">{subtitle}</p>
-          </div>
-        </div>
-        {actionLabel ? (
-          <Button className="w-full sm:w-auto" onClick={onAction}>
-            <Plus className="size-4" />
-            {actionLabel}
-          </Button>
-        ) : null}
+    <header className="page-header">
+      <div>
+        <h1 className="page-header-title">{title}</h1>
+        {description && <p className="page-header-desc">{description}</p>}
       </div>
-      {children}
-    </div>
+      {actions && <div className="page-header-actions">{actions}</div>}
+    </header>
   );
 }
+
+export const pageHeaderStyles = `
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.page-header-title {
+  margin: 0;
+  font-size: 30px;
+  line-height: 1.2;
+  font-weight: 850;
+  letter-spacing: -0.04em;
+  color: var(--color-text-primary);
+}
+
+.page-header-desc {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--color-text-secondary);
+}
+
+.page-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+@media (max-width: 767px) {
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .page-header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .page-header-actions > * {
+    flex: 1;
+  }
+}
+`;
 
 interface MetricCardProps {
   title: string;
@@ -53,24 +83,24 @@ interface MetricCardProps {
 
 export function MoneyValue({ value, tone = "neutral" }: { value: string; tone?: "neutral" | "positive" | "negative" }) {
   const color = tone === "positive" ? "text-success" : tone === "negative" ? "text-destructive" : "text-foreground";
-  return <span className={cn("font-semibold tabular-nums", color)}>{value}</span>;
+  return <span className={cn("font-bold tabular-nums", color)}>{value}</span>;
 }
 
 const statusStyles: Record<string, string> = {
-  aberto: "bg-primary/12 text-primary ring-primary/15",
-  pending: "bg-warning/15 text-warning ring-warning/20",
-  approved: "bg-success/12 text-success ring-success/20",
-  rejected: "bg-destructive/12 text-destructive ring-destructive/20",
-  disabled: "bg-muted text-muted-foreground ring-border",
-  pago: "bg-success/12 text-success ring-success/20",
-  confirmed: "bg-success/12 text-success ring-success/20",
-  paid: "bg-success/12 text-success ring-success/20",
-  received: "bg-success/12 text-success ring-success/20",
-  vencido: "bg-destructive/12 text-destructive ring-destructive/20",
-  overdue: "bg-destructive/12 text-destructive ring-destructive/20",
-  cancelled: "bg-destructive/12 text-destructive ring-destructive/20",
-  rascunho: "bg-warning/15 text-warning ring-warning/20",
-  ativo: "bg-info/12 text-info ring-info/20",
+  aberto: "bg-primary-soft text-primary",
+  pending: "bg-warning-soft text-warning-strong",
+  approved: "bg-success-soft text-success-strong",
+  rejected: "bg-danger-soft text-danger-strong",
+  disabled: "bg-surface-soft text-text-secondary",
+  pago: "bg-success-soft text-success-strong",
+  confirmed: "bg-success-soft text-success-strong",
+  paid: "bg-success-soft text-success-strong",
+  received: "bg-success-soft text-success-strong",
+  vencido: "bg-danger-soft text-danger-strong",
+  overdue: "bg-danger-soft text-danger-strong",
+  cancelled: "bg-surface-soft text-text-muted",
+  rascunho: "bg-warning-soft text-warning-strong",
+  ativo: "bg-primary-soft text-primary",
 };
 
 const statusLabels: Record<string, string> = {
@@ -92,7 +122,7 @@ const statusLabels: Record<string, string> = {
 
 export function StatusBadge({ status }: { status: string }) {
   return (
-    <span className={cn("inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1", statusStyles[status] ?? "bg-slate-100 text-slate-700 ring-slate-500/10")}>
+    <span className={cn("inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold", statusStyles[status] ?? "bg-surface-soft text-text-secondary")}>
       {statusLabels[status] ?? status}
     </span>
   );
@@ -102,11 +132,11 @@ export function LoadingState({ label = "Carregando..." }: { label?: string }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {Array.from({ length: 4 }).map((_, index) => (
-        <Card key={index} className="overflow-hidden">
+        <Card key={index}>
           <CardContent className="space-y-4 p-5">
-            <div className="h-3 w-24 animate-pulse rounded-full bg-muted" />
-            <div className="h-8 w-32 animate-pulse rounded-full bg-muted" />
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="h-3 w-24 animate-pulse rounded-full bg-surface-muted" />
+            <div className="h-8 w-32 animate-pulse rounded-full bg-surface-muted" />
+            <div className="flex items-center gap-2 text-xs text-text-muted">
               <Loader2 className="size-3 animate-spin" />
               {label}
             </div>
@@ -118,23 +148,23 @@ export function LoadingState({ label = "Carregando..." }: { label?: string }) {
 }
 
 const toneStyles = {
-  blue: "bg-primary-light text-primary",
-  green: "bg-success-light text-success",
-  red: "bg-destructive-light text-destructive",
-  amber: "bg-warning-light text-warning",
-  slate: "bg-muted text-muted-foreground",
+  blue: "bg-primary-soft text-primary",
+  green: "bg-success-soft text-success",
+  red: "bg-danger-soft text-danger",
+  amber: "bg-warning-soft text-warning",
+  slate: "bg-surface-soft text-text-secondary",
 };
 
 export function MetricCard({ title, value, icon: Icon, tone = "blue", helper, className }: MetricCardProps) {
   return (
-    <Card className={cn("min-w-0 transition duration-200 hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-[var(--shadow-soft)]", className)}>
-      <CardContent className="relative min-h-[9.75rem] p-5 sm:p-6">
+    <Card className={cn("card-hover min-w-0", className)}>
+      <CardContent className="relative min-h-[156px] p-5 sm:p-6">
         <div className="min-w-0">
-          <p className="truncate pr-14 text-xs font-semibold uppercase text-muted-foreground">{title}</p>
-          <p className="mt-4 max-w-full whitespace-nowrap text-2xl font-bold leading-tight text-foreground tabular-nums sm:text-[1.6rem]" title={value}>{value}</p>
-          {helper ? <p className="mt-2 text-xs leading-5 text-muted-foreground">{helper}</p> : null}
+          <p className="truncate pr-14 text-xs font-bold uppercase text-text-secondary">{title}</p>
+          <p className="mt-4 text-2xl font-bold text-text-primary tabular-nums sm:text-[1.6rem]" title={value}>{value}</p>
+          {helper ? <p className="mt-2 text-xs text-text-secondary">{helper}</p> : null}
         </div>
-        <div className={cn("absolute right-5 top-5 flex size-12 items-center justify-center rounded-xl ring-1 ring-current/10 sm:right-6 sm:top-6", toneStyles[tone])}>
+        <div className={cn("absolute right-5 top-5 flex size-12 items-center justify-center rounded-xl sm:right-6 sm:top-6", toneStyles[tone])}>
           <Icon className="size-5" />
         </div>
       </CardContent>
@@ -154,33 +184,48 @@ export function FilterBar({ searchPlaceholder = "Buscar...", search, onSearchCha
   const hasFilters = Boolean(children);
 
   return (
-    <Card className="overflow-hidden">
-      <CardContent className="p-3 sm:p-4">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input className="bg-background/50 pl-9" placeholder={searchPlaceholder} aria-label={searchPlaceholder} value={search} onChange={(e) => onSearchChange?.(e.target.value)} />
-          </div>
-          {hasFilters ? (
-            <Button type="button" variant="outline" className="md:hidden" onClick={() => setOpen((current) => !current)} aria-expanded={open}>
+    <>
+      <div className="filter-bar">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-text-muted" />
+          <Input className="pl-9" placeholder={searchPlaceholder} aria-label={searchPlaceholder} value={search} onChange={(e) => onSearchChange?.(e.target.value)} />
+        </div>
+        {hasFilters && (
+          <>
+            <Button type="button" variant="outline" className="md:hidden" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
               <SlidersHorizontal className="size-4" />
               Filtros
-              <ChevronDown className={cn("ml-auto size-4 transition-transform duration-200 ease-in-out", open && "rotate-180")} />
+              <ChevronDown className={cn("ml-auto size-4 transition-transform", open && "rotate-180")} />
             </Button>
-          ) : null}
-          {hasFilters ? (
-            <div className={cn(
-              "grid gap-3 transition-all duration-200 ease-in-out sm:grid-cols-2 md:flex md:shrink-0",
-              open ? "max-h-96 opacity-100" : "max-h-0 overflow-hidden opacity-0 md:max-h-96 md:opacity-100",
-            )}>
+            <div className={cn("hidden md:flex gap-3", open ? "flex flex-wrap" : "hidden")}>
               {children}
             </div>
-          ) : null}
-        </div>
-      </CardContent>
-    </Card>
+          </>
+        )}
+      </div>
+      <style>{filterBarStyles}</style>
+    </>
   );
 }
+
+const filterBarStyles = `
+.filter-bar {
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.filter-bar input { flex: 1; }
+
+@media (max-width: 1023px) {
+  .filter-bar { flex-direction: column; align-items: stretch; }
+}
+`;
 
 interface MonthSelectProps {
   value?: string;
@@ -232,42 +277,108 @@ export function StatusSelect({ value, onValueChange }: StatusSelectProps) {
 }
 
 interface EmptyStateProps {
+  icon?: ReactNode;
   title: string;
   description?: string;
+  action?: ReactNode;
   actionLabel?: string;
   onAction?: () => void;
 }
 
-export function EmptyState({ title, description, actionLabel, onAction }: EmptyStateProps) {
+export function EmptyState({ icon, title, description, action, actionLabel, onAction }: EmptyStateProps) {
+  const resolvedAction = action ?? (actionLabel && onAction ? <Button onClick={onAction}><Plus className="size-4" />{actionLabel}</Button> : undefined);
   return (
-    <div className="flex min-h-72 items-center justify-center px-4 py-10 text-center sm:px-6 sm:py-14">
-      <div className="mx-auto flex w-full max-w-lg flex-col items-center">
-        <div className="relative mb-5 flex size-16 items-center justify-center rounded-lg border border-border bg-card text-primary shadow-sm">
-          <div className="absolute inset-2 rounded-md bg-primary/10" />
-          <TableProperties className="relative size-7" />
-        </div>
-        <h3 className="text-balance text-base font-semibold leading-6 text-foreground sm:text-lg">{title}</h3>
-        {description ? <p className="mt-2 max-w-md text-pretty text-sm leading-6 text-muted-foreground">{description}</p> : null}
-        {actionLabel ? (
-          <Button className="mt-6" variant="secondary" onClick={onAction}>
-            <Plus className="size-4" />
-            {actionLabel}
-          </Button>
-        ) : null}
-      </div>
+    <div className="empty-state">
+      {icon && <div className="empty-state-icon">{icon}</div>}
+      <h3>{title}</h3>
+      {description && <p>{description}</p>}
+      {resolvedAction && <div className="empty-state-action">{resolvedAction}</div>}
     </div>
   );
 }
+
+export const emptyStateStyles = `
+.empty-state {
+  padding: 48px 24px;
+  text-align: center;
+  display: grid;
+  place-items: center;
+}
+
+.empty-state-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  display: grid;
+  place-items: center;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  margin-bottom: 16px;
+}
+
+.empty-state h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 850;
+  color: var(--color-text-primary);
+}
+
+.empty-state p {
+  max-width: 420px;
+  margin: 8px 0 0;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.empty-state-action {
+  margin-top: 20px;
+}
+`;
+
+interface PageShellProps {
+  icon: LucideIcon;
+  title: string;
+  subtitle: string;
+  actionLabel?: string;
+  onAction?: () => void;
+  children: ReactNode;
+}
+
+export function PageShell({ title, subtitle, actionLabel, onAction, children }: PageShellProps) {
+  return (
+    <div className="page-stack">
+      <PageHeader
+        title={title}
+        description={subtitle}
+        actions={actionLabel && onAction ? <Button onClick={onAction}><Plus className="size-4" />{actionLabel}</Button> : undefined}
+      />
+      {children}
+      <style>{pageHeaderStyles}</style>
+      <style>{`${pageShellStyles}`}</style>
+    </div>
+  );
+}
+
+const pageShellStyles = `
+.page-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+`;
 
 interface EmptyTableProps {
   columns: string[];
   emptyTitle: string;
   emptyDescription?: string;
+  onAction?: () => void;
+  actionLabel?: string;
 }
 
-export function EmptyTable({ columns, emptyTitle, emptyDescription }: EmptyTableProps) {
+export function EmptyTable({ columns, emptyTitle, emptyDescription, onAction, actionLabel }: EmptyTableProps) {
   return (
-    <Card className="overflow-hidden">
+    <Card>
       <Table>
         <TableHeader>
           <TableRow>
@@ -279,55 +390,15 @@ export function EmptyTable({ columns, emptyTitle, emptyDescription }: EmptyTable
         <TableBody>
           <TableRow>
             <TableCell colSpan={columns.length} className="p-0">
-              <EmptyState title={emptyTitle} description={emptyDescription} />
+              <EmptyState
+                title={emptyTitle}
+                description={emptyDescription}
+                action={actionLabel && onAction ? <Button onClick={onAction}><Plus className="size-4" />{actionLabel}</Button> : undefined}
+              />
             </TableCell>
           </TableRow>
         </TableBody>
       </Table>
     </Card>
-  );
-}
-
-interface StarterPageProps {
-  icon: LucideIcon;
-  title: string;
-  subtitle: string;
-  actionLabel?: string;
-  onAction?: () => void;
-  metrics?: MetricCardProps[];
-  columns: string[];
-  emptyTitle: string;
-  emptyDescription?: string;
-  filters?: boolean;
-}
-
-export function StarterPage({
-  icon,
-  title,
-  subtitle,
-  actionLabel,
-  onAction,
-  metrics = [],
-  columns,
-  emptyTitle,
-  emptyDescription,
-  filters = true,
-}: StarterPageProps) {
-  return (
-    <PageShell icon={icon} title={title} subtitle={subtitle} actionLabel={actionLabel} onAction={onAction}>
-      {metrics.length ? (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {metrics.map((metric) => (
-            <MetricCard key={metric.title} {...metric} />
-          ))}
-        </div>
-      ) : null}
-      {filters ? (
-        <FilterBar searchPlaceholder={`Buscar em ${title.toLowerCase()}...`}>
-          <StatusSelect />
-        </FilterBar>
-      ) : null}
-      <EmptyTable columns={columns} emptyTitle={emptyTitle} emptyDescription={emptyDescription} />
-    </PageShell>
   );
 }

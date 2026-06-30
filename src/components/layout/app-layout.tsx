@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
-import { Bell, ChevronDown, ChevronLeft, ChevronRight, LogOut, Menu, Moon, Search, Sun, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { ChevronDown, LogOut, Menu, Moon, Sun, X } from "lucide-react";
 import { ArtecLogoMark } from "@/components/brand/ArtecLogoMark";
 import { useAuthStore } from "@/lib/supabase/auth-store";
 import { cn } from "@/lib/utils";
@@ -16,19 +14,12 @@ import {
   type NavigationItem,
 } from "./navigation";
 
-const SIDEBAR_STORAGE_KEY = "artec.sidebar.collapsed";
-
 export function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(() => localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true");
   const user = useAuthStore((s) => s.user);
   const signOut = useAuthStore((s) => s.signOut);
   const navigate = useNavigate();
   const location = useLocation();
-
-  useEffect(() => {
-    localStorage.setItem(SIDEBAR_STORAGE_KEY, String(collapsed));
-  }, [collapsed]);
 
   useEffect(() => {
     setMobileOpen(false);
@@ -40,194 +31,81 @@ export function AppLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <a href="#conteudo-principal" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-card focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-primary focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-ring/40">
+    <div className="app-shell">
+      <a href="#conteudo-principal" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-[14px] focus:bg-surface focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-primary focus:shadow-card focus:outline-none focus:ring-[3px] focus:ring-primary/28">
         Pular para o conteúdo
       </a>
-      <AppSidebar collapsed={collapsed} onCollapsedChange={setCollapsed} pathname={location.pathname} userEmail={user?.email} onSignOut={handleSignOut} />
-      <div className={cn("min-w-0 transition-[padding] duration-200 lg:pl-[244px]", collapsed && "lg:pl-[88px]")}>
-        <div className="min-w-0 bg-background/95 backdrop-blur lg:min-h-screen">
-          <Topbar pathname={location.pathname} userEmail={user?.email} mobileOpen={mobileOpen} onOpenMobile={() => setMobileOpen(true)} onSignOut={handleSignOut} />
-          <main id="conteudo-principal" tabIndex={-1} className="min-w-0 pb-20 outline-none lg:pb-16">
-            <Outlet />
-          </main>
-        </div>
+      <AppSidebar pathname={location.pathname} userEmail={user?.email} onSignOut={handleSignOut} />
+      <div className="app-main">
+        <Topbar pathname={location.pathname} userEmail={user?.email} mobileOpen={mobileOpen} onOpenMobile={() => setMobileOpen(true)} onSignOut={handleSignOut} />
+        <main id="conteudo-principal" tabIndex={-1} className="outline-none">
+          <Outlet />
+        </main>
       </div>
       <MobileNavDrawer open={mobileOpen} pathname={location.pathname} userEmail={user?.email} onClose={() => setMobileOpen(false)} onSignOut={handleSignOut} />
     </div>
   );
 }
 
-interface SidebarProps {
-  collapsed: boolean;
-  onCollapsedChange: (collapsed: boolean) => void;
-  pathname: string;
-  userEmail?: string;
-  onSignOut: () => void;
-}
-
-function AppSidebar({ collapsed, onCollapsedChange, pathname, userEmail, onSignOut }: SidebarProps) {
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ Financeiro: true, Gestão: true, Configurações: true });
-  const [flyout, setFlyout] = useState<string | null>(null);
-
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") setFlyout(null);
-    }
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
-
+function AppSidebar({ pathname, userEmail, onSignOut }: { pathname: string; userEmail?: string; onSignOut: () => void }) {
   return (
-    <aside className={cn("fixed inset-y-0 left-0 z-40 hidden bg-[linear-gradient(180deg,var(--navy-950)_0%,var(--navy-900)_48%,var(--navy-800)_100%)] text-white shadow-[0_28px_80px_rgba(3,18,37,0.28)] transition-[width] duration-200 lg:flex lg:flex-col lg:rounded-r-[28px]", collapsed ? "w-[88px]" : "w-[244px]")}>
-      <SidebarHeader collapsed={collapsed} onCollapsedChange={onCollapsedChange} />
-      <nav className={cn("flex-1 space-y-5 px-3 py-5", collapsed ? "overflow-visible" : "overflow-y-auto overflow-x-hidden")} aria-label="Menu principal">
-        {navigationItems.map((item) => (
-          <SidebarGroup
-            key={item.title}
-            item={item}
-            pathname={pathname}
-            collapsed={collapsed}
-            expanded={Boolean(openGroups[item.title])}
-            flyoutOpen={flyout === item.title}
-            onToggle={() => setOpenGroups((current) => ({ ...current, [item.title]: !current[item.title] }))}
-            onFlyoutToggle={() => setFlyout((current) => (current === item.title ? null : item.title))}
-            onFlyoutClose={() => setFlyout(null)}
-          />
-        ))}
-      </nav>
-      <SidebarFooter collapsed={collapsed} userEmail={userEmail} onSignOut={onSignOut} />
-    </aside>
+    <>
+      <aside className="sidebar" aria-label="Menu principal">
+        <div className="sidebar-logo">
+          <NavLink to="/app" aria-label="Ir para Dashboard" className="flex flex-col items-center gap-2">
+            <ArtecLogoMark className="sidebar-logo-mark" />
+            <span className="sidebar-logo-text">Artec Gestão</span>
+          </NavLink>
+        </div>
+
+        <nav className="sidebar-nav">
+          {navigationItems.map((item) => (
+            <SidebarGroup key={item.title} item={item} pathname={pathname} />
+          ))}
+        </nav>
+
+        <SidebarFooter userEmail={userEmail} onSignOut={onSignOut} />
+      </aside>
+      <style>{sidebarStyles}</style>
+    </>
   );
 }
 
-function SidebarHeader({ collapsed, onCollapsedChange }: { collapsed: boolean; onCollapsedChange: (collapsed: boolean) => void }) {
-  return (
-    <div className={cn("relative flex px-4 pb-5 pt-7", collapsed ? "justify-center" : "justify-center text-center")}>
-      <NavLink to="/app" className={cn("flex min-w-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/35", collapsed ? "items-center justify-center" : "flex-col items-center gap-2")} aria-label="Ir para Dashboard">
-        <span className="flex shrink-0 items-center justify-center text-white" style={{ "--logo-accent": "#DDEBFF" } as React.CSSProperties}>
-          <ArtecLogoMark className={cn(collapsed ? "size-10" : "size-14")} />
-        </span>
-        {!collapsed ? (
-          <span className="min-w-0 [&>span:not(.brand-label)]:sr-only">
-            <span className="brand-label block truncate text-sm font-bold text-white">Artec Gestão</span>
-            <span className="block truncate text-sm font-bold text-foreground">Artec Gestão</span>
-            <span className="block truncate text-xs font-medium text-muted-foreground">Controle financeiro</span>
-          </span>
-        ) : null}
-      </NavLink>
-      <button
-        type="button"
-        onClick={() => onCollapsedChange(!collapsed)}
-        aria-label={collapsed ? "Expandir sidebar" : "Recolher sidebar"}
-        title={collapsed ? "Expandir sidebar" : "Recolher sidebar"}
-        className={cn(
-          "absolute right-0 top-8 flex size-8 shrink-0 translate-x-1/2 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white/75 shadow-sm backdrop-blur transition hover:bg-white/18 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/35",
-          collapsed && "top-9",
-        )}
-      >
-        {collapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
-      </button>
-    </div>
-  );
-}
-
-interface SidebarGroupProps {
-  item: NavigationItem;
-  pathname: string;
-  collapsed: boolean;
-  expanded: boolean;
-  flyoutOpen: boolean;
-  onToggle: () => void;
-  onFlyoutToggle: () => void;
-  onFlyoutClose: () => void;
-}
-
-function SidebarGroup({ item, pathname, collapsed, expanded, flyoutOpen, onToggle, onFlyoutToggle, onFlyoutClose }: SidebarGroupProps) {
+function SidebarGroup({ item, pathname }: { item: NavigationItem; pathname: string }) {
   const active = isNavigationGroupActive(pathname, item);
   const Icon = item.icon;
 
   if (!item.items?.length && item.href) {
-    return <SidebarItem href={item.href} title={item.title} icon={Icon} active={active} collapsed={collapsed} />;
-  }
-
-  if (collapsed) {
     return (
-      <div className="relative">
-        <button type="button" title={item.title} aria-label={item.title} aria-expanded={flyoutOpen} onClick={onFlyoutToggle} className={sidebarItemClasses(active, true)}>
-          <Icon className="size-5" />
-          <SidebarTooltip title={item.title} />
-        </button>
-        {flyoutOpen ? (
-          <div className="absolute left-full top-0 z-50 ml-2 w-64 rounded-xl border border-border bg-popover p-2 text-popover-foreground shadow-[var(--shadow-soft)] before:absolute before:-left-2 before:top-0 before:h-full before:w-2 before:content-['']">
-            <div className="px-3 py-2 text-xs font-semibold uppercase text-sidebar-muted">{item.title}</div>
-            <SidebarSubmenu items={item.items ?? []} pathname={pathname} onNavigate={onFlyoutClose} popover />
-          </div>
-        ) : null}
+      <div>
+        <NavLink
+          to={item.href}
+          end={item.href === "/app"}
+          className={cn("sidebar-link", active && "sidebar-link-active")}
+          aria-current={active ? "page" : undefined}
+        >
+          <Icon size={20} />
+          <span>{item.title}</span>
+        </NavLink>
       </div>
     );
   }
 
   return (
     <div>
-      <div className="px-3 pb-2 text-[11px] font-bold uppercase tracking-[0.14em] text-white/45">{item.title}</div>
-      <SidebarSubmenu items={item.items ?? []} pathname={pathname} />
-      <button type="button" aria-expanded={expanded} onClick={onToggle} className="sr-only">
-        <Icon className="size-5 shrink-0" />
-        {item.title}
-      </button>
-    </div>
-  );
-}
-
-function sidebarItemClasses(active: boolean, collapsed = false) {
-  return cn(
-    "motion-sidebar-item group relative flex h-12 w-full items-center gap-3 rounded-[14px] px-4 text-sm font-semibold text-white/82 transition duration-200 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/35",
-    collapsed && "justify-center px-0",
-    active && "bg-[linear-gradient(135deg,var(--blue-600),#164ed8)] text-white shadow-[0_16px_34px_rgba(11,99,246,0.28)] hover:bg-[linear-gradient(135deg,var(--blue-600),#164ed8)]",
-  );
-}
-
-function SidebarTooltip({ title }: { title: string }) {
-  return (
-    <span className="pointer-events-none absolute left-full top-1/2 z-50 ml-3 hidden -translate-y-1/2 whitespace-nowrap rounded-md border border-border bg-popover px-2.5 py-1 text-xs font-semibold text-popover-foreground opacity-0 shadow-[var(--shadow-soft)] transition group-hover:opacity-100 group-focus-visible:opacity-100 lg:group-hover:block lg:group-focus-visible:block">
-      {title}
-    </span>
-  );
-}
-
-function SidebarItem({ href, title, icon: Icon, active, collapsed, onNavigate }: { href: string; title: string; icon: NavigationItem["icon"]; active: boolean; collapsed: boolean; onNavigate?: () => void }) {
-  return (
-    <NavLink to={href} end={href === "/app"} title={title} aria-label={title} aria-current={active ? "page" : undefined} onClick={onNavigate} className={sidebarItemClasses(active, collapsed)}>
-      <Icon className="size-5 shrink-0" />
-      {collapsed ? <SidebarTooltip title={title} /> : null}
-      {!collapsed ? <span className="truncate">{title}</span> : null}
-    </NavLink>
-  );
-}
-
-function SidebarSubmenu({ items, pathname, onNavigate, popover = false }: { items: { title: string; href: string }[]; pathname: string; onNavigate?: () => void; popover?: boolean }) {
-  return (
-    <div className={cn("mt-1 space-y-1", popover ? "pl-0" : "pl-4")}>
-      {items.map((subitem) => {
-        const active = isNavigationActive(pathname, subitem.href);
-        const Icon = navigationIconMap[subitem.title];
+      <p className="sidebar-group-label">{item.title}</p>
+      {item.items?.map((subitem) => {
+        const subActive = isNavigationActive(pathname, subitem.href);
+        const SubIcon = navigationIconMap[subitem.title];
         return (
           <NavLink
             key={subitem.href}
             to={subitem.href}
-            title={subitem.title}
-            aria-label={subitem.title}
-            aria-current={active ? "page" : undefined}
-            onClick={onNavigate}
-            className={cn(
-              "motion-sidebar-item flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2",
-              "text-white/65 hover:bg-white/10 hover:text-white focus-visible:ring-white/35",
-              active && "bg-white/12 text-white",
-            )}
+            className={cn("sidebar-link", subActive && "sidebar-link-active")}
+            aria-current={subActive ? "page" : undefined}
           >
-            {Icon ? <Icon className="size-4 shrink-0" /> : null}
-            {subitem.title}
+            {SubIcon && <SubIcon size={20} />}
+            <span>{subitem.title}</span>
           </NavLink>
         );
       })}
@@ -235,44 +113,38 @@ function SidebarSubmenu({ items, pathname, onNavigate, popover = false }: { item
   );
 }
 
-function SidebarFooter({ collapsed, userEmail, onSignOut }: { collapsed: boolean; userEmail?: string; onSignOut: () => void }) {
+function SidebarFooter({ userEmail, onSignOut }: { userEmail?: string; onSignOut: () => void }) {
+  const initials = (userEmail ?? "U")
+    .split(/[\s@._-]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase())
+    .join("") || "U";
+
   return (
-    <div className="p-3">
-      <div className={cn("mb-3 flex items-center gap-3 rounded-2xl bg-white/10 p-3 text-white shadow-sm ring-1 ring-white/10", collapsed && "justify-center p-2")}>
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#061A3A] text-white ring-1 ring-white/12" style={{ "--logo-accent": "#DDEBFF" } as React.CSSProperties}>
-          <ArtecLogoMark className="size-7" />
-        </span>
-        {!collapsed ? (
-          <div className="min-w-0 [&>div:not(.user-label)]:sr-only">
-            <div className="user-label truncate text-sm font-semibold text-white">Artec Gestão</div>
-            <div className="user-label text-xs text-white/65">Administrador</div>
-            <div className="truncate text-sm font-semibold text-foreground">{userEmail ?? "Usuário"}</div>
-            <div className="text-xs text-muted-foreground">v1.02</div>
-          </div>
-        ) : null}
+    <div className="sidebar-user">
+      <div className="sidebar-user-avatar">{initials}</div>
+      <div className="min-w-0 flex-1">
+        <div className="sidebar-user-name truncate">{userEmail?.split("@")[0] ?? "Usuário"}</div>
+        <div className="sidebar-user-role truncate">Administrador</div>
       </div>
-      <Button variant="outline" size={collapsed ? "icon" : "sm"} onClick={onSignOut} className={cn("w-full border-white/15 bg-white/[0.08] text-white hover:bg-white/[0.12] hover:text-white", collapsed && "w-10")} aria-label="Sair">
-        <LogOut className="size-4" />
-        {!collapsed ? "Sair" : null}
-      </Button>
+      <button type="button" onClick={onSignOut} aria-label="Sair" className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-white/70 transition hover:bg-white/20 hover:text-white">
+        <LogOut size={16} />
+      </button>
     </div>
   );
 }
 
 function Topbar({ pathname, userEmail, mobileOpen, onOpenMobile, onSignOut }: { pathname: string; userEmail?: string; mobileOpen: boolean; onOpenMobile: () => void; onSignOut: () => void }) {
   return (
-    <header className="sticky top-0 z-30 h-16 border-b border-border/60 bg-card/92 backdrop-blur-xl lg:hidden">
-      <div className="mx-auto flex h-full min-w-0 max-w-[1560px] items-center gap-3 px-4 sm:px-6 lg:px-10 2xl:px-12">
-        <button type="button" onClick={onOpenMobile} className="flex size-10 shrink-0 items-center justify-center rounded-md border border-border/80 bg-card text-muted-foreground transition hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 lg:hidden" aria-label="Abrir menu" aria-expanded={mobileOpen} aria-controls="menu-mobile">
-          <Menu className="size-5" />
-        </button>
-        <Breadcrumbs pathname={pathname} />
-        <GlobalSearch />
-        <div className="ml-auto flex items-center gap-2">
-          <NotificationButton />
-          <ThemeToggle />
-          <UserMenu userEmail={userEmail} onSignOut={onSignOut} />
-        </div>
+    <header className="topbar">
+      <button type="button" onClick={onOpenMobile} className="mobile-menu-button" aria-label="Abrir menu" aria-expanded={mobileOpen} aria-controls="menu-mobile">
+        <Menu size={20} />
+      </button>
+      <Breadcrumbs pathname={pathname} />
+      <div className="topbar-actions">
+        <ThemeToggle />
+        <UserMenu userEmail={userEmail} onSignOut={onSignOut} />
       </div>
     </header>
   );
@@ -281,181 +153,416 @@ function Topbar({ pathname, userEmail, mobileOpen, onOpenMobile, onSignOut }: { 
 function Breadcrumbs({ pathname }: { pathname: string }) {
   const trail = useMemo(() => findNavigationTrail(pathname), [pathname]);
   return (
-    <nav className="hidden min-w-0 sm:block" aria-label="Breadcrumb">
-      <ol className="flex min-w-0 items-center gap-2 text-sm">
-        {trail.map((item, index) => (
-          <li key={`${item}-${index}`} className="flex min-w-0 items-center gap-2">
-            {index > 0 ? <span className="text-border">/</span> : null}
-            <span className={cn("truncate", index === trail.length - 1 ? "font-semibold text-foreground" : "text-muted-foreground")}>{item}</span>
-          </li>
-        ))}
-      </ol>
+    <nav aria-label="Breadcrumb" className="topbar-breadcrumbs">
+      {trail.map((item, index) => (
+        <span key={`${item}-${index}`} className="flex items-center gap-2">
+          {index > 0 && <span className="text-text-muted text-xs">/</span>}
+          <span className={cn("truncate", index === trail.length - 1 ? "font-bold text-text-primary" : "text-text-secondary")}>{item}</span>
+        </span>
+      ))}
     </nav>
   );
 }
 
-function GlobalSearch() {
-  return (
-    <div className="relative ml-2 hidden w-full max-w-sm md:block">
-      <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-      <Input className="h-10 min-h-10 border-transparent bg-[#F1F5F9] pl-9 shadow-none focus-visible:ring-2 focus-visible:ring-primary/35 dark:bg-muted" placeholder="Buscar lançamentos, relatórios..." aria-label="Busca global" />
-    </div>
-  );
-}
-
-function IconButton({ children, label, onClick, expanded }: { children: React.ReactNode; label: string; onClick?: () => void; expanded?: boolean }) {
-  return (
-    <button type="button" onClick={onClick} aria-label={label} aria-expanded={expanded} className="flex size-10 items-center justify-center rounded-md border border-border/70 bg-card/85 text-muted-foreground shadow-sm transition hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40">
-      {children}
-    </button>
-  );
-}
-
 function ThemeToggle() {
-  const theme = useThemeStore((state) => state.theme);
-  const toggleTheme = useThemeStore((state) => state.toggleTheme);
+  const theme = useThemeStore((s) => s.theme);
+  const toggleTheme = useThemeStore((s) => s.toggleTheme);
   return (
-    <IconButton label={theme === "dark" ? "Ativar modo claro" : "Ativar modo escuro"} onClick={toggleTheme}>
-      {theme === "dark" ? <Sun className="size-5" /> : <Moon className="size-5" />}
-    </IconButton>
-  );
-}
-
-function NotificationButton() {
-  const [open, setOpen] = useState(false);
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false);
-    }
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
-  return (
-    <div className="relative">
-      <IconButton label="Notificações" expanded={open} onClick={() => setOpen((current) => !current)}>
-        <Bell className="size-5" />
-      </IconButton>
-      {open ? (
-        <div className="fixed right-4 top-16 z-50 w-[min(20rem,calc(100vw-2rem))] rounded-lg border border-border/70 bg-popover p-4 text-popover-foreground shadow-[var(--shadow-soft)]">
-          <div className="text-sm font-semibold text-foreground">Notificações</div>
-          <p className="mt-1 text-sm text-muted-foreground">Nenhuma notificação nova.</p>
-        </div>
-      ) : null}
-    </div>
+    <button type="button" onClick={toggleTheme} aria-label={theme === "dark" ? "Ativar modo claro" : "Ativar modo escuro"} className="topbar-icon-btn">
+      {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+    </button>
   );
 }
 
 function UserMenu({ userEmail, onSignOut }: { userEmail?: string; onSignOut: () => void }) {
   const [open, setOpen] = useState(false);
+
   useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false);
-    }
+    function handleKeyDown(e: KeyboardEvent) { if (e.key === "Escape") setOpen(false); }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  const initials = (userEmail ?? "U")
+    .split(/[\s@._-]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase())
+    .join("") || "U";
+
+  const palette = ["#185FA5", "#1D9E75", "#D85A30", "#7C3AED", "#BA7517"];
+  const hash = Array.from(userEmail ?? "U").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+
   return (
     <div className="relative">
-      <button type="button" onClick={() => setOpen((current) => !current)} aria-label="Menu do usuário" aria-expanded={open} className="flex h-10 items-center gap-2 rounded-lg border border-border/70 bg-card/85 px-2.5 text-foreground shadow-sm transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40">
-        <UserAvatar label={userEmail ?? "Usuário"} />
-        <span className="hidden max-w-40 truncate text-sm font-medium sm:block">{userEmail ?? "Usuário"}</span>
-        <ChevronDown className={cn("size-4 text-muted-foreground transition-transform duration-200", open && "rotate-180")} />
+      <button type="button" onClick={() => setOpen((v) => !v)} aria-label="Menu do usuário" aria-expanded={open} className="topbar-user-btn">
+        <span className="flex size-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white" style={{ backgroundColor: palette[hash % palette.length] }}>
+          {initials}
+        </span>
+        <span className="hidden sm:block max-w-28 truncate text-sm font-medium text-text-primary">{userEmail?.split("@")[0] ?? "Usuário"}</span>
+        <ChevronDown size={14} className={cn("text-text-muted transition-transform", open && "rotate-180")} />
       </button>
-      {open ? (
-        <div className="absolute right-0 top-12 z-50 w-64 rounded-lg border border-border/70 bg-popover p-2 text-popover-foreground shadow-[var(--shadow-soft)]">
+      {open && (
+        <div className="absolute right-0 top-11 z-50 w-56 rounded-[14px] border border-border bg-surface p-2 text-text-primary shadow-elevated">
           <div className="border-b border-border px-3 py-2">
-            <div className="truncate text-sm font-semibold text-foreground">{userEmail ?? "Usuário"}</div>
-            <div className="text-xs text-muted-foreground">Sessão ativa</div>
+            <div className="truncate text-sm font-bold">{userEmail ?? "Usuário"}</div>
+            <div className="text-xs text-text-secondary">Sessão ativa</div>
           </div>
-          <button type="button" onClick={onSignOut} className="mt-2 flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40">
-            <LogOut className="size-4" />
+          <button type="button" onClick={onSignOut} className="mt-1 flex w-full items-center gap-2 rounded-[10px] px-3 py-2 text-sm font-medium text-text-secondary transition hover:bg-surface-soft hover:text-text-primary">
+            <LogOut size={16} />
             Sair
           </button>
         </div>
-      ) : null}
+      )}
     </div>
   );
 }
 
-function UserAvatar({ label }: { label: string }) {
-  const palette = ["#185FA5", "#1D9E75", "#D85A30", "#7C3AED", "#BA7517"];
-  const hash = Array.from(label).reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const initials = label
-    .split(/[\s@._-]+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("") || "U";
-
-  return (
-    <span className="flex size-7 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white" style={{ backgroundColor: palette[hash % palette.length] }}>
-      {initials}
-    </span>
-  );
-}
-
 function MobileNavDrawer({ open, pathname, userEmail, onClose, onSignOut }: { open: boolean; pathname: string; userEmail?: string; onClose: () => void; onSignOut: () => void }) {
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ Financeiro: true, Gestão: true, Configurações: true });
-
   useEffect(() => {
     if (!open) return;
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") onClose();
-    }
+    function handleKeyDown(e: KeyboardEvent) { if (e.key === "Escape") onClose(); }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [open, onClose]);
 
   if (!open) return null;
+
+  const initials = (userEmail ?? "U")
+    .split(/[\s@._-]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase())
+    .join("") || "U";
+
   return (
     <div className="fixed inset-0 z-50 lg:hidden">
-      <button type="button" aria-label="Fechar menu" className="absolute inset-0 bg-slate-950/40 backdrop-blur-[2px]" onClick={onClose} />
-      <aside id="menu-mobile" role="dialog" aria-modal="true" aria-label="Menu principal" className="relative flex h-full w-80 max-w-[88vw] flex-col border-r border-border bg-card text-foreground shadow-2xl">
-        <div className="flex h-16 items-center justify-between border-b border-border px-4">
-          <div className="flex items-center gap-3">
-            <span className="flex size-10 items-center justify-center rounded-lg bg-[#061A3A] text-white" style={{ "--logo-accent": "#DDEBFF" } as React.CSSProperties}>
-              <ArtecLogoMark className="size-8" />
-            </span>
-            <span className="font-bold text-foreground">Artec Gestão</span>
-          </div>
-          <button type="button" onClick={onClose} aria-label="Fechar menu" className="rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30">
-            <X className="size-5" />
+      <button type="button" aria-label="Fechar menu" className="sidebar-overlay" onClick={onClose} />
+      <aside id="menu-mobile" className="sidebar-mobile-drawer">
+        <div className="flex items-center justify-between px-4 py-5">
+          <NavLink to="/app" onClick={onClose} className="flex items-center gap-3">
+            <ArtecLogoMark className="size-10" />
+            <span className="font-bold text-lg text-white">Artec Gestão</span>
+          </NavLink>
+          <button type="button" onClick={onClose} aria-label="Fechar menu" className="flex size-10 items-center justify-center rounded-xl bg-white/10 text-white/70 hover:bg-white/20 hover:text-white">
+            <X size={20} />
           </button>
         </div>
-        <nav className="flex-1 space-y-1 overflow-y-auto p-4" aria-label="Menu mobile">
-          {navigationItems.map((item) => (
-            <MobileNavItem key={item.title} item={item} pathname={pathname} expanded={Boolean(openGroups[item.title])} onToggle={() => setOpenGroups((current) => ({ ...current, [item.title]: !current[item.title] }))} onNavigate={onClose} />
-          ))}
+        <nav className="flex-1 overflow-y-auto px-3 py-3">
+          {navigationItems.map((item) => {
+            const active = isNavigationGroupActive(pathname, item);
+            if (!item.items?.length && item.href) {
+              return (
+                <NavLink key={item.href} to={item.href} end onClick={onClose} className={cn("sidebar-link", active && "sidebar-link-active")}>
+                  <item.icon size={20} />
+                  <span>{item.title}</span>
+                </NavLink>
+              );
+            }
+            return (
+              <div key={item.title}>
+                <p className="sidebar-group-label">{item.title}</p>
+                {item.items?.map((subitem) => {
+                  const subActive = isNavigationActive(pathname, subitem.href);
+                  const SubIcon = navigationIconMap[subitem.title];
+                  return (
+                    <NavLink key={subitem.href} to={subitem.href} onClick={onClose} className={cn("sidebar-link", subActive && "sidebar-link-active")}>
+                      {SubIcon && <SubIcon size={20} />}
+                      <span>{subitem.title}</span>
+                    </NavLink>
+                  );
+                })}
+              </div>
+            );
+          })}
         </nav>
-        <div className="border-t border-border p-4">
-          <div className="mb-3 min-w-0">
-            <div className="truncate text-sm font-medium text-muted-foreground">{userEmail ?? "Usuário"}</div>
-            <div className="text-xs text-muted-foreground">v1.02</div>
+        <div className="sidebar-user">
+          <div className="sidebar-user-avatar">{initials}</div>
+          <div className="min-w-0 flex-1">
+            <div className="sidebar-user-name truncate">{userEmail?.split("@")[0] ?? "Usuário"}</div>
+            <div className="sidebar-user-role truncate">Administrador</div>
           </div>
-          <Button onClick={onSignOut} className="w-full">
-            <LogOut className="size-4" />
-            Sair
-          </Button>
+          <button type="button" onClick={onSignOut} aria-label="Sair" className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-white/70 transition hover:bg-white/20 hover:text-white">
+            <LogOut size={16} />
+          </button>
         </div>
       </aside>
     </div>
   );
 }
 
-function MobileNavItem({ item, pathname, expanded, onToggle, onNavigate }: { item: NavigationItem; pathname: string; expanded: boolean; onToggle: () => void; onNavigate: () => void }) {
-  const active = isNavigationGroupActive(pathname, item);
-  const Icon = item.icon;
-  if (!item.items?.length && item.href) {
-    return <SidebarItem href={item.href} title={item.title} icon={Icon} active={active} collapsed={false} onNavigate={onNavigate} />;
-  }
-  return (
-    <div>
-      <button type="button" aria-expanded={expanded} onClick={onToggle} className={sidebarItemClasses(active)}>
-        <Icon className="size-5" />
-        <span className="flex-1 text-left">{item.title}</span>
-        <ChevronDown className={cn("size-4 transition-transform duration-200 ease-in-out", expanded && "rotate-180")} />
-      </button>
-      {expanded ? <SidebarSubmenu items={item.items ?? []} pathname={pathname} onNavigate={onNavigate} /> : null}
-    </div>
-  );
+const sidebarStyles = `
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  background: var(--color-background);
 }
+
+.app-main {
+  flex: 1;
+  min-width: 0;
+  padding: 0 var(--page-padding-desktop) var(--page-padding-desktop);
+  background:
+    radial-gradient(circle at top left, rgba(21, 94, 239, 0.06), transparent 320px),
+    var(--color-background);
+}
+
+@media (max-width: 767px) {
+  .app-shell {
+    display: block;
+  }
+  .app-main {
+    padding: 0 var(--page-padding-mobile) var(--page-padding-mobile);
+  }
+}
+
+.sidebar {
+  width: 248px;
+  min-height: 100vh;
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.12), transparent 260px),
+    linear-gradient(180deg, var(--sidebar-start) 0%, var(--sidebar-mid) 48%, var(--sidebar-end) 100%);
+  color: #ffffff;
+  box-shadow: 0 24px 60px rgba(0, 31, 84, 0.28);
+  position: sticky;
+  top: 0;
+  flex-shrink: 0;
+}
+
+@media (max-width: 767px) {
+  .sidebar {
+    display: none;
+  }
+}
+
+.sidebar-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0 26px;
+}
+
+.sidebar-logo-mark {
+  width: 64px;
+  height: 64px;
+  color: #ffffff;
+}
+
+.sidebar-logo-text {
+  font-size: 17px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.sidebar-group-label {
+  margin: 0 0 8px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.sidebar-link {
+  height: 50px;
+  padding: 0 14px;
+  border-radius: 13px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: rgba(255, 255, 255, 0.84);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background-color 180ms ease, color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+}
+
+.sidebar-link:hover {
+  background: rgba(255, 255, 255, 0.09);
+  color: #ffffff;
+  transform: translateX(2px);
+}
+
+.sidebar-link-active {
+  background: linear-gradient(135deg, #155eef 0%, #0f4fd8 100%);
+  color: #ffffff;
+  box-shadow: 0 12px 28px rgba(21, 94, 239, 0.36);
+}
+
+.sidebar-link svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.sidebar-user {
+  margin-top: auto;
+  padding: 12px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sidebar-user-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #2dd4bf, #2563eb);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.sidebar-user-name {
+  font-size: 13px;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.sidebar-user-role {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  padding: 0 8px;
+}
+
+@media (max-width: 767px) {
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+  }
+}
+
+.mobile-menu-button {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .mobile-menu-button {
+    display: inline-flex;
+    width: 42px;
+    height: 42px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text-primary);
+    transition: background-color 160ms ease, border-color 160ms ease;
+  }
+  .mobile-menu-button:hover {
+    background: var(--color-surface-muted);
+  }
+}
+
+.topbar-breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+@media (max-width: 767px) {
+  .topbar-breadcrumbs {
+    display: none;
+  }
+}
+
+.topbar-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.topbar-icon-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  display: grid;
+  place-items: center;
+  transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.topbar-icon-btn:hover {
+  background: var(--color-surface-muted);
+  border-color: var(--color-border-strong);
+  transform: translateY(-1px);
+}
+
+.topbar-user-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 10px;
+  border-radius: 14px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.topbar-user-btn:hover {
+  background: var(--color-surface-muted);
+  border-color: var(--color-border-strong);
+}
+
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 10, 24, 0.56);
+  backdrop-filter: blur(4px);
+  z-index: 50;
+}
+
+.sidebar-mobile-drawer {
+  position: relative;
+  width: 300px;
+  max-width: 88vw;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.10), transparent 260px),
+    linear-gradient(180deg, var(--sidebar-start) 0%, var(--sidebar-mid) 48%, var(--sidebar-end) 100%);
+  color: #ffffff;
+  z-index: 60;
+  animation: slideIn 220ms ease;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+`;

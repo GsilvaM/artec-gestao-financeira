@@ -1,21 +1,32 @@
 import { cn } from "@/lib/utils";
 
-type CardProps = React.HTMLAttributes<HTMLDivElement>;
+type CardProps = React.HTMLAttributes<HTMLDivElement> & {
+  elevated?: boolean;
+};
 
-export function Card({ className, ...props }: CardProps) {
-  return <div className={cn("motion-card rounded-[22px] border border-border bg-card text-card-foreground shadow-[var(--shadow-card)] dark:border-white/10", className)} {...props} />;
+export function Card({ elevated = false, className, ...props }: CardProps) {
+  return (
+    <div
+      className={cn(
+        "motion-card rounded-[20px] border border-border bg-surface text-text-primary shadow-card",
+        elevated && "shadow-elevated",
+        className
+      )}
+      {...props}
+    />
+  );
 }
 
 export function CardHeader({ className, ...props }: CardProps) {
-  return <div className={cn("flex flex-col space-y-1.5 p-5 sm:p-6", className)} {...props} />;
+  return <div className={cn("flex flex-col gap-1.5 p-5 sm:p-6", className)} {...props} />;
 }
 
 export function CardTitle({ className, ...props }: CardProps) {
-  return <div className={cn("font-semibold leading-tight tracking-normal", className)} {...props} />;
+  return <h3 className={cn("text-[17px] font-[850] leading-tight text-text-primary", className)} {...props} />;
 }
 
 export function CardDescription({ className, ...props }: CardProps) {
-  return <div className={cn("text-sm text-muted-foreground", className)} {...props} />;
+  return <p className={cn("text-sm text-text-secondary", className)} {...props} />;
 }
 
 export function CardContent({ className, ...props }: CardProps) {

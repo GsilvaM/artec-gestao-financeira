@@ -3,13 +3,15 @@ import {
   BarChart3,
   Building2,
   CircleDollarSign,
+  CreditCard,
   FileText,
-  LayoutDashboard,
+  Home,
   ReceiptText,
   RefreshCw,
   Settings,
-  Users,
-  WalletCards,
+  ShieldCheck,
+  UserRoundCog,
+  UsersRound,
 } from "lucide-react";
 
 export interface NavigationChild {
@@ -27,7 +29,7 @@ export interface NavigationItem {
 export const navigationItems: NavigationItem[] = [
   {
     title: "Dashboard",
-    icon: LayoutDashboard,
+    icon: Home,
     href: "/app",
   },
   {
@@ -45,7 +47,7 @@ export const navigationItems: NavigationItem[] = [
   },
   {
     title: "Gestão",
-    icon: Users,
+    icon: UsersRound,
     items: [
       { title: "Relatórios", href: "/app/relatorios" },
       { title: "Clientes", href: "/app/cadastros/clientes" },
@@ -65,18 +67,21 @@ export const navigationItems: NavigationItem[] = [
 ];
 
 export const navigationIconMap: Record<string, LucideIcon> = {
-  Dashboard: LayoutDashboard,
+  Dashboard: Home,
   Financeiro: CircleDollarSign,
   "Contas a pagar": ReceiptText,
-  "Contas a receber": WalletCards,
+  "Contas a receber": CreditCard,
   Movimentações: RefreshCw,
+  Categorias: FileText,
+  "Centros de custo": Building2,
+  DRE: BarChart3,
   Relatórios: BarChart3,
-  Clientes: Users,
+  Clientes: UsersRound,
   Fornecedores: Building2,
-  Colaboradores: Users,
+  Colaboradores: UserRoundCog,
   "Relatórios financeiros": FileText,
   Configurações: Settings,
-  Admin: Building2,
+  Admin: ShieldCheck,
 };
 
 export function findNavigationTrail(pathname: string) {
