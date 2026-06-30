@@ -43,13 +43,13 @@ export function MetricCard({
   const isPositive = (delta ?? 0) >= 0;
   const DeltaIcon = isPositive ? ArrowUpRight : ArrowDownRight;
   const deltaContent = typeof delta === "number" ? (
-    <span className={cn("inline-flex min-w-0 items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold", isPositive ? "bg-success-light text-success" : "bg-destructive-light text-destructive")}>
+    <span className={cn("inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2 py-1 text-[11px] font-semibold", isPositive ? "bg-success-light text-success" : "bg-destructive-light text-destructive")}>
       <DeltaIcon className="size-3.5 shrink-0" />
-      <span className="truncate">{isPositive ? "+" : ""}{delta.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}% vs. mês anterior</span>
+      <span>{isPositive ? "+" : ""}{delta.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}% vs. mês anterior</span>
     </span>
   ) : deltaUnavailableLabel ? (
-    <Badge variant="secondary" className="min-w-0 border-transparent bg-secondary px-2 py-1 text-[11px] font-medium text-muted-foreground">
-      <span className="truncate">{deltaUnavailableLabel}</span>
+    <Badge variant="secondary" className="shrink-0 whitespace-nowrap border-transparent bg-secondary px-2 py-1 text-[11px] font-medium text-muted-foreground">
+      <span>{deltaUnavailableLabel}</span>
     </Badge>
   ) : null;
 
@@ -62,12 +62,12 @@ export function MetricCard({
     >
       <div className={cn("pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r to-transparent", accentStyles[iconColor])} />
       <p className="truncate text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]">{label}</p>
-      <div className="flex min-w-0 items-center gap-2">
+      <div className="flex min-w-0 items-center justify-between gap-2">
         <div className={cn("flex size-8 shrink-0 items-center justify-center rounded-lg shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]", iconStyles[iconColor])}>
           <Icon className="size-4" />
         </div>
-        <p className="min-w-0 shrink truncate text-[22px] font-semibold leading-[1.1] text-[var(--text-primary)] tabular-nums" title={title ?? String(value)}>{value}</p>
-        {deltaContent ? <div className="min-w-0 flex-1">{deltaContent}</div> : null}
+        <p className="min-w-0 flex-1 truncate text-[22px] font-semibold leading-[1.1] text-[var(--text-primary)] tabular-nums" title={title ?? String(value)}>{value}</p>
+        {deltaContent}
       </div>
       {sparklineData?.length ? <SparklineChart data={sparklineData} color={iconColor} /> : null}
       {footer ? <p className="mt-0.5 truncate text-[11px] text-[var(--text-muted)]">{footer}</p> : null}
