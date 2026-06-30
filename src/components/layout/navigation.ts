@@ -2,10 +2,14 @@ import type { LucideIcon } from "lucide-react";
 import {
   BarChart3,
   Building2,
-  DollarSign,
+  CircleDollarSign,
+  FileText,
   LayoutDashboard,
+  ReceiptText,
+  RefreshCw,
   Settings,
   Users,
+  WalletCards,
 } from "lucide-react";
 
 export interface NavigationChild {
@@ -28,43 +32,52 @@ export const navigationItems: NavigationItem[] = [
   },
   {
     title: "Financeiro",
-    icon: DollarSign,
+    icon: CircleDollarSign,
     items: [
-      { title: "Lançamentos", href: "/app/financeiro/lancamentos" },
-      { title: "Contas a receber", href: "/app/financeiro/contas-receber" },
+      { title: "Financeiro", href: "/app/financeiro/lancamentos" },
       { title: "Contas a pagar", href: "/app/financeiro/contas-pagar" },
+      { title: "Contas a receber", href: "/app/financeiro/contas-receber" },
+      { title: "Movimentações", href: "/app/financeiro/fluxo-caixa" },
       { title: "Categorias", href: "/app/financeiro/categorias" },
       { title: "Centros de custo", href: "/app/financeiro/centros-custo" },
       { title: "DRE", href: "/app/financeiro/dre" },
-      { title: "Fluxo de caixa", href: "/app/financeiro/fluxo-caixa" },
+    ],
+  },
+  {
+    title: "Gestão",
+    icon: Users,
+    items: [
+      { title: "Relatórios", href: "/app/relatorios" },
+      { title: "Clientes", href: "/app/cadastros/clientes" },
+      { title: "Fornecedores", href: "/app/cadastros/fornecedores" },
+      { title: "Colaboradores", href: "/app/cadastros/colaboradores" },
       { title: "Relatórios financeiros", href: "/app/relatorios/financeiros" },
     ],
   },
   {
-    title: "Cadastros",
-    icon: Users,
-    items: [
-      { title: "Clientes", href: "/app/cadastros/clientes" },
-      { title: "Fornecedores", href: "/app/cadastros/fornecedores" },
-      { title: "Colaboradores", href: "/app/cadastros/colaboradores" },
-    ],
-  },
-  {
-    title: "Relatórios",
-    icon: BarChart3,
-    href: "/app/relatorios",
-  },
-  {
     title: "Configurações",
     icon: Settings,
-    href: "/app/configuracoes",
-  },
-  {
-    title: "Admin",
-    icon: Building2,
-    href: "/app/admin",
+    items: [
+      { title: "Configurações", href: "/app/configuracoes" },
+      { title: "Admin", href: "/app/admin" },
+    ],
   },
 ];
+
+export const navigationIconMap: Record<string, LucideIcon> = {
+  Dashboard: LayoutDashboard,
+  Financeiro: CircleDollarSign,
+  "Contas a pagar": ReceiptText,
+  "Contas a receber": WalletCards,
+  Movimentações: RefreshCw,
+  Relatórios: BarChart3,
+  Clientes: Users,
+  Fornecedores: Building2,
+  Colaboradores: Users,
+  "Relatórios financeiros": FileText,
+  Configurações: Settings,
+  Admin: Building2,
+};
 
 export function findNavigationTrail(pathname: string) {
   for (const item of navigationItems) {

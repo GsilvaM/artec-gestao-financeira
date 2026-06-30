@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
-import { Bell, ChevronDown, ChevronLeft, ChevronRight, LogOut, Menu, Moon, Search, Sun, UserCircle, X } from "lucide-react";
+import { Bell, ChevronDown, ChevronLeft, ChevronRight, LogOut, Menu, Moon, Search, Sun, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ArtecLogoMark } from "@/components/brand/ArtecLogoMark";
 import { useAuthStore } from "@/lib/supabase/auth-store";
 import { cn } from "@/lib/utils";
 import { useThemeStore } from "@/stores/theme";
@@ -10,6 +11,7 @@ import {
   findNavigationTrail,
   isNavigationActive,
   isNavigationGroupActive,
+  navigationIconMap,
   navigationItems,
   type NavigationItem,
 } from "./navigation";
@@ -38,13 +40,13 @@ export function AppLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground lg:p-5">
+    <div className="min-h-screen bg-background text-foreground">
       <a href="#conteudo-principal" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-card focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-primary focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-ring/40">
         Pular para o conteúdo
       </a>
       <AppSidebar collapsed={collapsed} onCollapsedChange={setCollapsed} pathname={location.pathname} userEmail={user?.email} onSignOut={handleSignOut} />
-      <div className={cn("min-w-0 transition-[padding] duration-200 lg:pl-[280px]", collapsed && "lg:pl-[80px]")}>
-        <div className="min-w-0 bg-background/95 backdrop-blur lg:min-h-[calc(100vh-2.5rem)] lg:rounded-r-xl">
+      <div className={cn("min-w-0 transition-[padding] duration-200 lg:pl-[244px]", collapsed && "lg:pl-[88px]")}>
+        <div className="min-w-0 bg-background/95 backdrop-blur lg:min-h-screen">
           <Topbar pathname={location.pathname} userEmail={user?.email} mobileOpen={mobileOpen} onOpenMobile={() => setMobileOpen(true)} onSignOut={handleSignOut} />
           <main id="conteudo-principal" tabIndex={-1} className="min-w-0 pb-20 outline-none lg:pb-16">
             <Outlet />
@@ -65,7 +67,7 @@ interface SidebarProps {
 }
 
 function AppSidebar({ collapsed, onCollapsedChange, pathname, userEmail, onSignOut }: SidebarProps) {
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ Financeiro: true, Cadastros: true });
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ Financeiro: true, Gestão: true, Configurações: true });
   const [flyout, setFlyout] = useState<string | null>(null);
 
   useEffect(() => {
@@ -77,9 +79,9 @@ function AppSidebar({ collapsed, onCollapsedChange, pathname, userEmail, onSignO
   }, []);
 
   return (
-    <aside className={cn("fixed inset-y-0 left-0 z-40 hidden border-r border-border bg-sidebar text-sidebar-foreground shadow-[var(--shadow-card)] transition-[width] duration-200 lg:inset-y-5 lg:left-5 lg:flex lg:flex-col lg:rounded-l-xl", collapsed ? "w-[80px]" : "w-[280px]")}>
+    <aside className={cn("fixed inset-y-0 left-0 z-40 hidden bg-[linear-gradient(180deg,var(--navy-950)_0%,var(--navy-900)_48%,var(--navy-800)_100%)] text-white shadow-[0_28px_80px_rgba(3,18,37,0.28)] transition-[width] duration-200 lg:flex lg:flex-col lg:rounded-r-[28px]", collapsed ? "w-[88px]" : "w-[244px]")}>
       <SidebarHeader collapsed={collapsed} onCollapsedChange={onCollapsedChange} />
-      <nav className={cn("flex-1 space-y-1.5 px-4 py-5", collapsed ? "overflow-visible" : "overflow-y-auto overflow-x-hidden")} aria-label="Menu principal">
+      <nav className={cn("flex-1 space-y-5 px-3 py-5", collapsed ? "overflow-visible" : "overflow-y-auto overflow-x-hidden")} aria-label="Menu principal">
         {navigationItems.map((item) => (
           <SidebarGroup
             key={item.title}
@@ -101,11 +103,14 @@ function AppSidebar({ collapsed, onCollapsedChange, pathname, userEmail, onSignO
 
 function SidebarHeader({ collapsed, onCollapsedChange }: { collapsed: boolean; onCollapsedChange: (collapsed: boolean) => void }) {
   return (
-    <div className="relative flex h-20 items-center gap-3 border-b border-border/70 px-4">
-      <NavLink to="/app" className="flex min-w-0 flex-1 items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/35" aria-label="Ir para Dashboard">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground shadow-[0_14px_30px_-22px_var(--primary)]">AG</span>
+    <div className={cn("relative flex px-4 pb-5 pt-7", collapsed ? "justify-center" : "justify-center text-center")}>
+      <NavLink to="/app" className={cn("flex min-w-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/35", collapsed ? "items-center justify-center" : "flex-col items-center gap-2")} aria-label="Ir para Dashboard">
+        <span className="flex shrink-0 items-center justify-center text-white" style={{ "--logo-cutout": "#061A3A" } as React.CSSProperties}>
+          <ArtecLogoMark className={cn(collapsed ? "size-10" : "size-14")} />
+        </span>
         {!collapsed ? (
-          <span className="min-w-0">
+          <span className="min-w-0 [&>span:not(.brand-label)]:sr-only">
+            <span className="brand-label block truncate text-sm font-bold text-white">Artec Gestão</span>
             <span className="block truncate text-sm font-bold text-foreground">Artec Gestão</span>
             <span className="block truncate text-xs font-medium text-muted-foreground">Controle financeiro</span>
           </span>
@@ -117,8 +122,8 @@ function SidebarHeader({ collapsed, onCollapsedChange }: { collapsed: boolean; o
         aria-label={collapsed ? "Expandir sidebar" : "Recolher sidebar"}
         title={collapsed ? "Expandir sidebar" : "Recolher sidebar"}
         className={cn(
-          "flex size-9 shrink-0 items-center justify-center rounded-lg border border-border/80 bg-card text-muted-foreground transition hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/35",
-          collapsed && "absolute right-0 top-1/2 size-8 -translate-y-1/2 translate-x-1/2 shadow-sm",
+          "absolute right-0 top-8 flex size-8 shrink-0 translate-x-1/2 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white/75 shadow-sm backdrop-blur transition hover:bg-white/18 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/35",
+          collapsed && "top-9",
         )}
       >
         {collapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
@@ -177,9 +182,9 @@ function SidebarGroup({ item, pathname, collapsed, expanded, flyoutOpen, onToggl
 
 function sidebarItemClasses(active: boolean, collapsed = false) {
   return cn(
-    "motion-sidebar-item group relative flex h-11 w-full items-center gap-3 rounded-lg px-3 text-sm font-semibold text-sidebar-muted transition hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/35",
+    "motion-sidebar-item group relative flex h-12 w-full items-center gap-3 rounded-[14px] px-4 text-sm font-semibold text-white/82 transition duration-200 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/35",
     collapsed && "justify-center px-0",
-    active && "border-l-4 border-primary bg-sidebar-active text-sidebar-active-foreground shadow-sm ring-1 ring-primary/15 hover:bg-sidebar-active",
+    active && "bg-[linear-gradient(135deg,var(--blue-600),#164ed8)] text-white shadow-[0_16px_34px_rgba(11,99,246,0.28)] hover:bg-[linear-gradient(135deg,var(--blue-600),#164ed8)]",
   );
 }
 
@@ -206,6 +211,7 @@ function SidebarSubmenu({ items, pathname, onNavigate, popover = false }: { item
     <div className={cn("mt-1 space-y-1", popover ? "pl-0" : "pl-4")}>
       {items.map((subitem) => {
         const active = isNavigationActive(pathname, subitem.href);
+        const Icon = navigationIconMap[subitem.title];
         return (
           <NavLink
             key={subitem.href}
@@ -215,11 +221,12 @@ function SidebarSubmenu({ items, pathname, onNavigate, popover = false }: { item
             aria-current={active ? "page" : undefined}
             onClick={onNavigate}
             className={cn(
-              "motion-sidebar-item block rounded-md px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2",
-              "text-sidebar-muted hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring/35",
-              active && "bg-sidebar-active text-sidebar-active-foreground",
+              "motion-sidebar-item flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2",
+              "text-white/65 hover:bg-white/10 hover:text-white focus-visible:ring-white/35",
+              active && "bg-white/12 text-white",
             )}
           >
+            {Icon ? <Icon className="size-4 shrink-0" /> : null}
             {subitem.title}
           </NavLink>
         );
@@ -230,17 +237,19 @@ function SidebarSubmenu({ items, pathname, onNavigate, popover = false }: { item
 
 function SidebarFooter({ collapsed, userEmail, onSignOut }: { collapsed: boolean; userEmail?: string; onSignOut: () => void }) {
   return (
-    <div className="border-t border-border/70 p-4">
-      <div className={cn("mb-3 flex items-center gap-3 rounded-xl bg-card p-3 shadow-sm ring-1 ring-border/70", collapsed && "justify-center p-2")}>
-        <UserCircle className="size-5 shrink-0 text-primary" />
+    <div className="p-3">
+      <div className={cn("mb-3 flex items-center gap-3 rounded-2xl bg-white/10 p-3 text-white shadow-sm ring-1 ring-white/10", collapsed && "justify-center p-2")}>
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-300 to-cyan-500 text-xs font-bold text-white">AG</span>
         {!collapsed ? (
-          <div className="min-w-0">
+          <div className="min-w-0 [&>div:not(.user-label)]:sr-only">
+            <div className="user-label truncate text-sm font-semibold text-white">Artec Gestão</div>
+            <div className="user-label text-xs text-white/65">Administrador</div>
             <div className="truncate text-sm font-semibold text-foreground">{userEmail ?? "Usuário"}</div>
             <div className="text-xs text-muted-foreground">v1.02</div>
           </div>
         ) : null}
       </div>
-      <Button variant="outline" size={collapsed ? "icon" : "sm"} onClick={onSignOut} className={cn("w-full", collapsed && "w-10")} aria-label="Sair">
+      <Button variant="outline" size={collapsed ? "icon" : "sm"} onClick={onSignOut} className={cn("w-full border-white/15 bg-white/[0.08] text-white hover:bg-white/[0.12] hover:text-white", collapsed && "w-10")} aria-label="Sair">
         <LogOut className="size-4" />
         {!collapsed ? "Sair" : null}
       </Button>
@@ -384,7 +393,7 @@ function UserAvatar({ label }: { label: string }) {
 }
 
 function MobileNavDrawer({ open, pathname, userEmail, onClose, onSignOut }: { open: boolean; pathname: string; userEmail?: string; onClose: () => void; onSignOut: () => void }) {
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ Financeiro: true, Cadastros: true });
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ Financeiro: true, Gestão: true, Configurações: true });
 
   useEffect(() => {
     if (!open) return;
