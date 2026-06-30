@@ -461,6 +461,8 @@ const sidebarStyles = `
 }
 
 .topbar {
+  position: relative;
+  z-index: 30;
   display: flex;
   align-items: center;
   gap: 12px;

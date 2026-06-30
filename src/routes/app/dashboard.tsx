@@ -153,11 +153,11 @@ function KpiCard({
 
   return (
     <section className="metric-card card-hover">
-      <div>
+      <div className="min-w-0">
         <div className={cn("metric-icon", iconColors[tone])}>
           <Icon size={20} />
         </div>
-        <div>
+        <div className="min-w-0">
           <p className="metric-title">{title}</p>
           <strong className="metric-value">{value}</strong>
         </div>
@@ -786,10 +786,13 @@ const dashboardStyles = `
   display: block;
   margin-top: 6px;
   color: var(--text-strong);
-  font-size: clamp(1.25rem, 2vw, 1.75rem);
+  font-size: clamp(1.1rem, 1.5vw, 1.5rem);
   line-height: 1.1;
   font-weight: 750;
   letter-spacing: -0.03em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .metric-trend {
