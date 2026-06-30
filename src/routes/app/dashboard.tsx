@@ -483,6 +483,7 @@ export function Component() {
                     iconColor="green"
                     footer="Receitas registradas"
                     delta={faturamentoDelta}
+                    deltaUnavailableLabel="Sem dados no mês anterior"
                     sparklineData={dashboardKpiSeries.faturamento}
                   />
                   <DashboardMetricCard
@@ -493,6 +494,7 @@ export function Component() {
                     iconColor="blue"
                     footer="Receitas menos despesas"
                     delta={lucroDelta}
+                    deltaUnavailableLabel="Sem dados no mês anterior"
                     sparklineData={dashboardKpiSeries.lucro}
                   />
                   <DashboardMetricCard

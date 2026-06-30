@@ -1,5 +1,6 @@
 import { ArrowDownRight, ArrowUpRight, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 import { SparklineChart } from "./SparklineChart";
 
 type IconColor = "green" | "blue" | "red";
@@ -20,6 +21,7 @@ export function MetricCard({
   label,
   value,
   delta,
+  deltaUnavailableLabel,
   sparklineData,
   footer,
   icon: Icon,
@@ -30,6 +32,7 @@ export function MetricCard({
   label: string;
   value: string | number;
   delta?: number;
+  deltaUnavailableLabel?: string;
   sparklineData?: number[];
   footer?: string;
   icon: LucideIcon;
@@ -58,6 +61,10 @@ export function MetricCard({
           <DeltaIcon className="size-3.5" />
           {isPositive ? "+" : ""}{delta.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}% vs. mês anterior
         </div>
+      ) : deltaUnavailableLabel ? (
+        <Badge variant="secondary" className="w-fit border-transparent bg-secondary text-[11px] font-medium text-muted-foreground">
+          {deltaUnavailableLabel}
+        </Badge>
       ) : null}
       {sparklineData?.length ? <SparklineChart data={sparklineData} color={iconColor} /> : null}
       {footer ? <p className="mt-0.5 truncate text-[11px] text-[var(--text-muted)]">{footer}</p> : null}
