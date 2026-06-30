@@ -513,8 +513,8 @@ export function Component() {
         </div>
       )}
 
-      <div className="grid items-start gap-6 lg:grid-cols-[1.3fr_1fr]">
-        <Card className="overflow-hidden">
+      <div className="grid items-stretch gap-6 lg:grid-cols-[1.3fr_1fr]">
+        <Card className="flex h-full flex-col overflow-hidden">
           <CardHeader className="border-b border-border/60 pb-4 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle className="flex items-center gap-2 text-lg">
               <TrendingUp className="size-5 text-primary" />
@@ -522,7 +522,7 @@ export function Component() {
             </CardTitle>
             <ChartLegend hiddenSeries={hiddenSeries} onToggle={toggleSeries} />
           </CardHeader>
-          <CardContent className="p-5 pt-6 sm:p-6 sm:pt-6">
+          <CardContent className="flex flex-1 flex-col p-5 pt-6 sm:p-6 sm:pt-6">
             <div className="h-[200px] sm:h-80" role="img" aria-label={`Resumo financeiro: receitas ${formatMoney(totalReceitas)}, despesas ${formatMoney(totalDespesas)} e saldo ${formatMoney(saldo)}.`}>
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={chartData} margin={{ left: 64, right: 18, top: 18, bottom: 4 }} barGap={8}>
@@ -563,14 +563,14 @@ export function Component() {
           </CardContent>
         </Card>
 
-        <Card className="overflow-hidden">
+        <Card className="flex h-full flex-col overflow-hidden">
           <CardHeader className="border-b border-border/60 pb-4">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Activity className="size-5 text-primary" />
               Atalhos rápidos
             </CardTitle>
           </CardHeader>
-          <CardContent className="grid gap-3 pt-5">
+          <CardContent className="flex flex-1 flex-col justify-between gap-3 pt-5">
             {shortcuts.map((item) => (
               <Button
                 key={item.label}
