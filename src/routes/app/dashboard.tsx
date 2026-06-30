@@ -500,10 +500,10 @@ export function Component() {
                   <DashboardMetricCard
                     label="Contas pagas"
                     value={timedOut && !kpis ? "—" : String(contasPagas ?? 0)}
+                    title={timedOut && !kpis ? "Aguardando dados" : String(contasPagas ?? 0)}
                     icon={ArrowDownCircle}
                     iconColor="red"
                     footer={timedOut && !kpis ? "Aguardando dados" : "Pagas e recebidas no mês"}
-                    className="sm:col-span-2 2xl:col-span-3"
                   />
                   {timedOut && !kpis ? <span className="sr-only" aria-live="polite">Dados de contas pagas indisponíveis após 5 segundos. Valor exibido como traço.</span> : null}
                 </>
