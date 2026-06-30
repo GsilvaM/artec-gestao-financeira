@@ -380,7 +380,7 @@ export function Component() {
               <div className="relative overflow-hidden rounded-2xl bg-[radial-gradient(circle_at_18px_18px,rgba(255,255,255,0.05)_2px,transparent_2px),linear-gradient(135deg,var(--color-card-bg),#174a78)] bg-[length:34px_34px,auto] p-6 text-white shadow-[0_28px_60px_-34px_rgba(30,96,145,0.9)] ring-1 ring-white/10 dark:bg-[radial-gradient(circle_at_18px_18px,rgba(255,255,255,0.035)_2px,transparent_2px),linear-gradient(135deg,#141b22,#0d2a45_58%,#111111)] dark:shadow-[0_28px_70px_-38px_rgba(0,0,0,0.95)] sm:p-7">
                 <div className="absolute -right-16 -top-14 size-44 rounded-full bg-white/[0.06]" />
                 <div className="absolute -bottom-24 right-8 size-52 rounded-full bg-[var(--color-balance)]/10" />
-                <div className="relative flex min-h-[21rem] flex-col gap-6">
+                <div className="relative flex min-h-[21rem] flex-col gap-4">
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
                       <p className="text-xl font-bold">Artec Gestão</p>
@@ -390,7 +390,7 @@ export function Component() {
                   </div>
                   <div className="mt-auto">
                     <p className="text-xs font-medium text-white/70">Saldo atual</p>
-                    <p className="mt-1.5 text-3xl font-bold tabular-nums sm:text-4xl">{formatMoney(saldo)}</p>
+                    <p className="mt-1 text-3xl font-bold tabular-nums sm:text-4xl">{formatMoney(saldo)}</p>
                   </div>
                   <div className="grid grid-cols-2 gap-4 rounded-xl bg-white/10 p-4 text-sm ring-1 ring-white/10 backdrop-blur dark:bg-black/18">
                     <div>

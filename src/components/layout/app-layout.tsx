@@ -151,6 +151,7 @@ function SidebarGroup({ item, pathname, collapsed, expanded, flyoutOpen, onToggl
       <div className="relative">
         <button type="button" title={item.title} aria-label={item.title} aria-expanded={flyoutOpen} onClick={onFlyoutToggle} className={sidebarItemClasses(active, true)}>
           <Icon className="size-5" />
+          <SidebarTooltip title={item.title} />
         </button>
         {flyoutOpen ? (
           <div className="absolute left-full top-0 z-50 ml-2 w-64 rounded-xl border border-border bg-popover p-2 text-popover-foreground shadow-[var(--shadow-soft)] before:absolute before:-left-2 before:top-0 before:h-full before:w-2 before:content-['']">
@@ -176,9 +177,17 @@ function SidebarGroup({ item, pathname, collapsed, expanded, flyoutOpen, onToggl
 
 function sidebarItemClasses(active: boolean, collapsed = false) {
   return cn(
-    "motion-sidebar-item flex h-11 w-full items-center gap-3 rounded-lg px-3 text-sm font-semibold text-sidebar-muted transition hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/35",
+    "motion-sidebar-item group relative flex h-11 w-full items-center gap-3 rounded-lg px-3 text-sm font-semibold text-sidebar-muted transition hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/35",
     collapsed && "justify-center px-0",
-    active && "border-l-2 border-primary bg-sidebar-active text-sidebar-active-foreground shadow-sm ring-1 ring-primary/15 hover:bg-sidebar-active",
+    active && "border-l-4 border-primary bg-sidebar-active text-sidebar-active-foreground shadow-sm ring-1 ring-primary/15 hover:bg-sidebar-active",
+  );
+}
+
+function SidebarTooltip({ title }: { title: string }) {
+  return (
+    <span className="pointer-events-none absolute left-full top-1/2 z-50 ml-3 hidden -translate-y-1/2 whitespace-nowrap rounded-md border border-border bg-popover px-2.5 py-1 text-xs font-semibold text-popover-foreground opacity-0 shadow-[var(--shadow-soft)] transition group-hover:opacity-100 group-focus-visible:opacity-100 lg:group-hover:block lg:group-focus-visible:block">
+      {title}
+    </span>
   );
 }
 
@@ -186,6 +195,7 @@ function SidebarItem({ href, title, icon: Icon, active, collapsed, onNavigate }:
   return (
     <NavLink to={href} end={href === "/app"} title={title} aria-label={title} aria-current={active ? "page" : undefined} onClick={onNavigate} className={sidebarItemClasses(active, collapsed)}>
       <Icon className="size-5 shrink-0" />
+      {collapsed ? <SidebarTooltip title={title} /> : null}
       {!collapsed ? <span className="truncate">{title}</span> : null}
     </NavLink>
   );
