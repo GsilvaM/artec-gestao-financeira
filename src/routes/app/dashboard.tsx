@@ -494,58 +494,104 @@ function RecentMovementsTable({
         </Button>
       </div>
       {rows.length ? (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Descrição</TableHead>
-              <TableHead>Categoria</TableHead>
-              <TableHead>Tipo</TableHead>
-              <TableHead>Valor</TableHead>
-              <TableHead>Data</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+        <>
+          <div className="dashboard-table-desktop">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Descrição</TableHead>
+                  <TableHead>Categoria</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Valor</TableHead>
+                  <TableHead>Data</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rows.map((entry) => {
+                  const receita = entry.type === "receita";
+                  return (
+                    <TableRow key={entry.id}>
+                      <TableCell
+                        className="max-w-[280px] truncate font-medium"
+                        title={entry.description}
+                      >
+                        {entry.description}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={receita ? "success" : "warning"}>
+                          {entry.categoryName ||
+                            (receita ? "Receita" : "Despesa")}
+                        </Badge>
+                      </TableCell>
+                      <TableCell
+                        className={cn(
+                          "font-medium",
+                          receita ? "text-success" : "text-danger"
+                        )}
+                      >
+                        {receita ? "Receita" : "Despesa"}
+                      </TableCell>
+                      <TableCell
+                        className={cn(
+                          "font-bold",
+                          receita ? "text-success" : "text-danger"
+                        )}
+                      >
+                        {formatMoney(entry.amount)}
+                      </TableCell>
+                      <TableCell className="text-text-secondary">
+                        {formatDate(entry.date)}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+          <div className="dashboard-mobile-list">
             {rows.map((entry) => {
               const receita = entry.type === "receita";
               return (
-                <TableRow key={entry.id}>
-                  <TableCell className="font-medium">{entry.description}</TableCell>
-                  <TableCell>
+                <article key={entry.id} className="dashboard-mobile-record">
+                  <div className="dashboard-mobile-record-top">
+                    <div className="min-w-0">
+                      <h3>{entry.description}</h3>
+                      <p>{formatDate(entry.date)}</p>
+                    </div>
+                    <strong
+                      className={cn(receita ? "text-success" : "text-danger")}
+                    >
+                      {formatMoney(entry.amount)}
+                    </strong>
+                  </div>
+                  <div className="dashboard-mobile-record-bottom">
                     <Badge variant={receita ? "success" : "warning"}>
                       {entry.categoryName || (receita ? "Receita" : "Despesa")}
                     </Badge>
-                  </TableCell>
-                  <TableCell
-                    className={cn(
-                      "font-medium",
-                      receita ? "text-success" : "text-danger"
-                    )}
-                  >
-                    {receita ? "Receita" : "Despesa"}
-                  </TableCell>
-                  <TableCell
-                    className={cn(
-                      "font-bold",
-                      receita ? "text-success" : "text-danger"
-                    )}
-                  >
-                    {formatMoney(entry.amount)}
-                  </TableCell>
-                  <TableCell className="text-text-secondary">
-                    {formatDate(entry.date)}
-                  </TableCell>
-                </TableRow>
+                    <span
+                      className={cn(receita ? "text-success" : "text-danger")}
+                    >
+                      {receita ? "Receita" : "Despesa"}
+                    </span>
+                  </div>
+                </article>
               );
             })}
-          </TableBody>
-        </Table>
+          </div>
+        </>
       ) : (
         <EmptyState
           title="Nenhuma movimentação encontrada."
           description="Os lançamentos recentes aparecem aqui assim que forem cadastrados."
         />
       )}
-      <Button type="button" variant="ghost" size="sm" className="mt-4 text-primary font-bold" onClick={onViewAll}>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="text-primary mt-4 font-bold"
+        onClick={onViewAll}
+      >
         Ver todas as movimentações <ChevronRight className="size-4" />
       </Button>
     </section>
@@ -588,39 +634,75 @@ function AccountsPayableTable({
         </Button>
       </div>
       {rows.length ? (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Descrição</TableHead>
-              <TableHead>Vencimento</TableHead>
-              <TableHead>Valor</TableHead>
-              <TableHead>Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+        <>
+          <div className="dashboard-table-desktop">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Descrição</TableHead>
+                  <TableHead>Vencimento</TableHead>
+                  <TableHead>Valor</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rows.map((entry) => (
+                  <TableRow key={entry.id}>
+                    <TableCell
+                      className="max-w-[320px] truncate font-medium"
+                      title={entry.description}
+                    >
+                      {entry.description}
+                    </TableCell>
+                    <TableCell className="text-text-secondary">
+                      {formatDate(entry.dueDate)}
+                    </TableCell>
+                    <TableCell className="font-bold">
+                      {formatMoney(entry.amount)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={badgeMap[entry.status] ?? "default"}>
+                        {labelMap[entry.status] ?? entry.status}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          <div className="dashboard-mobile-list">
             {rows.map((entry) => (
-              <TableRow key={entry.id}>
-                <TableCell className="font-medium">{entry.description}</TableCell>
-                <TableCell className="text-text-secondary">
-                  {formatDate(entry.dueDate)}
-                </TableCell>
-                <TableCell className="font-bold">{formatMoney(entry.amount)}</TableCell>
-                <TableCell>
+              <article key={entry.id} className="dashboard-mobile-record">
+                <div className="dashboard-mobile-record-top">
+                  <div className="min-w-0">
+                    <h3>{entry.description}</h3>
+                    <p>Vence em {formatDate(entry.dueDate)}</p>
+                  </div>
+                  <strong>{formatMoney(entry.amount)}</strong>
+                </div>
+                <div className="dashboard-mobile-record-bottom">
+                  <span>Status</span>
                   <Badge variant={badgeMap[entry.status] ?? "default"}>
                     {labelMap[entry.status] ?? entry.status}
                   </Badge>
-                </TableCell>
-              </TableRow>
+                </div>
+              </article>
             ))}
-          </TableBody>
-        </Table>
+          </div>
+        </>
       ) : (
         <EmptyState
           title="Nenhuma conta a pagar encontrada."
           description="As próximas obrigações aparecem aqui para acompanhamento rápido."
         />
       )}
-      <Button type="button" variant="ghost" size="sm" className="mt-4 text-primary font-bold" onClick={onViewAll}>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="text-primary mt-4 font-bold"
+        onClick={onViewAll}
+      >
         Ver todas as contas a pagar <ChevronRight className="size-4" />
       </Button>
     </section>
@@ -667,6 +749,9 @@ export function Component() {
         cashFlowRange.start
       ),
     [cashFlowRange.start, cashFlowRows]
+  );
+  const hasChartData = chartData.some(
+    (item) => item.receitas !== 0 || item.despesas !== 0 || item.saldo !== 0
   );
   const kpiSeries = useMemo(
     () => ({
@@ -785,111 +870,122 @@ export function Component() {
                     onToggle={toggleSeries}
                   />
                 </div>
-                <div className="chart-card-body">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart
-                      data={chartData}
-                      margin={{ left: 54, right: 18, top: 18, bottom: 6 }}
-                      barGap={8}
-                    >
-                      <defs>
-                        <linearGradient
-                          id="saldoAreaGradient"
-                          x1="0"
-                          y1="0"
-                          x2="0"
-                          y2="1"
-                        >
-                          <stop
-                            offset="0%"
-                            stopColor="var(--chart-balance)"
-                            stopOpacity={0.16}
+                {hasChartData ? (
+                  <div className="chart-card-body">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <ComposedChart
+                        data={chartData}
+                        margin={{ left: 54, right: 18, top: 18, bottom: 6 }}
+                        barGap={8}
+                      >
+                        <defs>
+                          <linearGradient
+                            id="saldoAreaGradient"
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="1"
+                          >
+                            <stop
+                              offset="0%"
+                              stopColor="var(--chart-balance)"
+                              stopOpacity={0.16}
+                            />
+                            <stop
+                              offset="100%"
+                              stopColor="var(--chart-balance)"
+                              stopOpacity={0}
+                            />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid
+                          vertical={false}
+                          strokeDasharray="4 6"
+                          stroke="color-mix(in srgb, var(--border) 54%, transparent)"
+                        />
+                        <XAxis
+                          dataKey="mes"
+                          stroke="var(--color-text-muted)"
+                          fontSize={12}
+                          tickMargin={10}
+                        />
+                        <YAxis
+                          stroke="var(--color-text-muted)"
+                          fontSize={12}
+                          tickMargin={8}
+                          tickFormatter={(v: number) => formatCompactMoney(v)}
+                        />
+                        <Tooltip
+                          content={(props) => (
+                            <FinancialTooltip
+                              active={props.active}
+                              payload={
+                                props.payload as ChartPayload[] | undefined
+                              }
+                            />
+                          )}
+                        />
+                        {!hiddenSeries.saldo ? (
+                          <Area
+                            type="monotone"
+                            dataKey="saldo"
+                            fill="url(#saldoAreaGradient)"
+                            stroke="none"
                           />
-                          <stop
-                            offset="100%"
-                            stopColor="var(--chart-balance)"
-                            stopOpacity={0}
+                        ) : null}
+                        {!hiddenSeries.receitas ? (
+                          <Bar
+                            dataKey="receitas"
+                            name="Receitas"
+                            fill="var(--chart-revenue)"
+                            fillOpacity={0.92}
+                            radius={[7, 7, 0, 0]}
+                            maxBarSize={40}
                           />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid
-                        vertical={false}
-                        strokeDasharray="4 6"
-                        stroke="color-mix(in srgb, var(--border) 54%, transparent)"
-                      />
-                      <XAxis
-                        dataKey="mes"
-                        stroke="var(--color-text-muted)"
-                        fontSize={12}
-                        tickMargin={10}
-                      />
-                      <YAxis
-                        stroke="var(--color-text-muted)"
-                        fontSize={12}
-                        tickMargin={8}
-                        tickFormatter={(v: number) => formatCompactMoney(v)}
-                      />
-                      <Tooltip
-                        content={(props) => (
-                          <FinancialTooltip
-                            active={props.active}
-                            payload={
-                              props.payload as ChartPayload[] | undefined
-                            }
+                        ) : null}
+                        {!hiddenSeries.despesas ? (
+                          <Bar
+                            dataKey="despesas"
+                            name="Despesas"
+                            fill="var(--chart-expense)"
+                            fillOpacity={0.9}
+                            radius={[7, 7, 0, 0]}
+                            maxBarSize={40}
                           />
-                        )}
-                      />
-                      {!hiddenSeries.saldo ? (
-                        <Area
-                          type="monotone"
-                          dataKey="saldo"
-                          fill="url(#saldoAreaGradient)"
-                          stroke="none"
-                        />
-                      ) : null}
-                      {!hiddenSeries.receitas ? (
-                        <Bar
-                          dataKey="receitas"
-                          name="Receitas"
-                          fill="var(--chart-revenue)"
-                          fillOpacity={0.92}
-                          radius={[7, 7, 0, 0]}
-                          maxBarSize={40}
-                        />
-                      ) : null}
-                      {!hiddenSeries.despesas ? (
-                        <Bar
-                          dataKey="despesas"
-                          name="Despesas"
-                          fill="var(--chart-expense)"
-                          fillOpacity={0.9}
-                          radius={[7, 7, 0, 0]}
-                          maxBarSize={40}
-                        />
-                      ) : null}
-                      {!hiddenSeries.saldo ? (
-                        <Line
-                          type="monotone"
-                          dataKey="saldo"
-                          name="Saldo"
-                          stroke="var(--chart-balance)"
-                          strokeWidth={3.2}
-                          dot={{
-                            r: 4,
-                            strokeWidth: 2,
-                            stroke: "var(--card)",
-                            fill: "var(--chart-balance)",
-                          }}
-                          activeDot={{
-                            r: 6,
-                            strokeWidth: 2,
-                            stroke: "var(--card)",
-                          }}
-                        />
-                      ) : null}
-                    </ComposedChart>
-                  </ResponsiveContainer>
-                </div>
+                        ) : null}
+                        {!hiddenSeries.saldo ? (
+                          <Line
+                            type="monotone"
+                            dataKey="saldo"
+                            name="Saldo"
+                            stroke="var(--chart-balance)"
+                            strokeWidth={3.2}
+                            dot={{
+                              r: 4,
+                              strokeWidth: 2,
+                              stroke: "var(--card)",
+                              fill: "var(--chart-balance)",
+                            }}
+                            activeDot={{
+                              r: 6,
+                              strokeWidth: 2,
+                              stroke: "var(--card)",
+                            }}
+                          />
+                        ) : null}
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="chart-empty-state">
+                    <FileBarChart className="size-9" />
+                    <h3>Sem movimentações no período</h3>
+                    <p>
+                      Receitas, despesas e saldo serão exibidos aqui assim que
+                      houver lançamentos nos últimos meses.
+                    </p>
+                  </div>
+                )}
               </section>
               <QuickActionsCard onNavigate={navigate} />
             </div>
@@ -916,6 +1012,7 @@ const dashboardStyles = `
   display: flex;
   flex-direction: column;
   gap: 22px;
+  min-width: 0;
 }
 
 .dashboard-top-grid {
@@ -923,6 +1020,7 @@ const dashboardStyles = `
   grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.58fr);
   gap: 22px;
   align-items: stretch;
+  min-width: 0;
 }
 
 .dashboard-kpi-panel {
@@ -944,18 +1042,21 @@ const dashboardStyles = `
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
+  min-width: 0;
 }
 
 .dashboard-middle-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.45fr) minmax(0, 0.95fr);
   gap: 22px;
+  min-width: 0;
 }
 
 .dashboard-bottom-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 22px;
+  min-width: 0;
 }
 
 @media (max-width: 1279px) {
@@ -1197,6 +1298,8 @@ const dashboardStyles = `
 
 /* Chart card */
 .chart-card {
+  min-width: 0;
+  overflow: hidden;
   padding: 24px;
   border-radius: 20px;
   border: 1px solid var(--color-border);
@@ -1223,6 +1326,7 @@ const dashboardStyles = `
 .chart-legend {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 18px;
   color: var(--text-secondary);
   font-size: 12px;
@@ -1248,11 +1352,47 @@ const dashboardStyles = `
 }
 
 .chart-card-body {
+  height: 300px;
   min-height: 262px;
+  min-width: 0;
+}
+
+.chart-empty-state {
+  min-height: 220px;
+  border: 1px dashed var(--color-border);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--color-surface-muted) 58%, transparent);
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px;
+  text-align: center;
+}
+
+.chart-empty-state svg {
+  color: var(--primary);
+}
+
+.chart-empty-state h3 {
+  margin: 0;
+  color: var(--text-strong);
+  font-size: 15px;
+  font-weight: 750;
+}
+
+.chart-empty-state p {
+  margin: 0;
+  max-width: 440px;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 /* Quick actions */
 .quick-actions-card {
+  min-width: 0;
   padding: 24px;
   border-radius: 22px;
   border: 1px solid var(--color-border);
@@ -1357,6 +1497,8 @@ const dashboardStyles = `
 
 /* Table cards */
 .table-card {
+  min-width: 0;
+  overflow: hidden;
   padding: 20px;
   border-radius: 22px;
   border: 1px solid var(--color-border);
@@ -1378,6 +1520,112 @@ const dashboardStyles = `
   font-size: 17px;
   font-weight: 700;
   color: var(--text-strong);
+}
+
+.dashboard-table-desktop {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.dashboard-mobile-list {
+  display: none;
+}
+
+.dashboard-mobile-record {
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+  padding: 14px;
+  box-shadow: var(--shadow-xs);
+}
+
+.dashboard-mobile-record-top,
+.dashboard-mobile-record-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.dashboard-mobile-record-top {
+  align-items: flex-start;
+}
+
+.dashboard-mobile-record-top h3 {
+  margin: 0;
+  color: var(--text-strong);
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-mobile-record-top p {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.dashboard-mobile-record-top strong {
+  flex: 0 0 auto;
+  max-width: 44%;
+  color: var(--text-strong);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-mobile-record-bottom {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-soft);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .chart-card,
+  .quick-actions-card,
+  .table-card {
+    padding: 16px;
+    border-radius: 18px;
+  }
+
+  .chart-card-header,
+  .table-card-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .chart-legend {
+    width: 100%;
+    gap: 8px;
+  }
+
+  .chart-legend button {
+    flex: 1 1 auto;
+    min-width: max-content;
+  }
+
+  .chart-card-body {
+    height: 260px;
+  }
+
+  .dashboard-table-desktop {
+    display: none;
+  }
+
+  .dashboard-mobile-list {
+    display: grid;
+    gap: 10px;
+  }
 }
 
 `;

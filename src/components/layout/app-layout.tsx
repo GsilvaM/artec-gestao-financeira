@@ -1,11 +1,21 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
-import { ChevronDown, LogOut, Menu, Moon, PanelLeftClose, PanelLeftOpen, Sun, X } from "lucide-react";
+import {
+  ChevronDown,
+  LogOut,
+  Menu,
+  Moon,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Sun,
+  X,
+} from "lucide-react";
 import { AppLogo } from "@/components/brand/AppLogo";
 import { Button, IconButton } from "@/components/ui/button";
 import { useAuthStore } from "@/lib/supabase/auth-store";
 import { cn } from "@/lib/utils";
 import { useThemeStore } from "@/stores/theme";
+import { preloadNavigationRoutes, preloadRoute } from "@/routes/preload";
 import {
   findNavigationTrail,
   isNavigationActive,
@@ -29,7 +39,9 @@ function useSidebarCollapsed() {
       const next = !prev;
       try {
         localStorage.setItem("sidebar-collapsed", String(next));
-      } catch { /* noop */ }
+      } catch {
+        /* noop */
+      }
       return next;
     });
   }, []);
@@ -48,6 +60,10 @@ export function AppLayout() {
   useEffect(() => {
     setMobileOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    preloadNavigationRoutes();
+  }, []);
 
   async function handleSignOut() {
     await signOut();
@@ -112,10 +128,10 @@ function AppSidebar({
           <NavLink
             to="/app"
             aria-label="Ir para Dashboard"
-            className={cn(
-              "sidebar-logo-link",
-              collapsed && "justify-center"
-            )}
+            onFocus={() => preloadRoute("/app")}
+            onMouseEnter={() => preloadRoute("/app")}
+            onPointerDown={() => preloadRoute("/app")}
+            className={cn("sidebar-logo-link", collapsed && "justify-center")}
           >
             <AppLogo compact={collapsed} />
           </NavLink>
@@ -123,7 +139,12 @@ function AppSidebar({
 
         <nav className="sidebar-nav">
           {navigationItems.map((item) => (
-            <SidebarGroup key={item.title} item={item} pathname={pathname} collapsed={collapsed} />
+            <SidebarGroup
+              key={item.title}
+              item={item}
+              pathname={pathname}
+              collapsed={collapsed}
+            />
           ))}
         </nav>
 
@@ -133,11 +154,19 @@ function AppSidebar({
             aria-label={collapsed ? "Expandir sidebar" : "Recolher sidebar"}
             className="sidebar-collapse-btn"
           >
-            {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+            {collapsed ? (
+              <PanelLeftOpen size={16} />
+            ) : (
+              <PanelLeftClose size={16} />
+            )}
           </IconButton>
         </div>
 
-        <SidebarFooter collapsed={collapsed} userEmail={userEmail} onSignOut={onSignOut} />
+        <SidebarFooter
+          collapsed={collapsed}
+          userEmail={userEmail}
+          onSignOut={onSignOut}
+        />
       </aside>
       <style>{sidebarStyles}</style>
     </>
@@ -157,11 +186,15 @@ function SidebarGroup({
   const Icon = item.icon;
 
   if (!item.items?.length && item.href) {
+    const href = item.href;
     return (
       <div>
         <NavLink
-          to={item.href}
-          end={item.href === "/app"}
+          to={href}
+          end={href === "/app"}
+          onFocus={() => preloadRoute(href)}
+          onMouseEnter={() => preloadRoute(href)}
+          onPointerDown={() => preloadRoute(href)}
           className={cn(
             "sidebar-link",
             collapsed && "sidebar-link-collapsed",
@@ -186,6 +219,9 @@ function SidebarGroup({
           <NavLink
             key={subitem.href}
             to={subitem.href}
+            onFocus={() => preloadRoute(subitem.href)}
+            onMouseEnter={() => preloadRoute(subitem.href)}
+            onPointerDown={() => preloadRoute(subitem.href)}
             className={cn(
               "sidebar-link",
               collapsed && "sidebar-link-collapsed",
@@ -232,13 +268,13 @@ function SidebarFooter({
           </div>
         </div>
       )}
-          <IconButton
-            onClick={onSignOut}
-            aria-label="Sair"
-            className="size-10 rounded-lg bg-[color-mix(in_srgb,var(--sidebar-foreground)_10%,transparent)] text-[var(--sidebar-muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-foreground)]"
-          >
-            <LogOut size={16} />
-          </IconButton>
+      <IconButton
+        onClick={onSignOut}
+        aria-label="Sair"
+        className="size-10 rounded-lg bg-[color-mix(in_srgb,var(--sidebar-foreground)_10%,transparent)] text-[var(--sidebar-muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-foreground)]"
+      >
+        <LogOut size={16} />
+      </IconButton>
     </div>
   );
 }
@@ -349,7 +385,7 @@ function UserMenu({
         className="topbar-user-btn"
       >
         <span
-          className="flex size-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-primary-foreground"
+          className="text-primary-foreground flex size-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
           style={{ backgroundColor: "var(--primary)" }}
         >
           {initials}
@@ -433,9 +469,15 @@ function MobileNavDrawer({
           <NavLink
             to="/app"
             onClick={onClose}
+            onFocus={() => preloadRoute("/app")}
+            onMouseEnter={() => preloadRoute("/app")}
+            onPointerDown={() => preloadRoute("/app")}
             className="flex items-center gap-3"
           >
-            <AppLogo compact markClassName="[--logo-accent:var(--sidebar-foreground)]" />
+            <AppLogo
+              compact
+              markClassName="[--logo-accent:var(--sidebar-foreground)]"
+            />
           </NavLink>
           <IconButton
             onClick={onClose}
@@ -449,12 +491,16 @@ function MobileNavDrawer({
           {navigationItems.map((item) => {
             const active = isNavigationGroupActive(pathname, item);
             if (!item.items?.length && item.href) {
+              const href = item.href;
               return (
                 <NavLink
-                  key={item.href}
-                  to={item.href}
+                  key={href}
+                  to={href}
                   end
                   onClick={onClose}
+                  onFocus={() => preloadRoute(href)}
+                  onMouseEnter={() => preloadRoute(href)}
+                  onPointerDown={() => preloadRoute(href)}
                   className={cn(
                     "sidebar-link",
                     active && "sidebar-link-active"
@@ -476,6 +522,9 @@ function MobileNavDrawer({
                       key={subitem.href}
                       to={subitem.href}
                       onClick={onClose}
+                      onFocus={() => preloadRoute(subitem.href)}
+                      onMouseEnter={() => preloadRoute(subitem.href)}
+                      onPointerDown={() => preloadRoute(subitem.href)}
                       className={cn(
                         "sidebar-link",
                         subActive && "sidebar-link-active"
@@ -503,7 +552,7 @@ function MobileNavDrawer({
           <IconButton
             onClick={onSignOut}
             aria-label="Sair"
-        className="size-10 rounded-lg bg-[color-mix(in_srgb,var(--sidebar-foreground)_10%,transparent)] text-[var(--sidebar-muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-foreground)]"
+            className="size-10 rounded-lg bg-[color-mix(in_srgb,var(--sidebar-foreground)_10%,transparent)] text-[var(--sidebar-muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-foreground)]"
           >
             <LogOut size={16} />
           </IconButton>
@@ -518,11 +567,13 @@ const sidebarStyles = `
   min-height: 100vh;
   display: flex;
   background: var(--background);
+  overflow-x: hidden;
 }
 
 .app-main {
   flex: 1;
   min-width: 0;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
@@ -530,6 +581,7 @@ const sidebarStyles = `
 #conteudo-principal {
   width: 100%;
   max-width: 1360px;
+  min-width: 0;
   margin-inline: auto;
   padding: 32px;
   flex: 1;
@@ -556,7 +608,8 @@ const sidebarStyles = `
 
 .sidebar {
   width: 272px;
-  min-height: 100vh;
+  height: 100dvh;
+  min-height: 0;
   padding: 20px 16px;
   display: flex;
   flex-direction: column;
@@ -567,6 +620,7 @@ const sidebarStyles = `
   top: 0;
   flex-shrink: 0;
   border-right: 1px solid var(--sidebar-border);
+  overflow: hidden;
 }
 
 @media (max-width: 1023px) {
@@ -576,6 +630,7 @@ const sidebarStyles = `
 }
 
 .sidebar-logo {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   padding: 4px 4px 24px;
@@ -622,8 +677,15 @@ const sidebarStyles = `
   display: flex;
   flex-direction: column;
   gap: 24px;
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 2px;
+}
+
+.sidebar-nav > div {
+  min-width: 0;
 }
 
 .sidebar-group-label {
@@ -636,6 +698,8 @@ const sidebarStyles = `
 }
 
 .sidebar-link {
+  width: 100%;
+  min-width: 0;
   min-height: 44px;
   padding: 0 12px;
   border-radius: 12px;
@@ -648,13 +712,20 @@ const sidebarStyles = `
   font-size: 14px;
   font-weight: 650;
   line-height: 1;
-  transition: background-color 180ms ease, color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+  white-space: nowrap;
+  transition: background-color 150ms ease, color 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+}
+
+.sidebar-link span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sidebar-link:hover {
   background: var(--sidebar-hover);
   color: var(--sidebar-active-foreground);
-  transform: translateX(2px);
+  transform: translateX(1px);
 }
 
 .sidebar-link-active {
@@ -670,7 +741,8 @@ const sidebarStyles = `
 }
 
 .sidebar-user {
-  margin-top: auto;
+  flex: 0 0 auto;
+  margin-top: 12px;
   padding: 12px;
   border-radius: var(--radius-lg);
   background: color-mix(in srgb, var(--sidebar-foreground) 8%, transparent);
@@ -715,7 +787,8 @@ const sidebarStyles = `
   padding: 0 32px;
   border-bottom: 1px solid var(--border-subtle);
   background: color-mix(in srgb, var(--background) 84%, transparent);
-  backdrop-filter: blur(16px);
+  backdrop-filter: blur(12px);
+  flex: 0 0 auto;
 }
 
 @media (max-width: 1023px) {
@@ -746,7 +819,7 @@ const sidebarStyles = `
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--foreground);
-  transition: background-color 180ms ease, border-color 180ms ease, transform 180ms ease;
+  transition: background-color 150ms ease, border-color 150ms ease, transform 150ms ease;
 }
 
 .mobile-menu-button svg {
@@ -768,6 +841,7 @@ const sidebarStyles = `
 }
 
 .topbar-breadcrumbs {
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -781,6 +855,7 @@ const sidebarStyles = `
 }
 
 .topbar-actions {
+  flex: 0 0 auto;
   margin-left: auto;
   display: flex;
   align-items: center;
@@ -798,7 +873,7 @@ const sidebarStyles = `
   align-items: center;
   justify-content: center;
   line-height: 1;
-  transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
+  transition: background-color 150ms ease, border-color 150ms ease, transform 150ms ease;
 }
 
 .topbar-icon-btn svg {
@@ -824,7 +899,7 @@ const sidebarStyles = `
   border: 1px solid var(--border);
   background: var(--surface);
   line-height: 1;
-  transition: background-color 160ms ease, border-color 160ms ease;
+  transition: background-color 150ms ease, border-color 150ms ease;
 }
 
 .topbar-user-btn svg {
@@ -850,13 +925,27 @@ const sidebarStyles = `
   position: relative;
   width: 320px;
   max-width: 88vw;
-  height: 100%;
+  height: 100dvh;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   background: linear-gradient(180deg, var(--sidebar) 0%, var(--sidebar-2) 50%, var(--sidebar-3) 100%);
   color: var(--sidebar-foreground);
   z-index: 60;
-  animation: slideIn 220ms ease;
+  animation: slideIn 180ms ease;
+}
+
+.sidebar-mobile-drawer nav {
+  min-height: 0;
+  overflow-x: hidden;
+}
+
+.sidebar-mobile-drawer .sidebar-user {
+  margin: 0;
+  border-radius: 0;
+  border-right: 0;
+  border-bottom: 0;
+  border-left: 0;
 }
 
 @keyframes slideIn {
@@ -868,7 +957,7 @@ const sidebarStyles = `
 .sidebar-collapsed .sidebar {
   width: 80px;
   padding: 20px 8px;
-  transition: width 220ms ease, padding 220ms ease;
+  transition: width 180ms ease, padding 180ms ease;
 }
 
 .sidebar-collapsed .sidebar-logo {
@@ -912,9 +1001,9 @@ const sidebarStyles = `
 
 .sidebar-actions {
   display: flex;
+  flex: 0 0 auto;
   justify-content: center;
   padding: 8px 0;
-  margin-top: auto;
 }
 
 .sidebar-collapse-btn {
@@ -929,7 +1018,7 @@ const sidebarStyles = `
   background: transparent;
   border: none;
   cursor: pointer;
-  transition: background-color 160ms ease, color 160ms ease;
+  transition: background-color 150ms ease, color 150ms ease;
 }
 
 .sidebar-collapse-btn:hover {

@@ -3,6 +3,7 @@ import { AuthLayout } from "@/components/layout/auth-layout";
 import { AppLayout } from "@/components/layout/app-layout";
 import { ProtectedRoute } from "@/components/layout/protected-route";
 import { PublicRoute } from "@/components/layout/public-route";
+import { routeModuleLoaders } from "./preload";
 
 export const router = createBrowserRouter([
   {
@@ -13,7 +14,7 @@ export const router = createBrowserRouter([
         children: [
           {
             path: "/",
-            lazy: () => import("./login"),
+            lazy: routeModuleLoaders["/"],
           },
         ],
       },
@@ -25,22 +26,64 @@ export const router = createBrowserRouter([
       {
         element: <AppLayout />,
         children: [
-          { path: "/app", lazy: () => import("./app/dashboard") },
-          { path: "/app/financeiro/lancamentos", lazy: () => import("./app/financeiro/lancamentos/page") },
-          { path: "/app/financeiro/contas-pagar", lazy: () => import("./app/financeiro/contas-pagar/page") },
-          { path: "/app/financeiro/contas-receber", lazy: () => import("./app/financeiro/contas-receber/page") },
-          { path: "/app/financeiro/categorias", lazy: () => import("./app/financeiro/categorias/page") },
-          { path: "/app/financeiro/centros-custo", lazy: () => import("./app/financeiro/centros-custo/page") },
-          { path: "/app/financeiro/dre", lazy: () => import("./app/financeiro/dre/page") },
-          { path: "/app/financeiro/fluxo-caixa", lazy: () => import("./app/financeiro/fluxo-caixa/page") },
-          { path: "/app/relatorios", lazy: () => import("./app/relatorios/page") },
-          { path: "/app/relatorios/financeiros", lazy: () => import("./app/relatorios/financeiros/page") },
-          { path: "/app/relatorios/centros-custo", lazy: () => import("./app/relatorios/centros-custo/page") },
-          { path: "/app/cadastros/clientes", lazy: () => import("./app/cadastros/clientes/page") },
-          { path: "/app/cadastros/fornecedores", lazy: () => import("./app/cadastros/fornecedores/page") },
-          { path: "/app/cadastros/colaboradores", lazy: () => import("./app/cadastros/colaboradores/page") },
-          { path: "/app/configuracoes", lazy: () => import("./app/configuracoes/page") },
-          { path: "/app/admin", lazy: () => import("./app/admin/page") },
+          { path: "/app", lazy: routeModuleLoaders["/app"] },
+          {
+            path: "/app/financeiro/lancamentos",
+            lazy: routeModuleLoaders["/app/financeiro/lancamentos"],
+          },
+          {
+            path: "/app/financeiro/contas-pagar",
+            lazy: routeModuleLoaders["/app/financeiro/contas-pagar"],
+          },
+          {
+            path: "/app/financeiro/contas-receber",
+            lazy: routeModuleLoaders["/app/financeiro/contas-receber"],
+          },
+          {
+            path: "/app/financeiro/categorias",
+            lazy: routeModuleLoaders["/app/financeiro/categorias"],
+          },
+          {
+            path: "/app/financeiro/centros-custo",
+            lazy: routeModuleLoaders["/app/financeiro/centros-custo"],
+          },
+          {
+            path: "/app/financeiro/dre",
+            lazy: routeModuleLoaders["/app/financeiro/dre"],
+          },
+          {
+            path: "/app/financeiro/fluxo-caixa",
+            lazy: routeModuleLoaders["/app/financeiro/fluxo-caixa"],
+          },
+          {
+            path: "/app/relatorios",
+            lazy: routeModuleLoaders["/app/relatorios"],
+          },
+          {
+            path: "/app/relatorios/financeiros",
+            lazy: routeModuleLoaders["/app/relatorios/financeiros"],
+          },
+          {
+            path: "/app/relatorios/centros-custo",
+            lazy: routeModuleLoaders["/app/relatorios/centros-custo"],
+          },
+          {
+            path: "/app/cadastros/clientes",
+            lazy: routeModuleLoaders["/app/cadastros/clientes"],
+          },
+          {
+            path: "/app/cadastros/fornecedores",
+            lazy: routeModuleLoaders["/app/cadastros/fornecedores"],
+          },
+          {
+            path: "/app/cadastros/colaboradores",
+            lazy: routeModuleLoaders["/app/cadastros/colaboradores"],
+          },
+          {
+            path: "/app/configuracoes",
+            lazy: routeModuleLoaders["/app/configuracoes"],
+          },
+          { path: "/app/admin", lazy: routeModuleLoaders["/app/admin"] },
         ],
       },
     ],
