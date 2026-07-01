@@ -27,12 +27,31 @@ const schema = z.object({
   descricao: z.string().min(3, "Informe a descrição"),
   cliente: z.string().optional(),
   colaborador: z.string().optional(),
-  valor: z.coerce.number().positive("Informe um valor maior que zero"),
+  valor: z.preprocess(
+    (v) => {
+      if (typeof v !== "string") return v;
+      const input = v.trim();
+      if (!input) return undefined;
+      const normalized = input.includes(",") ? input.replace(/\./g, "").replace(",", ".") : input;
+      return Number(normalized);
+    },
+    z.number().positive("Informe um valor maior que zero"),
+  ),
   status: z.enum(["aberto", "pago", "vencido"]),
   observacoes: z.string().optional(),
 });
 
-type FormState = z.input<typeof schema>;
+interface FormState {
+  data: string;
+  tipo: string;
+  categoria: string;
+  descricao: string;
+  cliente: string;
+  colaborador: string;
+  valor: string;
+  status: string;
+  observacoes: string;
+}
 
 const initialForm: FormState = {
   data: "",
@@ -41,7 +60,7 @@ const initialForm: FormState = {
   descricao: "",
   cliente: "",
   colaborador: "",
-  valor: 0,
+  valor: "",
   status: "aberto",
   observacoes: "",
 };
@@ -117,9 +136,9 @@ export function Component() {
       tipo: entry.type,
       categoria: entry.categoryName,
       descricao: entry.description,
-      cliente: entry.clientName ?? (entry.notes?.startsWith("Cliente/Fornecedor: ") ? entry.notes.replace("Cliente/Fornecedor: ", "").split(" | ")[0] : ""),
+      cliente: entry.clientName ?? (entry.notes?.startsWith("Cliente/Fornecedor: ") ? entry.notes.replace("Cliente/Fornecedor: ", "").split(" | ")[0] : "") ?? "",
       colaborador: entry.collaboratorId ?? "",
-      valor: entry.amount,
+      valor: entry.amount.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
       status: (STATUS_REVERSE[entry.status] ?? "aberto") as "aberto" | "pago" | "vencido",
       observacoes: entry.notes?.startsWith("Cliente/Fornecedor: ") ? entry.notes.split(" | ").slice(1).join(" | ") : entry.notes ?? "",
     });
@@ -257,7 +276,7 @@ export function Component() {
                 options={(collaborators ?? []).map((collaborator) => ({ value: collaborator.id, label: collaborator.name }))}
               />
             </Field>
-            <Field label="Valor" error={errors.valor}><Input type="number" min="0" step="0.01" value={form.valor} onChange={(e) => updateField("valor", e.target.value)} placeholder="0,00" /></Field>
+            <Field label="Valor" error={errors.valor}><Input type="text" inputMode="decimal" value={form.valor} onChange={(e) => updateField("valor", e.target.value)} placeholder="0,00" /></Field>
             <Field label="Observações"><Textarea value={form.observacoes ?? ""} onChange={(e) => updateField("observacoes", e.target.value)} placeholder="Informações adicionais" /></Field>
           </div>
           <DialogFooter>
