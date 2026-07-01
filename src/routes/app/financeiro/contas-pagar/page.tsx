@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+﻿import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   AlertTriangle,
@@ -524,7 +524,7 @@ function AccountPayableMobileList({
       <div className="mobile-list">
         <EmptyState
           title="Nenhuma conta a pagar encontrada."
-          description="Cadastre suas obrigaÃ§Ãµes para controlar o fluxo de saÃ­da."
+          description="Cadastre suas obrigações para controlar o fluxo de saída."
           actionLabel="Nova conta"
           onAction={onNew}
         />
@@ -559,7 +559,7 @@ function AccountPayableMobileList({
                 <Button
                   variant="ghost"
                   size="icon"
-                  aria-label="AÃ§Ãµes da conta a pagar"
+                  aria-label="Ações da conta a pagar"
                 >
                   <MoreHorizontal className="size-4" />
                 </Button>

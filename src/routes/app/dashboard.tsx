@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import {
   ArrowDownCircle,
   ArrowUpCircle,
@@ -30,6 +30,14 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { SparklineChart } from "@/components/dashboard/SparklineChart";
 import { useAccountsPayable } from "@/domain/financeiro/hooks/use-accounts";
 import { useCashFlow } from "@/domain/financeiro/hooks/use-cash-flow";
@@ -41,7 +49,7 @@ import type {
 } from "@/domain/financeiro/types";
 import { cn, formatMoney, toFiniteNumber } from "@/lib/utils";
 import { formatCompactMoney } from "./dashboard-utils";
-import { pageHeaderStyles } from "@/components/layout/page-shell";
+import { EmptyState, pageHeaderStyles } from "@/components/layout/page-shell";
 
 type ChartSeries = "receitas" | "despesas" | "saldo";
 
@@ -333,12 +341,14 @@ function ChartLegend({
   return (
     <div className="chart-legend">
       {items.map((item) => (
-        <button
+        <Button
           key={item.id}
           type="button"
+          variant="ghost"
+          size="sm"
           onClick={() => onToggle(item.id)}
           className={cn(
-            "inline-flex items-center gap-2",
+            "px-3 [&_span]:shrink-0",
             hiddenSeries[item.id] && "opacity-45"
           )}
           aria-pressed={!hiddenSeries[item.id]}
@@ -350,7 +360,7 @@ function ChartLegend({
             )}
           />
           {item.label}
-        </button>
+        </Button>
       ))}
     </div>
   );
@@ -435,9 +445,10 @@ function QuickActionsCard({
         {actions.map((action) => {
           const Icon = action.icon;
           return (
-            <button
+            <Button
               key={action.label}
               type="button"
+              variant="secondary"
               onClick={() => onNavigate(action.to)}
               className="quick-action-card"
             >
@@ -453,7 +464,7 @@ function QuickActionsCard({
                 </div>
               </div>
               <ChevronRight className="quick-action-chevron" />
-            </button>
+            </Button>
           );
         })}
       </div>
@@ -483,66 +494,63 @@ function RecentMovementsTable({
         </Button>
       </div>
       {rows.length ? (
-        <div className="table-wrapper">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Descrição</th>
-                <th>Categoria</th>
-                <th>Tipo</th>
-                <th>Valor</th>
-                <th>Data</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((entry) => {
-                const receita = entry.type === "receita";
-                return (
-                  <tr key={entry.id}>
-                    <td className="font-medium">{entry.description}</td>
-                    <td>
-                      <Badge variant={receita ? "success" : "warning"}>
-                        {entry.categoryName ||
-                          (receita ? "Receita" : "Despesa")}
-                      </Badge>
-                    </td>
-                    <td
-                      className={cn(
-                        "font-medium",
-                        receita ? "text-success" : "text-danger"
-                      )}
-                    >
-                      {receita ? "↑ Receita" : "↓ Despesa"}
-                    </td>
-                    <td
-                      className={cn(
-                        "font-bold",
-                        receita ? "text-success" : "text-danger"
-                      )}
-                    >
-                      {formatMoney(entry.amount)}
-                    </td>
-                    <td className="text-text-secondary">
-                      {formatDate(entry.date)}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Descrição</TableHead>
+              <TableHead>Categoria</TableHead>
+              <TableHead>Tipo</TableHead>
+              <TableHead>Valor</TableHead>
+              <TableHead>Data</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((entry) => {
+              const receita = entry.type === "receita";
+              return (
+                <TableRow key={entry.id}>
+                  <TableCell className="font-medium">{entry.description}</TableCell>
+                  <TableCell>
+                    <Badge variant={receita ? "success" : "warning"}>
+                      {entry.categoryName || (receita ? "Receita" : "Despesa")}
+                    </Badge>
+                  </TableCell>
+                  <TableCell
+                    className={cn(
+                      "font-medium",
+                      receita ? "text-success" : "text-danger"
+                    )}
+                  >
+                    {receita ? "Receita" : "Despesa"}
+                  </TableCell>
+                  <TableCell
+                    className={cn(
+                      "font-bold",
+                      receita ? "text-success" : "text-danger"
+                    )}
+                  >
+                    {formatMoney(entry.amount)}
+                  </TableCell>
+                  <TableCell className="text-text-secondary">
+                    {formatDate(entry.date)}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
       ) : (
-        <div className="border-border text-text-muted rounded-2xl border border-dashed p-8 text-center text-sm">
-          Nenhuma movimentação encontrada.
-        </div>
+        <EmptyState
+          title="Nenhuma movimentação encontrada."
+          description="Os lançamentos recentes aparecem aqui assim que forem cadastrados."
+        />
       )}
-      <button type="button" className="table-footer-link" onClick={onViewAll}>
+      <Button type="button" variant="ghost" size="sm" className="mt-4 text-primary font-bold" onClick={onViewAll}>
         Ver todas as movimentações <ChevronRight className="size-4" />
-      </button>
+      </Button>
     </section>
   );
 }
-
 function AccountsPayableTable({
   entries,
   onViewAll,
@@ -580,46 +588,44 @@ function AccountsPayableTable({
         </Button>
       </div>
       {rows.length ? (
-        <div className="table-wrapper">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Descrição</th>
-                <th>Vencimento</th>
-                <th>Valor</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((entry) => (
-                <tr key={entry.id}>
-                  <td className="font-medium">{entry.description}</td>
-                  <td className="text-text-secondary">
-                    {formatDate(entry.dueDate)}
-                  </td>
-                  <td className="font-bold">{formatMoney(entry.amount)}</td>
-                  <td>
-                    <Badge variant={badgeMap[entry.status] ?? "default"}>
-                      {labelMap[entry.status] ?? entry.status}
-                    </Badge>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Descrição</TableHead>
+              <TableHead>Vencimento</TableHead>
+              <TableHead>Valor</TableHead>
+              <TableHead>Status</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((entry) => (
+              <TableRow key={entry.id}>
+                <TableCell className="font-medium">{entry.description}</TableCell>
+                <TableCell className="text-text-secondary">
+                  {formatDate(entry.dueDate)}
+                </TableCell>
+                <TableCell className="font-bold">{formatMoney(entry.amount)}</TableCell>
+                <TableCell>
+                  <Badge variant={badgeMap[entry.status] ?? "default"}>
+                    {labelMap[entry.status] ?? entry.status}
+                  </Badge>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       ) : (
-        <div className="border-border text-text-muted rounded-2xl border border-dashed p-8 text-center text-sm">
-          Nenhuma conta a pagar encontrada.
-        </div>
+        <EmptyState
+          title="Nenhuma conta a pagar encontrada."
+          description="As próximas obrigações aparecem aqui para acompanhamento rápido."
+        />
       )}
-      <button type="button" className="table-footer-link" onClick={onViewAll}>
+      <Button type="button" variant="ghost" size="sm" className="mt-4 text-primary font-bold" onClick={onViewAll}>
         Ver todas as contas a pagar <ChevronRight className="size-4" />
-      </button>
+      </Button>
     </section>
   );
 }
-
 export function Component() {
   const navigate = useNavigate();
   const { data: kpis, isLoading, isError, refetch } = useDashboardKpis();
@@ -1277,10 +1283,11 @@ const dashboardStyles = `
   background: color-mix(in srgb, var(--color-surface) 84%, transparent);
   color: inherit;
   text-decoration: none;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: space-between;
   gap: 14px;
+  line-height: 1;
   transition: background-color 180ms ease, border-color 180ms ease, transform 180ms ease;
   cursor: pointer;
 }
@@ -1310,6 +1317,7 @@ const dashboardStyles = `
 .quick-action-icon svg {
   width: 22px;
   height: 22px;
+  flex-shrink: 0;
 }
 
 .quick-action-icon-purple {
@@ -1372,68 +1380,4 @@ const dashboardStyles = `
   color: var(--text-strong);
 }
 
-.table-wrapper {
-  width: 100%;
-  overflow-x: auto;
-}
-
-.data-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  font-size: 14px;
-}
-
-.data-table thead th {
-  padding: 13px 16px;
-  background: var(--color-surface-soft);
-  color: var(--text-secondary);
-  font-size: 12px;
-  font-weight: 700;
-  text-align: left;
-  white-space: nowrap;
-}
-
-.data-table thead th:first-child {
-  border-top-left-radius: 12px;
-  border-bottom-left-radius: 12px;
-}
-
-.data-table thead th:last-child {
-  border-top-right-radius: 12px;
-  border-bottom-right-radius: 12px;
-}
-
-.data-table tbody td {
-  padding: 15px 16px;
-  border-bottom: 1px solid var(--color-border);
-  color: var(--color-text-primary);
-  vertical-align: middle;
-}
-
-.data-table tbody tr {
-  transition: background-color 160ms ease;
-}
-
-.data-table tbody tr:hover {
-  background: var(--color-surface-muted);
-}
-
-.data-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.table-footer-link {
-  margin-top: 16px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--color-primary);
-  font-size: 14px;
-  font-weight: 700;
-  text-decoration: none;
-  background: none;
-  border: none;
-  cursor: pointer;
-}
 `;

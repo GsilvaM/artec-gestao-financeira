@@ -21,7 +21,7 @@ export function TableFooter({ className, ...props }: React.HTMLAttributes<HTMLTa
 }
 
 export function TableRow({ className, ...props }: React.HTMLAttributes<HTMLTableRowElement>) {
-  return <tr className={cn("border-b border-border transition-colors duration-200 hover:bg-primary-soft data-[state=selected]:bg-[var(--surface-2)]", className)} {...props} />;
+  return <tr className={cn("h-14 border-b border-border transition-colors duration-200 hover:bg-primary-soft data-[state=selected]:bg-[var(--surface-2)]", className)} {...props} />;
 }
 
 export function TableHead({ className, ...props }: React.ThHTMLAttributes<HTMLTableCellElement>) {
@@ -29,7 +29,7 @@ export function TableHead({ className, ...props }: React.ThHTMLAttributes<HTMLTa
     <th
       scope="col"
       className={cn(
-        "h-12 bg-[var(--surface-2)] px-4 text-left align-middle text-[11px] font-bold uppercase tracking-[0.04em] text-[var(--muted)] first:rounded-l-[var(--radius-md)] last:rounded-r-[var(--radius-md)]",
+        "h-11 bg-[var(--surface-2)] px-4 text-left align-middle text-[11px] font-bold uppercase tracking-[0.04em] text-[var(--muted)] first:rounded-l-[var(--radius-md)] last:rounded-r-[var(--radius-md)]",
         className
       )}
       {...props}
@@ -41,7 +41,7 @@ export function TableCell({ className, ...props }: React.TdHTMLAttributes<HTMLTa
   return (
     <td
       className={cn(
-        "border-b border-[var(--border-subtle)] px-4 py-4 align-middle text-[var(--foreground)]",
+        "border-b border-[var(--border-subtle)] px-4 py-3 align-middle text-[var(--foreground)]",
         className
       )}
       {...props}

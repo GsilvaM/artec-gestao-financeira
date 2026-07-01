@@ -199,8 +199,10 @@ export function FilterBar({
             />
           </div>
           {hasFilters && (
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="lg"
               className="filter-toggle"
               onClick={() => setOpen((v) => !v)}
               aria-expanded={open}
@@ -211,7 +213,7 @@ export function FilterBar({
                 size={14}
                 className={cn("transition-transform", open && "rotate-180")}
               />
-            </button>
+            </Button>
           )}
         </div>
         {hasFilters && open && <div className="filter-content">{children}</div>}
@@ -381,10 +383,10 @@ export function PageShell({
         description={subtitle}
         actions={
           actionLabel && onAction ? (
-            <button type="button" className="button-primary" onClick={onAction}>
-              <Plus size={16} />
+            <Button type="button" size="lg" onClick={onAction}>
+              <Plus className="size-4" />
               {actionLabel}
-            </button>
+            </Button>
           ) : undefined
         }
       />

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { ArrowLeft, LockKeyhole, Moon, Send, Sun } from "lucide-react";
 import { AppLogo } from "@/components/brand/AppLogo";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { Button, IconButton } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -67,9 +67,9 @@ export function Component() {
   return (
     <div className="login-page">
       <div className="login-bg" />
-      <button type="button" onClick={toggleTheme} className="login-theme-btn" aria-label={theme === "dark" ? "Ativar modo claro" : "Ativar modo escuro"}>
+      <IconButton onClick={toggleTheme} className="login-theme-btn" aria-label={theme === "dark" ? "Ativar modo claro" : "Ativar modo escuro"}>
         {theme === "dark" ? <Sun className="size-5" /> : <Moon className="size-5" />}
-      </button>
+      </IconButton>
 
       <Card className="login-card">
         <CardHeader className="items-center text-center">
@@ -92,7 +92,7 @@ export function Component() {
                 <Label htmlFor="password">Senha</Label>
                 <Input id="password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="********" />
               </div>
-              <Button type="submit" disabled={submitting} className="w-full">
+              <Button type="submit" size="lg" disabled={submitting} className="w-full">
                 <LockKeyhole className="size-4" />
                 {submitting ? "Entrando..." : "Entrar"}
               </Button>
@@ -128,7 +128,7 @@ export function Component() {
                   <Textarea id="request-message" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Explique brevemente por que precisa acessar o sistema." />
                 </div>
               </div>
-              <Button type="submit" disabled={submitting} className="w-full">
+              <Button type="submit" size="lg" disabled={submitting} className="w-full">
                 <Send className="size-4" />
                 {submitting ? "Enviando..." : "Enviar solicitação"}
               </Button>
@@ -176,15 +176,23 @@ const loginStyles = `
   right: 16px;
   top: 16px;
   z-index: 10;
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   border-radius: 12px;
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--foreground);
-  display: grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
   transition: background-color 180ms ease, transform 180ms ease;
+}
+
+.login-theme-btn svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
 }
 
 .login-theme-btn:hover {

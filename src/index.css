@@ -876,17 +876,24 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    border-radius: 16px;
+    border-radius: 12px;
     border: 1px solid var(--color-border);
     background: var(--color-surface);
     color: var(--text-strong);
     padding: 0 14px;
     font-size: 0.875rem;
     font-weight: 700;
+    line-height: 1;
     cursor: pointer;
     transition:
       background 160ms ease,
       border-color 160ms ease;
+  }
+
+  .filter-toggle svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
   }
 
   .filter-toggle:hover {
@@ -1214,48 +1221,6 @@
 
   .category-dot-danger {
     background: var(--danger-500);
-  }
-
-  /* === Button Primary === */
-  .button-primary {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    height: 44px;
-    padding: 0 18px;
-    border-radius: 16px;
-    border: 0;
-    background: linear-gradient(135deg, var(--primary-600), var(--primary-500));
-    color: white;
-    font-size: 0.875rem;
-    font-weight: 700;
-    line-height: 1;
-    box-shadow: 0 12px 24px rgba(21, 94, 239, 0.22);
-    cursor: pointer;
-    transition:
-      transform 180ms ease,
-      box-shadow 180ms ease,
-      background 180ms ease;
-  }
-
-  .button-primary:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 16px 32px rgba(21, 94, 239, 0.28);
-  }
-
-  .button-primary svg {
-    width: 16px;
-    height: 16px;
-    flex: 0 0 auto;
-  }
-
-  @media (max-width: 768px) {
-    .button-primary {
-      width: 100%;
-      height: 46px;
-      border-radius: 16px;
-    }
   }
 
   /* === Page Header === */

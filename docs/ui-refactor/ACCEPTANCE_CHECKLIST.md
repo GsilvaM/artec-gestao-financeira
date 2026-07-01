@@ -1,0 +1,41 @@
+# Acceptance Checklist
+
+A refatoracao so esta concluida se:
+
+- [ ] O botao de login esta perfeitamente alinhado.
+- [ ] Todos os botoes principais estao alinhados.
+- [ ] Todos os IconButtons estao centralizados.
+- [ ] Botoes com icone + texto estao alinhados.
+- [ ] Botoes de filtros estao alinhados.
+- [ ] Acoes "..." estao alinhadas.
+- [ ] Botoes mobile nao cortam texto.
+- [ ] Button global foi padronizado.
+- [ ] IconButton global foi padronizado.
+- [ ] Todas as paginas usam o novo design system.
+- [ ] Nenhuma pagina ficou com visual antigo.
+- [ ] Logo antigo foi removido.
+- [ ] AppLogo novo aparece na sidebar.
+- [ ] AppLogo novo aparece no login.
+- [ ] AppLogo novo aparece no topbar mobile.
+- [ ] Favicon foi atualizado.
+- [ ] Sidebar ficou premium.
+- [ ] Login dark tem 3 camadas.
+- [ ] Dashboard parece SaaS financeiro.
+- [ ] Tabelas desktop estao refinadas.
+- [ ] Mobile usa cards em vez de tabela espremida.
+- [ ] Empty states estao bonitos.
+- [ ] Inputs/selects estao padronizados.
+- [ ] Filtros estao padronizados.
+- [ ] Badges estao padronizadas.
+- [ ] Nao ha overflow horizontal.
+- [ ] Dark mode esta bom.
+- [ ] Light mode esta bom.
+- [ ] aria-label em botoes icon-only.
+- [ ] Focus visible em controles.
+- [ ] `npm run typecheck` passa.
+- [ ] `npm run lint` passa.
+- [ ] `npm run test` passa.
+- [ ] `npm run build` passa.
+- [ ] Nenhum backend foi alterado.
+- [ ] Nenhum calculo financeiro foi alterado.
+- [ ] Nenhuma rota foi alterada.

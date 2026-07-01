@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+﻿import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   Banknote,
@@ -557,7 +557,7 @@ function AccountReceivableMobileList({
                 <Button
                   variant="ghost"
                   size="icon"
-                  aria-label="AÃ§Ãµes da conta a receber"
+                  aria-label="Ações da conta a receber"
                 >
                   <MoreHorizontal className="size-4" />
                 </Button>

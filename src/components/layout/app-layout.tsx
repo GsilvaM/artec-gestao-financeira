@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
 import { ChevronDown, LogOut, Menu, Moon, Sun, X } from "lucide-react";
 import { AppLogo } from "@/components/brand/AppLogo";
+import { Button, IconButton } from "@/components/ui/button";
 import { useAuthStore } from "@/lib/supabase/auth-store";
 import { cn } from "@/lib/utils";
 import { useThemeStore } from "@/stores/theme";
@@ -175,14 +176,13 @@ function SidebarFooter({
           {userEmail ?? "Administrador"}
         </div>
       </div>
-      <button
-        type="button"
+      <IconButton
         onClick={onSignOut}
         aria-label="Sair"
-        className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[color-mix(in_srgb,var(--sidebar-foreground)_10%,transparent)] text-[var(--sidebar-muted)] transition hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-foreground)]"
+        className="size-9 rounded-lg bg-[color-mix(in_srgb,var(--sidebar-foreground)_10%,transparent)] text-[var(--sidebar-muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-foreground)]"
       >
         <LogOut size={16} />
-      </button>
+      </IconButton>
     </div>
   );
 }
@@ -202,8 +202,7 @@ function Topbar({
 }) {
   return (
     <header className="topbar">
-      <button
-        type="button"
+      <IconButton
         onClick={onOpenMobile}
         className="mobile-menu-button"
         aria-label="Abrir menu"
@@ -211,7 +210,7 @@ function Topbar({
         aria-controls="menu-mobile"
       >
         <Menu size={20} />
-      </button>
+      </IconButton>
       <Breadcrumbs pathname={pathname} />
       <div className="topbar-actions">
         <ThemeToggle />
@@ -248,14 +247,13 @@ function ThemeToggle() {
   const theme = useThemeStore((s) => s.theme);
   const toggleTheme = useThemeStore((s) => s.toggleTheme);
   return (
-    <button
-      type="button"
+    <IconButton
       onClick={toggleTheme}
       aria-label={theme === "dark" ? "Ativar modo claro" : "Ativar modo escuro"}
       className="topbar-icon-btn"
     >
       {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
-    </button>
+    </IconButton>
   );
 }
 
@@ -286,8 +284,9 @@ function UserMenu({
 
   return (
     <div className="relative">
-      <button
+      <Button
         type="button"
+        variant="outline"
         onClick={() => setOpen((v) => !v)}
         aria-label="Menu do usuário"
         aria-expanded={open}
@@ -309,7 +308,7 @@ function UserMenu({
             open && "rotate-180"
           )}
         />
-      </button>
+      </Button>
       {open && (
         <div className="border-border bg-surface text-text-primary shadow-elevated absolute top-11 right-0 z-50 w-56 rounded-[14px] border p-2">
           <div className="border-border border-b px-3 py-2">
@@ -318,14 +317,15 @@ function UserMenu({
             </div>
             <div className="text-text-secondary text-xs">Sessão ativa</div>
           </div>
-          <button
+          <Button
             type="button"
+            variant="ghost"
             onClick={onSignOut}
-            className="text-text-secondary hover:bg-surface-soft hover:text-text-primary mt-1 flex w-full items-center gap-2 rounded-[10px] px-3 py-2 text-sm font-medium transition"
+            className="text-text-secondary hover:bg-surface-soft hover:text-text-primary mt-1 inline-flex h-10 w-full items-center justify-start gap-2 rounded-[10px] px-3 text-sm font-medium leading-none transition [&_svg]:size-4 [&_svg]:shrink-0"
           >
             <LogOut size={16} />
             Sair
-          </button>
+          </Button>
         </div>
       )}
     </div>
@@ -381,14 +381,13 @@ function MobileNavDrawer({
           >
             <AppLogo markClassName="[--logo-accent:var(--sidebar-foreground)]" />
           </NavLink>
-          <button
-            type="button"
+          <IconButton
             onClick={onClose}
             aria-label="Fechar menu"
-            className="flex size-10 items-center justify-center rounded-xl bg-[color-mix(in_srgb,var(--sidebar-foreground)_10%,transparent)] text-[var(--sidebar-muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-foreground)]"
+            className="size-10 rounded-xl bg-[color-mix(in_srgb,var(--sidebar-foreground)_10%,transparent)] text-[var(--sidebar-muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-foreground)] [&_svg]:size-5"
           >
             <X size={20} />
-          </button>
+          </IconButton>
         </div>
         <nav className="flex-1 overflow-y-auto px-3 py-3">
           {navigationItems.map((item) => {
@@ -445,14 +444,13 @@ function MobileNavDrawer({
               {userEmail ?? "Administrador"}
             </div>
           </div>
-          <button
-            type="button"
+          <IconButton
             onClick={onSignOut}
             aria-label="Sair"
-            className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[color-mix(in_srgb,var(--sidebar-foreground)_10%,transparent)] text-[var(--sidebar-muted)] transition hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-foreground)]"
+            className="size-9 rounded-lg bg-[color-mix(in_srgb,var(--sidebar-foreground)_10%,transparent)] text-[var(--sidebar-muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-foreground)]"
           >
             <LogOut size={16} />
-          </button>
+          </IconButton>
         </div>
       </aside>
     </div>
@@ -585,13 +583,15 @@ const sidebarStyles = `
   min-height: 44px;
   padding: 0 12px;
   border-radius: 12px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 8px;
   color: var(--sidebar-foreground);
   text-decoration: none;
   font-size: 14px;
   font-weight: 650;
+  line-height: 1;
   transition: background-color 180ms ease, color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
 }
 
@@ -685,11 +685,18 @@ const sidebarStyles = `
   height: 44px;
   align-items: center;
   justify-content: center;
+  line-height: 1;
   border-radius: 12px;
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--foreground);
   transition: background-color 180ms ease, border-color 180ms ease, transform 180ms ease;
+}
+
+.mobile-menu-button svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
 }
 
 .mobile-menu-button:hover {
@@ -731,9 +738,17 @@ const sidebarStyles = `
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--foreground);
-  display: grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
   transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.topbar-icon-btn svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
 }
 
 .topbar-icon-btn:hover {
@@ -743,15 +758,23 @@ const sidebarStyles = `
 }
 
 .topbar-user-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   height: 44px;
   padding: 0 12px;
   border-radius: 12px;
   border: 1px solid var(--border);
   background: var(--surface);
+  line-height: 1;
   transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.topbar-user-btn svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
 }
 
 .topbar-user-btn:hover {

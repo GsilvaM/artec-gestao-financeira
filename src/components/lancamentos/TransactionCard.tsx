@@ -66,8 +66,8 @@ export function TransactionCard({
           <span className="text-[11px] capitalize text-[var(--text-muted)]">{transaction.type}</span>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="size-7 text-muted-foreground hover:text-foreground" aria-label="Mais opções">
-                <MoreHorizontal className="size-3.5" />
+              <Button variant="ghost" size="icon" className="size-9 text-muted-foreground hover:text-foreground" aria-label="Mais opções">
+                <MoreHorizontal className="size-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>

@@ -113,7 +113,10 @@ export function DropdownMenuTrigger({ children, asChild, className, ...props }: 
       aria-expanded={open}
       aria-controls={contentId}
       onClick={handleClick}
-      className={className}
+      className={cn(
+        "inline-flex items-center justify-center gap-2 leading-none [&_svg]:size-4 [&_svg]:shrink-0",
+        className,
+      )}
       {...props}
     >
       {children}
@@ -157,7 +160,7 @@ export function DropdownMenuItem({ children, className, onClick, destructive, ..
       role="menuitem"
       onClick={(e) => { onClick?.(e); close(); }}
       className={cn(
-        "flex w-full cursor-pointer items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-bold outline-none transition",
+        "inline-flex h-10 w-full cursor-pointer items-center justify-start gap-2 rounded-xl px-3 text-left text-sm font-bold leading-none outline-none transition [&_svg]:size-4 [&_svg]:shrink-0",
         destructive
           ? "text-destructive hover:bg-destructive/10 focus-visible:bg-destructive/10"
           : "text-foreground hover:bg-accent focus-visible:bg-accent",

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+﻿import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   Building,
@@ -399,7 +399,7 @@ function CostCenterMobileList({
                 <Button
                   variant="ghost"
                   size="icon"
-                  aria-label="AÃ§Ãµes do centro de custo"
+                  aria-label="Ações do centro de custo"
                 >
                   <MoreHorizontal className="size-4" />
                 </Button>

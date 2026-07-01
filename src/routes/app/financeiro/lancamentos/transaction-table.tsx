@@ -56,7 +56,7 @@ export function TransactionTable({ entries, isLoading, error, onEdit, onDelete }
                 <TableCell className="w-12">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="size-8" aria-label="Ações do lançamento">
+                      <Button variant="ghost" size="icon" className="size-9" aria-label="Ações do lançamento">
                         <MoreHorizontal className="size-4" />
                       </Button>
                     </DropdownMenuTrigger>

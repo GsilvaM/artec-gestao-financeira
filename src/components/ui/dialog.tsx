@@ -62,7 +62,7 @@ export function DialogCloseButton({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="absolute right-4 top-4 rounded-2xl p-2 text-text-muted transition hover:bg-surface-soft hover:text-text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/20"
+      className="absolute right-4 top-4 inline-flex size-10 items-center justify-center rounded-xl p-0 leading-none text-text-muted transition hover:bg-surface-soft hover:text-text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/20 [&_svg]:size-4 [&_svg]:shrink-0"
       aria-label="Fechar modal"
     >
       <X className="size-4" />
