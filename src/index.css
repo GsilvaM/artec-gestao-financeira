@@ -6,50 +6,50 @@
 :root {
   color-scheme: light;
 
-  --app-bg: #EEF4FB;
-  --app-bg-soft: #F6F9FD;
+  --app-bg: #eef4fb;
+  --app-bg-soft: #f6f9fd;
 
-  --surface: #FFFFFF;
-  --surface-soft: #F8FBFF;
-  --surface-muted: #F1F6FC;
+  --surface: #ffffff;
+  --surface-soft: #f8fbff;
+  --surface-muted: #f1f6fc;
 
-  --text-strong: #061A38;
-  --text-primary: #0B1F3A;
+  --text-strong: #061a38;
+  --text-primary: #0b1f3a;
   --text-secondary: #435979;
-  --text-muted: #71829D;
-  --text-inverse: #FFFFFF;
+  --text-muted: #71829d;
+  --text-inverse: #ffffff;
 
-  --border-soft: #D7E2F0;
-  --border-default: #C8D6E8;
+  --border-soft: #d7e2f0;
+  --border-default: #c8d6e8;
 
-  --primary-950: #03152E;
-  --primary-900: #06244A;
-  --primary-800: #0A3A78;
-  --primary-700: #0F4FA8;
-  --primary-600: #155EEF;
-  --primary-500: #2563EB;
-  --primary-100: #DBEAFE;
-  --primary-50: #EFF6FF;
+  --primary-950: #03152e;
+  --primary-900: #06244a;
+  --primary-800: #0a3a78;
+  --primary-700: #0f4fa8;
+  --primary-600: #155eef;
+  --primary-500: #2563eb;
+  --primary-100: #dbeafe;
+  --primary-50: #eff6ff;
 
   --success-600: #079455;
-  --success-500: #12B76A;
-  --success-100: #D1FADF;
-  --success-50: #ECFDF3;
+  --success-500: #12b76a;
+  --success-100: #d1fadf;
+  --success-50: #ecfdf3;
 
-  --danger-600: #D92D20;
-  --danger-500: #F04438;
-  --danger-100: #FEE4E2;
-  --danger-50: #FEF3F2;
+  --danger-600: #d92d20;
+  --danger-500: #f04438;
+  --danger-100: #fee4e2;
+  --danger-50: #fef3f2;
 
-  --warning-600: #DC6803;
-  --warning-500: #F79009;
-  --warning-100: #FEF0C7;
-  --warning-50: #FFFAEB;
+  --warning-600: #dc6803;
+  --warning-500: #f79009;
+  --warning-100: #fef0c7;
+  --warning-50: #fffaeb;
 
-  --purple-600: #7C3AED;
-  --purple-500: #8B5CF6;
-  --purple-100: #EDE9FE;
-  --purple-50: #F5F3FF;
+  --purple-600: #7c3aed;
+  --purple-500: #8b5cf6;
+  --purple-100: #ede9fe;
+  --purple-50: #f5f3ff;
 
   --color-background: var(--app-bg);
   --color-background-soft: var(--app-bg-soft);
@@ -192,7 +192,7 @@
   --color-text-secondary: #aab8cc;
   --color-text-muted: #7f90a8;
 
-  --color-border: rgba(148, 163, 184, 0.30);
+  --color-border: rgba(148, 163, 184, 0.3);
   --color-border-strong: rgba(148, 163, 184, 0.42);
 
   --color-primary: #3b82f6;
@@ -278,7 +278,9 @@
   --bg-danger: color-mix(in srgb, var(--color-danger) 18%, transparent);
   --bg-accent: color-mix(in srgb, var(--color-primary) 18%, transparent);
   --bg-warning: color-mix(in srgb, var(--color-pending) 18%, transparent);
-  --shadow-soft: 0 20px 54px -28px rgba(0, 0, 0, 0.86), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --shadow-soft:
+    0 20px 54px -28px rgba(0, 0, 0, 0.86),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 @theme inline {
@@ -353,12 +355,31 @@
   body {
     margin: 0;
     background:
-      radial-gradient(circle at top left, color-mix(in srgb, var(--primary) 10%, transparent), transparent 30rem),
-      radial-gradient(circle at top right, color-mix(in srgb, var(--success) 5%, transparent), transparent 28rem),
-      linear-gradient(180deg, var(--color-background) 0%, var(--color-background-soft) 100%);
+      radial-gradient(
+        circle at top left,
+        color-mix(in srgb, var(--primary) 10%, transparent),
+        transparent 30rem
+      ),
+      radial-gradient(
+        circle at top right,
+        color-mix(in srgb, var(--success) 5%, transparent),
+        transparent 28rem
+      ),
+      linear-gradient(
+        180deg,
+        var(--color-background) 0%,
+        var(--color-background-soft) 100%
+      );
     color: var(--color-text-primary);
     font-family:
-      "Inter", "Geist", "Manrope", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      "Inter",
+      "Geist",
+      "Manrope",
+      system-ui,
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      sans-serif;
     font-optical-sizing: auto;
     font-synthesis: none;
     -webkit-font-smoothing: antialiased;
@@ -410,10 +431,12 @@
     min-height: 2.5rem;
     border: 0.15rem solid transparent;
     border-radius: 999px;
-    background: color-mix(in srgb, var(--primary) 42%, var(--border)) padding-box;
+    background: color-mix(in srgb, var(--primary) 42%, var(--border))
+      padding-box;
   }
 
-  img, svg {
+  img,
+  svg {
     max-width: 100%;
   }
 
@@ -428,7 +451,11 @@
 
 @layer components {
   .motion-card {
-    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background-color 180ms ease;
+    transition:
+      transform 180ms ease,
+      box-shadow 180ms ease,
+      border-color 180ms ease,
+      background-color 180ms ease;
   }
 
   .motion-card:hover {
@@ -438,26 +465,51 @@
   }
 
   .motion-control {
-    transition: transform 170ms ease, box-shadow 170ms ease, border-color 170ms ease, background-color 170ms ease, color 170ms ease;
+    transition:
+      transform 170ms ease,
+      box-shadow 170ms ease,
+      border-color 170ms ease,
+      background-color 170ms ease,
+      color 170ms ease;
   }
 
   .filter-bar {
-    border-color: color-mix(in srgb, var(--color-border) 86%, transparent) !important;
-    background: color-mix(in srgb, var(--color-surface) 86%, transparent) !important;
+    border-color: color-mix(
+      in srgb,
+      var(--color-border) 86%,
+      transparent
+    ) !important;
+    background: color-mix(
+      in srgb,
+      var(--color-surface) 86%,
+      transparent
+    ) !important;
     box-shadow: var(--shadow-sm) !important;
     backdrop-filter: blur(14px);
   }
 
   .table-card {
     overflow: hidden;
-    border-color: color-mix(in srgb, var(--color-border) 86%, transparent) !important;
-    background: color-mix(in srgb, var(--color-surface) 90%, transparent) !important;
+    border-color: color-mix(
+      in srgb,
+      var(--color-border) 86%,
+      transparent
+    ) !important;
+    background: color-mix(
+      in srgb,
+      var(--color-surface) 90%,
+      transparent
+    ) !important;
     box-shadow: var(--shadow-card) !important;
     backdrop-filter: blur(14px);
   }
 
   .data-table thead th {
-    background: color-mix(in srgb, var(--color-surface-muted) 92%, transparent) !important;
+    background: color-mix(
+      in srgb,
+      var(--color-surface-muted) 92%,
+      transparent
+    ) !important;
     color: var(--color-text-muted) !important;
     font-size: 11px !important;
     font-weight: 700 !important;
@@ -466,11 +518,19 @@
   }
 
   .data-table tbody td {
-    border-bottom-color: color-mix(in srgb, var(--color-border) 72%, transparent) !important;
+    border-bottom-color: color-mix(
+      in srgb,
+      var(--color-border) 72%,
+      transparent
+    ) !important;
   }
 
   .data-table tbody tr:hover {
-    background: color-mix(in srgb, var(--primary) 6%, var(--color-surface)) !important;
+    background: color-mix(
+      in srgb,
+      var(--primary) 6%,
+      var(--color-surface)
+    ) !important;
   }
 
   /* === Typography Utilities === */
@@ -644,7 +704,9 @@
     font-size: 0.875rem;
     font-weight: 700;
     cursor: pointer;
-    transition: background 160ms ease, border-color 160ms ease;
+    transition:
+      background 160ms ease,
+      border-color 160ms ease;
   }
 
   .filter-toggle:hover {
@@ -715,7 +777,7 @@
   .mobile-record-card {
     border: 1px solid var(--border-soft);
     border-radius: 18px;
-    background: rgba(255, 255, 255, 0.9);
+    background: color-mix(in srgb, var(--color-surface) 92%, transparent);
     box-shadow: var(--shadow-xs);
     padding: 14px;
   }
@@ -846,7 +908,7 @@
   .dre-mobile-card {
     border: 1px solid var(--border-soft);
     border-radius: 18px;
-    background: rgba(255, 255, 255, 0.9);
+    background: color-mix(in srgb, var(--color-surface) 92%, transparent);
     padding: 14px;
     box-shadow: var(--shadow-xs);
   }
@@ -883,7 +945,7 @@
   .cashflow-card {
     border: 1px solid var(--border-soft);
     border-radius: 18px;
-    background: rgba(255, 255, 255, 0.9);
+    background: color-mix(in srgb, var(--color-surface) 92%, transparent);
     padding: 14px;
   }
 
@@ -931,7 +993,7 @@
   .category-card {
     border: 1px solid var(--border-soft);
     border-radius: 18px;
-    background: rgba(255, 255, 255, 0.9);
+    background: color-mix(in srgb, var(--color-surface) 92%, transparent);
     padding: 14px;
     display: flex;
     align-items: center;
@@ -991,7 +1053,10 @@
     line-height: 1;
     box-shadow: 0 12px 24px rgba(21, 94, 239, 0.22);
     cursor: pointer;
-    transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+    transition:
+      transform 180ms ease,
+      box-shadow 180ms ease,
+      background 180ms ease;
   }
 
   .button-primary:hover {
@@ -1090,10 +1155,12 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .motion-card, .motion-control {
+    .motion-card,
+    .motion-control {
       transition: none;
     }
-    .motion-card:hover, .motion-control:hover {
+    .motion-card:hover,
+    .motion-control:hover {
       transform: none;
     }
   }

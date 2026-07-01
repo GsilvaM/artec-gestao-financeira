@@ -16,7 +16,17 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useNavigate } from "react-router";
-import { Area, Bar, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  Area,
+  Bar,
+  CartesianGrid,
+  ComposedChart,
+  Line,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,7 +35,10 @@ import { useAccountsPayable } from "@/domain/financeiro/hooks/use-accounts";
 import { useCashFlow } from "@/domain/financeiro/hooks/use-cash-flow";
 import { useDashboardKpis } from "@/domain/financeiro/hooks/use-dashboard-kpis";
 import { useFinancialEntries } from "@/domain/financeiro/hooks/use-financial-entries";
-import type { AccountPayableRow, FinancialEntryRow } from "@/domain/financeiro/types";
+import type {
+  AccountPayableRow,
+  FinancialEntryRow,
+} from "@/domain/financeiro/types";
 import { cn, formatMoney, toFiniteNumber } from "@/lib/utils";
 import { formatCompactMoney } from "./dashboard-utils";
 import { pageHeaderStyles } from "@/components/layout/page-shell";
@@ -49,7 +62,10 @@ type CashFlowApiRow = {
 function useDataTimeout(isLoading: boolean, timeoutMs = 5_000) {
   const [timedOut, setTimedOut] = useState(false);
   useEffect(() => {
-    if (!isLoading) { setTimedOut(false); return; }
+    if (!isLoading) {
+      setTimedOut(false);
+      return;
+    }
     const timeout = window.setTimeout(() => setTimedOut(true), timeoutMs);
     return () => window.clearTimeout(timeout);
   }, [isLoading, timeoutMs]);
@@ -57,8 +73,20 @@ function useDataTimeout(isLoading: boolean, timeoutMs = 5_000) {
 }
 
 function getDashboardCashFlowRange(referenceDate = new Date()) {
-  const start = new Date(referenceDate.getFullYear(), referenceDate.getMonth() - 5, 1);
-  const end = new Date(referenceDate.getFullYear(), referenceDate.getMonth() + 1, 0, 23, 59, 59, 999);
+  const start = new Date(
+    referenceDate.getFullYear(),
+    referenceDate.getMonth() - 5,
+    1
+  );
+  const end = new Date(
+    referenceDate.getFullYear(),
+    referenceDate.getMonth() + 1,
+    0,
+    23,
+    59,
+    59,
+    999
+  );
   return { start, end };
 }
 
@@ -67,11 +95,17 @@ function monthKey(date: Date) {
 }
 
 function monthLabel(date: Date) {
-  const label = date.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "");
+  const label = date
+    .toLocaleDateString("pt-BR", { month: "short" })
+    .replace(".", "");
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
-function buildFinancialChartData(rows: CashFlowApiRow[] | undefined, start: Date, months = 6): FinancialChartPoint[] {
+function buildFinancialChartData(
+  rows: CashFlowApiRow[] | undefined,
+  start: Date,
+  months = 6
+): FinancialChartPoint[] {
   const totalsByMonth = new Map<string, Omit<FinancialChartPoint, "mes">>();
   for (const row of rows ?? []) {
     if (!row.period) continue;
@@ -85,7 +119,11 @@ function buildFinancialChartData(rows: CashFlowApiRow[] | undefined, start: Date
   }
   const monthlyData = Array.from({ length: months }, (_, index) => {
     const date = new Date(start.getFullYear(), start.getMonth() + index, 1);
-    const current = totalsByMonth.get(monthKey(date)) ?? { receitas: 0, despesas: 0, saldo: 0 };
+    const current = totalsByMonth.get(monthKey(date)) ?? {
+      receitas: 0,
+      despesas: 0,
+      saldo: 0,
+    };
     return { mes: monthLabel(date), ...current };
   });
   let accumulatedBalance = 0;
@@ -102,7 +140,12 @@ function getSeriesDelta(values: number[]) {
   }
   const current = trimmed.at(-1);
   const previous = trimmed.at(-2);
-  if (typeof current !== "number" || typeof previous !== "number" || previous === 0) return undefined;
+  if (
+    typeof current !== "number" ||
+    typeof previous !== "number" ||
+    previous === 0
+  )
+    return undefined;
   return Number((((current - previous) / Math.abs(previous)) * 100).toFixed(1));
 }
 
@@ -113,18 +156,40 @@ function formatDate(value: string) {
 }
 
 function formatLongDate(date = new Date()) {
-  return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+  return date.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
 }
 
 function DeltaBadge({ value }: { value?: number }) {
   if (typeof value !== "number") {
-    return <span className="text-xs font-medium text-text-muted">Sem dados do mês anterior</span>;
+    return (
+      <span className="text-text-muted text-xs font-medium">
+        Sem dados do mês anterior
+      </span>
+    );
   }
   const positive = value >= 0;
   return (
-    <span className={cn("inline-flex items-center gap-1 text-xs font-bold", positive ? "text-success" : "text-danger")}>
-      {positive ? <ArrowUpCircle className="size-3.5" /> : <ArrowDownCircle className="size-3.5" />}
-      {positive ? "+" : ""}{value.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 text-xs font-bold",
+        positive ? "text-success" : "text-danger"
+      )}
+    >
+      {positive ? (
+        <ArrowUpCircle className="size-3.5" />
+      ) : (
+        <ArrowDownCircle className="size-3.5" />
+      )}
+      {positive ? "+" : ""}
+      {value.toLocaleString("pt-BR", {
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1,
+      })}
+      %
     </span>
   );
 }
@@ -169,15 +234,24 @@ function KpiCard({
             <small>vs. mês anterior</small>
           </div>
         )}
-        <div className={cn(delta !== undefined ? "h-10 mt-2" : "h-10")}>
-          <SparklineChart data={sparklineData.length ? sparklineData : [0, 0, 0, 0, 0, 0]} color={sparklineColor} />
+        <div className={cn(delta !== undefined ? "mt-2 h-10" : "h-10")}>
+          <SparklineChart
+            data={sparklineData.length ? sparklineData : [0, 0, 0, 0, 0, 0]}
+            color={sparklineColor}
+          />
         </div>
       </div>
     </section>
   );
 }
 
-function PendingKpiCard({ total, overdue }: { total: number; overdue: number }) {
+function PendingKpiCard({
+  total,
+  overdue,
+}: {
+  total: number;
+  overdue: number;
+}) {
   const hasPending = total > 0;
   return (
     <section className="metric-card card-hover">
@@ -191,36 +265,66 @@ function PendingKpiCard({ total, overdue }: { total: number; overdue: number }) 
         </div>
       </div>
       <div>
-        <p className={cn("flex items-center gap-1.5 text-sm font-bold", hasPending ? "text-warning" : "text-success")}>
+        <p
+          className={cn(
+            "flex items-center gap-1.5 text-sm font-bold",
+            hasPending ? "text-warning" : "text-success"
+          )}
+        >
           <CheckCircle2 className="size-4" />
           {hasPending ? `${overdue} vencidas` : "Tudo em dia"}
         </p>
-        <p className="text-xs text-text-secondary mt-1">
-          {hasPending ? "Revise as contas pendentes no financeiro." : "Todas as contas estão dentro do prazo."}
+        <p className="text-text-secondary mt-1 text-xs">
+          {hasPending
+            ? "Revise as contas pendentes no financeiro."
+            : "Todas as contas estão dentro do prazo."}
         </p>
       </div>
     </section>
   );
 }
 
-type ChartPayload = { payload?: { receitas: number; despesas: number; saldo: number; mes: string } };
+type ChartPayload = {
+  payload?: { receitas: number; despesas: number; saldo: number; mes: string };
+};
 
-function FinancialTooltip({ active, payload }: { active?: boolean; payload?: ChartPayload[] }) {
+function FinancialTooltip({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: ChartPayload[];
+}) {
   const item = payload?.[0]?.payload;
   if (!active || !item) return null;
   return (
-    <div className="rounded-2xl border border-border bg-surface p-3 text-xs text-text-primary shadow-card">
-      <p className="mb-2 font-bold text-text-primary">{item.mes}</p>
+    <div className="border-border bg-surface text-text-primary shadow-card rounded-2xl border p-3 text-xs">
+      <p className="text-text-primary mb-2 font-bold">{item.mes}</p>
       <div className="space-y-1.5">
-        <p className="flex items-center justify-between gap-8"><span className="text-text-secondary">Receitas</span><strong className="text-success">{formatMoney(item.receitas)}</strong></p>
-        <p className="flex items-center justify-between gap-8"><span className="text-text-secondary">Despesas</span><strong className="text-danger">{formatMoney(item.despesas)}</strong></p>
-        <p className="flex items-center justify-between gap-8"><span className="text-text-secondary">Saldo</span><strong className="text-primary">{formatMoney(item.saldo)}</strong></p>
+        <p className="flex items-center justify-between gap-8">
+          <span className="text-text-secondary">Receitas</span>
+          <strong className="text-success">{formatMoney(item.receitas)}</strong>
+        </p>
+        <p className="flex items-center justify-between gap-8">
+          <span className="text-text-secondary">Despesas</span>
+          <strong className="text-danger">{formatMoney(item.despesas)}</strong>
+        </p>
+        <p className="flex items-center justify-between gap-8">
+          <span className="text-text-secondary">Saldo</span>
+          <strong className="text-primary">{formatMoney(item.saldo)}</strong>
+        </p>
       </div>
     </div>
   );
 }
 
-function ChartLegend({ hiddenSeries, onToggle }: { hiddenSeries: Record<ChartSeries, boolean>; onToggle: (series: ChartSeries) => void }) {
+function ChartLegend({
+  hiddenSeries,
+  onToggle,
+}: {
+  hiddenSeries: Record<ChartSeries, boolean>;
+  onToggle: (series: ChartSeries) => void;
+}) {
   const items: { id: ChartSeries; label: string; className: string }[] = [
     { id: "receitas", label: "Receitas", className: "bg-chart-revenue" },
     { id: "despesas", label: "Despesas", className: "bg-chart-expense" },
@@ -229,8 +333,22 @@ function ChartLegend({ hiddenSeries, onToggle }: { hiddenSeries: Record<ChartSer
   return (
     <div className="chart-legend">
       {items.map((item) => (
-        <button key={item.id} type="button" onClick={() => onToggle(item.id)} className={cn("inline-flex items-center gap-2", hiddenSeries[item.id] && "opacity-45")} aria-pressed={!hiddenSeries[item.id]}>
-          <span className={cn(item.id === "saldo" ? "legend-line" : "legend-dot", item.className)} />
+        <button
+          key={item.id}
+          type="button"
+          onClick={() => onToggle(item.id)}
+          className={cn(
+            "inline-flex items-center gap-2",
+            hiddenSeries[item.id] && "opacity-45"
+          )}
+          aria-pressed={!hiddenSeries[item.id]}
+        >
+          <span
+            className={cn(
+              item.id === "saldo" ? "legend-line" : "legend-dot",
+              item.className
+            )}
+          />
           {item.label}
         </button>
       ))}
@@ -238,7 +356,15 @@ function ChartLegend({ hiddenSeries, onToggle }: { hiddenSeries: Record<ChartSer
   );
 }
 
-function FinancialHeroCard({ balance, revenue, expenses }: { balance: number; revenue: number; expenses: number }) {
+function FinancialHeroCard({
+  balance,
+  revenue,
+  expenses,
+}: {
+  balance: number;
+  revenue: number;
+  expenses: number;
+}) {
   return (
     <section className="financial-hero-card">
       <div className="financial-hero-glow" aria-hidden="true" />
@@ -257,11 +383,15 @@ function FinancialHeroCard({ balance, revenue, expenses }: { balance: number; re
       </div>
       <div className="financial-hero-footer">
         <div>
-          <span className="financial-mini-label financial-income">Receitas</span>
+          <span className="financial-mini-label financial-income">
+            Receitas
+          </span>
           <strong>{formatMoney(revenue)}</strong>
         </div>
         <div>
-          <span className="financial-mini-label financial-expense">Despesas</span>
+          <span className="financial-mini-label financial-expense">
+            Despesas
+          </span>
           <strong>{formatMoney(expenses)}</strong>
         </div>
       </div>
@@ -269,11 +399,33 @@ function FinancialHeroCard({ balance, revenue, expenses }: { balance: number; re
   );
 }
 
-function QuickActionsCard({ onNavigate }: { onNavigate: (to: string) => void }) {
+function QuickActionsCard({
+  onNavigate,
+}: {
+  onNavigate: (to: string) => void;
+}) {
   const actions = [
-    { label: "Novo lançamento", description: "Registre receita ou despesa", icon: Plus, to: "/app/financeiro/lancamentos", tone: "purple" as const },
-    { label: "Nova conta a pagar", description: "Adicione conta para pagamento", icon: CreditCard, to: "/app/financeiro/contas-pagar", tone: "blue" as const },
-    { label: "Emitir relatório", description: "Gere relatórios financeiros", icon: FileBarChart, to: "/app/relatorios", tone: "green" as const },
+    {
+      label: "Novo lançamento",
+      description: "Registre receita ou despesa",
+      icon: Plus,
+      to: "/app/financeiro/lancamentos",
+      tone: "purple" as const,
+    },
+    {
+      label: "Nova conta a pagar",
+      description: "Adicione conta para pagamento",
+      icon: CreditCard,
+      to: "/app/financeiro/contas-pagar",
+      tone: "blue" as const,
+    },
+    {
+      label: "Emitir relatório",
+      description: "Gere relatórios financeiros",
+      icon: FileBarChart,
+      to: "/app/relatorios",
+      tone: "green" as const,
+    },
   ];
 
   return (
@@ -283,9 +435,16 @@ function QuickActionsCard({ onNavigate }: { onNavigate: (to: string) => void }) 
         {actions.map((action) => {
           const Icon = action.icon;
           return (
-            <button key={action.label} type="button" onClick={() => onNavigate(action.to)} className="quick-action-card">
+            <button
+              key={action.label}
+              type="button"
+              onClick={() => onNavigate(action.to)}
+              className="quick-action-card"
+            >
               <div className="quick-action-left">
-                <div className={`quick-action-icon quick-action-icon-${action.tone}`}>
+                <div
+                  className={`quick-action-icon quick-action-icon-${action.tone}`}
+                >
                   <Icon />
                 </div>
                 <div>
@@ -302,13 +461,26 @@ function QuickActionsCard({ onNavigate }: { onNavigate: (to: string) => void }) 
   );
 }
 
-function RecentMovementsTable({ entries }: { entries: FinancialEntryRow[] }) {
+function RecentMovementsTable({
+  entries,
+  onViewAll,
+}: {
+  entries: FinancialEntryRow[];
+  onViewAll: () => void;
+}) {
   const rows = entries.slice(0, 4);
   return (
     <section className="table-card">
       <div className="table-card-header">
         <h2>Últimas movimentações</h2>
-        <Button variant="ghost" size="sm" className="text-primary font-bold">Ver todas</Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-primary font-bold"
+          onClick={onViewAll}
+        >
+          Ver todas
+        </Button>
       </div>
       {rows.length ? (
         <div className="table-wrapper">
@@ -328,10 +500,31 @@ function RecentMovementsTable({ entries }: { entries: FinancialEntryRow[] }) {
                 return (
                   <tr key={entry.id}>
                     <td className="font-medium">{entry.description}</td>
-                    <td><Badge variant={receita ? "success" : "warning"}>{entry.categoryName || (receita ? "Receita" : "Despesa")}</Badge></td>
-                    <td className={cn("font-medium", receita ? "text-success" : "text-danger")}>{receita ? "↑ Receita" : "↓ Despesa"}</td>
-                    <td className={cn("font-bold", receita ? "text-success" : "text-danger")}>{formatMoney(entry.amount)}</td>
-                    <td className="text-text-secondary">{formatDate(entry.date)}</td>
+                    <td>
+                      <Badge variant={receita ? "success" : "warning"}>
+                        {entry.categoryName ||
+                          (receita ? "Receita" : "Despesa")}
+                      </Badge>
+                    </td>
+                    <td
+                      className={cn(
+                        "font-medium",
+                        receita ? "text-success" : "text-danger"
+                      )}
+                    >
+                      {receita ? "↑ Receita" : "↓ Despesa"}
+                    </td>
+                    <td
+                      className={cn(
+                        "font-bold",
+                        receita ? "text-success" : "text-danger"
+                      )}
+                    >
+                      {formatMoney(entry.amount)}
+                    </td>
+                    <td className="text-text-secondary">
+                      {formatDate(entry.date)}
+                    </td>
                   </tr>
                 );
               })}
@@ -339,16 +532,29 @@ function RecentMovementsTable({ entries }: { entries: FinancialEntryRow[] }) {
           </table>
         </div>
       ) : (
-        <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-text-muted">Nenhuma movimentação encontrada.</div>
+        <div className="border-border text-text-muted rounded-2xl border border-dashed p-8 text-center text-sm">
+          Nenhuma movimentação encontrada.
+        </div>
       )}
-      <button type="button" className="table-footer-link">Ver todas as movimentações <ChevronRight className="size-4" /></button>
+      <button type="button" className="table-footer-link" onClick={onViewAll}>
+        Ver todas as movimentações <ChevronRight className="size-4" />
+      </button>
     </section>
   );
 }
 
-function AccountsPayableTable({ entries }: { entries: AccountPayableRow[] }) {
+function AccountsPayableTable({
+  entries,
+  onViewAll,
+}: {
+  entries: AccountPayableRow[];
+  onViewAll: () => void;
+}) {
   const rows = entries.slice(0, 4);
-  const badgeMap: Record<string, "warning" | "success" | "destructive" | "default"> = {
+  const badgeMap: Record<
+    string,
+    "warning" | "success" | "destructive" | "default"
+  > = {
     paid: "success",
     overdue: "destructive",
     cancelled: "default",
@@ -364,7 +570,14 @@ function AccountsPayableTable({ entries }: { entries: AccountPayableRow[] }) {
     <section className="table-card">
       <div className="table-card-header">
         <h2>Contas a pagar</h2>
-        <Button variant="ghost" size="sm" className="text-primary font-bold">Ver todas</Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-primary font-bold"
+          onClick={onViewAll}
+        >
+          Ver todas
+        </Button>
       </div>
       {rows.length ? (
         <div className="table-wrapper">
@@ -381,18 +594,28 @@ function AccountsPayableTable({ entries }: { entries: AccountPayableRow[] }) {
               {rows.map((entry) => (
                 <tr key={entry.id}>
                   <td className="font-medium">{entry.description}</td>
-                  <td className="text-text-secondary">{formatDate(entry.dueDate)}</td>
+                  <td className="text-text-secondary">
+                    {formatDate(entry.dueDate)}
+                  </td>
                   <td className="font-bold">{formatMoney(entry.amount)}</td>
-                  <td><Badge variant={badgeMap[entry.status] ?? "default"}>{labelMap[entry.status] ?? entry.status}</Badge></td>
+                  <td>
+                    <Badge variant={badgeMap[entry.status] ?? "default"}>
+                      {labelMap[entry.status] ?? entry.status}
+                    </Badge>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       ) : (
-        <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-text-muted">Nenhuma conta a pagar encontrada.</div>
+        <div className="border-border text-text-muted rounded-2xl border border-dashed p-8 text-center text-sm">
+          Nenhuma conta a pagar encontrada.
+        </div>
       )}
-      <button type="button" className="table-footer-link">Ver todas as contas a pagar <ChevronRight className="size-4" /></button>
+      <button type="button" className="table-footer-link" onClick={onViewAll}>
+        Ver todas as contas a pagar <ChevronRight className="size-4" />
+      </button>
     </section>
   );
 }
@@ -403,28 +626,52 @@ export function Component() {
   const { data: entries = [] } = useFinancialEntries();
   const { data: payables = [] } = useAccountsPayable();
   const cashFlowRange = useMemo(() => getDashboardCashFlowRange(), []);
-  const { data: cashFlowRows } = useCashFlow("month", cashFlowRange.start, cashFlowRange.end);
+  const { data: cashFlowRows } = useCashFlow(
+    "month",
+    cashFlowRange.start,
+    cashFlowRange.end
+  );
   const timedOut = useDataTimeout(isLoading);
-  const [hiddenSeries, setHiddenSeries] = useState<Record<ChartSeries, boolean>>({ receitas: false, despesas: false, saldo: false });
+  const [hiddenSeries, setHiddenSeries] = useState<
+    Record<ChartSeries, boolean>
+  >({ receitas: false, despesas: false, saldo: false });
 
   const saldo = kpis?.saldo ?? 0;
   const totalReceitas = kpis?.totalReceitas ?? 0;
   const totalDespesas = kpis?.totalDespesas ?? 0;
-  const contasPagas = kpis ? (kpis.contasPagasMes ?? 0) + (kpis.contasRecebidasMes ?? 0) : null;
-  const pendenciaData = useMemo(() => ({
-    total: (kpis?.contasAVencer ?? 0) + (kpis?.contasVencidas ?? 0) + (kpis?.contasAReceber ?? 0) + (kpis?.contasReceberVencidas ?? 0),
-    overdue: (kpis?.contasVencidas ?? 0) + (kpis?.contasReceberVencidas ?? 0),
-  }), [kpis]);
+  const contasPagas = kpis
+    ? (kpis.contasPagasMes ?? 0) + (kpis.contasRecebidasMes ?? 0)
+    : null;
+  const pendenciaData = useMemo(
+    () => ({
+      total:
+        (kpis?.contasAVencer ?? 0) +
+        (kpis?.contasVencidas ?? 0) +
+        (kpis?.contasAReceber ?? 0) +
+        (kpis?.contasReceberVencidas ?? 0),
+      overdue: (kpis?.contasVencidas ?? 0) + (kpis?.contasReceberVencidas ?? 0),
+    }),
+    [kpis]
+  );
 
   const chartData = useMemo(
-    () => buildFinancialChartData(cashFlowRows as CashFlowApiRow[] | undefined, cashFlowRange.start),
-    [cashFlowRange.start, cashFlowRows],
+    () =>
+      buildFinancialChartData(
+        cashFlowRows as CashFlowApiRow[] | undefined,
+        cashFlowRange.start
+      ),
+    [cashFlowRange.start, cashFlowRows]
   );
-  const kpiSeries = useMemo(() => ({
-    faturamento: chartData.map((item) => item.receitas),
-    lucro: chartData.map((item) => item.saldo),
-    contasPagas: chartData.map((_item, index) => (index === chartData.length - 1 ? contasPagas ?? 0 : 0)),
-  }), [chartData, contasPagas]);
+  const kpiSeries = useMemo(
+    () => ({
+      faturamento: chartData.map((item) => item.receitas),
+      lucro: chartData.map((item) => item.saldo),
+      contasPagas: chartData.map((_item, index) =>
+        index === chartData.length - 1 ? (contasPagas ?? 0) : 0
+      ),
+    }),
+    [chartData, contasPagas]
+  );
 
   function toggleSeries(series: ChartSeries) {
     setHiddenSeries((current) => ({ ...current, [series]: !current[series] }));
@@ -438,7 +685,10 @@ export function Component() {
         <header className="page-header">
           <div>
             <h1 className="page-header-title">Dashboard</h1>
-            <p className="page-header-desc">Visão executiva para acompanhar caixa, lucro, despesas e pendências.</p>
+            <p className="page-header-desc">
+              Visão executiva para acompanhar caixa, lucro, despesas e
+              pendências.
+            </p>
           </div>
           <div className="page-header-actions">
             <Button variant="outline">
@@ -454,31 +704,68 @@ export function Component() {
 
         {isLoading && !timedOut ? (
           <div className="dashboard-top-grid">
-            <Card><CardContent className="h-[330px] animate-pulse bg-surface-muted rounded-[20px]" /></Card>
+            <Card>
+              <CardContent className="bg-surface-muted h-[330px] animate-pulse rounded-[20px]" />
+            </Card>
             <div className="dashboard-metrics-grid">
-              {Array.from({ length: 4 }).map((_, i) => <Card key={i}><CardContent className="h-[292px] animate-pulse bg-surface-muted rounded-[20px]" /></Card>)}
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Card key={i}>
+                  <CardContent className="bg-surface-muted h-[292px] animate-pulse rounded-[20px]" />
+                </Card>
+              ))}
             </div>
           </div>
         ) : isError ? (
           <Card elevated>
             <CardContent className="flex min-h-56 flex-col items-center justify-center gap-3 p-8 text-center">
-              <p className="font-bold text-text-primary">Não foi possível carregar os KPIs.</p>
-              <p className="text-sm text-text-secondary">Verifique sua conexão e tente novamente.</p>
+              <p className="text-text-primary font-bold">
+                Não foi possível carregar os KPIs.
+              </p>
+              <p className="text-text-secondary text-sm">
+                Verifique sua conexão e tente novamente.
+              </p>
               <Button onClick={() => void refetch()}>Tentar novamente</Button>
             </CardContent>
           </Card>
         ) : (
           <>
             <div className="dashboard-top-grid">
-              <FinancialHeroCard balance={saldo} revenue={totalReceitas} expenses={totalDespesas} />
+              <FinancialHeroCard
+                balance={saldo}
+                revenue={totalReceitas}
+                expenses={totalDespesas}
+              />
 
               <div className="dashboard-kpi-panel">
                 <h2>Resumo financeiro</h2>
                 <div className="dashboard-metrics-grid">
-                  <KpiCard title="Faturamento" value={formatMoney(totalReceitas)} icon={Banknote} tone="green" delta={getSeriesDelta(kpiSeries.faturamento)} sparklineData={kpiSeries.faturamento} />
-                  <KpiCard title="Lucro" value={formatMoney(saldo)} icon={TrendingUp} tone="blue" delta={getSeriesDelta(kpiSeries.lucro)} sparklineData={kpiSeries.lucro} />
-                  <KpiCard title="Contas pagas" value={timedOut && !kpis ? "—" : String(contasPagas ?? 0)} icon={ReceiptText} tone="orange" sparklineData={kpiSeries.contasPagas} />
-                  <PendingKpiCard total={pendenciaData.total} overdue={pendenciaData.overdue} />
+                  <KpiCard
+                    title="Faturamento"
+                    value={formatMoney(totalReceitas)}
+                    icon={Banknote}
+                    tone="green"
+                    delta={getSeriesDelta(kpiSeries.faturamento)}
+                    sparklineData={kpiSeries.faturamento}
+                  />
+                  <KpiCard
+                    title="Lucro"
+                    value={formatMoney(saldo)}
+                    icon={TrendingUp}
+                    tone="blue"
+                    delta={getSeriesDelta(kpiSeries.lucro)}
+                    sparklineData={kpiSeries.lucro}
+                  />
+                  <KpiCard
+                    title="Contas pagas"
+                    value={timedOut && !kpis ? "—" : String(contasPagas ?? 0)}
+                    icon={ReceiptText}
+                    tone="orange"
+                    sparklineData={kpiSeries.contasPagas}
+                  />
+                  <PendingKpiCard
+                    total={pendenciaData.total}
+                    overdue={pendenciaData.overdue}
+                  />
                 </div>
               </div>
             </div>
@@ -487,25 +774,113 @@ export function Component() {
               <section className="chart-card">
                 <div className="chart-card-header">
                   <h2>Resumo financeiro</h2>
-                  <ChartLegend hiddenSeries={hiddenSeries} onToggle={toggleSeries} />
+                  <ChartLegend
+                    hiddenSeries={hiddenSeries}
+                    onToggle={toggleSeries}
+                  />
                 </div>
                 <div className="chart-card-body">
                   <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={chartData} margin={{ left: 54, right: 18, top: 18, bottom: 6 }} barGap={8}>
+                    <ComposedChart
+                      data={chartData}
+                      margin={{ left: 54, right: 18, top: 18, bottom: 6 }}
+                      barGap={8}
+                    >
                       <defs>
-                        <linearGradient id="saldoAreaGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="var(--chart-balance)" stopOpacity={0.16} />
-                          <stop offset="100%" stopColor="var(--chart-balance)" stopOpacity={0} />
+                        <linearGradient
+                          id="saldoAreaGradient"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="0%"
+                            stopColor="var(--chart-balance)"
+                            stopOpacity={0.16}
+                          />
+                          <stop
+                            offset="100%"
+                            stopColor="var(--chart-balance)"
+                            stopOpacity={0}
+                          />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid vertical={false} strokeDasharray="4 6" stroke="color-mix(in srgb, var(--border) 54%, transparent)" />
-                      <XAxis dataKey="mes" stroke="var(--color-text-muted)" fontSize={12} tickMargin={10} />
-                      <YAxis stroke="var(--color-text-muted)" fontSize={12} tickMargin={8} tickFormatter={(v: number) => formatCompactMoney(v)} />
-                      <Tooltip content={(props) => <FinancialTooltip active={props.active} payload={props.payload as ChartPayload[] | undefined} />} />
-                      {!hiddenSeries.saldo ? <Area type="monotone" dataKey="saldo" fill="url(#saldoAreaGradient)" stroke="none" /> : null}
-                      {!hiddenSeries.receitas ? <Bar dataKey="receitas" name="Receitas" fill="var(--chart-revenue)" fillOpacity={0.92} radius={[7, 7, 0, 0]} maxBarSize={40} /> : null}
-                      {!hiddenSeries.despesas ? <Bar dataKey="despesas" name="Despesas" fill="var(--chart-expense)" fillOpacity={0.9} radius={[7, 7, 0, 0]} maxBarSize={40} /> : null}
-                      {!hiddenSeries.saldo ? <Line type="monotone" dataKey="saldo" name="Saldo" stroke="var(--chart-balance)" strokeWidth={3.2} dot={{ r: 4, strokeWidth: 2, stroke: "var(--card)", fill: "var(--chart-balance)" }} activeDot={{ r: 6, strokeWidth: 2, stroke: "var(--card)" }} /> : null}
+                      <CartesianGrid
+                        vertical={false}
+                        strokeDasharray="4 6"
+                        stroke="color-mix(in srgb, var(--border) 54%, transparent)"
+                      />
+                      <XAxis
+                        dataKey="mes"
+                        stroke="var(--color-text-muted)"
+                        fontSize={12}
+                        tickMargin={10}
+                      />
+                      <YAxis
+                        stroke="var(--color-text-muted)"
+                        fontSize={12}
+                        tickMargin={8}
+                        tickFormatter={(v: number) => formatCompactMoney(v)}
+                      />
+                      <Tooltip
+                        content={(props) => (
+                          <FinancialTooltip
+                            active={props.active}
+                            payload={
+                              props.payload as ChartPayload[] | undefined
+                            }
+                          />
+                        )}
+                      />
+                      {!hiddenSeries.saldo ? (
+                        <Area
+                          type="monotone"
+                          dataKey="saldo"
+                          fill="url(#saldoAreaGradient)"
+                          stroke="none"
+                        />
+                      ) : null}
+                      {!hiddenSeries.receitas ? (
+                        <Bar
+                          dataKey="receitas"
+                          name="Receitas"
+                          fill="var(--chart-revenue)"
+                          fillOpacity={0.92}
+                          radius={[7, 7, 0, 0]}
+                          maxBarSize={40}
+                        />
+                      ) : null}
+                      {!hiddenSeries.despesas ? (
+                        <Bar
+                          dataKey="despesas"
+                          name="Despesas"
+                          fill="var(--chart-expense)"
+                          fillOpacity={0.9}
+                          radius={[7, 7, 0, 0]}
+                          maxBarSize={40}
+                        />
+                      ) : null}
+                      {!hiddenSeries.saldo ? (
+                        <Line
+                          type="monotone"
+                          dataKey="saldo"
+                          name="Saldo"
+                          stroke="var(--chart-balance)"
+                          strokeWidth={3.2}
+                          dot={{
+                            r: 4,
+                            strokeWidth: 2,
+                            stroke: "var(--card)",
+                            fill: "var(--chart-balance)",
+                          }}
+                          activeDot={{
+                            r: 6,
+                            strokeWidth: 2,
+                            stroke: "var(--card)",
+                          }}
+                        />
+                      ) : null}
                     </ComposedChart>
                   </ResponsiveContainer>
                 </div>
@@ -514,8 +889,14 @@ export function Component() {
             </div>
 
             <div className="dashboard-bottom-grid">
-              <RecentMovementsTable entries={entries} />
-              <AccountsPayableTable entries={payables} />
+              <RecentMovementsTable
+                entries={entries}
+                onViewAll={() => navigate("/app/financeiro/lancamentos")}
+              />
+              <AccountsPayableTable
+                entries={payables}
+                onViewAll={() => navigate("/app/financeiro/contas-pagar")}
+              />
             </div>
           </>
         )}

@@ -1,5 +1,11 @@
 import type { LucideIcon } from "lucide-react";
-import { ChevronDown, Loader2, Plus, Search, SlidersHorizontal } from "lucide-react";
+import {
+  ChevronDown,
+  Loader2,
+  Plus,
+  Search,
+  SlidersHorizontal,
+} from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -56,7 +62,14 @@ const toneStyles: Record<string, string> = {
   slate: "bg-surface-soft text-text-secondary border-border-soft",
 };
 
-export function MetricCard({ title, value, icon: Icon, tone = "blue", helper, className }: MetricCardProps) {
+export function MetricCard({
+  title,
+  value,
+  icon: Icon,
+  tone = "blue",
+  helper,
+  className,
+}: MetricCardProps) {
   return (
     <div className={cn("stat-card", className)}>
       <div className="stat-card-header">
@@ -71,8 +84,19 @@ export function MetricCard({ title, value, icon: Icon, tone = "blue", helper, cl
   );
 }
 
-export function MoneyValue({ value, tone = "neutral" }: { value: string; tone?: "neutral" | "positive" | "negative" }) {
-  const color = tone === "positive" ? "text-success" : tone === "negative" ? "text-destructive" : "text-foreground";
+export function MoneyValue({
+  value,
+  tone = "neutral",
+}: {
+  value: string;
+  tone?: "neutral" | "positive" | "negative";
+}) {
+  const color =
+    tone === "positive"
+      ? "text-success"
+      : tone === "negative"
+        ? "text-destructive"
+        : "text-foreground";
   return <span className={cn("font-bold tabular-nums", color)}>{value}</span>;
 }
 
@@ -112,7 +136,13 @@ const statusLabels: Record<string, string> = {
 
 export function StatusBadge({ status }: { status: string }) {
   return (
-    <span className={cn("badge", statusStyles[status] ?? "bg-surface-soft text-text-secondary border-border-soft")}>
+    <span
+      className={cn(
+        "badge",
+        statusStyles[status] ??
+          "bg-surface-soft text-text-secondary border-border-soft"
+      )}
+    >
       {statusLabels[status] ?? status}
     </span>
   );
@@ -124,10 +154,10 @@ export function LoadingState({ label = "Carregando..." }: { label?: string }) {
       {Array.from({ length: 4 }).map((_, index) => (
         <div key={index} className="stat-card">
           <div className="space-y-4">
-            <div className="h-3 w-24 animate-pulse rounded-full bg-surface-muted" />
-            <div className="h-8 w-36 animate-pulse rounded-full bg-surface-muted" />
-            <div className="h-3 w-44 animate-pulse rounded-full bg-surface-muted" />
-            <div className="flex items-center gap-2 text-xs text-text-muted">
+            <div className="bg-surface-muted h-3 w-24 animate-pulse rounded-full" />
+            <div className="bg-surface-muted h-8 w-36 animate-pulse rounded-full" />
+            <div className="bg-surface-muted h-3 w-44 animate-pulse rounded-full" />
+            <div className="text-text-muted flex items-center gap-2 text-xs">
               <Loader2 className="size-3 animate-spin" />
               {label}
             </div>
@@ -145,7 +175,12 @@ interface FilterBarProps {
   children?: ReactNode;
 }
 
-export function FilterBar({ searchPlaceholder = "Buscar...", search, onSearchChange, children }: FilterBarProps) {
+export function FilterBar({
+  searchPlaceholder = "Buscar...",
+  search,
+  onSearchChange,
+  children,
+}: FilterBarProps) {
   const [open, setOpen] = useState(true);
   const hasFilters = Boolean(children);
 
@@ -154,7 +189,7 @@ export function FilterBar({ searchPlaceholder = "Buscar...", search, onSearchCha
       <div className="filter-card">
         <div className="filter-row">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-text-muted" />
+            <Search className="text-text-muted absolute top-1/2 left-3 size-4 -translate-y-1/2" />
             <input
               className="search-input"
               placeholder={searchPlaceholder}
@@ -172,15 +207,14 @@ export function FilterBar({ searchPlaceholder = "Buscar...", search, onSearchCha
             >
               <SlidersHorizontal size={16} />
               Filtros
-              <ChevronDown size={14} className={cn("transition-transform", open && "rotate-180")} />
+              <ChevronDown
+                size={14}
+                className={cn("transition-transform", open && "rotate-180")}
+              />
             </button>
           )}
         </div>
-        {hasFilters && open && (
-          <div className="filter-content">
-            {children}
-          </div>
-        )}
+        {hasFilters && open && <div className="filter-content">{children}</div>}
       </div>
       <style>{filterStyles}</style>
     </>
@@ -239,8 +273,14 @@ export function MonthSelect({ value, onValueChange }: MonthSelectProps) {
     date.setDate(1);
     date.setMonth(date.getMonth() - index);
     const optionValue = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-    const label = date.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
-    return { value: optionValue, label: label.charAt(0).toUpperCase() + label.slice(1) };
+    const label = date.toLocaleDateString("pt-BR", {
+      month: "long",
+      year: "numeric",
+    });
+    return {
+      value: optionValue,
+      label: label.charAt(0).toUpperCase() + label.slice(1),
+    };
   });
 
   return (
@@ -252,7 +292,9 @@ export function MonthSelect({ value, onValueChange }: MonthSelectProps) {
     >
       <option value="">Mês</option>
       {monthOptions.map((opt) => (
-        <option key={opt.value} value={opt.value}>{opt.label}</option>
+        <option key={opt.value} value={opt.value}>
+          {opt.label}
+        </option>
       ))}
     </select>
   );
@@ -288,14 +330,30 @@ interface EmptyStateProps {
   onAction?: () => void;
 }
 
-export function EmptyState({ icon, title, description, action, actionLabel, onAction }: EmptyStateProps) {
-  const resolvedAction = action ?? (actionLabel && onAction ? <Button onClick={onAction}><Plus className="size-4" />{actionLabel}</Button> : undefined);
+export function EmptyState({
+  icon,
+  title,
+  description,
+  action,
+  actionLabel,
+  onAction,
+}: EmptyStateProps) {
+  const resolvedAction =
+    action ??
+    (actionLabel && onAction ? (
+      <Button onClick={onAction}>
+        <Plus className="size-4" />
+        {actionLabel}
+      </Button>
+    ) : undefined);
   return (
     <div className="empty-state">
       {icon && <div className="empty-state-icon">{icon}</div>}
       <h3>{title}</h3>
       {description && <p>{description}</p>}
-      {resolvedAction && <div className="empty-state-action">{resolvedAction}</div>}
+      {resolvedAction && (
+        <div className="empty-state-action">{resolvedAction}</div>
+      )}
     </div>
   );
 }
@@ -309,18 +367,26 @@ interface PageShellProps {
   children: ReactNode;
 }
 
-export function PageShell({ title, subtitle, actionLabel, onAction, children }: PageShellProps) {
+export function PageShell({
+  title,
+  subtitle,
+  actionLabel,
+  onAction,
+  children,
+}: PageShellProps) {
   return (
     <div className="page-stack">
       <PageHeader
         title={title}
         description={subtitle}
-        actions={actionLabel && onAction ? (
-          <button className="button-primary" onClick={onAction}>
-            <Plus size={16} />
-            {actionLabel}
-          </button>
-        ) : undefined}
+        actions={
+          actionLabel && onAction ? (
+            <button type="button" className="button-primary" onClick={onAction}>
+              <Plus size={16} />
+              {actionLabel}
+            </button>
+          ) : undefined
+        }
       />
       {children}
       <style>{pageHeaderStyles}</style>
@@ -345,13 +411,26 @@ interface EmptyTableProps {
   actionLabel?: string;
 }
 
-export function EmptyTable({ columns: _columns, emptyTitle, emptyDescription, onAction, actionLabel }: EmptyTableProps) {
+export function EmptyTable({
+  columns: _columns,
+  emptyTitle,
+  emptyDescription,
+  onAction,
+  actionLabel,
+}: EmptyTableProps) {
   return (
     <div className="table-card" style={{ padding: 0 }}>
       <EmptyState
         title={emptyTitle}
         description={emptyDescription}
-        action={actionLabel && onAction ? <Button onClick={onAction}><Plus className="size-4" />{actionLabel}</Button> : undefined}
+        action={
+          actionLabel && onAction ? (
+            <Button onClick={onAction}>
+              <Plus className="size-4" />
+              {actionLabel}
+            </Button>
+          ) : undefined
+        }
       />
     </div>
   );

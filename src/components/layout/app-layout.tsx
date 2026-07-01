@@ -32,27 +32,58 @@ export function AppLayout() {
 
   return (
     <div className="app-shell">
-      <a href="#conteudo-principal" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-[14px] focus:bg-surface focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-primary focus:shadow-card focus:outline-none focus:ring-[3px] focus:ring-primary/28">
+      <a
+        href="#conteudo-principal"
+        className="focus:bg-surface focus:text-primary focus:shadow-card focus:ring-primary/28 sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:rounded-[14px] focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:ring-[3px] focus:outline-none"
+      >
         Pular para o conteúdo
       </a>
-      <AppSidebar pathname={location.pathname} userEmail={user?.email} onSignOut={handleSignOut} />
+      <AppSidebar
+        pathname={location.pathname}
+        userEmail={user?.email}
+        onSignOut={handleSignOut}
+      />
       <div className="app-main">
-        <Topbar pathname={location.pathname} userEmail={user?.email} mobileOpen={mobileOpen} onOpenMobile={() => setMobileOpen(true)} onSignOut={handleSignOut} />
+        <Topbar
+          pathname={location.pathname}
+          userEmail={user?.email}
+          mobileOpen={mobileOpen}
+          onOpenMobile={() => setMobileOpen(true)}
+          onSignOut={handleSignOut}
+        />
         <main id="conteudo-principal" tabIndex={-1} className="outline-none">
           <Outlet />
         </main>
       </div>
-      <MobileNavDrawer open={mobileOpen} pathname={location.pathname} userEmail={user?.email} onClose={() => setMobileOpen(false)} onSignOut={handleSignOut} />
+      <MobileNavDrawer
+        open={mobileOpen}
+        pathname={location.pathname}
+        userEmail={user?.email}
+        onClose={() => setMobileOpen(false)}
+        onSignOut={handleSignOut}
+      />
     </div>
   );
 }
 
-function AppSidebar({ pathname, userEmail, onSignOut }: { pathname: string; userEmail?: string; onSignOut: () => void }) {
+function AppSidebar({
+  pathname,
+  userEmail,
+  onSignOut,
+}: {
+  pathname: string;
+  userEmail?: string;
+  onSignOut: () => void;
+}) {
   return (
     <>
       <aside className="sidebar" aria-label="Menu principal">
         <div className="sidebar-logo">
-          <NavLink to="/app" aria-label="Ir para Dashboard" className="flex flex-col items-center gap-2">
+          <NavLink
+            to="/app"
+            aria-label="Ir para Dashboard"
+            className="flex flex-col items-center gap-2"
+          >
             <ArtecLogoMark className="sidebar-logo-mark" />
             <span className="sidebar-logo-text">Artec Gestão</span>
           </NavLink>
@@ -71,7 +102,13 @@ function AppSidebar({ pathname, userEmail, onSignOut }: { pathname: string; user
   );
 }
 
-function SidebarGroup({ item, pathname }: { item: NavigationItem; pathname: string }) {
+function SidebarGroup({
+  item,
+  pathname,
+}: {
+  item: NavigationItem;
+  pathname: string;
+}) {
   const active = isNavigationGroupActive(pathname, item);
   const Icon = item.icon;
 
@@ -113,32 +150,67 @@ function SidebarGroup({ item, pathname }: { item: NavigationItem; pathname: stri
   );
 }
 
-function SidebarFooter({ userEmail, onSignOut }: { userEmail?: string; onSignOut: () => void }) {
-  const initials = (userEmail ?? "U")
-    .split(/[\s@._-]+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase())
-    .join("") || "U";
+function SidebarFooter({
+  userEmail,
+  onSignOut,
+}: {
+  userEmail?: string;
+  onSignOut: () => void;
+}) {
+  const initials =
+    (userEmail ?? "U")
+      .split(/[\s@._-]+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((p) => p[0]?.toUpperCase())
+      .join("") || "U";
 
   return (
     <div className="sidebar-user">
       <div className="sidebar-user-avatar">{initials}</div>
       <div className="min-w-0 flex-1">
-        <div className="sidebar-user-name truncate">{userEmail?.split("@")[0] ?? "Usuário"}</div>
-        <div className="sidebar-user-role truncate">{userEmail ?? "Administrador"}</div>
+        <div className="sidebar-user-name truncate">
+          {userEmail?.split("@")[0] ?? "Usuário"}
+        </div>
+        <div className="sidebar-user-role truncate">
+          {userEmail ?? "Administrador"}
+        </div>
       </div>
-      <button type="button" onClick={onSignOut} aria-label="Sair" className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-white/70 transition hover:bg-white/20 hover:text-white">
+      <button
+        type="button"
+        onClick={onSignOut}
+        aria-label="Sair"
+        className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-white/70 transition hover:bg-white/20 hover:text-white"
+      >
         <LogOut size={16} />
       </button>
     </div>
   );
 }
 
-function Topbar({ pathname, userEmail, mobileOpen, onOpenMobile, onSignOut }: { pathname: string; userEmail?: string; mobileOpen: boolean; onOpenMobile: () => void; onSignOut: () => void }) {
+function Topbar({
+  pathname,
+  userEmail,
+  mobileOpen,
+  onOpenMobile,
+  onSignOut,
+}: {
+  pathname: string;
+  userEmail?: string;
+  mobileOpen: boolean;
+  onOpenMobile: () => void;
+  onSignOut: () => void;
+}) {
   return (
     <header className="topbar">
-      <button type="button" onClick={onOpenMobile} className="mobile-menu-button" aria-label="Abrir menu" aria-expanded={mobileOpen} aria-controls="menu-mobile">
+      <button
+        type="button"
+        onClick={onOpenMobile}
+        className="mobile-menu-button"
+        aria-label="Abrir menu"
+        aria-expanded={mobileOpen}
+        aria-controls="menu-mobile"
+      >
         <Menu size={20} />
       </button>
       <Breadcrumbs pathname={pathname} />
@@ -157,7 +229,16 @@ function Breadcrumbs({ pathname }: { pathname: string }) {
       {trail.map((item, index) => (
         <span key={`${item}-${index}`} className="flex items-center gap-2">
           {index > 0 && <span className="text-text-muted text-xs">/</span>}
-          <span className={cn("truncate", index === trail.length - 1 ? "font-bold text-text-primary" : "text-text-secondary")}>{item}</span>
+          <span
+            className={cn(
+              "truncate",
+              index === trail.length - 1
+                ? "text-text-primary font-bold"
+                : "text-text-secondary"
+            )}
+          >
+            {item}
+          </span>
         </span>
       ))}
     </nav>
@@ -168,47 +249,87 @@ function ThemeToggle() {
   const theme = useThemeStore((s) => s.theme);
   const toggleTheme = useThemeStore((s) => s.toggleTheme);
   return (
-    <button type="button" onClick={toggleTheme} aria-label={theme === "dark" ? "Ativar modo claro" : "Ativar modo escuro"} className="topbar-icon-btn">
+    <button
+      type="button"
+      onClick={toggleTheme}
+      aria-label={theme === "dark" ? "Ativar modo claro" : "Ativar modo escuro"}
+      className="topbar-icon-btn"
+    >
       {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
     </button>
   );
 }
 
-function UserMenu({ userEmail, onSignOut }: { userEmail?: string; onSignOut: () => void }) {
+function UserMenu({
+  userEmail,
+  onSignOut,
+}: {
+  userEmail?: string;
+  onSignOut: () => void;
+}) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) { if (e.key === "Escape") setOpen(false); }
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  const initials = (userEmail ?? "U")
-    .split(/[\s@._-]+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase())
-    .join("") || "U";
+  const initials =
+    (userEmail ?? "U")
+      .split(/[\s@._-]+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((p) => p[0]?.toUpperCase())
+      .join("") || "U";
 
   const palette = ["#185FA5", "#1D9E75", "#D85A30", "#7C3AED", "#BA7517"];
-  const hash = Array.from(userEmail ?? "U").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const hash = Array.from(userEmail ?? "U").reduce(
+    (acc, char) => acc + char.charCodeAt(0),
+    0
+  );
 
   return (
     <div className="relative">
-      <button type="button" onClick={() => setOpen((v) => !v)} aria-label="Menu do usuário" aria-expanded={open} className="topbar-user-btn">
-        <span className="flex size-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white" style={{ backgroundColor: palette[hash % palette.length] }}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-label="Menu do usuário"
+        aria-expanded={open}
+        className="topbar-user-btn"
+      >
+        <span
+          className="flex size-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white"
+          style={{ backgroundColor: palette[hash % palette.length] }}
+        >
           {initials}
         </span>
-        <span className="hidden sm:block max-w-28 truncate text-sm font-medium text-text-primary">{userEmail?.split("@")[0] ?? "Usuário"}</span>
-        <ChevronDown size={14} className={cn("text-text-muted transition-transform", open && "rotate-180")} />
+        <span className="text-text-primary hidden max-w-28 truncate text-sm font-medium sm:block">
+          {userEmail?.split("@")[0] ?? "Usuário"}
+        </span>
+        <ChevronDown
+          size={14}
+          className={cn(
+            "text-text-muted transition-transform",
+            open && "rotate-180"
+          )}
+        />
       </button>
       {open && (
-        <div className="absolute right-0 top-11 z-50 w-56 rounded-[14px] border border-border bg-surface p-2 text-text-primary shadow-elevated">
-          <div className="border-b border-border px-3 py-2">
-            <div className="truncate text-sm font-bold">{userEmail ?? "Usuário"}</div>
-            <div className="text-xs text-text-secondary">Sessão ativa</div>
+        <div className="border-border bg-surface text-text-primary shadow-elevated absolute top-11 right-0 z-50 w-56 rounded-[14px] border p-2">
+          <div className="border-border border-b px-3 py-2">
+            <div className="truncate text-sm font-bold">
+              {userEmail ?? "Usuário"}
+            </div>
+            <div className="text-text-secondary text-xs">Sessão ativa</div>
           </div>
-          <button type="button" onClick={onSignOut} className="mt-1 flex w-full items-center gap-2 rounded-[10px] px-3 py-2 text-sm font-medium text-text-secondary transition hover:bg-surface-soft hover:text-text-primary">
+          <button
+            type="button"
+            onClick={onSignOut}
+            className="text-text-secondary hover:bg-surface-soft hover:text-text-primary mt-1 flex w-full items-center gap-2 rounded-[10px] px-3 py-2 text-sm font-medium transition"
+          >
             <LogOut size={16} />
             Sair
           </button>
@@ -218,33 +339,62 @@ function UserMenu({ userEmail, onSignOut }: { userEmail?: string; onSignOut: () 
   );
 }
 
-function MobileNavDrawer({ open, pathname, userEmail, onClose, onSignOut }: { open: boolean; pathname: string; userEmail?: string; onClose: () => void; onSignOut: () => void }) {
+function MobileNavDrawer({
+  open,
+  pathname,
+  userEmail,
+  onClose,
+  onSignOut,
+}: {
+  open: boolean;
+  pathname: string;
+  userEmail?: string;
+  onClose: () => void;
+  onSignOut: () => void;
+}) {
   useEffect(() => {
     if (!open) return;
-    function handleKeyDown(e: KeyboardEvent) { if (e.key === "Escape") onClose(); }
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [open, onClose]);
 
   if (!open) return null;
 
-  const initials = (userEmail ?? "U")
-    .split(/[\s@._-]+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase())
-    .join("") || "U";
+  const initials =
+    (userEmail ?? "U")
+      .split(/[\s@._-]+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((p) => p[0]?.toUpperCase())
+      .join("") || "U";
 
   return (
     <div className="fixed inset-0 z-50 lg:hidden">
-      <button type="button" aria-label="Fechar menu" className="sidebar-overlay" onClick={onClose} />
+      <button
+        type="button"
+        aria-label="Fechar menu"
+        className="sidebar-overlay"
+        onClick={onClose}
+      />
       <aside id="menu-mobile" className="sidebar-mobile-drawer">
         <div className="flex items-center justify-between px-4 py-5">
-          <NavLink to="/app" onClick={onClose} className="flex items-center gap-3">
+          <NavLink
+            to="/app"
+            onClick={onClose}
+            className="flex items-center gap-3"
+          >
             <ArtecLogoMark className="size-11 [--logo-accent:#bfd9ff]" />
-            <span className="font-bold text-lg text-white">Artec Gestão</span>
+            <span className="text-lg font-bold text-white">Artec Gestão</span>
           </NavLink>
-          <button type="button" onClick={onClose} aria-label="Fechar menu" className="flex size-10 items-center justify-center rounded-xl bg-white/10 text-white/70 hover:bg-white/20 hover:text-white">
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Fechar menu"
+            className="flex size-10 items-center justify-center rounded-xl bg-white/10 text-white/70 hover:bg-white/20 hover:text-white"
+          >
             <X size={20} />
           </button>
         </div>
@@ -253,7 +403,16 @@ function MobileNavDrawer({ open, pathname, userEmail, onClose, onSignOut }: { op
             const active = isNavigationGroupActive(pathname, item);
             if (!item.items?.length && item.href) {
               return (
-                <NavLink key={item.href} to={item.href} end onClick={onClose} className={cn("sidebar-link", active && "sidebar-link-active")}>
+                <NavLink
+                  key={item.href}
+                  to={item.href}
+                  end
+                  onClick={onClose}
+                  className={cn(
+                    "sidebar-link",
+                    active && "sidebar-link-active"
+                  )}
+                >
                   <item.icon size={20} />
                   <span>{item.title}</span>
                 </NavLink>
@@ -266,7 +425,15 @@ function MobileNavDrawer({ open, pathname, userEmail, onClose, onSignOut }: { op
                   const subActive = isNavigationActive(pathname, subitem.href);
                   const SubIcon = navigationIconMap[subitem.title];
                   return (
-                    <NavLink key={subitem.href} to={subitem.href} onClick={onClose} className={cn("sidebar-link", subActive && "sidebar-link-active")}>
+                    <NavLink
+                      key={subitem.href}
+                      to={subitem.href}
+                      onClick={onClose}
+                      className={cn(
+                        "sidebar-link",
+                        subActive && "sidebar-link-active"
+                      )}
+                    >
                       {SubIcon && <SubIcon size={20} />}
                       <span>{subitem.title}</span>
                     </NavLink>
@@ -279,10 +446,19 @@ function MobileNavDrawer({ open, pathname, userEmail, onClose, onSignOut }: { op
         <div className="sidebar-user">
           <div className="sidebar-user-avatar">{initials}</div>
           <div className="min-w-0 flex-1">
-            <div className="sidebar-user-name truncate">{userEmail?.split("@")[0] ?? "Usuário"}</div>
-            <div className="sidebar-user-role truncate">{userEmail ?? "Administrador"}</div>
+            <div className="sidebar-user-name truncate">
+              {userEmail?.split("@")[0] ?? "Usuário"}
+            </div>
+            <div className="sidebar-user-role truncate">
+              {userEmail ?? "Administrador"}
+            </div>
           </div>
-          <button type="button" onClick={onSignOut} aria-label="Sair" className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-white/70 transition hover:bg-white/20 hover:text-white">
+          <button
+            type="button"
+            onClick={onSignOut}
+            aria-label="Sair"
+            className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-white/70 transition hover:bg-white/20 hover:text-white"
+          >
             <LogOut size={16} />
           </button>
         </div>
@@ -475,7 +651,7 @@ const sidebarStyles = `
     position: sticky;
     top: 0;
     z-index: 30;
-    background: rgba(255, 255, 255, 0.82);
+    background: color-mix(in srgb, var(--color-surface) 88%, transparent);
     border-bottom: 1px solid var(--color-border);
     backdrop-filter: blur(12px);
     padding: 0 12px;
