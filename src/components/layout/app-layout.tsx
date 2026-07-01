@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
-import { ChevronDown, LogOut, Menu, Moon, Sun, X } from "lucide-react";
+import { ChevronDown, LogOut, Menu, Moon, PanelLeftClose, PanelLeftOpen, Sun, X } from "lucide-react";
 import { AppLogo } from "@/components/brand/AppLogo";
 import { Button, IconButton } from "@/components/ui/button";
 import { useAuthStore } from "@/lib/supabase/auth-store";
@@ -15,8 +15,31 @@ import {
   type NavigationItem,
 } from "./navigation";
 
+function useSidebarCollapsed() {
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem("sidebar-collapsed") === "true";
+    } catch {
+      return false;
+    }
+  });
+
+  const toggle = useCallback(() => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("sidebar-collapsed", String(next));
+      } catch { /* noop */ }
+      return next;
+    });
+  }, []);
+
+  return { collapsed, toggle };
+}
+
 export function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { collapsed, toggle: toggleSidebar } = useSidebarCollapsed();
   const user = useAuthStore((s) => s.user);
   const signOut = useAuthStore((s) => s.signOut);
   const navigate = useNavigate();
@@ -32,7 +55,7 @@ export function AppLayout() {
   }
 
   return (
-    <div className="app-shell">
+    <div className={cn("app-shell", collapsed && "sidebar-collapsed")}>
       <a
         href="#conteudo-principal"
         className="focus:bg-surface focus:text-primary focus:shadow-card focus:ring-primary/28 sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:rounded-[14px] focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:ring-[3px] focus:outline-none"
@@ -40,9 +63,11 @@ export function AppLayout() {
         Pular para o conteúdo
       </a>
       <AppSidebar
+        collapsed={collapsed}
         pathname={location.pathname}
         userEmail={user?.email}
         onSignOut={handleSignOut}
+        onToggleCollapse={toggleSidebar}
       />
       <div className="app-main">
         <Topbar
@@ -68,13 +93,17 @@ export function AppLayout() {
 }
 
 function AppSidebar({
+  collapsed,
   pathname,
   userEmail,
   onSignOut,
+  onToggleCollapse,
 }: {
+  collapsed: boolean;
   pathname: string;
   userEmail?: string;
   onSignOut: () => void;
+  onToggleCollapse: () => void;
 }) {
   return (
     <>
@@ -83,19 +112,32 @@ function AppSidebar({
           <NavLink
             to="/app"
             aria-label="Ir para Dashboard"
-            className="flex flex-col items-center gap-2"
+            className={cn(
+              "sidebar-logo-link",
+              collapsed && "justify-center"
+            )}
           >
-            <AppLogo />
+            <AppLogo compact={collapsed} />
           </NavLink>
         </div>
 
         <nav className="sidebar-nav">
           {navigationItems.map((item) => (
-            <SidebarGroup key={item.title} item={item} pathname={pathname} />
+            <SidebarGroup key={item.title} item={item} pathname={pathname} collapsed={collapsed} />
           ))}
         </nav>
 
-        <SidebarFooter userEmail={userEmail} onSignOut={onSignOut} />
+        <div className="sidebar-actions">
+          <IconButton
+            onClick={onToggleCollapse}
+            aria-label={collapsed ? "Expandir sidebar" : "Recolher sidebar"}
+            className="sidebar-collapse-btn"
+          >
+            {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+          </IconButton>
+        </div>
+
+        <SidebarFooter collapsed={collapsed} userEmail={userEmail} onSignOut={onSignOut} />
       </aside>
       <style>{sidebarStyles}</style>
     </>
@@ -105,9 +147,11 @@ function AppSidebar({
 function SidebarGroup({
   item,
   pathname,
+  collapsed,
 }: {
   item: NavigationItem;
   pathname: string;
+  collapsed?: boolean;
 }) {
   const active = isNavigationGroupActive(pathname, item);
   const Icon = item.icon;
@@ -118,11 +162,15 @@ function SidebarGroup({
         <NavLink
           to={item.href}
           end={item.href === "/app"}
-          className={cn("sidebar-link", active && "sidebar-link-active")}
+          className={cn(
+            "sidebar-link",
+            collapsed && "sidebar-link-collapsed",
+            active && "sidebar-link-active"
+          )}
           aria-current={active ? "page" : undefined}
         >
           <Icon size={20} />
-          <span>{item.title}</span>
+          {!collapsed && <span>{item.title}</span>}
         </NavLink>
       </div>
     );
@@ -130,7 +178,7 @@ function SidebarGroup({
 
   return (
     <div>
-      <p className="sidebar-group-label">{item.title}</p>
+      {!collapsed && <p className="sidebar-group-label">{item.title}</p>}
       {item.items?.map((subitem) => {
         const subActive = isNavigationActive(pathname, subitem.href);
         const SubIcon = navigationIconMap[subitem.title];
@@ -138,11 +186,15 @@ function SidebarGroup({
           <NavLink
             key={subitem.href}
             to={subitem.href}
-            className={cn("sidebar-link", subActive && "sidebar-link-active")}
+            className={cn(
+              "sidebar-link",
+              collapsed && "sidebar-link-collapsed",
+              subActive && "sidebar-link-active"
+            )}
             aria-current={subActive ? "page" : undefined}
           >
             {SubIcon && <SubIcon size={20} />}
-            <span>{subitem.title}</span>
+            {!collapsed && <span>{subitem.title}</span>}
           </NavLink>
         );
       })}
@@ -151,9 +203,11 @@ function SidebarGroup({
 }
 
 function SidebarFooter({
+  collapsed,
   userEmail,
   onSignOut,
 }: {
+  collapsed?: boolean;
   userEmail?: string;
   onSignOut: () => void;
 }) {
@@ -166,23 +220,25 @@ function SidebarFooter({
       .join("") || "U";
 
   return (
-    <div className="sidebar-user">
+    <div className={cn("sidebar-user", collapsed && "sidebar-user-collapsed")}>
       <div className="sidebar-user-avatar">{initials}</div>
-      <div className="min-w-0 flex-1">
-        <div className="sidebar-user-name truncate">
-          {userEmail?.split("@")[0] ?? "Usuário"}
+      {!collapsed && (
+        <div className="min-w-0 flex-1">
+          <div className="sidebar-user-name truncate">
+            {userEmail?.split("@")[0] ?? "Usuário"}
+          </div>
+          <div className="sidebar-user-role truncate">
+            {userEmail ?? "Administrador"}
+          </div>
         </div>
-        <div className="sidebar-user-role truncate">
-          {userEmail ?? "Administrador"}
-        </div>
-      </div>
-      <IconButton
-        onClick={onSignOut}
-        aria-label="Sair"
-        className="size-10 rounded-lg bg-[color-mix(in_srgb,var(--sidebar-foreground)_10%,transparent)] text-[var(--sidebar-muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-foreground)]"
-      >
-        <LogOut size={16} />
-      </IconButton>
+      )}
+          <IconButton
+            onClick={onSignOut}
+            aria-label="Sair"
+            className="size-10 rounded-lg bg-[color-mix(in_srgb,var(--sidebar-foreground)_10%,transparent)] text-[var(--sidebar-muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-foreground)]"
+          >
+            <LogOut size={16} />
+          </IconButton>
     </div>
   );
 }
@@ -379,7 +435,7 @@ function MobileNavDrawer({
             onClick={onClose}
             className="flex items-center gap-3"
           >
-            <AppLogo markClassName="[--logo-accent:var(--sidebar-foreground)]" />
+            <AppLogo compact markClassName="[--logo-accent:var(--sidebar-foreground)]" />
           </NavLink>
           <IconButton
             onClick={onClose}
@@ -807,4 +863,89 @@ const sidebarStyles = `
   from { transform: translateX(-100%); }
   to { transform: translateX(0); }
 }
+
+/* Collapsed sidebar */
+.sidebar-collapsed .sidebar {
+  width: 80px;
+  padding: 20px 8px;
+  transition: width 220ms ease, padding 220ms ease;
+}
+
+.sidebar-collapsed .sidebar-logo {
+  padding: 4px 4px 20px;
+  justify-content: center;
+}
+
+.sidebar-logo-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--sidebar-foreground);
+  text-decoration: none;
+}
+
+.sidebar-collapsed .sidebar-group-label {
+  display: none;
+}
+
+.sidebar-collapsed .sidebar-link {
+  justify-content: center;
+  padding: 0;
+  width: 44px;
+  min-height: 44px;
+  margin-inline: auto;
+}
+
+.sidebar-collapsed .sidebar-link span {
+  display: none;
+}
+
+.sidebar-collapsed .sidebar-nav {
+  align-items: center;
+}
+
+.sidebar-collapsed .sidebar-nav > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.sidebar-actions {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0;
+  margin-top: auto;
+}
+
+.sidebar-collapse-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  color: var(--sidebar-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.sidebar-collapse-btn:hover {
+  background: var(--sidebar-hover);
+  color: var(--sidebar-foreground);
+}
+
+.sidebar-collapsed .sidebar-user {
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  align-items: center;
+}
+
+.sidebar-collapsed .sidebar-user .min-w-0 {
+  display: none;
+}
+
 `;
