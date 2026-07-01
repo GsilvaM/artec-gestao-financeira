@@ -1,11 +1,13 @@
 ---
 name: artec-visual-regression-review
-description: Revisa acabamento visual final do Artec Gestao, especialmente botoes, sidebar, login, tabelas e dark/light mode.
+description: Revisa acabamento visual final do Artec Gestao contra UX_CRITERIA.md, Dashboard baseline, botoes, sidebar, login, tabelas, charts e dark/light mode.
 ---
 
 # Artec Visual Regression Review Skill
 
-Revisar visualmente:
+Ler `docs/ui-refactor/UX_CRITERIA.md` antes de revisar.
+
+## Revisar visualmente
 
 - Botoes alinhados.
 - Login button alinhado.
@@ -17,8 +19,11 @@ Revisar visualmente:
 - Tabelas refinadas.
 - Empty states bonitos.
 - Mobile sem quebra.
+- Charts recharts/sparklines com cores por token.
+- Toasts sonner consistentes.
+- Forms com estados de erro, loading e focus-visible.
 
-Reprovar se houver:
+## Reprovar se houver
 
 - botao torto
 - texto de botao desalinhado
@@ -29,3 +34,9 @@ Reprovar se houver:
 - dark mode chapado
 - login escuro demais
 - mobile espremido
+- chart cortado ou poluido
+- toast ou menu cobrindo acao critica
+
+## Proibido
+
+Nao alterar backend, banco, auth, rotas, regras financeiras, package.json ou lockfiles.

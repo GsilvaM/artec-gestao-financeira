@@ -645,6 +645,11 @@
   }
 
   .motion-control {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    line-height: 1;
     transition:
       transform 170ms ease,
       box-shadow 170ms ease,
@@ -865,7 +870,7 @@
 
   .filter-row {
     display: grid;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: 10px;
     align-items: center;
   }

@@ -92,8 +92,8 @@ export function Component() {
                 <Label htmlFor="password">Senha</Label>
                 <Input id="password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="********" />
               </div>
-              <Button type="submit" size="lg" disabled={submitting} className="w-full">
-                <LockKeyhole className="size-4" />
+              <Button type="submit" size="lg" loading={submitting} className="w-full">
+                {!submitting && <LockKeyhole className="size-4" />}
                 {submitting ? "Entrando..." : "Entrar"}
               </Button>
               <Button type="button" variant="ghost" className="w-full" onClick={() => setMode("request")}>
@@ -128,8 +128,8 @@ export function Component() {
                   <Textarea id="request-message" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Explique brevemente por que precisa acessar o sistema." />
                 </div>
               </div>
-              <Button type="submit" size="lg" disabled={submitting} className="w-full">
-                <Send className="size-4" />
+              <Button type="submit" size="lg" loading={submitting} className="w-full">
+                {!submitting && <Send className="size-4" />}
                 {submitting ? "Enviando..." : "Enviar solicitação"}
               </Button>
               <Button type="button" variant="ghost" className="w-full" onClick={() => setMode("login")}>

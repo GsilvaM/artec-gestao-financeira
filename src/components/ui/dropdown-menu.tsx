@@ -75,10 +75,17 @@ export function DropdownMenuTrigger({ children, asChild, className, ...props }: 
     e.stopPropagation();
     if (triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
+      const menuWidth = 176;
+      const viewportPadding = 8;
+      const left = Math.min(
+        Math.max(viewportPadding, rect.right - menuWidth),
+        Math.max(viewportPadding, window.innerWidth - menuWidth - viewportPadding)
+      );
       setContentStyle({
         position: "fixed",
         top: `${rect.bottom + 4}px`,
-        left: `${Math.max(8, rect.right - 160)}px`,
+        left: `${left}px`,
+        width: `${menuWidth}px`,
         zIndex: 9999,
       });
     }
@@ -140,7 +147,7 @@ export function DropdownMenuContent({ children, className, ...props }: React.HTM
       tabIndex={-1}
       style={contentStyle}
       className={cn(
-        "min-w-[10rem] origin-top-right animate-in fade-in-0 zoom-in-95 rounded-2xl border border-border/90 bg-popover/95 p-1.5 text-popover-foreground shadow-elevated backdrop-blur focus:outline-none",
+        "max-w-[calc(100vw-1rem)] origin-top-right animate-in fade-in-0 zoom-in-95 rounded-2xl border border-border/90 bg-popover/95 p-1.5 text-popover-foreground shadow-elevated backdrop-blur focus:outline-none",
         className,
       )}
       {...props}

@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
+import { forwardRef } from "react";
 
 const buttonVariants = cva(
   "motion-control inline-flex box-border items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold leading-none align-middle transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-55 active:scale-[0.98] [&_span]:leading-none [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
@@ -45,23 +46,28 @@ type IconButtonProps = Omit<ButtonProps, "children" | "leftIcon" | "rightIcon"> 
   children: React.ReactNode;
 };
 
-export function Button({
-  className,
-  variant,
-  size,
-  loading,
-  leftIcon,
-  rightIcon,
-  children,
-  disabled,
-  type = "button",
-  ...props
-}: ButtonProps) {
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
+  {
+    className,
+    variant,
+    size,
+    loading,
+    leftIcon,
+    rightIcon,
+    children,
+    disabled,
+    type = "button",
+    ...props
+  },
+  ref
+) {
   return (
     <button
+      ref={ref}
       type={type}
       className={cn(buttonVariants({ variant, size, className }))}
       disabled={disabled || loading}
+      aria-busy={loading || undefined}
       {...props}
     >
       {loading ? (
@@ -76,18 +82,22 @@ export function Button({
       {rightIcon}
     </button>
   );
-}
+});
 
-export function IconButton({
-  className,
-  variant = "ghost",
-  size = "icon",
-  children,
-  type = "button",
-  ...props
-}: IconButtonProps) {
+export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(function IconButton(
+  {
+    className,
+    variant = "ghost",
+    size = "icon",
+    children,
+    type = "button",
+    ...props
+  },
+  ref
+) {
   return (
     <Button
+      ref={ref}
       type={type}
       variant={variant}
       size={size}
@@ -97,4 +107,4 @@ export function IconButton({
       {children}
     </Button>
   );
-}
+});
