@@ -29,7 +29,7 @@ export function TableHead({ className, ...props }: React.ThHTMLAttributes<HTMLTa
     <th
       scope="col"
       className={cn(
-        "h-11 bg-[var(--surface-2)] px-4 text-left align-middle text-[11px] font-bold uppercase tracking-[0.04em] text-[var(--muted)] first:rounded-l-[var(--radius-md)] last:rounded-r-[var(--radius-md)]",
+        "h-11 bg-[var(--surface-2)] px-4 text-left align-middle text-[11px] font-bold uppercase tracking-[0.04em] text-[var(--muted-foreground)] first:rounded-l-[var(--radius-md)] last:rounded-r-[var(--radius-md)]",
         className
       )}
       {...props}

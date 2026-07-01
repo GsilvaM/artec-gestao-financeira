@@ -16,6 +16,7 @@ import { useAuthStore } from "@/lib/supabase/auth-store";
 import { cn } from "@/lib/utils";
 import { useThemeStore } from "@/stores/theme";
 import { preloadNavigationRoutes, preloadRoute } from "@/routes/preload";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import {
   findNavigationTrail,
   isNavigationActive,
@@ -56,14 +57,32 @@ export function AppLayout() {
   const signOut = useAuthStore((s) => s.signOut);
   const navigate = useNavigate();
   const location = useLocation();
+  const isDesktop = !useMediaQuery("(max-width: 1023px)");
 
   useEffect(() => {
     setMobileOpen(false);
   }, [location.pathname]);
 
   useEffect(() => {
+    if (isDesktop && mobileOpen) {
+      setMobileOpen(false);
+    }
+  }, [isDesktop, mobileOpen]);
+
+  useEffect(() => {
     preloadNavigationRoutes();
   }, []);
+
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileOpen]);
 
   async function handleSignOut() {
     await signOut();
@@ -453,14 +472,18 @@ function MobileNavDrawer({
       .join("") || "U";
 
   return (
-    <div className="fixed inset-0 z-50 lg:hidden">
+    <div
+      className="fixed inset-0 z-50 lg:hidden"
+      style={{ pointerEvents: "none" }}
+    >
       <button
         type="button"
         aria-label="Fechar menu"
         className="sidebar-overlay"
         onClick={onClose}
+        style={{ pointerEvents: "auto" }}
       />
-      <aside id="menu-mobile" className="sidebar-mobile-drawer">
+      <aside id="menu-mobile" className="sidebar-mobile-drawer" style={{ pointerEvents: "auto" }}>
         <div className="flex items-center justify-between px-4 py-5">
           <NavLink
             to="/app"

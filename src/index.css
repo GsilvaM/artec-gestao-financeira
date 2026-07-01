@@ -861,11 +861,11 @@
 
   /* === Filter Card === */
   .filter-card {
-    border: 1px solid var(--color-border);
+    border: 0;
     border-radius: 22px;
-    background: color-mix(in srgb, var(--color-surface) 92%, transparent);
-    box-shadow: var(--shadow-sm);
-    padding: 12px;
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
   }
 
   .filter-row {

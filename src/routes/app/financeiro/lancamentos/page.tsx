@@ -230,11 +230,11 @@ export function Component() {
 
   return (
     <PageShell icon={FileText} title="Lançamentos" subtitle="Cadastre receitas, custos e despesas com menos cliques." actionLabel="Novo lançamento" onAction={() => { resetForm(); setOpen(true); }}>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <SummaryCard label="Lançamentos" value={String(entries?.length ?? 0)} icon={ListChecks} iconColor="blue" footer="Registros encontrados" />
         <SummaryCard label="Receitas" value={formatMoney(receitas)} icon={ArrowUpCircle} iconColor="green" footer="Entradas confirmadas" />
         <SummaryCard label="Despesas" value={formatMoney(despesas)} icon={ArrowDownCircle} iconColor="red" footer="Saídas registradas" />
-        <SummaryCard label="Saldo" value={formatMoney(saldo)} icon={Banknote} iconColor={saldo < 0 ? "red" : "blue"} footer="Receitas menos despesas" className="sm:col-span-2 xl:col-span-1" />
+        <SummaryCard label="Saldo" value={formatMoney(saldo)} icon={Banknote} iconColor={saldo < 0 ? "red" : "blue"} footer="Receitas menos despesas" />
       </div>
 
       <TransactionFilters

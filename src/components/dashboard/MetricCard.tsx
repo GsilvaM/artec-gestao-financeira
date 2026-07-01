@@ -61,7 +61,7 @@ export function MetricCard({
       )}
     >
       <div className={cn("pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r to-transparent", accentStyles[iconColor])} />
-      <p className="truncate text-[11px] font-bold uppercase tracking-[0.04em] text-[var(--muted)]">{label}</p>
+      <p className="truncate text-[11px] font-bold uppercase tracking-[0.04em] text-[var(--muted-foreground)]">{label}</p>
       <div className="flex min-w-0 items-center justify-between gap-2">
         <div className={cn("flex size-9 shrink-0 items-center justify-center rounded-xl", iconStyles[iconColor])}>
           <Icon className="size-4" />

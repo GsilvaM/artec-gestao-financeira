@@ -93,7 +93,7 @@ export function Component() {
 
   return (
     <PageShell icon={Tags} title="Categorias" subtitle="Organize receitas, custos e despesas por classificação" actionLabel="Nova categoria" onAction={() => { resetForm(); setOpen(true); }}>
-      <div className="stats-grid">
+      <div className="grid grid-cols-1 items-stretch gap-4">
         <MetricCard title="Categorias ativas" value={String(categories?.length ?? 0)} icon={FolderTree} tone="blue" />
       </div>
 
