@@ -2,11 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
 import {
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   LogOut,
   Menu,
   Moon,
-  PanelLeftClose,
-  PanelLeftOpen,
   Sun,
   X,
 } from "lucide-react";
@@ -121,6 +121,8 @@ function AppSidebar({
   onSignOut: () => void;
   onToggleCollapse: () => void;
 }) {
+  const collapseLabel = collapsed ? "Expandir menu" : "Recolher menu";
+
   return (
     <>
       <aside className="sidebar" aria-label="Menu principal">
@@ -135,6 +137,14 @@ function AppSidebar({
           >
             <AppLogo compact={collapsed} />
           </NavLink>
+          <IconButton
+            onClick={onToggleCollapse}
+            aria-label={collapseLabel}
+            title={collapseLabel}
+            className="sidebar-collapse-btn"
+          >
+            {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          </IconButton>
         </div>
 
         <nav className="sidebar-nav">
@@ -147,20 +157,6 @@ function AppSidebar({
             />
           ))}
         </nav>
-
-        <div className="sidebar-actions">
-          <IconButton
-            onClick={onToggleCollapse}
-            aria-label={collapsed ? "Expandir sidebar" : "Recolher sidebar"}
-            className="sidebar-collapse-btn"
-          >
-            {collapsed ? (
-              <PanelLeftOpen size={16} />
-            ) : (
-              <PanelLeftClose size={16} />
-            )}
-          </IconButton>
-        </div>
 
         <SidebarFooter
           collapsed={collapsed}
@@ -633,7 +629,9 @@ const sidebarStyles = `
   flex: 0 0 auto;
   display: flex;
   align-items: center;
-  padding: 4px 4px 24px;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 4px 2px 22px 4px;
 }
 
 .app-logo {
@@ -698,11 +696,13 @@ const sidebarStyles = `
 }
 
 .sidebar-link {
+  position: relative;
   width: 100%;
   min-width: 0;
   min-height: 44px;
   padding: 0 12px;
   border-radius: 12px;
+  border: 1px solid transparent;
   display: inline-flex;
   align-items: center;
   justify-content: flex-start;
@@ -723,15 +723,28 @@ const sidebarStyles = `
 }
 
 .sidebar-link:hover {
-  background: var(--sidebar-hover);
+  background: color-mix(in srgb, var(--sidebar-foreground) 8%, transparent);
   color: var(--sidebar-active-foreground);
   transform: translateX(1px);
 }
 
 .sidebar-link-active {
-  background: var(--sidebar-active);
+  background: color-mix(in srgb, var(--sidebar-active) 82%, transparent);
   color: var(--sidebar-active-foreground);
-  box-shadow: 0 14px 30px var(--primary-ring);
+  border-color: color-mix(in srgb, var(--sidebar-active-foreground) 14%, transparent);
+  box-shadow: 0 8px 18px rgba(3, 10, 24, 0.16);
+}
+
+.sidebar-link-active::before {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  width: 3px;
+  height: 20px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--sidebar-active-foreground) 78%, transparent);
+  transform: translateY(-50%);
 }
 
 .sidebar-link svg {
@@ -961,7 +974,9 @@ const sidebarStyles = `
 }
 
 .sidebar-collapsed .sidebar-logo {
-  padding: 4px 4px 20px;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px 4px 18px;
   justify-content: center;
 }
 
@@ -999,31 +1014,42 @@ const sidebarStyles = `
   align-items: center;
 }
 
-.sidebar-actions {
-  display: flex;
-  flex: 0 0 auto;
-  justify-content: center;
-  padding: 8px 0;
-}
-
 .sidebar-collapse-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   line-height: 1;
-  color: var(--sidebar-muted);
-  background: transparent;
-  border: none;
+  color: var(--sidebar-foreground);
+  background: color-mix(in srgb, var(--sidebar-foreground) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--sidebar-foreground) 12%, transparent);
   cursor: pointer;
-  transition: background-color 150ms ease, color 150ms ease;
+  box-shadow: none;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 150ms ease;
 }
 
 .sidebar-collapse-btn:hover {
-  background: var(--sidebar-hover);
+  background: color-mix(in srgb, var(--sidebar-foreground) 13%, transparent);
+  border-color: color-mix(in srgb, var(--sidebar-foreground) 24%, transparent);
   color: var(--sidebar-foreground);
+  transform: translateY(-1px);
+}
+
+.sidebar-collapse-btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--sidebar-active) 76%, transparent);
+  outline-offset: 2px;
+}
+
+.sidebar-collapsed .sidebar-link-active::before {
+  left: 4px;
+  height: 18px;
+}
+
+.sidebar-collapsed .sidebar-collapse-btn {
+  width: 44px;
+  height: 40px;
 }
 
 .sidebar-collapsed .sidebar-user {
