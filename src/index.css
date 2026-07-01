@@ -1060,6 +1060,12 @@
     padding: 28px 18px;
     text-align: center;
   }
+  
+  @media (max-width: 768px) {
+    .empty-state {
+      padding: 22px 14px;
+    }
+  }
 
   .empty-state-icon {
     width: 56px;
@@ -1262,11 +1268,6 @@
 
     .page-header-desc {
       font-size: 0.8125rem;
-    }
-
-    .page-action {
-      width: 100%;
-      height: 46px;
     }
   }
 

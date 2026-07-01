@@ -68,7 +68,7 @@ export function Component() {
     <div className="login-page">
       <div className="login-bg" />
       <IconButton onClick={toggleTheme} className="login-theme-btn" aria-label={theme === "dark" ? "Ativar modo claro" : "Ativar modo escuro"}>
-        {theme === "dark" ? <Sun className="size-5" /> : <Moon className="size-5" />}
+        {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
       </IconButton>
 
       <Card className="login-card">
@@ -190,8 +190,8 @@ const loginStyles = `
 }
 
 .login-theme-btn svg {
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   flex-shrink: 0;
 }
 

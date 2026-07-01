@@ -179,7 +179,7 @@ function SidebarFooter({
       <IconButton
         onClick={onSignOut}
         aria-label="Sair"
-        className="size-9 rounded-lg bg-[color-mix(in_srgb,var(--sidebar-foreground)_10%,transparent)] text-[var(--sidebar-muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-foreground)]"
+        className="size-10 rounded-lg bg-[color-mix(in_srgb,var(--sidebar-foreground)_10%,transparent)] text-[var(--sidebar-muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-foreground)]"
       >
         <LogOut size={16} />
       </IconButton>
@@ -252,7 +252,7 @@ function ThemeToggle() {
       aria-label={theme === "dark" ? "Ativar modo claro" : "Ativar modo escuro"}
       className="topbar-icon-btn"
     >
-      {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+      {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
     </IconButton>
   );
 }
@@ -302,7 +302,7 @@ function UserMenu({
           {userEmail?.split("@")[0] ?? "Usuário"}
         </span>
         <ChevronDown
-          size={14}
+          size={16}
           className={cn(
             "text-text-muted transition-transform",
             open && "rotate-180"
@@ -321,7 +321,7 @@ function UserMenu({
             type="button"
             variant="ghost"
             onClick={onSignOut}
-            className="text-text-secondary hover:bg-surface-soft hover:text-text-primary mt-1 inline-flex h-10 w-full items-center justify-start gap-2 rounded-[10px] px-3 text-sm font-medium leading-none transition [&_svg]:size-4 [&_svg]:shrink-0"
+            className="mt-1 w-full justify-start px-3"
           >
             <LogOut size={16} />
             Sair
@@ -384,7 +384,7 @@ function MobileNavDrawer({
           <IconButton
             onClick={onClose}
             aria-label="Fechar menu"
-            className="size-10 rounded-xl bg-[color-mix(in_srgb,var(--sidebar-foreground)_10%,transparent)] text-[var(--sidebar-muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-foreground)] [&_svg]:size-5"
+            className="size-10 rounded-xl bg-[color-mix(in_srgb,var(--sidebar-foreground)_10%,transparent)] text-[var(--sidebar-muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-foreground)] [&_svg]:size-4"
           >
             <X size={20} />
           </IconButton>
@@ -447,7 +447,7 @@ function MobileNavDrawer({
           <IconButton
             onClick={onSignOut}
             aria-label="Sair"
-            className="size-9 rounded-lg bg-[color-mix(in_srgb,var(--sidebar-foreground)_10%,transparent)] text-[var(--sidebar-muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-foreground)]"
+        className="size-10 rounded-lg bg-[color-mix(in_srgb,var(--sidebar-foreground)_10%,transparent)] text-[var(--sidebar-muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-foreground)]"
           >
             <LogOut size={16} />
           </IconButton>
@@ -694,8 +694,8 @@ const sidebarStyles = `
 }
 
 .mobile-menu-button svg {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   flex-shrink: 0;
 }
 
@@ -746,8 +746,8 @@ const sidebarStyles = `
 }
 
 .topbar-icon-btn svg {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   flex-shrink: 0;
 }
 
@@ -772,8 +772,8 @@ const sidebarStyles = `
 }
 
 .topbar-user-btn svg {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   flex-shrink: 0;
 }
 

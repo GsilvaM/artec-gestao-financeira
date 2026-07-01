@@ -227,73 +227,128 @@ export function Component() {
       </Card>
 
       <Card className="overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {["Usuário", "E-mail", "Perfil", "Status", "Solicitado em", "Último acesso", "Ações"].map((column) => (
-                <TableHead key={column}>{column}</TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
+        <div className="desktop-table">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={7} className="h-48 text-center text-sm text-muted-foreground">Carregando usuários...</TableCell>
+                {["Usuário", "E-mail", "Perfil", "Status", "Solicitado em", "Último acesso", "Ações"].map((column) => (
+                  <TableHead key={column}>{column}</TableHead>
+                ))}
               </TableRow>
-            ) : error ? (
-              <TableRow>
-                <TableCell colSpan={7} className="p-0">
-                  <EmptyState title="Não foi possível carregar usuários." description={error instanceof Error ? error.message : "Verifique as credenciais do Supabase e tente novamente."} />
-                </TableCell>
-              </TableRow>
-            ) : filteredUsers.length ? (
-              filteredUsers.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell>
-                    <div className="font-medium">{user.name || "Sem nome"}</div>
-                    {user.phone ? <div className="mt-1 text-xs text-muted-foreground">{user.phone}</div> : null}
-                  </TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>
-                    <Select
-                      className="min-w-40"
-                      value={user.roleId}
-                      onChange={(event) => handleAction(user, "role", event.target.value)}
-                      placeholder="Sem perfil"
-                      options={roles.map((role) => ({ value: role.id, label: roleLabel(role.name) }))}
-                      aria-label={`Perfil de ${user.email}`}
-                    />
-                  </TableCell>
-                  <TableCell><StatusBadge status={user.status} /></TableCell>
-                  <TableCell>{formatDateTime(user.createdAt)}</TableCell>
-                  <TableCell>{formatDateTime(user.lastSignInAt)}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-2">
-                      {user.status !== "approved" ? (
-                        <Button size="sm" onClick={() => handleAction(user, "approve")} disabled={updateMutation.isPending}>Aprovar</Button>
-                      ) : null}
-                      {user.status === "pending" ? (
-                        <Button size="sm" variant="destructive" onClick={() => handleAction(user, "reject")} disabled={updateMutation.isPending}>Rejeitar</Button>
-                      ) : null}
-                      {user.status === "approved" ? (
-                        <Button size="sm" variant="outline" onClick={() => handleAction(user, "disable")} disabled={updateMutation.isPending}>Desativar</Button>
-                      ) : null}
-                      {user.status === "disabled" || user.status === "rejected" ? (
-                        <Button size="sm" variant="secondary" onClick={() => handleAction(user, "reactivate")} disabled={updateMutation.isPending}>Reativar</Button>
-                      ) : null}
-                    </div>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="h-48 text-center text-sm text-muted-foreground">Carregando usuários...</TableCell>
+                </TableRow>
+              ) : error ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="p-0">
+                    <EmptyState title="Não foi possível carregar usuários." description={error instanceof Error ? error.message : "Verifique as credenciais do Supabase e tente novamente."} />
                   </TableCell>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={7} className="p-0">
-                  <EmptyState title="Nenhum usuário encontrado." description="Cadastre usuários ou aguarde novas solicitações de acesso." actionLabel="Novo usuário" onAction={() => setOpen(true)} />
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              ) : filteredUsers.length ? (
+                filteredUsers.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell>
+                      <div className="font-medium">{user.name || "Sem nome"}</div>
+                      {user.phone ? <div className="mt-1 text-xs text-muted-foreground">{user.phone}</div> : null}
+                    </TableCell>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>
+                      <Select
+                        className="min-w-40"
+                        value={user.roleId}
+                        onChange={(event) => handleAction(user, "role", event.target.value)}
+                        placeholder="Sem perfil"
+                        options={roles.map((role) => ({ value: role.id, label: roleLabel(role.name) }))}
+                        aria-label={`Perfil de ${user.email}`}
+                      />
+                    </TableCell>
+                    <TableCell><StatusBadge status={user.status} /></TableCell>
+                    <TableCell>{formatDateTime(user.createdAt)}</TableCell>
+                    <TableCell>{formatDateTime(user.lastSignInAt)}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-2">
+                        {user.status !== "approved" ? (
+                          <Button size="sm" onClick={() => handleAction(user, "approve")} disabled={updateMutation.isPending}>Aprovar</Button>
+                        ) : null}
+                        {user.status === "pending" ? (
+                          <Button size="sm" variant="destructive" onClick={() => handleAction(user, "reject")} disabled={updateMutation.isPending}>Rejeitar</Button>
+                        ) : null}
+                        {user.status === "approved" ? (
+                          <Button size="sm" variant="outline" onClick={() => handleAction(user, "disable")} disabled={updateMutation.isPending}>Desativar</Button>
+                        ) : null}
+                        {user.status === "disabled" || user.status === "rejected" ? (
+                          <Button size="sm" variant="secondary" onClick={() => handleAction(user, "reactivate")} disabled={updateMutation.isPending}>Reativar</Button>
+                        ) : null}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={7} className="p-0">
+                    <EmptyState title="Nenhum usuário encontrado." description="Cadastre usuários ou aguarde novas solicitações de acesso." actionLabel="Novo usuário" onAction={() => setOpen(true)} />
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+        <div className="mobile-list">
+          {isLoading ? (
+            Array.from({ length: 3 }).map((_, index) => (
+              <div key={index} className="mobile-record-card">
+                <div className="bg-surface-muted h-4 w-36 animate-pulse rounded-full" />
+                <div className="bg-surface-muted mt-3 h-4 w-52 animate-pulse rounded-full" />
+                <div className="bg-border mt-4 h-px" />
+                <div className="bg-surface-muted mt-4 h-4 w-40 animate-pulse rounded-full" />
+              </div>
+            ))
+          ) : error ? (
+            <EmptyState title="Não foi possível carregar usuários." description={error instanceof Error ? error.message : "Verifique as credenciais do Supabase e tente novamente."} />
+          ) : filteredUsers.length ? (
+            filteredUsers.map((user) => (
+              <article key={user.id} className="mobile-record-card">
+                <div className="mobile-record-top">
+                  <div className="min-w-0">
+                    <h3 className="text-text-primary truncate text-sm font-bold">
+                      {user.name || "Sem nome"}
+                    </h3>
+                    <p className="text-text-muted mt-1 text-xs">{user.email}</p>
+                    {user.phone ? <p className="text-text-secondary mt-1 text-xs">{user.phone}</p> : null}
+                    <p className="text-text-secondary mt-1 text-xs">
+                      {roleLabel(roles.find((r) => r.id === user.roleId)?.name ?? "")} · Solicitado em {formatDateTime(user.createdAt)}
+                    </p>
+                  </div>
+                  <StatusBadge status={user.status} />
+                </div>
+                <div className="mobile-record-bottom">
+                  <span className="text-text-muted text-xs">
+                    {user.lastSignInAt ? `Último acesso: ${formatDateTime(user.lastSignInAt)}` : "Nunca acessou"}
+                  </span>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {user.status !== "approved" ? (
+                    <Button size="sm" onClick={() => handleAction(user, "approve")} disabled={updateMutation.isPending}>Aprovar</Button>
+                  ) : null}
+                  {user.status === "pending" ? (
+                    <Button size="sm" variant="destructive" onClick={() => handleAction(user, "reject")} disabled={updateMutation.isPending}>Rejeitar</Button>
+                  ) : null}
+                  {user.status === "approved" ? (
+                    <Button size="sm" variant="outline" onClick={() => handleAction(user, "disable")} disabled={updateMutation.isPending}>Desativar</Button>
+                  ) : null}
+                  {user.status === "disabled" || user.status === "rejected" ? (
+                    <Button size="sm" variant="secondary" onClick={() => handleAction(user, "reactivate")} disabled={updateMutation.isPending}>Reativar</Button>
+                  ) : null}
+                </div>
+              </article>
+            ))
+          ) : (
+            <EmptyState title="Nenhum usuário encontrado." description="Cadastre usuários ou aguarde novas solicitações de acesso." actionLabel="Novo usuário" onAction={() => setOpen(true)} />
+          )}
+        </div>
       </Card>
 
       <Dialog open={open} onOpenChange={(value) => { if (!value) resetForm(); setOpen(value); }}>
