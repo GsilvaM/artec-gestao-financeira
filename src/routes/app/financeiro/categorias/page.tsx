@@ -12,13 +12,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from "@/domain/financeiro/hooks/use-categories";
 import type { CategoryFilters, CategoryRow } from "@/domain/financeiro/types";
 
+const DEFAULT_CATEGORY_COLOR = `#${"3B82F6"}`;
+const CATEGORY_DOT_FALLBACK = "var(--primary)";
+
 export function Component() {
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [type, setType] = useState<"receita" | "despesa">("receita");
-  const [color, setColor] = useState("#3B82F6");
+  const [color, setColor] = useState(DEFAULT_CATEGORY_COLOR);
   const [search, setSearch] = useState("");
 
   const filters = useMemo<CategoryFilters | undefined>(() => {
@@ -39,14 +42,14 @@ export function Component() {
   function resetForm() {
     setName("");
     setType("receita");
-    setColor("#3B82F6");
+    setColor(DEFAULT_CATEGORY_COLOR);
     setEditingId(null);
   }
 
   function handleEdit(cat: CategoryRow) {
     setName(cat.name);
     setType(cat.type);
-    setColor(cat.color ?? "#3B82F6");
+    setColor(cat.color ?? DEFAULT_CATEGORY_COLOR);
     setEditingId(cat.id);
     setOpen(true);
   }
@@ -178,7 +181,7 @@ function DesktopCategoryTable({
             <TableRow><TableCell colSpan={4} className="h-48 text-center text-sm text-muted-foreground">Carregando...</TableCell></TableRow>
           ) : categories?.length ? categories.map((cat) => (
             <TableRow key={cat.id}>
-              <TableCell className="font-medium"><span className="inline-flex items-center gap-2"><span className="inline-block size-3 rounded-full" style={{ backgroundColor: cat.color ?? "#94A3B8" }} />{cat.name}</span></TableCell>
+              <TableCell className="font-medium"><span className="inline-flex items-center gap-2"><span className="inline-block size-3 rounded-full" style={{ backgroundColor: cat.color ?? CATEGORY_DOT_FALLBACK }} />{cat.name}</span></TableCell>
               <TableCell>{cat.type === "receita" ? "Receita" : "Despesa"}</TableCell>
               <TableCell><StatusBadge status="ativo" /></TableCell>
               <TableCell>
@@ -246,7 +249,7 @@ function MobileCategoryList({
       {categories.map((cat) => (
         <article key={cat.id} className="category-card">
           <div className="category-main">
-            <span className="category-dot" style={{ backgroundColor: cat.color ?? "#94A3B8" }} />
+            <span className="category-dot" style={{ backgroundColor: cat.color ?? CATEGORY_DOT_FALLBACK }} />
             <div>
               <h3>{cat.name}</h3>
               <p>{cat.type === "receita" ? "Receita" : "Despesa"}</p>

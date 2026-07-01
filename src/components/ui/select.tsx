@@ -9,7 +9,7 @@ export function Select({ className, options, placeholder, ...props }: SelectProp
   return (
     <select
       className={cn(
-        "flex w-full min-h-[46px] rounded-2xl border border-border bg-surface text-text-primary px-4 text-sm font-semibold shadow-[var(--shadow-xs)] transition-all duration-160 ease-in-out hover:border-border-strong focus-visible:border-primary focus-visible:outline-none focus-visible:ring-[4px] focus-visible:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-50",
+        "flex min-h-11 w-full rounded-xl border border-border bg-[var(--surface-2)] px-4 text-sm font-medium text-foreground shadow-[var(--shadow-xs)] transition-all duration-200 ease-out hover:border-primary/45 focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-55",
         props.value === "" ? "text-text-muted" : "text-text-primary",
         className
       )}

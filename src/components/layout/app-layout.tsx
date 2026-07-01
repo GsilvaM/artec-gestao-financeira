@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
 import { ChevronDown, LogOut, Menu, Moon, Sun, X } from "lucide-react";
-import { ArtecLogoMark } from "@/components/brand/ArtecLogoMark";
+import { AppLogo } from "@/components/brand/AppLogo";
 import { useAuthStore } from "@/lib/supabase/auth-store";
 import { cn } from "@/lib/utils";
 import { useThemeStore } from "@/stores/theme";
@@ -84,8 +84,7 @@ function AppSidebar({
             aria-label="Ir para Dashboard"
             className="flex flex-col items-center gap-2"
           >
-            <ArtecLogoMark className="sidebar-logo-mark" />
-            <span className="sidebar-logo-text">Artec Gestão</span>
+            <AppLogo />
           </NavLink>
         </div>
 
@@ -180,7 +179,7 @@ function SidebarFooter({
         type="button"
         onClick={onSignOut}
         aria-label="Sair"
-        className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-white/70 transition hover:bg-white/20 hover:text-white"
+        className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[color-mix(in_srgb,var(--sidebar-foreground)_10%,transparent)] text-[var(--sidebar-muted)] transition hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-foreground)]"
       >
         <LogOut size={16} />
       </button>
@@ -285,12 +284,6 @@ function UserMenu({
       .map((p) => p[0]?.toUpperCase())
       .join("") || "U";
 
-  const palette = ["#185FA5", "#1D9E75", "#D85A30", "#7C3AED", "#BA7517"];
-  const hash = Array.from(userEmail ?? "U").reduce(
-    (acc, char) => acc + char.charCodeAt(0),
-    0
-  );
-
   return (
     <div className="relative">
       <button
@@ -301,8 +294,8 @@ function UserMenu({
         className="topbar-user-btn"
       >
         <span
-          className="flex size-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white"
-          style={{ backgroundColor: palette[hash % palette.length] }}
+          className="flex size-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-primary-foreground"
+          style={{ backgroundColor: "var(--primary)" }}
         >
           {initials}
         </span>
@@ -386,14 +379,13 @@ function MobileNavDrawer({
             onClick={onClose}
             className="flex items-center gap-3"
           >
-            <ArtecLogoMark className="size-11 [--logo-accent:#bfd9ff]" />
-            <span className="text-lg font-bold text-white">Artec Gestão</span>
+            <AppLogo markClassName="[--logo-accent:var(--sidebar-foreground)]" />
           </NavLink>
           <button
             type="button"
             onClick={onClose}
             aria-label="Fechar menu"
-            className="flex size-10 items-center justify-center rounded-xl bg-white/10 text-white/70 hover:bg-white/20 hover:text-white"
+            className="flex size-10 items-center justify-center rounded-xl bg-[color-mix(in_srgb,var(--sidebar-foreground)_10%,transparent)] text-[var(--sidebar-muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-foreground)]"
           >
             <X size={20} />
           </button>
@@ -457,7 +449,7 @@ function MobileNavDrawer({
             type="button"
             onClick={onSignOut}
             aria-label="Sair"
-            className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-white/70 transition hover:bg-white/20 hover:text-white"
+            className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[color-mix(in_srgb,var(--sidebar-foreground)_10%,transparent)] text-[var(--sidebar-muted)] transition hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-foreground)]"
           >
             <LogOut size={16} />
           </button>
@@ -471,10 +463,7 @@ const sidebarStyles = `
 .app-shell {
   min-height: 100vh;
   display: flex;
-  background:
-    radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 360px),
-    radial-gradient(circle at top right, rgba(18, 183, 106, 0.04), transparent 340px),
-    linear-gradient(180deg, var(--color-background) 0%, var(--color-background-soft) 100%);
+  background: var(--background);
 }
 
 .app-main {
@@ -486,13 +475,13 @@ const sidebarStyles = `
 
 #conteudo-principal {
   width: 100%;
-  max-width: 1480px;
+  max-width: 1360px;
   margin-inline: auto;
-  padding: 32px clamp(20px, 2vw, 32px) 32px;
+  padding: 32px;
   flex: 1;
 }
 
-@media (max-width: 767px) {
+@media (max-width: 1023px) {
   .app-shell {
     display: block;
   }
@@ -500,29 +489,33 @@ const sidebarStyles = `
     padding: 0;
   }
   #conteudo-principal {
-    padding: 12px 12px 32px;
+    padding: 24px;
     max-width: 100%;
   }
 }
 
+@media (max-width: 767px) {
+  #conteudo-principal {
+    padding: 16px;
+  }
+}
+
 .sidebar {
-  width: 216px;
+  width: 272px;
   min-height: 100vh;
-  padding: 18px 12px;
+  padding: 20px 16px;
   display: flex;
   flex-direction: column;
-  background:
-    radial-gradient(circle at top, rgba(255, 255, 255, 0.12), transparent 260px),
-    linear-gradient(180deg, #03152e 0%, #06244a 45%, #073b78 100%);
-  color: #ffffff;
-  box-shadow: 18px 0 46px rgba(6, 26, 56, 0.2);
+  background: linear-gradient(180deg, var(--sidebar) 0%, var(--sidebar-2) 54%, var(--sidebar-3) 100%);
+  color: var(--sidebar-foreground);
+  box-shadow: var(--shadow-lg);
   position: sticky;
   top: 0;
   flex-shrink: 0;
-  border-radius: 0 28px 28px 0;
+  border-right: 1px solid var(--sidebar-border);
 }
 
-@media (max-width: 767px) {
+@media (max-width: 1023px) {
   .sidebar {
     display: none;
   }
@@ -530,68 +523,88 @@ const sidebarStyles = `
 
 .sidebar-logo {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 12px 0 28px;
+  padding: 4px 4px 24px;
 }
 
-.sidebar-logo-mark {
-  width: 66px;
-  height: 66px;
-  color: #ffffff;
-  --logo-accent: #bfd9ff;
-  filter: drop-shadow(0 12px 22px rgba(0, 0, 0, 0.18));
+.app-logo {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+  color: var(--sidebar-foreground);
+  text-decoration: none;
 }
 
-.sidebar-logo-text {
-  font-size: 16px;
+.app-logo-mark {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  color: var(--primary);
+  --logo-accent: var(--sidebar-foreground);
+}
+
+.app-logo-copy {
+  display: grid;
+  gap: 2px;
+  line-height: 1.1;
+}
+
+.app-logo-copy strong {
+  color: var(--sidebar-foreground);
+  font-size: 18px;
   font-weight: 800;
-  color: #ffffff;
-  letter-spacing: -0.035em;
+}
+
+.app-logo-copy span {
+  color: var(--sidebar-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
   flex: 1;
   overflow-y: auto;
 }
 
 .sidebar-group-label {
-  margin: 0 0 8px 10px;
+  margin: 0 0 8px 12px;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.04em;
+  color: var(--sidebar-muted);
 }
 
 .sidebar-link {
-  min-height: 48px;
+  min-height: 44px;
   padding: 0 12px;
-  border-radius: 14px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  color: rgba(255, 255, 255, 0.84);
+  gap: 8px;
+  color: var(--sidebar-foreground);
   text-decoration: none;
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 650;
   transition: background-color 180ms ease, color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
 }
 
 .sidebar-link:hover {
-  background: rgba(255, 255, 255, 0.09);
-  color: #ffffff;
+  background: var(--sidebar-hover);
+  color: var(--sidebar-active-foreground);
   transform: translateX(2px);
 }
 
 .sidebar-link-active {
-  background: linear-gradient(135deg, #155eef 0%, #2563eb 100%);
-  color: #ffffff;
-  box-shadow: 0 12px 26px rgba(21, 94, 239, 0.3);
+  background: var(--sidebar-active);
+  color: var(--sidebar-active-foreground);
+  box-shadow: 0 14px 30px var(--primary-ring);
 }
 
 .sidebar-link svg {
@@ -603,9 +616,9 @@ const sidebarStyles = `
 .sidebar-user {
   margin-top: auto;
   padding: 12px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--sidebar-foreground) 8%, transparent);
+  border: 1px solid var(--sidebar-border);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -617,8 +630,8 @@ const sidebarStyles = `
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, #2dd4bf, #2563eb);
-  color: #ffffff;
+  background: var(--primary);
+  color: var(--primary-foreground);
   font-weight: 800;
   font-size: 15px;
   flex-shrink: 0;
@@ -627,13 +640,13 @@ const sidebarStyles = `
 .sidebar-user-name {
   font-size: 13px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--sidebar-foreground);
 }
 
 .sidebar-user-role {
   font-size: 12px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.68);
+  color: var(--sidebar-muted);
 }
 
 .topbar {
@@ -642,42 +655,52 @@ const sidebarStyles = `
   display: flex;
   align-items: center;
   gap: 12px;
-  min-height: 58px;
-  padding: 0 clamp(20px, 2vw, 32px);
+  min-height: 64px;
+  padding: 0 32px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: color-mix(in srgb, var(--background) 84%, transparent);
+  backdrop-filter: blur(16px);
 }
 
-@media (max-width: 767px) {
+@media (max-width: 1023px) {
   .topbar {
     position: sticky;
     top: 0;
     z-index: 30;
-    background: color-mix(in srgb, var(--color-surface) 88%, transparent);
-    border-bottom: 1px solid var(--color-border);
-    backdrop-filter: blur(12px);
-    padding: 0 12px;
-    min-height: 52px;
+    padding: 0 24px;
+    min-height: 60px;
+  }
+}
+
+@media (max-width: 767px) {
+  .topbar {
+    min-height: 56px;
+    padding: 0 16px;
   }
 }
 
 .mobile-menu-button {
   display: none;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--foreground);
+  transition: background-color 180ms ease, border-color 180ms ease, transform 180ms ease;
 }
 
-@media (max-width: 767px) {
+.mobile-menu-button:hover {
+  background: var(--surface-2);
+  border-color: var(--primary);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 1023px) {
   .mobile-menu-button {
     display: inline-flex;
-    width: 42px;
-    height: 42px;
-    align-items: center;
-    justify-content: center;
-    border-radius: 14px;
-    border: 1px solid var(--color-border);
-    background: var(--color-surface);
-    color: var(--color-text-primary);
-    transition: background-color 160ms ease, border-color 160ms ease;
-  }
-  .mobile-menu-button:hover {
-    background: var(--color-surface-muted);
   }
 }
 
@@ -704,18 +727,18 @@ const sidebarStyles = `
 .topbar-icon-btn {
   width: 44px;
   height: 44px;
-  border-radius: 16px;
-  border: 1px solid var(--color-border);
-  background: color-mix(in srgb, var(--color-surface) 86%, transparent);
-  color: var(--color-text-primary);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--foreground);
   display: grid;
   place-items: center;
   transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
 }
 
 .topbar-icon-btn:hover {
-  background: var(--color-surface-muted);
-  border-color: var(--color-border-strong);
+  background: var(--surface-2);
+  border-color: var(--primary);
   transform: translateY(-1px);
 }
 
@@ -725,36 +748,34 @@ const sidebarStyles = `
   gap: 8px;
   height: 44px;
   padding: 0 12px;
-  border-radius: 16px;
-  border: 1px solid var(--color-border);
-  background: color-mix(in srgb, var(--color-surface) 86%, transparent);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
   transition: background-color 160ms ease, border-color 160ms ease;
 }
 
 .topbar-user-btn:hover {
-  background: var(--color-surface-muted);
-  border-color: var(--color-border-strong);
+  background: var(--surface-2);
+  border-color: var(--primary);
 }
 
 .sidebar-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(3, 10, 24, 0.56);
+  background: rgba(5, 11, 20, 0.62);
   backdrop-filter: blur(4px);
   z-index: 50;
 }
 
 .sidebar-mobile-drawer {
   position: relative;
-  width: 300px;
+  width: 320px;
   max-width: 88vw;
   height: 100%;
   display: flex;
   flex-direction: column;
-  background:
-    radial-gradient(circle at top, rgba(255, 255, 255, 0.10), transparent 260px),
-    linear-gradient(180deg, var(--sidebar-start) 0%, var(--sidebar-mid) 48%, var(--sidebar-end) 100%);
-  color: #ffffff;
+  background: linear-gradient(180deg, var(--sidebar) 0%, var(--sidebar-2) 50%, var(--sidebar-3) 100%);
+  color: var(--sidebar-foreground);
   z-index: 60;
   animation: slideIn 220ms ease;
 }

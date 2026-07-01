@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { ArrowLeft, LockKeyhole, Moon, Send, Sun } from "lucide-react";
-import { ArtecLogoMark } from "@/components/brand/ArtecLogoMark";
+import { AppLogo } from "@/components/brand/AppLogo";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
@@ -74,7 +74,7 @@ export function Component() {
       <Card className="login-card">
         <CardHeader className="items-center text-center">
           <div className="login-icon">
-            <ArtecLogoMark className="size-11" />
+            <AppLogo compact markClassName="size-11" />
           </div>
           <h1 className="login-title">Artec Gestão</h1>
           <CardDescription>
@@ -154,21 +154,21 @@ const loginStyles = `
   justify-content: center;
   overflow: hidden;
   padding: 40px 16px;
-  background: var(--color-background);
+  background: var(--background);
 }
 
 .login-bg {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 80% 60% at 50% -20%, rgba(21, 94, 239, 0.15), transparent),
-    var(--sidebar-start);
+    linear-gradient(135deg, color-mix(in srgb, var(--primary) 10%, transparent), transparent 44%),
+    var(--surface-2);
 }
 
 .dark .login-bg {
   background:
-    radial-gradient(ellipse 80% 60% at 50% -20%, rgba(59, 130, 246, 0.12), transparent),
-    #06111f;
+    linear-gradient(135deg, color-mix(in srgb, var(--primary) 18%, transparent), transparent 42%),
+    var(--background);
 }
 
 .login-theme-btn {
@@ -178,24 +178,28 @@ const loginStyles = `
   z-index: 10;
   width: 42px;
   height: 42px;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--foreground);
   display: grid;
   place-items: center;
-  transition: background-color 160ms ease;
+  transition: background-color 180ms ease, transform 180ms ease;
 }
 
 .login-theme-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--surface-2);
+  transform: translateY(-1px);
 }
 
 .login-card {
   position: relative;
   width: 100%;
   max-width: 420px;
-  border-radius: 24px;
+  border-radius: var(--radius-xl);
+  border-color: var(--border-subtle);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
 }
 
 .login-icon {
@@ -204,22 +208,20 @@ const loginStyles = `
   height: 72px;
   align-items: center;
   justify-content: center;
-  border-radius: 24px;
-  background:
-    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.18), transparent 32px),
-    linear-gradient(135deg, #03152e 0%, #06244a 52%, #0f4fa8 100%);
-  color: #ffffff;
-  --logo-accent: #bfd9ff;
+  border-radius: var(--radius-xl);
+  background: var(--primary);
+  color: var(--primary-foreground);
+  --logo-accent: var(--primary-soft);
   margin: 0 auto 14px;
-  box-shadow: 0 18px 40px rgba(6, 26, 56, 0.22);
+  box-shadow: var(--shadow-md);
 }
 
 .login-title {
-  font-size: 26px;
+  font-size: 28px;
   font-weight: 800;
-  color: var(--color-text-primary);
+  color: var(--foreground);
   line-height: 1.2;
-  letter-spacing: -0.035em;
+  letter-spacing: 0;
 }
 
 .login-form {
@@ -231,6 +233,6 @@ const loginStyles = `
 .form-field {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 8px;
 }
 `;

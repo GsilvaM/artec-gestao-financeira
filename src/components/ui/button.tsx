@@ -2,27 +2,27 @@ import { cn } from "@/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 
 const buttonVariants = cva(
-  "motion-control inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl text-sm font-extrabold transition-all duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/20 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "motion-control inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-55 active:scale-[0.98] [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
         default:
-          "bg-gradient-to-r from-primary to-[#2563eb] text-primary-foreground shadow-[var(--shadow-blue)] hover:-translate-y-0.5 hover:from-primary-hover hover:to-primary hover:shadow-[0_16px_32px_rgba(37,99,235,0.28)] active:translate-y-0",
+          "bg-primary text-primary-foreground shadow-[var(--shadow-sm)] hover:-translate-y-0.5 hover:bg-primary-hover hover:shadow-[var(--shadow-md)]",
         destructive:
-          "bg-destructive text-destructive-foreground shadow-[0_12px_24px_rgba(217,45,32,0.18)] hover:-translate-y-0.5 hover:bg-destructive/90 active:translate-y-0",
+          "bg-destructive text-destructive-foreground shadow-[var(--shadow-sm)] hover:-translate-y-0.5 hover:bg-destructive/90",
         outline:
-          "border border-border bg-card/90 text-card-foreground shadow-[var(--shadow-xs)] backdrop-blur hover:-translate-y-0.5 hover:border-primary/25 hover:bg-primary-soft active:translate-y-0",
+          "border border-border bg-surface text-foreground shadow-[var(--shadow-xs)] hover:-translate-y-0.5 hover:border-primary hover:bg-primary-soft",
         secondary:
-          "bg-surface-soft/90 text-text-primary border border-border shadow-[var(--shadow-xs)] hover:-translate-y-0.5 hover:bg-surface-muted hover:border-border-strong active:translate-y-0",
+          "border border-border bg-[var(--surface-2)] text-foreground shadow-[var(--shadow-xs)] hover:-translate-y-0.5 hover:bg-[var(--surface-3)]",
         ghost:
-          "text-text-secondary hover:bg-surface-soft hover:text-text-primary hover:-translate-y-px",
+          "text-muted-foreground hover:bg-surface-2 hover:text-foreground hover:-translate-y-px",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
-        default: "min-h-[46px] px-5 py-2",
-        sm: "min-h-9 px-3 text-xs",
-        lg: "min-h-12 px-6",
-        icon: "size-[46px]",
+        default: "h-10 px-4 py-2",
+        sm: "h-9 px-4 text-sm",
+        lg: "h-11 px-5",
+        icon: "size-10",
       },
     },
     defaultVariants: {

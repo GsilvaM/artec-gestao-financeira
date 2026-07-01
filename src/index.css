@@ -328,6 +328,171 @@
 }
 
 @layer base {
+  :root {
+    color-scheme: light;
+    --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --background: #f6f8fc;
+    --foreground: #06152b;
+    --surface: #ffffff;
+    --surface-2: #f2f6fb;
+    --surface-3: #e8eef7;
+    --surface-elevated: #ffffff;
+    --muted: #6b7a90;
+    --muted-foreground: #53657d;
+    --border: #d8e2ef;
+    --border-subtle: #e8eef7;
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-soft: #dbeafe;
+    --primary-ring: rgba(37, 99, 235, 0.24);
+    --primary-foreground: #ffffff;
+    --sidebar: #071a33;
+    --sidebar-2: #082242;
+    --sidebar-3: #0b2d55;
+    --sidebar-foreground: #dbeafe;
+    --sidebar-muted: #8fa7c6;
+    --sidebar-border: rgba(255, 255, 255, 0.10);
+    --sidebar-active: #2563eb;
+    --sidebar-active-foreground: #ffffff;
+    --sidebar-hover: rgba(255,255,255,.08);
+    --success: #059669;
+    --success-soft: #d1fae5;
+    --success-foreground: #065f46;
+    --danger: #dc2626;
+    --danger-soft: #fee2e2;
+    --danger-foreground: #991b1b;
+    --warning: #d97706;
+    --warning-soft: #fef3c7;
+    --warning-foreground: #92400e;
+    --info: #0284c7;
+    --info-soft: #e0f2fe;
+    --info-foreground: #075985;
+    --radius-sm: 10px;
+    --radius-md: 14px;
+    --radius-lg: 18px;
+    --radius-xl: 24px;
+    --radius-2xl: 28px;
+    --shadow-xs: 0 1px 2px rgba(15,23,42,.04);
+    --shadow-sm: 0 4px 14px rgba(15,23,42,.06);
+    --shadow-md: 0 14px 40px rgba(15,23,42,.10);
+    --shadow-lg: 0 24px 70px rgba(15,23,42,.14);
+    --color-background: var(--background);
+    --color-background-soft: var(--surface-2);
+    --color-surface: var(--surface);
+    --color-surface-soft: var(--surface-2);
+    --color-surface-muted: var(--surface-3);
+    --color-text-primary: var(--foreground);
+    --color-text-secondary: var(--muted-foreground);
+    --color-text-muted: var(--muted);
+    --color-border: var(--border);
+    --color-border-strong: color-mix(in srgb, var(--border) 72%, var(--foreground));
+    --color-primary: var(--primary);
+    --color-primary-hover: var(--primary-hover);
+    --color-primary-soft: var(--primary-soft);
+    --color-success: var(--success);
+    --color-success-soft: var(--success-soft);
+    --color-success-strong: var(--success-foreground);
+    --color-danger: var(--danger);
+    --color-danger-soft: var(--danger-soft);
+    --color-danger-strong: var(--danger-foreground);
+    --color-warning: var(--warning);
+    --color-warning-soft: var(--warning-soft);
+    --color-warning-strong: var(--warning-foreground);
+    --color-purple: var(--info);
+    --color-purple-soft: var(--info-soft);
+    --app-bg: var(--background);
+    --surface-soft: var(--surface-2);
+    --surface-muted: var(--surface-3);
+    --text-strong: var(--foreground);
+    --text-primary: var(--foreground);
+    --text-secondary: var(--muted-foreground);
+    --text-muted: var(--muted);
+    --text-inverse: var(--primary-foreground);
+    --border-soft: var(--border-subtle);
+    --border-default: var(--border);
+    --primary-600: var(--primary);
+    --primary-500: var(--primary);
+    --primary-100: var(--primary-soft);
+    --primary-50: color-mix(in srgb, var(--primary) 9%, var(--surface));
+    --success-600: var(--success);
+    --success-500: var(--success);
+    --success-100: var(--success-soft);
+    --success-50: color-mix(in srgb, var(--success) 10%, var(--surface));
+    --danger-600: var(--danger);
+    --danger-500: var(--danger);
+    --danger-100: var(--danger-soft);
+    --danger-50: color-mix(in srgb, var(--danger) 9%, var(--surface));
+    --warning-600: var(--warning);
+    --warning-500: var(--warning);
+    --warning-100: var(--warning-soft);
+    --warning-50: color-mix(in srgb, var(--warning) 12%, var(--surface));
+    --purple-600: var(--info);
+    --purple-100: var(--info-soft);
+    --popover: var(--surface-elevated);
+    --card: var(--surface);
+    --secondary: var(--surface-2);
+    --input: var(--border);
+    --ring: var(--primary);
+    --destructive: var(--danger);
+    --destructive-foreground: var(--primary-foreground);
+    --success-light: var(--success-soft);
+    --warning-light: var(--warning-soft);
+    --primary-light: var(--primary-soft);
+    --destructive-light: var(--danger-soft);
+    --surface-card: var(--surface);
+    --bg-success: var(--success-soft);
+    --bg-danger: var(--danger-soft);
+    --bg-accent: var(--primary-soft);
+    --bg-warning: var(--warning-soft);
+    --chart-revenue: var(--success);
+    --chart-expense: var(--danger);
+    --chart-balance: var(--primary);
+  }
+
+  .dark {
+    color-scheme: dark;
+    --background: #050b14;
+    --foreground: #eaf2ff;
+    --surface: #0d1f33;
+    --surface-2: #122a44;
+    --surface-3: #16324f;
+    --surface-elevated: #10243b;
+    --muted: #8da3bd;
+    --muted-foreground: #b7c8de;
+    --border: rgba(148,163,184,.24);
+    --border-subtle: rgba(148,163,184,.15);
+    --primary: #3b82f6;
+    --primary-hover: #60a5fa;
+    --primary-soft: rgba(59,130,246,.18);
+    --primary-ring: rgba(59,130,246,.34);
+    --primary-foreground: #ffffff;
+    --sidebar: #061326;
+    --sidebar-2: #071a33;
+    --sidebar-3: #0b2d55;
+    --sidebar-foreground: #eaf2ff;
+    --sidebar-muted: #8fa7c6;
+    --sidebar-border: rgba(148,163,184,.18);
+    --sidebar-active: #3b82f6;
+    --sidebar-active-foreground: #ffffff;
+    --sidebar-hover: rgba(255,255,255,.08);
+    --success: #34d399;
+    --success-soft: rgba(52,211,153,.16);
+    --success-foreground: #a7f3d0;
+    --danger: #fb7185;
+    --danger-soft: rgba(251,113,133,.16);
+    --danger-foreground: #fecdd3;
+    --warning: #fbbf24;
+    --warning-soft: rgba(251,191,36,.16);
+    --warning-foreground: #fde68a;
+    --info: #38bdf8;
+    --info-soft: rgba(56,189,248,.16);
+    --info-foreground: #bae6fd;
+    --shadow-xs: 0 1px 2px rgba(0,0,0,.20);
+    --shadow-sm: 0 6px 18px rgba(0,0,0,.28);
+    --shadow-md: 0 18px 50px rgba(0,0,0,.36);
+    --shadow-lg: 0 30px 90px rgba(0,0,0,.44);
+  }
+
   * {
     border-color: var(--border);
   }
@@ -341,7 +506,7 @@
 
   html {
     min-height: 100vh;
-    background: var(--color-background);
+    background: var(--background);
     font-size: 16px;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
@@ -354,32 +519,10 @@
 
   body {
     margin: 0;
-    background:
-      radial-gradient(
-        circle at top left,
-        color-mix(in srgb, var(--primary) 10%, transparent),
-        transparent 30rem
-      ),
-      radial-gradient(
-        circle at top right,
-        color-mix(in srgb, var(--success) 5%, transparent),
-        transparent 28rem
-      ),
-      linear-gradient(
-        180deg,
-        var(--color-background) 0%,
-        var(--color-background-soft) 100%
-      );
-    color: var(--color-text-primary);
-    font-family:
-      "Inter",
-      "Geist",
-      "Manrope",
-      system-ui,
-      -apple-system,
-      BlinkMacSystemFont,
-      "Segoe UI",
-      sans-serif;
+    min-height: 100vh;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
     font-optical-sizing: auto;
     font-synthesis: none;
     -webkit-font-smoothing: antialiased;
@@ -410,12 +553,13 @@
   }
 
   :focus-visible {
-    outline: 3px solid rgba(21, 94, 239, 0.28);
+    outline: 2px solid var(--primary);
     outline-offset: 2px;
   }
 
   ::selection {
-    background: color-mix(in srgb, var(--primary) 22%, transparent);
+    background: var(--primary-soft);
+    color: var(--foreground);
   }
 
   *::-webkit-scrollbar {
@@ -450,6 +594,42 @@
 }
 
 @layer components {
+  .app-logo {
+    display: inline-flex;
+    min-width: 0;
+    align-items: center;
+    gap: 12px;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .app-logo-mark {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 auto;
+    color: currentColor;
+  }
+
+  .app-logo-copy {
+    display: grid;
+    gap: 2px;
+    line-height: 1.1;
+  }
+
+  .app-logo-copy strong {
+    color: inherit;
+    font-size: 18px;
+    font-weight: 800;
+  }
+
+  .app-logo-copy span {
+    color: var(--sidebar-muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
   .motion-card {
     transition:
       transform 180ms ease,

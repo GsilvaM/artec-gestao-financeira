@@ -971,12 +971,12 @@ const dashboardStyles = `
 .financial-hero-card {
   padding: 26px 28px;
   border-radius: 24px;
-  color: #ffffff;
+  color: var(--primary-foreground);
   position: relative;
   overflow: hidden;
   background:
     radial-gradient(circle at 85% 10%, rgba(96, 165, 250, 0.38), transparent 170px),
-    linear-gradient(135deg, #03152e 0%, #06244a 48%, #0f4fa8 100%);
+    linear-gradient(135deg, var(--sidebar) 0%, var(--sidebar-2) 48%, var(--sidebar-3) 100%);
   box-shadow: 0 24px 58px rgba(6, 26, 56, 0.28);
   height: fit-content;
 }
@@ -1016,7 +1016,7 @@ const dashboardStyles = `
   padding: 7px 14px;
   border-radius: 999px;
   background: rgba(34, 197, 94, 0.9);
-  color: #ffffff;
+  color: var(--primary-foreground);
   font-size: 12px;
   font-weight: 700;
 }
@@ -1085,11 +1085,11 @@ const dashboardStyles = `
 }
 
 .financial-income {
-  color: #86efac;
+  color: var(--success-foreground);
 }
 
 .financial-expense {
-  color: #fdba74;
+  color: var(--warning-foreground);
 }
 
 .financial-hero-footer strong {

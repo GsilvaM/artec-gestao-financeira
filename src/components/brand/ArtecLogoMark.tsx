@@ -9,22 +9,22 @@ export function ArtecLogoMark(props: SVGProps<SVGSVGElement>) {
       aria-hidden="true"
       {...props}
     >
+      <rect width="64" height="64" rx="18" fill="currentColor" opacity="0.12" />
       <path
-        d="M10.35 50.58 29.12 13.8c1.25-2.45 4.75-2.45 6 0l3.15 6.17-17.1 32.52a3.32 3.32 0 0 1-2.94 1.78h-5.55c-2.48 0-3.46-1.48-2.33-3.69Z"
+        d="M18 43.4c0-1.55 1.25-2.8 2.8-2.8h22.4a2.8 2.8 0 0 1 0 5.6H20.8a2.8 2.8 0 0 1-2.8-2.8Z"
         fill="currentColor"
       />
       <path
-        d="M35.62 24.86 49.9 50.58c1.23 2.21.24 3.69-2.23 3.69h-5.92a3.32 3.32 0 0 1-2.91-1.71L31.5 39.42l4.12-14.56Z"
+        d="M18 32c0-1.55 1.25-2.8 2.8-2.8h14.4a2.8 2.8 0 0 1 0 5.6H20.8A2.8 2.8 0 0 1 18 32Z"
+        fill="var(--logo-accent, currentColor)"
+      />
+      <path
+        d="M18 20.6c0-1.55 1.25-2.8 2.8-2.8h22.4a2.8 2.8 0 0 1 0 5.6H20.8a2.8 2.8 0 0 1-2.8-2.8Z"
+        fill="var(--logo-accent, currentColor)"
+      />
+      <path
+        d="M40.4 32a5.6 5.6 0 1 1 11.2 0 5.6 5.6 0 0 1-11.2 0Z"
         fill="currentColor"
-      />
-      <path
-        d="M27.25 36.45c.45-1.07 1.5-1.76 2.66-1.76h12.16c1.43 0 2.6 1.16 2.6 2.6v2.15c0 1.43-1.17 2.6-2.6 2.6H25.82c-1.67 0-2.8-1.72-2.14-3.25l.88-2.04a2.9 2.9 0 0 1 2.69-1.8Z"
-        fill="var(--logo-accent, currentColor)"
-      />
-      <path
-        d="M32.17 16.94 22.9 35.12h7.38l5.5-10.74-2.53-5.01c-.42-.84-.67-1.5-1.08-2.43Z"
-        fill="var(--logo-accent, currentColor)"
-        opacity="0.92"
       />
     </svg>
   );
