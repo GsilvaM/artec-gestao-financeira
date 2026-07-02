@@ -385,7 +385,7 @@
     --color-text-secondary: var(--muted-foreground);
     --color-text-muted: var(--muted);
     --color-border: var(--border);
-    --color-border-strong: color-mix(in srgb, var(--border) 72%, var(--foreground));
+    --color-border-strong: color-mix(in srgb, var(--primary) 18%, var(--border));
     --color-primary: var(--primary);
     --color-primary-hover: var(--primary-hover);
     --color-primary-soft: var(--primary-soft);

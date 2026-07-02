@@ -55,7 +55,9 @@ async function createEntry(
   await page.getByRole("button", { name: /novo lançamento/i }).first().click();
   const dialog = page.getByRole("dialog");
   await expect(dialog.getByRole("heading", { name: /novo lançamento/i })).toBeVisible();
-  await dialog.locator('input[type="date"]').fill("2026-06-23");
+  await dialog.getByRole("textbox", { name: "Data" }).click();
+  await dialog.getByRole("button", { name: /anterior/i }).click();
+  await dialog.getByRole("button", { name: "23" }).click();
   await dialog.locator("select").nth(0).selectOption(entry.type);
   await expect(dialog.locator("select").nth(1).locator("option")).toContainText([entry.category]);
   await dialog.locator("select").nth(1).selectOption({ label: entry.category });

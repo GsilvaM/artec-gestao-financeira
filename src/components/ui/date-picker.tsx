@@ -97,11 +97,14 @@ export function DatePicker({ id, value, onChange, ariaLabel = "Data", invalid }:
     <div ref={wrapRef} className="relative">
       <input
         id={id}
-        type="date"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
+        type="text"
+        value={formatDisplayDate(value)}
+        readOnly
+        inputMode="none"
+        onClick={() => setOpen(true)}
         onFocus={() => setOpen(true)}
         aria-label={ariaLabel}
+        aria-haspopup="dialog"
         aria-expanded={open}
         aria-invalid={invalid || undefined}
         className={cn(
