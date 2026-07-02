@@ -100,7 +100,6 @@
   --app-bg: var(--color-background);
   --surface: var(--color-surface);
   --surface-soft: var(--color-surface-soft);
-  --border-soft: var(--color-border);
   --navy-950: #03152e;
   --navy-900: #06244a;
   --navy-800: #0a3a78;
@@ -141,8 +140,8 @@
   --accent-foreground: var(--color-text-primary);
   --destructive: var(--color-danger);
   --destructive-foreground: #ffffff;
-  --border: var(--color-border);
-  --input: var(--color-border);
+  --border: #d8e2ef;
+  --input: #d8e2ef;
   --ring: var(--color-primary);
   --success: var(--color-success);
   --success-light: var(--color-success-soft);
@@ -245,8 +244,8 @@
   --accent-foreground: var(--color-text-primary);
   --destructive: var(--color-danger);
   --destructive-foreground: #ffffff;
-  --border: var(--color-border);
-  --input: var(--color-border);
+  --border: rgba(148,163,184,0.3);
+  --input: rgba(148,163,184,0.3);
   --ring: var(--color-primary);
   --success: var(--color-success);
   --success-light: var(--color-success-soft);
