@@ -1,11 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Activity, CheckCircle2, Search, Shield, UserPlus, Users, XCircle } from "lucide-react";
+import { Activity, CheckCircle2, Loader2, Shield, UserPlus, Users, XCircle } from "lucide-react";
 import { FormField as Field } from "@/components/forms/form-field";
-import { EmptyState, MetricCard, PageShell, StatusBadge } from "@/components/layout/page-shell";
+import { EmptyState, FilterBar, MetricCard, PageShell, StatusBadge } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Dialog, DialogCloseButton, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -120,6 +120,16 @@ function roleLabel(roleName: string) {
   return labels[roleName] ?? (roleName || "Sem perfil");
 }
 
+function statusLabel(status: string) {
+  const labels: Record<string, string> = {
+    pending: "Pendentes",
+    approved: "Aprovados",
+    rejected: "Rejeitados",
+    disabled: "Desativados",
+  };
+  return labels[status] ?? status;
+}
+
 export function Component() {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -129,6 +139,7 @@ export function Component() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [roleId, setRoleId] = useState("");
+  const firstInputRef = useRef<HTMLInputElement>(null);
 
   const queryClient = useQueryClient();
   const { data, isLoading, error } = useQuery({ queryKey, queryFn: fetchAdminUsers });
@@ -158,6 +169,12 @@ export function Component() {
   const pendingUsers = users.filter((user) => user.status === "pending").length;
   const approvedUsers = users.filter((user) => user.status === "approved").length;
   const blockedUsers = users.filter((user) => user.status === "rejected" || user.status === "disabled").length;
+
+  useEffect(() => {
+    if (!open) return;
+    const timer = window.setTimeout(() => firstInputRef.current?.focus(), 80);
+    return () => window.clearTimeout(timer);
+  }, [open]);
 
   function resetForm() {
     setEmail("");
@@ -205,26 +222,29 @@ export function Component() {
         <MetricCard title="Bloqueados" value={String(blockedUsers)} icon={XCircle} tone="red" />
       </div>
 
-      <Card>
-        <CardContent className="grid gap-3 p-4 sm:p-4 md:grid-cols-[1fr_220px]">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input className="pl-9" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Nome, e-mail, telefone ou perfil" aria-label="Buscar usuário" />
-          </div>
-          <Select
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
-            placeholder="Todos os status"
-            aria-label="Filtrar por status"
-            options={[
-              { value: "pending", label: "Pendentes" },
-              { value: "approved", label: "Aprovados" },
-              { value: "rejected", label: "Rejeitados" },
-              { value: "disabled", label: "Desativados" },
-            ]}
-          />
-        </CardContent>
-      </Card>
+      <FilterBar
+        searchPlaceholder="Nome, e-mail, telefone ou perfil"
+        search={search}
+        onSearchChange={setSearch}
+        activeFilters={
+          statusFilter
+            ? [{ key: "status", label: statusLabel(statusFilter), onRemove: () => setStatusFilter("") }]
+            : []
+        }
+      >
+        <Select
+          value={statusFilter}
+          onChange={(event) => setStatusFilter(event.target.value)}
+          placeholder="Todos os status"
+          aria-label="Filtrar por status"
+          options={[
+            { value: "pending", label: "Pendentes" },
+            { value: "approved", label: "Aprovados" },
+            { value: "rejected", label: "Rejeitados" },
+            { value: "disabled", label: "Desativados" },
+          ]}
+        />
+      </FilterBar>
 
       <Card className="overflow-hidden">
         <div className="desktop-table">
@@ -361,7 +381,7 @@ export function Component() {
           <form onSubmit={handleSave}>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Nome">
-                <Input value={name} onChange={(event) => setName(event.target.value)} placeholder="Nome do usuário" />
+                <Input ref={firstInputRef} value={name} onChange={(event) => setName(event.target.value)} placeholder="Nome do usuário" />
               </Field>
               <Field label="Telefone">
                 <Input value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="(00) 00000-0000" />
@@ -379,7 +399,7 @@ export function Component() {
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => { resetForm(); setOpen(false); }}>Cancelar</Button>
               <Button type="submit" disabled={createMutation.isPending}>
-                <UserPlus className="size-4" />
+                {createMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <UserPlus className="size-4" />}
                 {createMutation.isPending ? "Cadastrando..." : "Cadastrar"}
               </Button>
             </DialogFooter>

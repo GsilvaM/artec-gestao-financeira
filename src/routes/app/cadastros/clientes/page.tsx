@@ -1,19 +1,34 @@
-﻿import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Building2, MoreHorizontal, Pencil, Plus, Trash2, UserRoundPlus } from "lucide-react";
 import { ClientDialog, type ClientRecord } from "@/components/forms/client-dialog";
 import { Dialog, DialogCloseButton, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { PageHeader, MetricCard, StatusBadge, FilterBar, StatusSelect, EmptyState, pageHeaderStyles } from "@/components/layout/page-shell";
+import { PageHeader, MetricCard, StatusBadge, FilterBar, EmptyState, pageHeaderStyles } from "@/components/layout/page-shell";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Select } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-
 
 export function Component() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<ClientRecord | null>(null);
   const [deleting, setDeleting] = useState<ClientRecord | null>(null);
   const [records, setRecords] = useState<ClientRecord[]>([]);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+
+  const filteredRecords = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return records.filter((client) => {
+      const matchesStatus = statusFilter ? client.status === statusFilter : true;
+      const matchesSearch = term
+        ? [client.nome, client.documento, client.telefone, client.email, client.observacoes]
+            .filter((value): value is string => Boolean(value))
+            .some((value) => value.toLowerCase().includes(term))
+        : true;
+      return matchesStatus && matchesSearch;
+    });
+  }, [records, search, statusFilter]);
 
   function handleSave(data: ClientRecord) {
     setRecords((current) => {
@@ -45,7 +60,7 @@ export function Component() {
       <div className="page-stack">
         <PageHeader
           title="Clientes"
-          description="Cadastre, edite e acompanhe seus clientes em um só lugar."
+          description="Cadastre, edite e acompanhe seus clientes em um so lugar."
           actions={
             <Button onClick={() => { setEditing(null); setOpen(true); }}>
               <Plus className="size-4" />
@@ -60,21 +75,32 @@ export function Component() {
           ))}
         </div>
 
-        <FilterBar searchPlaceholder="Buscar por nome, documento, telefone ou e-mail...">
-          <StatusSelect />
+        <FilterBar
+          searchPlaceholder="Buscar por nome, documento, telefone ou e-mail..."
+          search={search}
+          onSearchChange={setSearch}
+          activeFilters={statusFilter ? [{ key: "status", label: "Ativo", onRemove: () => setStatusFilter("") }] : []}
+        >
+          <Select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+            placeholder="Todos os status"
+            aria-label="Filtrar clientes por status"
+            options={[{ value: "ativo", label: "Ativos" }]}
+          />
         </FilterBar>
 
         <Card className="overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow>
-                {["Nome/razão social", "Documento", "Contato", "Cidade", "Status", "Ações"].map((col) => (
+                {["Nome/razao social", "Documento", "Contato", "Cidade", "Status", "Acoes"].map((col) => (
                   <TableHead key={col}>{col}</TableHead>
                 ))}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {records.length ? records.map((client) => (
+              {filteredRecords.length ? filteredRecords.map((client) => (
                 <TableRow key={client.id}>
                   <TableCell className="font-medium">{client.nome}</TableCell>
                   <TableCell>{client.documento}</TableCell>
@@ -84,7 +110,7 @@ export function Component() {
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" aria-label="Ações"><MoreHorizontal className="size-4" /></Button>
+                        <Button variant="ghost" size="icon" aria-label="Acoes"><MoreHorizontal className="size-4" /></Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
                         <DropdownMenuItem onClick={() => { setEditing(client); setOpen(true); }}><Pencil className="size-4" />Editar</DropdownMenuItem>
@@ -98,8 +124,8 @@ export function Component() {
                 <TableRow>
                   <TableCell colSpan={6} className="p-0">
                     <EmptyState
-                      title="Nenhum cliente cadastrado ainda."
-                      description="Adicione seu primeiro cliente para começar a vincular lançamentos, contas e relatórios."
+                      title={records.length ? "Nenhum cliente encontrado." : "Nenhum cliente cadastrado ainda."}
+                      description={records.length ? "Ajuste a busca ou remova filtros para ver mais clientes." : "Adicione seu primeiro cliente para comecar a vincular lancamentos, contas e relatorios."}
                       action={<Button onClick={() => { setEditing(null); setOpen(true); }}><Plus className="size-4" />Cadastrar cliente</Button>}
                     />
                   </TableCell>
@@ -116,7 +142,7 @@ export function Component() {
           <DialogCloseButton onClick={() => setDeleting(null)} />
           <DialogHeader>
             <DialogTitle>Excluir cliente</DialogTitle>
-            <DialogDescription>Confirma a exclusão de <strong>{deleting?.nome}</strong>? Esta ação não pode ser desfeita.</DialogDescription>
+            <DialogDescription>Confirma a exclusao de <strong>{deleting?.nome}</strong>? Esta acao nao pode ser desfeita.</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleting(null)}>Cancelar</Button>
@@ -141,26 +167,11 @@ const clientStyles = `
   gap: 16px;
 }
 
-.filter-bar {
-  padding: 14px;
-  border-radius: 18px;
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-card);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.filter-bar input { flex: 1; }
-
 @media (max-width: 1023px) {
   .metrics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .filter-bar { flex-direction: column; align-items: stretch; }
 }
 
 @media (max-width: 639px) {
   .metrics-grid { grid-template-columns: 1fr; }
 }
-
 `;

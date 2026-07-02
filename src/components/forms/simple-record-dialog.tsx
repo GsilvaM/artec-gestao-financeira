@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { FormField as Field } from "@/components/forms/form-field";
@@ -29,6 +30,13 @@ export function SimpleRecordDialog({ open, onOpenChange, title, description, suc
   const [form, setForm] = useState(initialForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const firstInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const timer = window.setTimeout(() => firstInputRef.current?.focus(), 80);
+    return () => window.clearTimeout(timer);
+  }, [open]);
 
   function updateField(field: keyof typeof initialForm, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -59,14 +67,17 @@ export function SimpleRecordDialog({ open, onOpenChange, title, description, suc
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Nome" error={errors.nome}><Input value={form.nome} onChange={(e) => updateField("nome", e.target.value)} placeholder="Nome do registro" /></Field>
+          <Field label="Nome" error={errors.nome}><Input ref={firstInputRef} value={form.nome} onChange={(e) => updateField("nome", e.target.value)} placeholder="Nome do registro" /></Field>
           <Field label="Referência"><Input value={form.referencia} onChange={(e) => updateField("referencia", e.target.value)} placeholder="Código, contato ou categoria" /></Field>
           <Field label="Status"><Select value={form.status} onChange={(e) => updateField("status", e.target.value)} options={[{ value: "ativo", label: "Ativo" }, { value: "rascunho", label: "Rascunho" }]} /></Field>
           <div className="sm:col-span-2"><Field label="Observações"><Textarea value={form.observacoes} onChange={(e) => updateField("observacoes", e.target.value)} placeholder="Notas iniciais" /></Field></div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={handleSave} disabled={saving}>{saving ? "Salvando..." : "Salvar"}</Button>
+          <Button onClick={handleSave} disabled={saving}>
+            {saving && <Loader2 className="size-4 animate-spin" />}
+            {saving ? "Salvando..." : "Salvar"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

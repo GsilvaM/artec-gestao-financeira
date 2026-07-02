@@ -201,6 +201,11 @@ export function Component() {
         searchPlaceholder="Buscar colaborador, e-mail, telefone ou funcao..."
         search={search}
         onSearchChange={setSearch}
+        activeFilters={
+          includeInactive
+            ? [{ key: "includeInactive", label: "Inclui inativos", onRemove: () => setIncludeInactive(false) }]
+            : []
+        }
       >
         <Select
           value={includeInactive ? "true" : "false"}
@@ -211,6 +216,7 @@ export function Component() {
             { value: "false", label: "Somente ativos" },
             { value: "true", label: "Todos" },
           ]}
+          aria-label="Filtrar colaboradores por status"
         />
       </FilterBar>
 
