@@ -10,15 +10,16 @@ interface ResponsiveTransactionListProps {
   isLoading: boolean;
   error: Error | null;
   onEdit: (entry: FinancialEntryRow) => void;
+  onDuplicate: (entry: FinancialEntryRow) => void;
   onDelete: (entry: FinancialEntryRow) => void;
 }
 
-export function ResponsiveTransactionList({ entries, isLoading, error, onEdit, onDelete }: ResponsiveTransactionListProps) {
+export function ResponsiveTransactionList({ entries, isLoading, error, onEdit, onDuplicate, onDelete }: ResponsiveTransactionListProps) {
   const isDesktop = useIsDesktop();
 
   if (isLoading) {
     return isDesktop ? (
-      <TransactionTable entries={[]} isLoading error={false} onEdit={onEdit} onDelete={onDelete} />
+      <TransactionTable entries={[]} isLoading error={false} onEdit={onEdit} onDuplicate={onDuplicate} onDelete={onDelete} />
     ) : (
       <div className="block md:hidden">
         <div className="space-y-2">
@@ -45,7 +46,7 @@ export function ResponsiveTransactionList({ entries, isLoading, error, onEdit, o
 
   if (error) {
     return isDesktop ? (
-      <TransactionTable entries={[]} isLoading={false} error={true} onEdit={onEdit} onDelete={onDelete} />
+      <TransactionTable entries={[]} isLoading={false} error={true} onEdit={onEdit} onDuplicate={onDuplicate} onDelete={onDelete} />
     ) : (
       <div className="block md:hidden">
         <Card>
@@ -59,7 +60,7 @@ export function ResponsiveTransactionList({ entries, isLoading, error, onEdit, o
 
   if (!entries?.length) {
     return isDesktop ? (
-      <TransactionTable entries={[]} isLoading={false} error={false} onEdit={onEdit} onDelete={onDelete} />
+      <TransactionTable entries={[]} isLoading={false} error={false} onEdit={onEdit} onDuplicate={onDuplicate} onDelete={onDelete} />
     ) : (
       <div className="block md:hidden">
         <Card>
@@ -72,12 +73,12 @@ export function ResponsiveTransactionList({ entries, isLoading, error, onEdit, o
   }
 
   return isDesktop ? (
-    <TransactionTable entries={entries} isLoading={false} error={false} onEdit={onEdit} onDelete={onDelete} />
+    <TransactionTable entries={entries} isLoading={false} error={false} onEdit={onEdit} onDuplicate={onDuplicate} onDelete={onDelete} />
   ) : (
     <div className="block md:hidden">
-      <div className="space-y-2">
+      <div className="space-y-3">
         {entries.map((entry) => (
-          <TransactionCard key={entry.id} transaction={entry} onEdit={onEdit} onDelete={onDelete} />
+          <TransactionCard key={entry.id} transaction={entry} onEdit={onEdit} onDuplicate={onDuplicate} onDelete={onDelete} />
         ))}
       </div>
     </div>

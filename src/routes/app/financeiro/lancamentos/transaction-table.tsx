@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Copy, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { EmptyState, MoneyValue, StatusBadge } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -12,12 +12,13 @@ interface TransactionTableProps {
   isLoading: boolean;
   error: boolean;
   onEdit: (entry: FinancialEntryRow) => void;
+  onDuplicate: (entry: FinancialEntryRow) => void;
   onDelete: (entry: FinancialEntryRow) => void;
 }
 
 const columns = ["Data", "Tipo", "Categoria", "Descrição", "Vínculos", "Valor", "Status", "Ações"];
 
-export function TransactionTable({ entries, isLoading, error, onEdit, onDelete }: TransactionTableProps) {
+export function TransactionTable({ entries, isLoading, error, onEdit, onDuplicate, onDelete }: TransactionTableProps) {
   if (isLoading) return <TableFrame state="loading" />;
   if (error) return <TableFrame state="error" />;
   if (!entries.length) return <TableFrame state="empty" />;
@@ -36,7 +37,7 @@ export function TransactionTable({ entries, isLoading, error, onEdit, onDelete }
           {entries.map((entry) => {
             const isReceita = entry.type === "receita";
             return (
-              <TableRow key={entry.id}>
+              <TableRow key={entry.id} className="group">
                 <TableCell className="whitespace-nowrap text-muted-foreground">{formatDate(entry.date)}</TableCell>
                 <TableCell>
                   <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold", isReceita ? "bg-success/12 text-success" : "bg-destructive/12 text-destructive")}>
@@ -53,23 +54,39 @@ export function TransactionTable({ entries, isLoading, error, onEdit, onDelete }
                   <MoneyValue value={formatMoney(entry.amount)} tone={isReceita ? "positive" : "negative"} />
                 </TableCell>
                 <TableCell><StatusBadge status={entry.status} /></TableCell>
-                <TableCell className="w-12">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="size-9" aria-label="Ações do lançamento">
-                        <MoreHorizontal className="size-4" />
+                <TableCell className="w-32">
+                  <div className="flex items-center justify-end gap-1">
+                    <div className="hidden items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 lg:flex">
+                      <Button variant="ghost" size="icon" className="size-9" aria-label="Editar lançamento" onClick={() => onEdit(entry)}>
+                        <Pencil className="size-4" />
                       </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuItem onClick={() => onEdit(entry)}>
-                        <Pencil className="size-4" />Editar
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem destructive onClick={() => onDelete(entry)}>
-                        <Trash2 className="size-4" />Excluir
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                      <Button variant="ghost" size="icon" className="size-9" aria-label="Duplicar lançamento" onClick={() => onDuplicate(entry)}>
+                        <Copy className="size-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="size-9 text-destructive hover:text-destructive" aria-label="Excluir lançamento" onClick={() => onDelete(entry)}>
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="size-9" aria-label="Ações do lançamento">
+                          <MoreHorizontal className="size-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuItem onClick={() => onEdit(entry)}>
+                          <Pencil className="size-4" />Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onDuplicate(entry)}>
+                          <Copy className="size-4" />Duplicar
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem destructive onClick={() => onDelete(entry)}>
+                          <Trash2 className="size-4" />Excluir
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </TableCell>
               </TableRow>
             );

@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Copy, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -26,10 +26,12 @@ function TransactionStatusBadge({ status }: { status: string }) {
 export function TransactionCard({
   transaction,
   onEdit,
+  onDuplicate,
   onDelete,
 }: {
   transaction: FinancialEntryRow;
   onEdit?: (entry: FinancialEntryRow) => void;
+  onDuplicate?: (entry: FinancialEntryRow) => void;
   onDelete?: (entry: FinancialEntryRow) => void;
 }) {
   const isReceita = transaction.type === "receita";
@@ -62,8 +64,8 @@ export function TransactionCard({
           </div>
         </div>
 
-        <div className="mt-1.5 flex items-center justify-between border-t-[0.5px] border-border/70 pt-1.5">
-          <span className="text-[11px] capitalize text-[var(--text-muted)]">{transaction.type}</span>
+        <div className="mt-3 flex items-center justify-between border-t border-[var(--border-subtle)] pt-2">
+          <span className={cn("inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium leading-4 capitalize", isReceita ? "bg-[var(--bg-success)] text-[var(--text-success)]" : "bg-[var(--bg-danger)] text-[var(--text-danger)]")}>{transaction.type}</span>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="size-9 text-muted-foreground hover:text-foreground" aria-label="Mais opções">
@@ -73,6 +75,9 @@ export function TransactionCard({
             <DropdownMenuContent>
               <DropdownMenuItem onClick={() => onEdit?.(transaction)}>
                 <Pencil className="size-4" />Editar
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onDuplicate?.(transaction)}>
+                <Copy className="size-4" />Duplicar
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem destructive onClick={() => onDelete?.(transaction)}>

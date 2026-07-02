@@ -14,7 +14,9 @@ export function Component() {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   });
   const [start, end] = useMemo(() => {
-    const [year, month] = filterMonth.split("-");
+    const fallback = new Date();
+    const fallbackMonth = `${fallback.getFullYear()}-${String(fallback.getMonth() + 1).padStart(2, "0")}`;
+    const [year, month] = (filterMonth || fallbackMonth).split("-");
     return [
       new Date(Number(year), Number(month) - 1, 1),
       new Date(Number(year), Number(month), 0, 23, 59, 59, 999),
@@ -34,7 +36,13 @@ export function Component() {
         <MetricCard title="Saldo previsto" value={formatMoney(saldo)} icon={Banknote} tone={saldo < 0 ? "red" : "blue"} />
       </div>
 
-      <FilterBar>
+      <FilterBar
+        activeFilters={
+          filterMonth
+            ? [{ key: "month", label: formatMonthFilter(filterMonth), onRemove: () => setFilterMonth("") }]
+            : []
+        }
+      >
         <MonthSelect value={filterMonth} onValueChange={setFilterMonth} />
       </FilterBar>
 
@@ -157,5 +165,12 @@ function formatPeriod(period?: string) {
   const date = new Date(period);
   if (Number.isNaN(date.getTime())) return period;
   const label = date.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+function formatMonthFilter(month: string) {
+  const [year, monthIndex] = month.split("-").map(Number);
+  if (!year || !monthIndex) return month;
+  const label = new Date(year, monthIndex - 1, 1).toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
   return label.charAt(0).toUpperCase() + label.slice(1);
 }

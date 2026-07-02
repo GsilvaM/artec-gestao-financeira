@@ -264,6 +264,11 @@ export function Component() {
         searchPlaceholder="Buscar conta a pagar..."
         search={search}
         onSearchChange={setSearch}
+        activeFilters={
+          filterStatus
+            ? [{ key: "status", label: filterStatus === "pago" ? "Pago" : filterStatus === "vencido" ? "Vencido" : "Aberto", onRemove: () => setFilterStatus("") }]
+            : []
+        }
       >
         <StatusSelect value={filterStatus} onValueChange={setFilterStatus} />
       </FilterBar>
@@ -407,12 +412,11 @@ export function Component() {
             </Field>
             <Field label="Valor">
               <Input
-                type="number"
-                min="0"
-                step="0.01"
+                type="text"
+                inputMode="decimal"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                placeholder="0,00"
+                placeholder="R$ 0,00"
               />
             </Field>
             <Field label="Vencimento">

@@ -2,13 +2,10 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { ArrowDownCircle, ArrowUpCircle, Banknote, FileText, ListChecks } from "lucide-react";
-import { FormField as Field } from "@/components/forms/form-field";
+import { LancamentoModal, type LancamentoFormState } from "@/components/lancamentos/LancamentoModal";
 import { PageShell } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogCloseButton, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { useFinancialEntries, useCreateFinancialEntry, useUpdateFinancialEntry, useDeleteFinancialEntry } from "@/domain/financeiro/hooks/use-financial-entries";
 import { useCategories } from "@/domain/financeiro/hooks/use-categories";
 import { useCollaborators } from "@/domain/financeiro/hooks/use-collaborators";
@@ -41,19 +38,7 @@ const schema = z.object({
   observacoes: z.string().optional(),
 });
 
-interface FormState {
-  data: string;
-  tipo: string;
-  categoria: string;
-  descricao: string;
-  cliente: string;
-  colaborador: string;
-  valor: string;
-  status: string;
-  observacoes: string;
-}
-
-const initialForm: FormState = {
+const initialForm: LancamentoFormState = {
   data: "",
   tipo: "receita",
   categoria: "",
@@ -79,9 +64,12 @@ const STATUS_REVERSE: Record<string, string> = {
 
 export function Component() {
   const [open, setOpen] = useState(false);
+  const [mode, setMode] = useState<"criar" | "editar" | "duplicar">("criar");
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingEntry, setEditingEntry] = useState<FinancialEntryRow | null>(null);
+  const [duplicatingEntry, setDuplicatingEntry] = useState<FinancialEntryRow | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [form, setForm] = useState<FormState>(initialForm);
+  const [form, setForm] = useState<LancamentoFormState>(initialForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [search, setSearch] = useState("");
   const [filterMonth, setFilterMonth] = useState("");
@@ -107,17 +95,19 @@ export function Component() {
   const { mutateAsync: updateEntry, isPending: updating } = useUpdateFinancialEntry();
   const { mutateAsync: deleteEntry, isPending: deleting } = useDeleteFinancialEntry();
 
-  const isEditing = !!editingId;
   const isWorking = saving || updating;
   const { receitas, despesas, saldo } = calculateFinancialSummary(entries ?? []);
 
   function resetForm() {
     setForm(initialForm);
     setEditingId(null);
+    setEditingEntry(null);
+    setDuplicatingEntry(null);
+    setMode("criar");
     setErrors({});
   }
 
-  function updateField(field: keyof FormState, value: string) {
+  function updateField(field: keyof LancamentoFormState, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: "" }));
   }
@@ -143,6 +133,29 @@ export function Component() {
       observacoes: entry.notes?.startsWith("Cliente/Fornecedor: ") ? entry.notes.split(" | ").slice(1).join(" | ") : entry.notes ?? "",
     });
     setEditingId(entry.id);
+    setEditingEntry(entry);
+    setDuplicatingEntry(null);
+    setMode("editar");
+    setOpen(true);
+  }
+
+  function handleDuplicate(entry: FinancialEntryRow) {
+    setForm({
+      data: "",
+      tipo: entry.type,
+      categoria: entry.categoryName,
+      descricao: entry.description,
+      cliente: entry.clientName ?? (entry.notes?.startsWith("Cliente/Fornecedor: ") ? entry.notes.replace("Cliente/Fornecedor: ", "").split(" | ")[0] : "") ?? "",
+      colaborador: entry.collaboratorId ?? "",
+      valor: entry.amount.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      status: (STATUS_REVERSE[entry.status] ?? "aberto") as "aberto" | "pago" | "vencido",
+      observacoes: entry.notes?.startsWith("Cliente/Fornecedor: ") ? entry.notes.split(" | ").slice(1).join(" | ") : entry.notes ?? "",
+    });
+    setEditingId(null);
+    setEditingEntry(null);
+    setDuplicatingEntry(entry);
+    setMode("duplicar");
+    setErrors({});
     setOpen(true);
   }
 
@@ -246,45 +259,25 @@ export function Component() {
         onStatusChange={setFilterStatus}
       />
 
-      <ResponsiveTransactionList entries={entries} isLoading={isLoading} error={error} onEdit={handleEdit} onDelete={handleDelete} />
+      <ResponsiveTransactionList entries={entries} isLoading={isLoading} error={error} onEdit={handleEdit} onDuplicate={handleDuplicate} onDelete={handleDelete} />
 
-      <Dialog open={open} onOpenChange={(v) => { if (!v) resetForm(); setOpen(v); }}>
-        <DialogContent className="relative">
-          <DialogCloseButton onClick={() => { resetForm(); setOpen(false); }} />
-          <DialogHeader>
-            <DialogTitle>{isEditing ? "Editar lançamento" : "Novo lançamento"}</DialogTitle>
-            <DialogDescription>{isEditing ? "Altere os dados do lançamento selecionado." : "Registre uma receita, custo ou despesa com os dados essenciais."}</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Data" error={errors.data}><Input type="date" value={form.data} onChange={(e) => updateField("data", e.target.value)} /></Field>
-            <Field label="Tipo" error={errors.tipo}><Select value={form.tipo} onChange={(e) => updateField("tipo", e.target.value)} options={[{ value: "receita", label: "Receita" }, { value: "despesa", label: "Despesa" }]} /></Field>
-            <Field label="Categoria" error={errors.categoria}>
-              <Select value={form.categoria} onChange={(e) => updateField("categoria", e.target.value)}
-                options={(categories ?? [])
-                  .filter((c) => c.type === form.tipo)
-                  .map((c) => ({ value: c.name, label: c.name }))}
-                placeholder={categories?.length ? "Selecione..." : "Nenhuma categoria"} />
-            </Field>
-            <Field label="Status" error={errors.status}><Select value={form.status} onChange={(e) => updateField("status", e.target.value)} options={[{ value: "aberto", label: "Aberto" }, { value: "pago", label: "Pago" }, { value: "vencido", label: "Vencido" }]} /></Field>
-            <Field label="Descrição" error={errors.descricao}><Input value={form.descricao} onChange={(e) => updateField("descricao", e.target.value)} placeholder="Descrição do lançamento" /></Field>
-            <Field label="Cliente"><Input value={form.cliente ?? ""} onChange={(e) => updateField("cliente", e.target.value)} placeholder="Cliente relacionado (opcional)" /></Field>
-            <Field label="Colaborador">
-              <Select
-                value={form.colaborador ?? ""}
-                onChange={(e) => updateField("colaborador", e.target.value)}
-                placeholder="Nenhum colaborador"
-                options={(collaborators ?? []).map((collaborator) => ({ value: collaborator.id, label: collaborator.name }))}
-              />
-            </Field>
-            <Field label="Valor" error={errors.valor}><Input type="text" inputMode="decimal" value={form.valor} onChange={(e) => updateField("valor", e.target.value)} placeholder="0,00" /></Field>
-            <Field label="Observações"><Textarea value={form.observacoes ?? ""} onChange={(e) => updateField("observacoes", e.target.value)} placeholder="Informações adicionais" /></Field>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { resetForm(); setOpen(false); }}>Cancelar</Button>
-            <Button onClick={handleSave} disabled={isWorking}>{isWorking ? "Salvando..." : isEditing ? "Atualizar lançamento" : "Salvar lançamento"}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <LancamentoModal
+        open={open}
+        modo={mode}
+        tipoInicial={form.tipo === "despesa" ? "despesa" : "receita"}
+        contexto="financeiro"
+        lancamento={editingEntry}
+        duplicarDe={duplicatingEntry}
+        form={form}
+        errors={errors}
+        categories={categories ?? []}
+        collaborators={collaborators ?? []}
+        isWorking={isWorking}
+        onFieldChange={updateField}
+        onSave={handleSave}
+        onClose={() => { resetForm(); setOpen(false); }}
+        onOpenChange={(v) => { if (!v) resetForm(); setOpen(v); }}
+      />
 
       <Dialog open={!!deletingId} onOpenChange={(v) => { if (!v) setDeletingId(null); }}>
         <DialogContent className="relative">

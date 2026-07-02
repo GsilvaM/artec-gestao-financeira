@@ -447,6 +447,15 @@
     --chart-revenue: var(--success);
     --chart-expense: var(--danger);
     --chart-balance: var(--primary);
+    --color-bg-modal: var(--surface);
+    --color-bg-field: var(--surface-2);
+    --color-border-field: var(--border);
+    --color-border-focus: var(--primary);
+    --radius-field: 10px;
+    --radius-modal: 16px;
+    --field-height: 44px;
+    --transition-fast: 150ms ease;
+    --transition-medium: 200ms ease;
   }
 
   .dark {

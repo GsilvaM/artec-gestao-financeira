@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Children, cloneElement, createContext, useCallback, useContext, useEffect, useId, useRef, useState, type ReactElement, type ReactNode } from "react";
+import { Children, cloneElement, createContext, useCallback, useContext, useEffect, useId, useLayoutEffect, useRef, useState, type ReactElement, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
 interface DropdownContextValue {
@@ -132,7 +132,37 @@ export function DropdownMenuTrigger({ children, asChild, className, ...props }: 
 }
 
 export function DropdownMenuContent({ children, className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  const { open, contentId, contentRef, contentStyle } = useDropdown();
+  const { open, contentId, triggerRef, contentRef, contentStyle, setContentStyle } = useDropdown();
+
+  useLayoutEffect(() => {
+    if (!open || !triggerRef.current || !contentRef.current) return;
+
+    const triggerRect = triggerRef.current.getBoundingClientRect();
+    const contentRect = contentRef.current.getBoundingClientRect();
+    const viewportPadding = 8;
+    const gap = 4;
+    const menuWidth = contentRect.width || 176;
+    const menuHeight = contentRect.height;
+    const left = Math.min(
+      Math.max(viewportPadding, triggerRect.right - menuWidth),
+      Math.max(viewportPadding, window.innerWidth - menuWidth - viewportPadding),
+    );
+    const topBelow = triggerRect.bottom + gap;
+    const topAbove = triggerRect.top - menuHeight - gap;
+    const hasRoomBelow = topBelow + menuHeight <= window.innerHeight - viewportPadding;
+    const top = hasRoomBelow ? topBelow : Math.max(viewportPadding, topAbove);
+
+    setContentStyle({
+      position: "fixed",
+      top: `${top}px`,
+      left: `${left}px`,
+      width: `${menuWidth}px`,
+      maxHeight: `calc(100vh - ${viewportPadding * 2}px)`,
+      overflowY: "auto",
+      zIndex: 9999,
+    });
+  }, [contentRef, open, setContentStyle, triggerRef]);
+
   if (!open) return null;
 
   const content = (

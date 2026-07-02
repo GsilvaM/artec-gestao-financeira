@@ -5,6 +5,7 @@ import {
   Plus,
   Search,
   SlidersHorizontal,
+  X,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
@@ -172,6 +173,7 @@ interface FilterBarProps {
   searchPlaceholder?: string;
   search?: string;
   onSearchChange?: (value: string) => void;
+  activeFilters?: { key: string; label: string; onRemove: () => void }[];
   children?: ReactNode;
 }
 
@@ -179,10 +181,12 @@ export function FilterBar({
   searchPlaceholder = "Buscar...",
   search,
   onSearchChange,
+  activeFilters = [],
   children,
 }: FilterBarProps) {
   const [open, setOpen] = useState(true);
   const hasFilters = Boolean(children);
+  const hasActiveFilters = activeFilters.length > 0;
 
   return (
     <>
@@ -216,6 +220,22 @@ export function FilterBar({
             </Button>
           )}
         </div>
+        {hasActiveFilters && (
+          <div className="active-filter-row" aria-label="Filtros ativos">
+            {activeFilters.map((filter) => (
+              <button
+                key={filter.key}
+                type="button"
+                className="active-filter-chip"
+                onClick={filter.onRemove}
+                aria-label={`Remover filtro ${filter.label}`}
+              >
+                {filter.label}
+                <X className="size-3.5" />
+              </button>
+            ))}
+          </div>
+        )}
         {hasFilters && open && <div className="filter-content">{children}</div>}
       </div>
       <style>{filterStyles}</style>
@@ -232,8 +252,19 @@ const filterStyles = `
   background: var(--surface-2);
   color: var(--text-primary);
   font-size: 0.875rem;
+  font-weight: 650;
   padding: 0 14px 0 38px;
   outline: none;
+  box-shadow: var(--shadow-xs);
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.search-input:hover {
+  background: var(--surface);
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--color-border));
 }
 
 .search-input:focus {
@@ -249,6 +280,7 @@ const filterStyles = `
   background: var(--surface-2);
   color: var(--text-primary);
   font-size: 0.875rem;
+  font-weight: 650;
   padding: 0 14px;
   outline: none;
   appearance: none;
@@ -256,11 +288,59 @@ const filterStyles = `
   background-repeat: no-repeat;
   background-position: right 12px center;
   padding-right: 36px;
+  box-shadow: var(--shadow-xs);
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.select-input:hover {
+  background: var(--surface);
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--color-border));
 }
 
 .select-input:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 2px var(--primary-ring);
+}
+
+.active-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.active-filter-chip {
+  display: inline-flex;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--primary) 26%, var(--color-border));
+  background: color-mix(in srgb, var(--primary) 9%, var(--surface));
+  color: var(--text-primary);
+  padding: 0 10px;
+  font-size: 0.75rem;
+  font-weight: 750;
+  line-height: 1;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease;
+}
+
+.active-filter-chip:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.active-filter-chip svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
 }
 `;
 
