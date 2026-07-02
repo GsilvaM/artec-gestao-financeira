@@ -88,7 +88,7 @@ export function LancamentoModal({
       >
         <DialogCloseButton onClick={onClose} />
         <div className="border-b border-border/80 px-5 pb-4 pt-5 sm:px-6">
-          <DialogHeader className="mb-0 pr-10">
+          <DialogHeader className="mb-0 border-0 p-0 pr-10">
             <DialogTitle>{title}</DialogTitle>
             <DialogDescription>{description}</DialogDescription>
           </DialogHeader>

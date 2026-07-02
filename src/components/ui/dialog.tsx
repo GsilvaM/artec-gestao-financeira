@@ -41,8 +41,11 @@ export function DialogContent({ className, children, ...props }: React.HTMLAttri
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-[28px] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--primary)_4%,var(--surface))_0%,var(--surface)_30%)] p-5 shadow-[inset_0_1px_0_color-mix(in_srgb,var(--primary)_12%,transparent)] sm:p-6",
-        "before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-primary/35 before:to-transparent",
+        "relative overflow-hidden rounded-[28px] bg-[var(--color-bg-modal)] p-0 shadow-[inset_0_1px_0_color-mix(in_srgb,var(--primary)_12%,transparent)]",
+        "before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:z-10 before:h-px before:bg-gradient-to-r before:from-transparent before:via-primary/35 before:to-transparent",
+        "[&>form]:contents [&>form>div:first-child]:px-5 [&>form>div:first-child]:py-5 sm:[&>form>div:first-child]:px-6",
+        "[&>.grid]:px-5 [&>.grid]:py-5 sm:[&>.grid]:px-6",
+        "[&_.form-dialog-panel]:px-5 [&_.form-dialog-panel]:py-5 sm:[&_.form-dialog-panel]:px-6",
         className,
       )}
       {...props}
@@ -53,11 +56,11 @@ export function DialogContent({ className, children, ...props }: React.HTMLAttri
 }
 
 export function DialogHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("mb-5 space-y-2 pr-10", className)} {...props} />;
+  return <div className={cn("mb-0 space-y-2 border-b border-border/80 px-5 pb-4 pt-5 pr-14 sm:px-6", className)} {...props} />;
 }
 
 export function DialogFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("mt-7 flex flex-col-reverse gap-3 border-t border-border/80 pt-5 sm:flex-row sm:justify-end [&>button]:w-full sm:[&>button]:w-auto", className)} {...props} />;
+  return <div className={cn("mt-0 flex flex-col-reverse gap-3 border-t border-border/80 px-5 pb-5 pt-4 sm:flex-row sm:justify-end sm:px-6 [&>button]:w-full sm:[&>button]:w-auto", className)} {...props} />;
 }
 
 export function DialogTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {

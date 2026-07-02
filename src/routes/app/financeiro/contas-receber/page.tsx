@@ -20,6 +20,7 @@ import {
 } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogCloseButton,
@@ -418,10 +419,10 @@ export function Component() {
               />
             </Field>
             <Field label="Vencimento">
-              <Input
-                type="date"
+              <DatePicker
                 value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
+                onChange={setDueDate}
+                ariaLabel="Data de vencimento"
               />
             </Field>
             <Field label="Categoria">
