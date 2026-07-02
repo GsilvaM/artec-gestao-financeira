@@ -38,15 +38,26 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
 }
 
 export function DialogContent({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("p-6 sm:p-7", className)} {...props}>{children}</div>;
+  return (
+    <div
+      className={cn(
+        "relative overflow-hidden rounded-[28px] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--primary)_4%,var(--surface))_0%,var(--surface)_30%)] p-5 shadow-[inset_0_1px_0_color-mix(in_srgb,var(--primary)_12%,transparent)] sm:p-6",
+        "before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-primary/35 before:to-transparent",
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </div>
+  );
 }
 
 export function DialogHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("mb-5 space-y-1.5", className)} {...props} />;
+  return <div className={cn("mb-5 space-y-2 pr-10", className)} {...props} />;
 }
 
 export function DialogFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("mt-7 flex flex-col-reverse gap-3 border-t border-border/80 pt-5 sm:flex-row sm:justify-end", className)} {...props} />;
+  return <div className={cn("mt-7 flex flex-col-reverse gap-3 border-t border-border/80 pt-5 sm:flex-row sm:justify-end [&>button]:w-full sm:[&>button]:w-auto", className)} {...props} />;
 }
 
 export function DialogTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {

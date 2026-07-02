@@ -28,11 +28,16 @@ export function FormField({ label, error, children }: FormFieldProps) {
     : children;
 
   return (
-    <div className="space-y-1.5">
-      <Label htmlFor={child ? child.props.id ?? inputId : undefined}>{label}</Label>
+    <div className="group/form-field space-y-2">
+      <Label
+        htmlFor={child ? child.props.id ?? inputId : undefined}
+        className="text-[0.8125rem] font-black uppercase tracking-[0.04em] text-muted-foreground transition-colors group-focus-within/form-field:text-primary"
+      >
+        {label}
+      </Label>
       {control}
       {error ? (
-        <p id={errorId} className="text-xs font-medium text-destructive" role="alert">
+        <p id={errorId} className="text-xs font-bold leading-4 text-destructive" role="alert">
           {error}
         </p>
       ) : null}

@@ -205,9 +205,20 @@ const loginStyles = `
   width: 100%;
   max-width: 420px;
   border-radius: var(--radius-xl);
-  border-color: var(--border-subtle);
-  background: var(--surface);
-  box-shadow: var(--shadow-lg);
+  border-color: color-mix(in srgb, var(--primary) 14%, var(--border-subtle));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--primary) 5%, var(--surface)) 0%, var(--surface) 30%),
+    var(--surface);
+  box-shadow: var(--shadow-lg), inset 0 1px 0 color-mix(in srgb, var(--primary) 12%, transparent);
+  overflow: hidden;
+}
+
+.login-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--primary) 45%, transparent), transparent);
 }
 
 .login-icon {
@@ -242,5 +253,13 @@ const loginStyles = `
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.form-field label {
+  font-size: 0.8125rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
 }
 `;

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { Bell, Building2, CreditCard, Palette, Settings, UserCog } from "lucide-react";
+import { Bell, Building2, CreditCard, Loader2, Palette, Settings, UserCog } from "lucide-react";
 import { FormField as Field } from "@/components/forms/form-field";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,16 +34,16 @@ export function Component() {
     <PageShell icon={Settings} title="Configurações" subtitle="Ajustes gerais e preferências do sistema">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {settings.map((item) => (
-          <Card key={item.title} className="group transition-colors hover:border-primary/25">
+          <Card key={item.title} className="group overflow-hidden border-primary/10 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--primary)_4%,var(--surface))_0%,var(--surface)_42%)] transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[var(--shadow-md)]">
             <CardHeader className="flex-row items-center gap-3 space-y-0">
-              <div className="flex size-11 items-center justify-center rounded-lg bg-accent text-primary">
+              <div className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-primary/10 bg-primary/10 text-primary shadow-[inset_0_1px_0_color-mix(in_srgb,var(--primary)_12%,transparent)]">
                 <item.icon className="size-5" />
               </div>
-              <CardTitle className="text-base">{item.title}</CardTitle>
+              <CardTitle className="text-base leading-tight">{item.title}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm leading-6 text-muted-foreground">{item.description}</p>
-              <Button variant="outline" size="sm" onClick={() => setActive(item)}>Configurar</Button>
+              <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => setActive(item)}>Configurar</Button>
             </CardContent>
           </Card>
         ))}
@@ -64,7 +64,10 @@ export function Component() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setActive(null)}>Cancelar</Button>
-            <Button onClick={handleSave} disabled={saving}>{saving ? "Salvando..." : "Salvar configuração"}</Button>
+            <Button onClick={handleSave} disabled={saving}>
+              {saving && <Loader2 className="size-4 animate-spin" />}
+              {saving ? "Salvando..." : "Salvar configuração"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
