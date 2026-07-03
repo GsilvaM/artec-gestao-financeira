@@ -49,6 +49,14 @@ Agentes NAO podem alterar:
 - variaveis de ambiente
 - config de deploy
 
+Excecao explicita para a tarefa "Exportacao de DRE em PDF":
+
+- Pode alterar backend/resource routes/API somente para implementar o endpoint de exportacao do DRE em PDF.
+- Pode alterar services/queries somente para reaproveitar ou expor os dados ja existentes da DRE para o PDF, sem mudar regra financeira.
+- Pode alterar `package.json` e lockfile somente para adicionar a biblioteca de PDF `@react-pdf/renderer`.
+- Pode adicionar testes unitarios/API relacionados exclusivamente a exportacao de DRE em PDF.
+- Continua proibido alterar banco de dados, Prisma schema, migrations, seeds, Supabase config, autenticacao, permissoes fora do guard ja existente, variaveis de ambiente e config de deploy.
+
 ## Problema critico atual: botoes desalinhados
 
 O sistema apresenta botoes com textos e icones desalinhados, inclusive na tela de login.

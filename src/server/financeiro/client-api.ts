@@ -40,6 +40,14 @@ async function handleResponse(r: Response): Promise<unknown> {
   return r.json();
 }
 
+async function handleBlobResponse(r: Response): Promise<Blob> {
+  if (!r.ok) {
+    const body = await r.json().catch(() => null);
+    throw new Error(body?.error || body?.message || `HTTP ${r.status}`);
+  }
+  return r.blob();
+}
+
 export const clientApi = {
   financialEntries: {
     findAll: (filters?: Record<string, unknown>) =>
@@ -170,6 +178,8 @@ export const clientApi = {
   dre: {
     getByYear: (year: number) =>
       getAuthHeaders().then((headers) => apiFetch(`${BASE_URL}/dre?year=${year}`, { headers })).then(handleResponse),
+    exportPdf: (params: Record<string, string | number>) =>
+      getAuthHeaders().then((headers) => apiFetch(`${BASE_URL}/dre/export/pdf?${toSearchParams(params)}`, { headers })).then(handleBlobResponse),
   },
 
   cashFlow: {
