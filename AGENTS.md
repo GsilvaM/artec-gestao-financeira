@@ -27,6 +27,8 @@ Stack principal:
 
 Agentes podem alterar frontend, layout, design system, componentes visuais e CSS somente quando a tarefa pedir explicitamente.
 
+Quando a tarefa envolver a pagina DRE, alem da melhoria visual, tratar responsividade como requisito obrigatorio de entrega. A pagina DRE precisa funcionar bem desde desktop grande ate celular, incluindo graficos, filtros, tabela e modal de exportacao PDF.
+
 Agentes NAO podem alterar:
 
 - banco de dados
@@ -191,6 +193,7 @@ Usar como base:
 - `docs/ui-refactor/BUTTON_ALIGNMENT_SPEC.md`
 - `docs/ui-refactor/UI_REFACTOR_PLAN.md`
 - `docs/ui-refactor/ACCEPTANCE_CHECKLIST.md`
+- `docs/ui-refactor/DRE_UX_PDF_PROMPT.md` quando a tarefa envolver a pagina DRE, graficos, filtros, tabela ou exportacao PDF.
 
 ## Finalizacao
 

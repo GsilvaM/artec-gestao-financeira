@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   buildDre,
+  buildDreInsights,
   buildExpenseComposition,
   buildMonthlyEvolution,
+  buildMonthlyEvolutionSeries,
   calcularVariacao,
+  formatOptionalPercent,
   getBreakEvenState,
   shouldAlertExpenseCategory,
 } from "@/domain/financeiro/dre-visual";
@@ -55,6 +58,8 @@ describe("dre visual helpers", () => {
 
     expect(dre.variacaoReceitas.percentual).toBe(100);
     expect(dre.variacaoDespesas.percentual).toBe(100);
+    expect(dre.margemLiquida).toBe(50);
+    expect(dre.coberturaDespesas).toBe(200);
     expect(dre.rows.find((row) => row.category === "Colaborador")?.variation.percentual).toBe(100);
   });
 
@@ -74,6 +79,7 @@ describe("dre visual helpers", () => {
     expect(totalPercent).toBeGreaterThanOrEqual(99);
     expect(totalPercent).toBeLessThanOrEqual(101);
     expect(composition.find((item) => item.categoria === "Colaborador")?.alerta).toBe(true);
+    expect(composition.find((item) => item.categoria === "Colaborador")?.percentualReceita).toBeGreaterThan(100);
   });
 
   it("trata ponto de equilibrio negativo, positivo e exato", () => {
@@ -98,8 +104,25 @@ describe("dre visual helpers", () => {
     ]);
 
     expect(points).toEqual([
-      { mes: "2026-06", receita: 1000, despesa: 400, resultado: 600 },
-      { mes: "2026-07", receita: 2000, despesa: 0, resultado: 2000 },
+      { mes: "2026-06", receita: 1000, despesa: 400, resultado: 600, margem: 60, hasData: true },
+      { mes: "2026-07", receita: 2000, despesa: 0, resultado: 2000, margem: 100, hasData: true },
     ]);
+  });
+
+  it("preenche serie mensal com meses sem dados e insights gerenciais", () => {
+    const entries = [
+      entry({ type: "receita", amount: 1000, date: "2026-06-10", categoryName: "Servicos" }),
+      entry({ type: "despesa", amount: 1200, date: "2026-06-11", categoryName: "Colaborador" }),
+    ];
+    const dre = buildDre(entries);
+    const composition = buildExpenseComposition(dre.rows);
+    const points = buildMonthlyEvolutionSeries(entries, 6, "2026-07");
+    const insights = buildDreInsights(dre, composition);
+
+    expect(points).toHaveLength(6);
+    expect(points.at(-2)).toMatchObject({ mes: "2026-06", hasData: true });
+    expect(points[0]).toMatchObject({ hasData: false });
+    expect(insights.some((insight) => insight.id === "resultado-negativo")).toBe(true);
+    expect(formatOptionalPercent(null)).toBe("-");
   });
 });

@@ -29,6 +29,7 @@ export interface FatiaComposicao {
   categoria: string;
   valor: number;
   percentual: number;
+  percentualReceita: number;
   alerta: boolean;
   color: string;
 }
@@ -38,6 +39,14 @@ export interface PontoMensal {
   receita: number;
   despesa: number;
   resultado: number;
+  margem: number | null;
+  hasData?: boolean;
+}
+
+export interface DreInsight {
+  id: string;
+  tone: "positive" | "negative" | "warning" | "neutral";
+  text: string;
 }
 
 export type BreakEvenTone = "negative" | "positive" | "neutral";
@@ -47,6 +56,8 @@ export interface BreakEvenState {
   difference: number;
   receitaPct: number;
   despesaPct: number;
+  coberturaPct: number;
+  gap: number;
   text: string;
 }
 
@@ -97,6 +108,10 @@ export function calcularVariacao(atual: number, anterior: number | null): Variac
 export function formatPercent(value: number): string {
   if (!Number.isFinite(value)) return "0,0%";
   return `${value.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
+}
+
+export function formatOptionalPercent(value: number | null): string {
+  return value === null || !Number.isFinite(value) ? "-" : formatPercent(value);
 }
 
 export function formatVariacao(variation: VariacaoResultado): string {
@@ -217,6 +232,9 @@ export function buildDre(entries: FinancialEntryRow[], previousEntries: Financia
     totalReceitas,
     totalDespesas,
     resultado,
+    margemLiquida: totalReceitas > 0 ? roundPercent((resultado / totalReceitas) * 100) : null,
+    coberturaDespesas: totalDespesas > 0 ? roundPercent((totalReceitas / totalDespesas) * 100) : null,
+    gapEquilibrio: roundCurrency(totalDespesas - totalReceitas),
     variacaoReceitas: calcularVariacao(totalReceitas, previousReceitas),
     variacaoDespesas: calcularVariacao(totalDespesas, previousDespesas),
     variacaoResultado: calcularVariacao(resultado, previousResultado),
@@ -227,6 +245,7 @@ export function buildDre(entries: FinancialEntryRow[], previousEntries: Financia
 export function buildExpenseComposition(rows: DreLine[]): FatiaComposicao[] {
   const expenses = rows.filter((row) => row.type === "despesa" && !row.emphasis && row.amount > 0);
   const total = expenses.reduce((sum, row) => sum + row.amount, 0);
+  const totalReceitas = rows.find((row) => row.id === "total-receitas")?.amount ?? 0;
   if (total <= 0) return [];
 
   const visible: FatiaComposicao[] = [];
@@ -235,7 +254,7 @@ export function buildExpenseComposition(rows: DreLine[]): FatiaComposicao[] {
 
   expenses.forEach((row, index) => {
     const percentual = (row.amount / total) * 100;
-    if (percentual < 2) {
+    if (index >= 5 || percentual < 2) {
       outrosValor += row.amount;
       outrosAlerta ||= row.alert;
       return;
@@ -245,6 +264,7 @@ export function buildExpenseComposition(rows: DreLine[]): FatiaComposicao[] {
       categoria: row.category,
       valor: roundCurrency(row.amount),
       percentual: roundPercent(percentual),
+      percentualReceita: totalReceitas > 0 ? roundPercent((row.amount / totalReceitas) * 100) : 0,
       alerta: row.alert,
       color: row.alert ? "var(--chart-expense)" : row.categoryColor || getCompositionColor(index),
     });
@@ -255,6 +275,7 @@ export function buildExpenseComposition(rows: DreLine[]): FatiaComposicao[] {
       categoria: "Outros",
       valor: roundCurrency(outrosValor),
       percentual: roundPercent((outrosValor / total) * 100),
+      percentualReceita: totalReceitas > 0 ? roundPercent((outrosValor / totalReceitas) * 100) : 0,
       alerta: outrosAlerta,
       color: outrosAlerta ? "var(--chart-expense)" : getCompositionColor(4),
     });
@@ -269,16 +290,95 @@ export function buildMonthlyEvolution(entries: FinancialEntryRow[]): PontoMensal
   for (const entry of entries) {
     const month = getEntryMonth(entry.date);
     if (!month) continue;
-    const point = points.get(month) ?? { mes: month, receita: 0, despesa: 0, resultado: 0 };
+    const point = points.get(month) ?? { mes: month, receita: 0, despesa: 0, resultado: 0, margem: null, hasData: true };
     if (entry.type === "receita") point.receita += entry.amount;
     if (entry.type === "despesa") point.despesa += entry.amount;
     point.receita = roundCurrency(point.receita);
     point.despesa = roundCurrency(point.despesa);
     point.resultado = roundCurrency(point.receita - point.despesa);
+    point.margem = point.receita > 0 ? roundPercent((point.resultado / point.receita) * 100) : null;
+    point.hasData = true;
     points.set(month, point);
   }
 
   return [...points.values()].sort((a, b) => a.mes.localeCompare(b.mes));
+}
+
+export function buildMonthlyEvolutionSeries(
+  entries: FinancialEntryRow[],
+  monthsBack: 6 | 12,
+  referenceMonth: string,
+): PontoMensal[] {
+  const existing = new Map(buildMonthlyEvolution(entries).map((point) => [point.mes, point]));
+  const { year, month } = parseMonthValue(referenceMonth);
+  const points: PontoMensal[] = [];
+  const cursor = new Date(year, month - monthsBack, 1);
+
+  for (let index = 0; index < monthsBack; index += 1) {
+    const mes = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}`;
+    points.push(existing.get(mes) ?? { mes, receita: 0, despesa: 0, resultado: 0, margem: null, hasData: false });
+    cursor.setMonth(cursor.getMonth() + 1);
+  }
+
+  return points;
+}
+
+export function buildDreInsights({
+  totalReceitas,
+  totalDespesas,
+  resultado,
+  margemLiquida,
+  coberturaDespesas,
+}: ReturnType<typeof buildDre>, composition: FatiaComposicao[]): DreInsight[] {
+  if (totalReceitas <= 0 && totalDespesas <= 0) {
+    return [{ id: "empty", tone: "neutral", text: "Ainda nao ha dados suficientes para gerar uma leitura gerencial do periodo." }];
+  }
+
+  const insights: DreInsight[] = [];
+
+  if (resultado < 0) {
+    insights.push({
+      id: "resultado-negativo",
+      tone: "negative",
+      text: `As despesas superaram as receitas em ${formatCurrencyText(Math.abs(resultado))} no periodo.`,
+    });
+  } else if (resultado > 0) {
+    insights.push({
+      id: "resultado-positivo",
+      tone: "positive",
+      text: `A receita supera as despesas em ${formatCurrencyText(resultado)} no periodo.`,
+    });
+  } else {
+    insights.push({ id: "equilibrio", tone: "neutral", text: "Receitas e despesas estao empatadas no periodo." });
+  }
+
+  const topExpense = composition[0];
+  if (topExpense) {
+    insights.push({
+      id: "maior-despesa",
+      tone: topExpense.alerta ? "warning" : "neutral",
+      text: `${topExpense.categoria} representa ${formatPercent(topExpense.percentualReceita)} da receita e ${formatPercent(topExpense.percentual)} das despesas.`,
+    });
+  }
+
+  const coberturaText = coberturaDespesas === null
+    ? "Nao ha despesas no periodo para medir cobertura."
+    : `A receita cobre ${formatPercent(coberturaDespesas)} das despesas.`;
+  insights.push({
+    id: "cobertura",
+    tone: coberturaDespesas !== null && coberturaDespesas < 100 ? "warning" : "positive",
+    text: coberturaText,
+  });
+
+  if (margemLiquida !== null) {
+    insights.push({
+      id: "margem",
+      tone: margemLiquida < 0 ? "negative" : margemLiquida === 0 ? "neutral" : "positive",
+      text: `Margem liquida do periodo: ${formatPercent(margemLiquida)}.`,
+    });
+  }
+
+  return insights.slice(0, 4);
 }
 
 export function getBreakEvenState(receita: number, despesa: number, formatter: (value: number) => string): BreakEvenState {
@@ -286,6 +386,8 @@ export function getBreakEvenState(receita: number, despesa: number, formatter: (
   const difference = roundCurrency(receita - despesa);
   const receitaPct = clampPercent((receita / scale) * 100);
   const despesaPct = clampPercent((despesa / scale) * 100);
+  const coberturaPct = despesa > 0 ? roundPercent((receita / despesa) * 100) : receita > 0 ? 100 : 0;
+  const gap = roundCurrency(despesa - receita);
 
   if (difference < 0) {
     return {
@@ -293,6 +395,8 @@ export function getBreakEvenState(receita: number, despesa: number, formatter: (
       difference: Math.abs(difference),
       receitaPct,
       despesaPct,
+      coberturaPct,
+      gap,
       text: `Falta ${formatter(Math.abs(difference))} para cobrir as despesas do periodo`,
     };
   }
@@ -303,6 +407,8 @@ export function getBreakEvenState(receita: number, despesa: number, formatter: (
       difference,
       receitaPct,
       despesaPct,
+      coberturaPct,
+      gap,
       text: `Margem de ${formatter(difference)} acima do ponto de equilibrio`,
     };
   }
@@ -312,6 +418,8 @@ export function getBreakEvenState(receita: number, despesa: number, formatter: (
     difference: 0,
     receitaPct,
     despesaPct,
+    coberturaPct,
+    gap,
     text: "Ponto de equilibrio atingido",
   };
 }
@@ -362,6 +470,13 @@ function normalizeCompositionPercentages(items: FatiaComposicao[]): FatiaComposi
     if (largest && item.percentual > largest.percentual) largestIndex = index;
   });
   return items.map((item, index) => index === largestIndex ? { ...item, percentual: roundPercent(item.percentual + delta) } : item);
+}
+
+function formatCurrencyText(value: number): string {
+  return value.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
 }
 
 function parseMonthValue(value: string, fallback = new Date()): { year: number; month: number } {

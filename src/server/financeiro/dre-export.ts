@@ -1,10 +1,16 @@
 import { z } from "zod";
 import {
   buildDre,
+  buildDreInsights,
+  buildExpenseComposition,
   buildMonthlyEvolution,
   formatPercent,
   formatVariacao,
+  getBreakEvenState,
+  type BreakEvenState,
+  type DreInsight,
   type DreLine,
+  type FatiaComposicao,
   type PontoMensal,
 } from "../../domain/financeiro/dre-visual.js";
 import type { FinancialEntryRow } from "../../domain/financeiro/types.js";
@@ -64,7 +70,13 @@ export interface DreExportPayload {
     receitas: number;
     despesas: number;
     resultado: number;
+    margemLiquida: number | null;
+    coberturaDespesas: number | null;
+    gapEquilibrio: number;
   };
+  breakEven: BreakEvenState;
+  insights: DreInsight[];
+  expenseComposition: FatiaComposicao[];
   rows: DreLine[];
   monthlyComparison: PontoMensal[];
   empty: boolean;
@@ -152,6 +164,7 @@ export function buildDreExportPayload(
   generatedAt = new Date(),
 ): DreExportPayload {
   const dre = buildDre(entries, previousEntries);
+  const expenseComposition = buildExpenseComposition(dre.rows);
   return {
     companyName,
     title: "Demonstracao de Resultado",
@@ -161,7 +174,13 @@ export function buildDreExportPayload(
       receitas: dre.totalReceitas,
       despesas: dre.totalDespesas,
       resultado: dre.resultado,
+      margemLiquida: dre.margemLiquida,
+      coberturaDespesas: dre.coberturaDespesas,
+      gapEquilibrio: dre.gapEquilibrio,
     },
+    breakEven: getBreakEvenState(dre.totalReceitas, dre.totalDespesas, formatMoney),
+    insights: buildDreInsights(dre, expenseComposition),
+    expenseComposition,
     rows: dre.rows,
     monthlyComparison: period.includesMultipleMonths ? buildMonthlyComparison(entries, period.dateFrom, period.dateTo) : [],
     empty: entries.length === 0,
@@ -210,7 +229,7 @@ function buildMonthlyComparison(entries: FinancialEntryRow[], dateFrom: Date, da
 
   while (cursor <= end) {
     const mes = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}`;
-    points.push(existing.get(mes) ?? { mes, receita: 0, despesa: 0, resultado: 0 });
+    points.push(existing.get(mes) ?? { mes, receita: 0, despesa: 0, resultado: 0, margem: null, hasData: false });
     cursor.setMonth(cursor.getMonth() + 1);
   }
 

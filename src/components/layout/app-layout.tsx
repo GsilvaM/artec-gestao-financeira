@@ -599,10 +599,10 @@ const sidebarStyles = `
 
 #conteudo-principal {
   width: 100%;
-  max-width: 1360px;
+  max-width: 1440px;
   min-width: 0;
   margin-inline: auto;
-  padding: 32px;
+  padding: clamp(16px, 3vw, 40px);
   flex: 1;
 }
 

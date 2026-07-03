@@ -61,6 +61,10 @@ describe("dre export", () => {
     expect(payload.summary.receitas).toBe(20769);
     expect(payload.summary.despesas).toBe(29164);
     expect(payload.summary.resultado).toBe(-8395);
+    expect(payload.summary.margemLiquida).toBeLessThan(0);
+    expect(payload.expenseComposition.length).toBeGreaterThan(0);
+    expect(payload.insights.some((insight) => insight.id === "resultado-negativo")).toBe(true);
+    expect(payload.breakEven.tone).toBe("negative");
   });
 
   it("inclui comparativo mensal para periodos com mais de um mes", () => {
@@ -74,6 +78,7 @@ describe("dre export", () => {
     );
 
     expect(payload.monthlyComparison.map((point) => point.mes)).toEqual(["2026-04", "2026-05", "2026-06"]);
+    expect(payload.monthlyComparison[1]).toMatchObject({ hasData: false, margem: null });
   });
 
   it("gera PDF valido mesmo sem movimentacao", async () => {
