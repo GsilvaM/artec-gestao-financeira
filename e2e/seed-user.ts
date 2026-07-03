@@ -24,6 +24,7 @@ export async function ensureE2EUserAndData() {
   });
 
   const user = await findOrCreateUser(admin, email, password);
+  await ensureRoles();
   await ensureProfile(user.id, email);
   await ensureCategories();
   await cleanupOldE2EEntries(user.id);
@@ -71,11 +72,50 @@ async function findUserByEmail(admin: SupabaseAdminClient, email: string) {
 }
 
 async function ensureProfile(userId: string, email: string) {
+  const roleId = await findRoleId(["admin", "user"]);
+
   await prisma.profile.upsert({
     where: { userId },
     update: { name: "Usuário E2E", deletedAt: null },
     create: { id: randomUUID(), userId, name: "Usuário E2E", phone: email },
   });
+  await prisma.profile.update({
+    where: { userId },
+    data: {
+      phone: email,
+      status: "approved",
+      approvedAt: new Date(),
+      approvedBy: userId,
+      rejectedAt: null,
+      rejectedBy: null,
+      deletedAt: null,
+      roleId,
+    },
+  });
+}
+
+async function ensureRoles() {
+  const roles = [
+    { name: "admin", description: "Administrador - acesso total" },
+    { name: "user", description: "Usuario padrao aprovado" },
+  ];
+
+  for (const role of roles) {
+    await prisma.role.upsert({
+      where: { name: role.name },
+      update: { description: role.description, deletedAt: null },
+      create: role,
+    });
+  }
+}
+
+async function findRoleId(names: string[]) {
+  const role = await prisma.role.findFirst({
+    where: { name: { in: names }, deletedAt: null },
+    orderBy: { name: "asc" },
+    select: { id: true },
+  });
+  return role?.id ?? null;
 }
 
 async function ensureCategories() {

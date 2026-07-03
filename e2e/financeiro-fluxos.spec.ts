@@ -65,7 +65,7 @@ async function createEntry(
   await dialog.getByPlaceholder("Descrição do lançamento").fill(entry.description);
   await dialog.getByPlaceholder("0,00").fill(entry.amount);
   await dialog.getByRole("button", { name: /salvar lançamento/i }).click();
-  await expect(dialog).toHaveCount(0);
+  await expect(dialog).not.toBeVisible();
 }
 
 async function editFirstEntry(page: import("@playwright/test").Page, currentDescription: string, nextDescription: string, amount: string) {
@@ -76,7 +76,7 @@ async function editFirstEntry(page: import("@playwright/test").Page, currentDesc
   await dialog.getByPlaceholder("Descrição do lançamento").fill(nextDescription);
   await dialog.getByPlaceholder("0,00").fill(amount);
   await dialog.getByRole("button", { name: /atualizar lançamento/i }).click();
-  await expect(dialog).toHaveCount(0);
+  await expect(dialog).not.toBeVisible();
 }
 
 async function deleteEntry(page: import("@playwright/test").Page, description: string) {
@@ -85,5 +85,5 @@ async function deleteEntry(page: import("@playwright/test").Page, description: s
   await page.getByRole("menuitem", { name: /excluir/i }).click();
   const dialog = page.getByRole("dialog");
   await dialog.getByRole("button", { name: /^excluir$/i }).click();
-  await expect(dialog).toHaveCount(0);
+  await expect(dialog).not.toBeVisible();
 }

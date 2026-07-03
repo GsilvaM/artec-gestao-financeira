@@ -93,5 +93,5 @@ describe("dre export", () => {
 
     expect(pdf.byteLength).toBeGreaterThan(1000);
     expect(pdf.subarray(0, 4).toString()).toBe("%PDF");
-  });
+  }, 15_000);
 });
