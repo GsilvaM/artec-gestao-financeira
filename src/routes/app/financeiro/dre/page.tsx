@@ -116,7 +116,7 @@ export function Component() {
         <span className="badge border-border bg-[var(--surface-2)] text-muted-foreground">Regime: caixa</span>
       </div>
 
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-4">
+      <div className="dre-kpi-grid">
         <MetricCard title="Receita total" value={formatMoney(dre.totalReceitas)} icon={ArrowUpCircle} tone="green" helper={formatVariationDescription("receita", dre.variacaoReceitas)} />
         <MetricCard title="Despesa total" value={formatMoney(dre.totalDespesas)} icon={ArrowDownCircle} tone="red" helper={formatVariationDescription("despesa", dre.variacaoDespesas)} />
         <MetricCard title="Resultado liquido" value={formatMoney(dre.resultado)} icon={Scale} tone={dre.resultado < 0 ? "red" : "blue"} helper={dre.resultado < 0 ? "Resultado negativo no periodo" : "Resultado positivo no periodo"} />
@@ -137,7 +137,7 @@ export function Component() {
 
       <ExpenseComposition composition={composition} />
 
-      <Card className="p-4 sm:p-5">
+      <Card className="dre-filter-panel p-4 sm:p-5">
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
           <FilterBar searchPlaceholder="Buscar categoria ou descricao..." search={search} onSearchChange={setSearch} activeFilters={activeFilters}>
             <MonthSelect value={filterMonth} onValueChange={setFilterMonth} />
@@ -157,7 +157,7 @@ export function Component() {
               <option value="receita">Maior % da receita</option>
             </select>
           </FilterBar>
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+          <div className="dre-filter-actions">
             <Button type="button" variant="outline" className="w-full lg:w-auto" onClick={() => setExportOpen(true)}>
               <FileDown className="size-4" />
               Exportar PDF
@@ -265,7 +265,7 @@ function DrePdfExportDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
+      <DialogContent className="dre-export-dialog max-h-[calc(100dvh-1rem)] overflow-y-auto">
         <DialogCloseButton onClick={() => onOpenChange(false)} />
         <DialogHeader>
           <DialogTitle>Exportar DRE em PDF</DialogTitle>
@@ -274,7 +274,7 @@ function DrePdfExportDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4">
+        <div className="dre-export-form grid gap-4">
           <div className="rounded-xl border border-primary/15 bg-primary-light p-3 text-sm font-semibold leading-relaxed text-primary">
             A exportacao usa um layout proprio de PDF e nao depende do tamanho da tela atual.
           </div>
@@ -390,7 +390,7 @@ function BreakEvenIndicator({ state, receita, despesa }: { state: BreakEvenState
   return (
     <Card className="overflow-hidden p-5 sm:p-6">
       <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <p className="card-label">Ponto de equilibrio</p>
           <h2 className={cn("mt-2 text-lg font-bold leading-tight", toneClass)}>{state.text}</h2>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -404,8 +404,8 @@ function BreakEvenIndicator({ state, receita, despesa }: { state: BreakEvenState
         </div>
         <div className="min-w-0 flex-1 lg:max-w-xl">
           <div className="relative h-4 rounded-full bg-surface-muted">
-            <span className="absolute inset-y-0 left-0 rounded-full bg-success" style={{ width: `${state.receitaPct}%` }} />
-            <span className={cn("absolute top-1/2 size-5 -translate-y-1/2 rounded-full border-2 border-surface shadow-sm", markerClass)} style={{ left: `calc(${state.despesaPct}% - 10px)` }} />
+            <span className="absolute inset-y-0 left-0 rounded-full bg-success" style={{ width: `${clampPercent(state.receitaPct)}%` }} />
+            <span className={cn("absolute top-1/2 size-5 -translate-y-1/2 rounded-full border-2 border-surface shadow-sm", markerClass)} style={{ left: `calc(${clampPercent(state.despesaPct)}% - 10px)` }} />
           </div>
           <div className="mt-3 flex items-center justify-between gap-4 text-xs font-bold text-muted-foreground">
             <span>Receita atual</span>
@@ -437,7 +437,7 @@ function DreEvolutionChart({
           <p className="card-label">Evolucao mensal</p>
           <h2 className="mt-2 text-lg font-bold leading-tight text-foreground">Receita, despesa e resultado</h2>
         </div>
-        <div className="inline-flex rounded-xl border border-border bg-[var(--surface-2)] p-1">
+        <div className="dre-period-toggle inline-flex rounded-xl border border-border bg-[var(--surface-2)] p-1">
           {[6, 12].map((option) => (
             <Button
               key={option}
@@ -452,7 +452,7 @@ function DreEvolutionChart({
           ))}
         </div>
       </div>
-      <div className="min-h-[260px] overflow-x-auto">
+      <div className="dre-chart-scroll min-h-[260px] overflow-x-auto">
         {isLoading ? (
           <div className="flex h-[300px] items-center justify-center text-sm font-semibold text-muted-foreground">Carregando grafico...</div>
         ) : !hasEnoughData ? (
@@ -460,7 +460,7 @@ function DreEvolutionChart({
             Ainda nao ha dados suficientes para evolucao mensal.
           </div>
         ) : (
-          <div className="h-[300px] min-w-[680px] lg:h-[340px]">
+          <div className={cn("dre-chart-frame h-[300px] lg:h-[340px]", months === 12 && "dre-chart-frame-wide")}>
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={data} margin={{ top: 8, right: 12, bottom: 8, left: 0 }}>
                 <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
@@ -526,7 +526,7 @@ function ExpenseComposition({ composition }: { composition: FatiaComposicao[] })
       </div>
       {composition.length ? (
         <div className="space-y-4">
-          <div className="flex h-5 overflow-hidden rounded-full bg-surface-muted">
+          <div className="dre-composition-bar flex h-5 overflow-hidden rounded-full bg-surface-muted">
             {composition.map((item) => (
               <span
                 key={item.categoria}
@@ -539,7 +539,7 @@ function ExpenseComposition({ composition }: { composition: FatiaComposicao[] })
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {composition.map((item) => (
               <div key={item.categoria} className="min-w-0 rounded-xl border border-border bg-[var(--surface-2)] px-3 py-3">
-                <div className="flex min-w-0 items-start justify-between gap-3">
+                <div className="dre-composition-item-head flex min-w-0 items-start justify-between gap-3">
                   <span className="flex min-w-0 items-center gap-2 text-sm font-semibold text-foreground">
                     <span className="size-2.5 shrink-0 rounded-full" style={{ background: item.color }} />
                     <span className="break-words">{item.categoria}</span>
@@ -749,4 +749,9 @@ function compactMoney(value: number) {
   if (abs >= 1_000_000) return `R$ ${(value / 1_000_000).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} mi`;
   if (abs >= 1_000) return `R$ ${(value / 1_000).toLocaleString("pt-BR", { maximumFractionDigits: 0 })} mil`;
   return formatMoney(value);
+}
+
+function clampPercent(value: number) {
+  if (!Number.isFinite(value)) return 0;
+  return Math.min(100, Math.max(0, value));
 }

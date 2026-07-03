@@ -42,6 +42,14 @@ export function Component() {
 
   const { data: entries = [], isLoading, error } = useFinancialEntries(filters);
   const { receitas, despesas, saldo, rows, periodLabel } = useMemo(() => buildReport(entries, filterMonth), [entries, filterMonth]);
+  const activeFilters = useMemo(
+    () => [
+      ...(search ? [{ key: "search", label: `Busca: ${search}`, onRemove: () => setSearch("") }] : []),
+      ...(filterMonth ? [{ key: "month", label: `Mes: ${formatPeriod(filterMonth)}`, onRemove: () => setFilterMonth("") }] : []),
+      ...(filterStatus ? [{ key: "status", label: `Status: ${filterStatus}`, onRemove: () => setFilterStatus("") }] : []),
+    ],
+    [filterMonth, filterStatus, search],
+  );
 
   return (
     <PageShell icon={FileBarChart} title="Relatório financeiro" subtitle="Análise consolidada de receitas, despesas e saldo.">
@@ -52,13 +60,77 @@ export function Component() {
         <MetricCard title="Indicadores" value={String(rows.length)} icon={AreaChart} tone="slate" />
       </div>
 
-      <FilterBar searchPlaceholder="Buscar indicador financeiro..." search={search} onSearchChange={setSearch}>
+      <FilterBar searchPlaceholder="Buscar indicador financeiro..." search={search} onSearchChange={setSearch} activeFilters={activeFilters}>
         <MonthSelect value={filterMonth} onValueChange={setFilterMonth} />
         <StatusSelect value={filterStatus} onValueChange={setFilterStatus} />
       </FilterBar>
 
-      <FinancialReportTable rows={rows} isLoading={isLoading} hasError={Boolean(error)} periodLabel={periodLabel} />
+      <div className="desktop-table">
+        <FinancialReportTable rows={rows} isLoading={isLoading} hasError={Boolean(error)} periodLabel={periodLabel} />
+      </div>
+      <div className="mobile-list">
+        <FinancialReportMobileList rows={rows} isLoading={isLoading} hasError={Boolean(error)} periodLabel={periodLabel} />
+      </div>
     </PageShell>
+  );
+}
+
+function FinancialReportMobileList({ rows, isLoading, hasError, periodLabel }: { rows: ReportRow[]; isLoading: boolean; hasError: boolean; periodLabel: string }) {
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <div key={index} className="mobile-record-card">
+            <div className="h-3 w-24 animate-pulse rounded-full bg-surface-muted" />
+            <div className="h-5 w-40 animate-pulse rounded-full bg-surface-muted" />
+            <div className="h-px bg-border" />
+            <div className="h-4 w-32 animate-pulse rounded-full bg-surface-muted" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (hasError) {
+    return (
+      <div className="mobile-record-card border-destructive/30 bg-danger-50 text-sm font-semibold text-destructive">
+        Erro ao carregar dados financeiros.
+      </div>
+    );
+  }
+
+  if (!rows.length) {
+    return (
+      <EmptyState
+        title="Nenhum dado financeiro encontrado."
+        description={`NÃ£o hÃ¡ lanÃ§amentos para ${periodLabel.toLowerCase()} com os filtros atuais.`}
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {rows.map((row) => {
+        const toneClass = row.type === "receita" ? "text-success" : row.type === "despesa" ? "text-destructive" : "text-primary";
+        return (
+          <article key={row.key} className="mobile-record-card">
+            <div className="flex min-w-0 items-start justify-between gap-3">
+              <div className="min-w-0">
+                <span className="mobile-record-label">{row.period}</span>
+                <h3 className="mobile-record-title">{row.indicator}</h3>
+              </div>
+              <span className={toneClass}>
+                {row.type === "receita" ? "Receita" : row.type === "despesa" ? "Despesa" : "Saldo"}
+              </span>
+            </div>
+            <div className="mobile-record-values">
+              <strong className={toneClass}>{formatMoney(row.realized)}</strong>
+              <span>{row.goal ? `${row.variation.toFixed(1)}% da meta` : "Sem meta definida"}</span>
+            </div>
+          </article>
+        );
+      })}
+    </div>
   );
 }
 

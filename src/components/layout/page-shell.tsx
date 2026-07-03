@@ -207,7 +207,7 @@ export function FilterBar({
               type="button"
               variant="outline"
               size="lg"
-              className="filter-toggle"
+              className={cn("filter-toggle", hasActiveFilters && "filter-toggle-active")}
               onClick={() => setOpen((v) => !v)}
               aria-expanded={open}
             >
@@ -341,6 +341,41 @@ const filterStyles = `
   width: 14px;
   height: 14px;
   flex-shrink: 0;
+}
+
+.filter-toggle-active {
+  border-color: color-mix(in srgb, var(--primary) 48%, var(--color-border));
+  color: var(--primary);
+}
+
+@media (max-width: 768px) {
+  .search-input,
+  .select-input {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  .filter-card {
+    display: grid;
+    gap: 12px;
+  }
+
+  .filter-row {
+    gap: 8px;
+  }
+
+  .filter-toggle {
+    min-height: 44px;
+  }
+
+  .active-filter-row {
+    margin-top: 0;
+  }
+
+  .active-filter-chip {
+    max-width: 100%;
+    justify-content: flex-start;
+  }
 }
 `;
 
@@ -482,6 +517,12 @@ const pageShellStyles = `
   display: flex;
   flex-direction: column;
   gap: 24px;
+}
+
+@media (max-width: 768px) {
+  .page-stack {
+    gap: 16px;
+  }
 }
 `;
 

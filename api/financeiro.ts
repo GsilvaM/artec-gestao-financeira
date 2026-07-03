@@ -1,6 +1,21 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import handler from "../src/routes/api/financeiro/handler.js";
 
+async function sendWebResponse(response: Response, res: ServerResponse) {
+  res.statusCode = response.status;
+  response.headers.forEach((value, key) => res.setHeader(key, value));
+
+  const contentType = response.headers.get("Content-Type") ?? "";
+  if (contentType.includes("application/pdf") || contentType.includes("application/octet-stream")) {
+    const responseBody = Buffer.from(await response.arrayBuffer());
+    res.end(responseBody);
+    return;
+  }
+
+  const responseBody = await response.text();
+  res.end(responseBody);
+}
+
 export default async function vercelHandler(
   req: IncomingMessage,
   res: ServerResponse,
@@ -28,10 +43,7 @@ export default async function vercelHandler(
 
   try {
     const response = await handler(request);
-    res.statusCode = response.status;
-    response.headers.forEach((value, key) => res.setHeader(key, value));
-    const responseBody = await response.text();
-    res.end(responseBody);
+    await sendWebResponse(response, res);
   } catch (err) {
     console.error("[api/financeiro] unhandled error:", err);
     res.statusCode = 500;

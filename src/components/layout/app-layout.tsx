@@ -307,6 +307,9 @@ function Topbar({
   onOpenMobile: () => void;
   onSignOut: () => void;
 }) {
+  const trail = useMemo(() => findNavigationTrail(pathname), [pathname]);
+  const currentPage = trail.at(-1) ?? "Dashboard";
+
   return (
     <header className="topbar">
       <IconButton
@@ -318,6 +321,9 @@ function Topbar({
       >
         <Menu size={20} />
       </IconButton>
+      <div className="mobile-page-title" aria-live="polite">
+        <span>{currentPage}</span>
+      </div>
       <Breadcrumbs pathname={pathname} />
       <div className="topbar-actions">
         <ThemeToggle />
@@ -506,7 +512,7 @@ function MobileNavDrawer({
             <X size={20} />
           </IconButton>
         </div>
-        <nav className="flex-1 overflow-y-auto px-3 py-3">
+        <nav className="mobile-drawer-nav flex-1 overflow-y-auto px-3 py-3">
           {navigationItems.map((item) => {
             const active = isNavigationGroupActive(pathname, item);
             if (!item.items?.length && item.href) {
@@ -827,6 +833,23 @@ const sidebarStyles = `
   flex: 0 0 auto;
 }
 
+.mobile-page-title {
+  display: none;
+  min-width: 0;
+  flex: 1 1 auto;
+  color: var(--text-strong);
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.mobile-page-title span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 @media (max-width: 1023px) {
   .topbar {
     position: sticky;
@@ -841,6 +864,11 @@ const sidebarStyles = `
   .topbar {
     min-height: 56px;
     padding: 0 16px;
+    gap: 10px;
+  }
+
+  .mobile-page-title {
+    display: block;
   }
 }
 
@@ -896,6 +924,29 @@ const sidebarStyles = `
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+@media (max-width: 767px) {
+  .topbar-actions {
+    gap: 6px;
+  }
+
+  .topbar-icon-btn,
+  .mobile-menu-button {
+    width: 40px;
+    height: 40px;
+  }
+
+  .topbar-user-btn {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+  }
+
+  .topbar-user-btn > span:not(:first-child),
+  .topbar-user-btn > svg {
+    display: none;
+  }
 }
 
 .topbar-icon-btn {
@@ -974,6 +1025,21 @@ const sidebarStyles = `
 .sidebar-mobile-drawer nav {
   min-height: 0;
   overflow-x: hidden;
+}
+
+.mobile-drawer-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mobile-drawer-nav .sidebar-group-label {
+  margin-top: 4px;
+}
+
+.mobile-drawer-nav .sidebar-link {
+  min-height: 48px;
+  margin-top: 4px;
 }
 
 .sidebar-mobile-drawer .sidebar-user {

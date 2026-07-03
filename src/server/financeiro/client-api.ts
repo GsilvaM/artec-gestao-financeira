@@ -45,7 +45,20 @@ async function handleBlobResponse(r: Response): Promise<Blob> {
     const body = await r.json().catch(() => null);
     throw new Error(body?.error || body?.message || `HTTP ${r.status}`);
   }
-  return r.blob();
+  const blob = await r.blob();
+  const contentType = r.headers.get('Content-Type') ?? blob.type;
+  const header = await blob.slice(0, 5).text().catch(() => '');
+
+  if (!contentType.includes('application/pdf') || header !== '%PDF-') {
+    const message = await blob.text().catch(() => '');
+    throw new Error(message || 'A exportacao nao retornou um PDF valido. Tente novamente.');
+  }
+
+  if (blob.size < 128) {
+    throw new Error('O PDF gerado esta vazio. Tente novamente ou altere o periodo.');
+  }
+
+  return blob;
 }
 
 export const clientApi = {

@@ -3,6 +3,21 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 
+async function sendWebResponse(response: Response, res: { statusCode: number; setHeader: (key: string, value: string) => void; end: (body?: string | Buffer) => void }) {
+  res.statusCode = response.status;
+  response.headers.forEach((value, key) => res.setHeader(key, value));
+
+  const contentType = response.headers.get("Content-Type") ?? "";
+  if (contentType.includes("application/pdf") || contentType.includes("application/octet-stream")) {
+    const responseBody = Buffer.from(await response.arrayBuffer());
+    res.end(responseBody);
+    return;
+  }
+
+  const responseBody = await response.text();
+  res.end(responseBody);
+}
+
 export default defineConfig({
   plugins: [
     react(),
@@ -29,10 +44,7 @@ export default defineConfig({
             });
             const { default: handler } = await import("./src/routes/api/financeiro/handler");
             const response = await handler(request);
-            res.statusCode = response.status;
-            response.headers.forEach((value, key) => res.setHeader(key, value));
-            const responseBody = await response.text();
-            res.end(responseBody);
+            await sendWebResponse(response, res);
           } catch (err) {
             console.error("[api/financeiro] unhandled error:", err);
             res.statusCode = 500;
@@ -59,10 +71,7 @@ export default defineConfig({
             });
             const { default: handler } = await import("./src/routes/api/admin/handler");
             const response = await handler(request);
-            res.statusCode = response.status;
-            response.headers.forEach((value, key) => res.setHeader(key, value));
-            const responseBody = await response.text();
-            res.end(responseBody);
+            await sendWebResponse(response, res);
           } catch (err) {
             console.error("[api/admin] unhandled error:", err);
             res.statusCode = 500;

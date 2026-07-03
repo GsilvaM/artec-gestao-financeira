@@ -29,7 +29,7 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
   return (
     <dialog
       ref={ref}
-      className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100vw-1rem)] max-w-2xl overflow-y-auto rounded-[28px] border border-border/90 bg-surface p-0 text-text-primary shadow-elevated backdrop:bg-[rgba(3,10,24,0.42)] backdrop:backdrop-blur-[8px] sm:w-[calc(100vw-2rem)]"
+      className="dialog-shell fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100vw-1rem)] max-w-2xl overflow-y-auto rounded-[28px] border border-border/90 bg-surface p-0 text-text-primary shadow-elevated backdrop:bg-[rgba(3,10,24,0.42)] backdrop:backdrop-blur-[8px] sm:w-[calc(100vw-2rem)]"
       onClick={(e) => { if (e.target === ref.current) onOpenChange(false); }}
     >
       {children}
@@ -60,7 +60,7 @@ export function DialogHeader({ className, ...props }: React.HTMLAttributes<HTMLD
 }
 
 export function DialogFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("mt-0 flex flex-col-reverse gap-3 border-t border-border/80 px-5 pb-5 pt-4 sm:flex-row sm:justify-end sm:px-6 [&>button]:w-full sm:[&>button]:w-auto", className)} {...props} />;
+  return <div className={cn("dialog-footer mt-0 flex flex-col-reverse gap-3 border-t border-border/80 px-5 pb-5 pt-4 sm:flex-row sm:justify-end sm:px-6 [&>button]:w-full sm:[&>button]:w-auto", className)} {...props} />;
 }
 
 export function DialogTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {

@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 
 export function Table({ className, ...props }: React.HTMLAttributes<HTMLTableElement>) {
   return (
-    <div className="relative w-full overflow-auto rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
+    <div className="table-scroll relative w-full overflow-auto rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
       <table className={cn("w-full min-w-[720px] border-separate border-spacing-0 text-sm", className)} {...props} />
     </div>
   );
