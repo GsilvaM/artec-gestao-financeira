@@ -1,10 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { accountPayableKeys, accountReceivableKeys } from '../query-keys.js';
+import { accountPayableKeys, accountReceivableKeys, cashFlowKeys, financialEntryKeys } from '../query-keys.js';
 import { clientApi } from '@/server/financeiro/client-api';
 import { toFiniteNumber } from '@/lib/utils';
 import type { AccountPayableFilters, AccountReceivableFilters, AccountPayableRow, AccountPayableUpdate, AccountReceivableRow, AccountReceivableUpdate } from '../types.js';
 
 const dashboardKey = ['dashboard'] as const;
+const dreKey = ['dre'] as const;
 
 type AccountPayableApiResponse = {
   id: string;
@@ -110,6 +111,21 @@ export function useUpdateAccountPayable() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: accountPayableKeys.all });
       void qc.invalidateQueries({ queryKey: dashboardKey });
+    },
+  });
+}
+
+export function usePayAccountPayable() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: unknown }) =>
+      clientApi.accountsPayable.pay(id, data),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: accountPayableKeys.all });
+      void qc.invalidateQueries({ queryKey: financialEntryKeys.all });
+      void qc.invalidateQueries({ queryKey: cashFlowKeys.all });
+      void qc.invalidateQueries({ queryKey: dashboardKey });
+      void qc.invalidateQueries({ queryKey: dreKey });
     },
   });
 }

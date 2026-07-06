@@ -2,7 +2,9 @@
 import { toast } from "sonner";
 import {
   AlertTriangle,
+  Banknote,
   CalendarClock,
+  CheckCircle2,
   CreditCard,
   MoreHorizontal,
   Pencil,
@@ -52,6 +54,7 @@ import {
   useCreateAccountPayable,
   useUpdateAccountPayable,
   useDeleteAccountPayable,
+  usePayAccountPayable,
 } from "@/domain/financeiro/hooks/use-accounts";
 import { useCategories } from "@/domain/financeiro/hooks/use-categories";
 import { useAuthStore } from "@/lib/supabase/auth-store";
@@ -84,6 +87,12 @@ export function Component() {
   const [status, setStatus] = useState<AccountPayableRow["status"]>("pending");
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
+  const [payingEntry, setPayingEntry] = useState<AccountPayableRow | null>(null);
+  const [paymentDate, setPaymentDate] = useState("");
+  const [paidAmount, setPaidAmount] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("");
+  const [bankAccount, setBankAccount] = useState("");
+  const [paymentNotes, setPaymentNotes] = useState("");
 
   const filters = useMemo<AccountPayableFilters | undefined>(() => {
     const f: AccountPayableFilters = {};
@@ -103,6 +112,8 @@ export function Component() {
     useUpdateAccountPayable();
   const { mutateAsync: deleteEntry, isPending: deleting } =
     useDeleteAccountPayable();
+  const { mutateAsync: payEntry, isPending: paying } =
+    usePayAccountPayable();
 
   const isEditing = !!editingId;
   const isWorking = creating || updating;
@@ -138,6 +149,28 @@ export function Component() {
 
   function handleDelete(entry: AccountPayableRow) {
     setDeletingId(entry.id);
+  }
+
+  function openPaymentDialog(entry: AccountPayableRow) {
+    if (entry.status === "paid") {
+      toast.info("Esta conta já está paga e o lançamento financeiro já existe.");
+      return;
+    }
+    setPayingEntry(entry);
+    setPaymentDate(new Date().toISOString().slice(0, 10));
+    setPaidAmount(String(entry.amount));
+    setPaymentMethod("");
+    setBankAccount("");
+    setPaymentNotes("");
+  }
+
+  function closePaymentDialog() {
+    setPayingEntry(null);
+    setPaymentDate("");
+    setPaidAmount("");
+    setPaymentMethod("");
+    setBankAccount("");
+    setPaymentNotes("");
   }
 
   async function confirmDelete() {
@@ -189,6 +222,10 @@ export function Component() {
         userId: user.id,
       };
       if (editingId) {
+        if (status === "paid") {
+          toast.error("Use a ação Marcar como paga para registrar o pagamento.");
+          return;
+        }
         await updateEntry({ id: editingId, data: payload });
         toast.success("Conta a pagar atualizada");
       } else {
@@ -201,6 +238,50 @@ export function Component() {
       const msg =
         err instanceof Error ? err.message : "Erro ao salvar conta a pagar";
       console.error("[save-accounts-payable]", msg, err);
+      toast.error(msg);
+    }
+  }
+
+  async function confirmPayment() {
+    if (!payingEntry) return;
+    const parsedAmount = parseMoneyInput(paidAmount);
+    if (!paymentDate) {
+      toast.error("Informe a data do pagamento");
+      return;
+    }
+    if (Number.isNaN(parsedAmount) || parsedAmount <= 0) {
+      toast.error("Informe um valor pago válido");
+      return;
+    }
+    if (!paymentMethod.trim()) {
+      toast.error("Informe a forma de pagamento");
+      return;
+    }
+    if (!user) {
+      toast.error("Usuário não autenticado");
+      return;
+    }
+
+    try {
+      await payEntry({
+        id: payingEntry.id,
+        data: {
+          paymentDate: new Date(paymentDate + "T00:00:00"),
+          paidAmount: parsedAmount,
+          paymentMethod: paymentMethod.trim(),
+          bankAccount: bankAccount.trim() || undefined,
+          notes: paymentNotes.trim() || undefined,
+          userId: user.id,
+        },
+      });
+      toast.success(
+        "Pagamento registrado com sucesso. Um lançamento de despesa foi criado automaticamente no Financeiro."
+      );
+      closePaymentDialog();
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "Erro ao registrar pagamento";
+      console.error("[pay-accounts-payable]", msg, err);
       toast.error(msg);
     }
   }
@@ -219,9 +300,18 @@ export function Component() {
 
   const statusOptions = [
     { value: "pending", label: "Pendente" },
-    { value: "paid", label: "Pago" },
     { value: "overdue", label: "Vencido" },
     { value: "cancelled", label: "Cancelado" },
+  ];
+  if (status === "paid") statusOptions.unshift({ value: "paid", label: "Pago" });
+
+  const paymentMethodOptions = [
+    { value: "pix", label: "Pix" },
+    { value: "boleto", label: "Boleto" },
+    { value: "transferencia", label: "Transferência" },
+    { value: "cartao_credito", label: "Cartão de crédito" },
+    { value: "cartao_debito", label: "Cartão de débito" },
+    { value: "dinheiro", label: "Dinheiro" },
   ];
 
   return (
@@ -330,6 +420,10 @@ export function Component() {
                             <Pencil className="size-4" />
                             Editar
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => openPaymentDialog(entry)}>
+                            <CheckCircle2 className="size-4" />
+                            Marcar como paga
+                          </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             destructive
@@ -367,6 +461,7 @@ export function Component() {
         isLoading={isLoading}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        onPay={openPaymentDialog}
         onNew={() => {
           resetForm();
           setOpen(true);
@@ -465,6 +560,71 @@ export function Component() {
         </DialogContent>
       </Dialog>
       <Dialog
+        open={!!payingEntry}
+        onOpenChange={(v) => {
+          if (!v) closePaymentDialog();
+        }}
+      >
+        <DialogContent className="relative">
+          <DialogCloseButton onClick={closePaymentDialog} />
+          <DialogHeader>
+            <DialogTitle>Registrar pagamento</DialogTitle>
+            <DialogDescription>
+              Confirme os dados para efetivar a despesa no Financeiro.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Data do pagamento">
+              <DatePicker
+                value={paymentDate}
+                onChange={setPaymentDate}
+                ariaLabel="Data do pagamento"
+              />
+            </Field>
+            <Field label="Valor pago">
+              <Input
+                type="text"
+                inputMode="decimal"
+                value={paidAmount}
+                onChange={(e) => setPaidAmount(e.target.value)}
+                placeholder="R$ 0,00"
+              />
+            </Field>
+            <Field label="Forma de pagamento">
+              <Select
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+                options={paymentMethodOptions}
+                placeholder="Selecione..."
+              />
+            </Field>
+            <Field label="Conta/Banco">
+              <Input
+                value={bankAccount}
+                onChange={(e) => setBankAccount(e.target.value)}
+                placeholder="Banco, conta ou carteira"
+              />
+            </Field>
+            <Field label="Observações">
+              <Input
+                value={paymentNotes}
+                onChange={(e) => setPaymentNotes(e.target.value)}
+                placeholder="Observações do pagamento"
+              />
+            </Field>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={closePaymentDialog}>
+              Cancelar
+            </Button>
+            <Button onClick={confirmPayment} disabled={paying}>
+              <Banknote className="size-4" />
+              {paying ? "Registrando..." : "Confirmar pagamento"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog
         open={!!deletingId}
         onOpenChange={(v) => {
           if (!v) setDeletingId(null);
@@ -501,12 +661,14 @@ function AccountPayableMobileList({
   isLoading,
   onEdit,
   onDelete,
+  onPay,
   onNew,
 }: {
   entries: AccountPayableRow[] | undefined;
   isLoading: boolean;
   onEdit: (entry: AccountPayableRow) => void;
   onDelete: (entry: AccountPayableRow) => void;
+  onPay: (entry: AccountPayableRow) => void;
   onNew: () => void;
 }) {
   if (isLoading) {
@@ -573,6 +735,10 @@ function AccountPayableMobileList({
                 <DropdownMenuItem onClick={() => onEdit(entry)}>
                   <Pencil className="size-4" />
                   Editar
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onPay(entry)}>
+                  <CheckCircle2 className="size-4" />
+                  Marcar como paga
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem destructive onClick={() => onDelete(entry)}>

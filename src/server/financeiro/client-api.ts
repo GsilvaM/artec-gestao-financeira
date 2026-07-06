@@ -100,6 +100,12 @@ export const clientApi = {
         headers,
         body: JSON.stringify(data),
       })).then(handleResponse),
+    pay: (id: string, data: unknown) =>
+      getAuthHeaders(true).then((headers) => apiFetch(`${BASE_URL}/accounts-payable/${id}`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({ ...(data as Record<string, unknown>), status: 'paid' }),
+      })).then(handleResponse),
     softDelete: (id: string) =>
       getAuthHeaders().then((headers) => apiFetch(`${BASE_URL}/accounts-payable/${id}`, { method: 'DELETE', headers })).then(handleResponse),
   },

@@ -27,29 +27,46 @@ Stack principal:
 
 Agentes podem alterar frontend, layout, design system, componentes visuais e CSS somente quando a tarefa pedir explicitamente.
 
+Agentes podem alterar backend, APIs, rotas de recurso, services, queries, mutations, contratos internos e regras de negocio somente quando a tarefa pedir explicitamente mudanca de backend, integracao, persistencia, fluxo de dados, regra de negocio ou correcao funcional que dependa dessas camadas.
+
+Quando uma tarefa pedir backend, agir de forma conservadora:
+
+- Entender primeiro o fluxo existente antes de editar.
+- Preferir reaproveitar services, repositories, schemas, permissions e helpers ja existentes.
+- Manter o menor escopo possivel para cumprir a regra solicitada.
+- Preservar contratos publicos sempre que possivel.
+- Nao alterar regra financeira, autenticacao, permissao ou payload existente sem necessidade clara da tarefa.
+- Usar transacoes quando a operacao envolver mais de uma escrita relacionada.
+- Garantir idempotencia ou protecao contra duplicidade quando houver risco financeiro.
+- Adicionar ou atualizar testes unitarios/API quando alterar regra de negocio, persistencia ou integracao entre modulos.
+- Documentar no relatorio final quais garantias foram mantidas e quais limitacoes permanecem.
+
 Quando a tarefa envolver a pagina DRE, alem da melhoria visual, tratar responsividade como requisito obrigatorio de entrega. A pagina DRE precisa funcionar bem desde desktop grande ate celular, incluindo graficos, filtros, tabela e modal de exportacao PDF.
 
-Agentes NAO podem alterar:
+Agentes NAO podem alterar, salvo quando a tarefa pedir explicitamente e a alteracao for indispensavel:
 
 - banco de dados
 - Prisma schema
 - migrations
 - seeds
 - Supabase config
-- backend
-- services de dados
-- queries
-- mutations
 - autenticacao
 - permissoes
-- rotas existentes
-- contratos de payload
 - calculos financeiros
-- regras de negocio
 - package.json
 - lockfiles
 - variaveis de ambiente
 - config de deploy
+
+Mesmo quando a tarefa pedir backend, continuam proibidas alteracoes destrutivas ou amplas sem autorizacao direta:
+
+- apagar dados fisicos em vez de soft delete/cancelamento/estorno;
+- remover funcionalidade existente;
+- enfraquecer autenticacao, autorizacao ou guards;
+- alterar schema/migrations por conveniencia quando houver solucao segura no modelo atual;
+- trocar contratos de payload sem compatibilidade ou migracao clara;
+- mudar calculos financeiros fora do escopo solicitado;
+- alterar package.json ou lockfiles sem necessidade tecnica explicita.
 
 Excecao explicita para a tarefa "Exportacao de DRE em PDF":
 
@@ -150,6 +167,17 @@ npm run e2e
 
 Nunca finalizar com erro de TypeScript, lint, teste ou build.
 
+Antes de finalizar qualquer tarefa backend:
+
+```bash
+npm run typecheck
+npm run lint
+npm run test
+npm run build
+```
+
+Quando a tarefa alterar API, fluxo financeiro, persistencia ou integracao entre modulos, adicionar ou atualizar testes relacionados e rodar pelo menos os testes afetados. Se o ambiente permitir, rodar `npm run e2e` quando a mudanca impactar fluxo de usuario.
+
 ## Proibicoes
 
 Nao usar:
@@ -159,10 +187,10 @@ Nao usar:
 - `console.log` esquecido
 - mock para mascarar problema
 - remocao de funcionalidade
-- alteracao de backend
-- alteracao de banco
-- alteracao de rotas
-- alteracao de regras financeiras
+- alteracao de banco sem pedido explicito
+- alteracao de rotas sem pedido explicito ou sem compatibilidade
+- alteracao de regras financeiras fora do escopo solicitado
+- alteracao ampla de backend quando uma mudanca pequena resolver
 
 ## Direcao visual
 

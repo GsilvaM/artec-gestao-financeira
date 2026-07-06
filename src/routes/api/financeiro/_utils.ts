@@ -18,6 +18,10 @@ export function requireId(id: string | undefined): asserts id is string {
 export function handleRepoError(err: unknown): Response {
   const error = err instanceof Error ? err : new Error("Erro desconhecido");
   console.error("[api/financeiro]", error);
+  const status = typeof (error as Error & { status?: unknown }).status === "number"
+    ? (error as Error & { status: number }).status
+    : undefined;
+  if (status) return json({ error: error.message }, { status });
   if (error.name === "NotFoundError")
     return json({ error: error.message }, { status: 404 });
   if (error.name === "ZodError" || error.name === "ValidationError")

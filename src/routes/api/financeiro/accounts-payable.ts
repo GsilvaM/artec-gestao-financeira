@@ -6,12 +6,23 @@ import {
   accountPayableCreateSchema,
   accountPayableUpdateSchema,
 } from "../../../domain/financeiro/schemas.js";
+import { payAccountPayable } from "../../../server/financeiro/accounts-payable-service.js";
 import { z } from "zod";
 import { json, parseDate, requireId, handleRepoError, type RouteArgs } from "./_utils.js";
 
 const uuidField = z.string().uuid();
 
 const createSchema = accountPayableCreateSchema.extend({
+  userId: uuidField,
+});
+
+const paymentSchema = z.object({
+  status: z.literal("paid"),
+  paymentDate: z.coerce.date(),
+  paidAmount: z.coerce.number().positive(),
+  paymentMethod: z.string().min(1),
+  bankAccount: z.string().optional(),
+  notes: z.string().optional(),
   userId: uuidField,
 });
 
@@ -44,6 +55,17 @@ export async function action({ request, params }: RouteArgs) {
     if (request.method === "PUT") {
       requireId(id);
       const body = await request.json();
+      if (body && typeof body === "object" && "status" in body && body.status === "paid") {
+        const data = paymentSchema.parse(body);
+        return json(await payAccountPayable(id!, {
+          paymentDate: data.paymentDate,
+          paidAmount: data.paidAmount,
+          paymentMethod: data.paymentMethod,
+          bankAccount: data.bankAccount?.trim() || null,
+          notes: data.notes?.trim() || null,
+          userId: data.userId,
+        }));
+      }
 
       return json(await accountPayableRepo.update(id!, accountPayableUpdateSchema.parse(body)));
     }

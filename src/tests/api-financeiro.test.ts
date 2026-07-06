@@ -6,6 +6,7 @@ import {
 } from "@/routes/api/financeiro/_utils";
 import handler from "@/routes/api/financeiro/handler";
 import * as entries from "@/routes/api/financeiro/entries";
+import * as accountsPayable from "@/routes/api/financeiro/accounts-payable";
 import * as categories from "@/routes/api/financeiro/categories";
 
 vi.mock("@/server/financeiro/repositories.js", () => ({
@@ -59,7 +60,12 @@ vi.mock("@/server/financeiro/queries.js", () => ({
   getDashboardKpis: vi.fn(),
 }));
 
+vi.mock("@/server/financeiro/accounts-payable-service.js", () => ({
+  payAccountPayable: vi.fn(),
+}));
+
 import { financialEntryRepo, categoryRepo } from "@/server/financeiro/repositories.js";
+import { payAccountPayable } from "@/server/financeiro/accounts-payable-service.js";
 
 const MOCK_ENTRY = {
   id: "11111111-1111-1111-1111-111111111111",
@@ -90,6 +96,25 @@ const MOCK_CATEGORY = {
   createdAt: new Date("2026-01-01"),
   updatedAt: new Date("2026-06-10"),
   deletedAt: null,
+};
+
+const MOCK_PAYABLE = {
+  id: "22222222-2222-2222-2222-222222222222",
+  description: "Fornecedor teste",
+  amount: 300,
+  dueDate: new Date("2026-07-05"),
+  paidDate: new Date("2026-07-06"),
+  status: "paid",
+  categoryId: "00000000-0000-0000-0000-000000000001",
+  costCenterId: null,
+  supplier: "Fornecedor",
+  userId: "00000000-0000-0000-0000-000000000002",
+  notes: null,
+  createdAt: new Date("2026-07-01"),
+  updatedAt: new Date("2026-07-06"),
+  deletedAt: null,
+  category: MOCK_CATEGORY,
+  costCenter: null,
 };
 
 describe("_utils", () => {
@@ -241,5 +266,74 @@ describe("categories route module", () => {
     const body = await response.json();
     expect(body).toHaveLength(1);
     expect(body[0].name).toBe("Serviços");
+  });
+});
+
+describe("accounts payable route module", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("registra pagamento via serviço transacional", async () => {
+    vi.mocked(payAccountPayable).mockResolvedValue({
+      account: MOCK_PAYABLE,
+      financialEntry: MOCK_ENTRY,
+      message: "Pagamento registrado com sucesso.",
+    } as never);
+    const request = new Request("http://localhost/api/financeiro/accounts-payable/22222222-2222-2222-2222-222222222222", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        status: "paid",
+        paymentDate: "2026-07-06",
+        paidAmount: 300,
+        paymentMethod: "pix",
+        bankAccount: "Banco teste",
+        userId: "00000000-0000-0000-0000-000000000002",
+      }),
+    });
+    const response = await accountsPayable.action({
+      request,
+      params: { id: "22222222-2222-2222-2222-222222222222" },
+    });
+
+    expect(response.status).toBe(200);
+    expect(payAccountPayable).toHaveBeenCalledWith(
+      "22222222-2222-2222-2222-222222222222",
+      expect.objectContaining({
+        paidAmount: 300,
+        paymentMethod: "pix",
+        bankAccount: "Banco teste",
+      }),
+    );
+  });
+
+  it("retorna 409 quando pagamento duplicado é rejeitado", async () => {
+    vi.mocked(payAccountPayable).mockRejectedValue(
+      Object.assign(new Error("Esta conta já está paga e o lançamento financeiro já existe."), {
+        name: "ValidationError",
+        status: 409,
+      }),
+    );
+    const request = new Request("http://localhost/api/financeiro/accounts-payable/22222222-2222-2222-2222-222222222222", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        status: "paid",
+        paymentDate: "2026-07-06",
+        paidAmount: 300,
+        paymentMethod: "pix",
+        userId: "00000000-0000-0000-0000-000000000002",
+      }),
+    });
+    const response = await accountsPayable.action({
+      request,
+      params: { id: "22222222-2222-2222-2222-222222222222" },
+    });
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toMatchObject({
+      error: "Esta conta já está paga e o lançamento financeiro já existe.",
+    });
   });
 });
