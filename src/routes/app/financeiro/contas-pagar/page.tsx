@@ -354,6 +354,9 @@ export function Component() {
   }
 
   const payableEntries = entries ?? [];
+  const visibleEntries = filterStatus
+    ? payableEntries
+    : payableEntries.filter((entry) => !isPaid(entry));
   const todayKey = toDateInputValue(new Date());
   const currentMonthKey = todayKey.slice(0, 7);
   const openEntries = payableEntries.filter(
@@ -486,8 +489,8 @@ export function Component() {
                     Carregando...
                   </TableCell>
                 </TableRow>
-              ) : entries?.length ? (
-                entries.map((entry) => (
+              ) : visibleEntries.length ? (
+                visibleEntries.map((entry) => (
                   <TableRow key={entry.id}>
                     <TableCell>
                       <div className="flex min-w-32 flex-col gap-1">
@@ -562,7 +565,7 @@ export function Component() {
                   <TableCell colSpan={7} className="p-0">
                     <EmptyState
                       title="Nenhuma conta a pagar encontrada."
-                      description="Cadastre suas obrigações para controlar o fluxo de saída."
+                      description="Contas pagas saem desta lista automaticamente. Cadastre novas obrigações ou use os filtros para consultar outros status."
                       actionLabel="Nova conta"
                       onAction={() => {
                         resetForm();
@@ -577,7 +580,7 @@ export function Component() {
         </Card>
       </div>
       <AccountPayableMobileList
-        entries={entries}
+        entries={visibleEntries}
         isLoading={isLoading}
         onEdit={handleEdit}
         onDelete={handleDelete}
