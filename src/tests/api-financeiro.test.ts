@@ -7,6 +7,7 @@ import {
 import handler from "@/routes/api/financeiro/handler";
 import * as entries from "@/routes/api/financeiro/entries";
 import * as accountsPayable from "@/routes/api/financeiro/accounts-payable";
+import * as accountsReceivable from "@/routes/api/financeiro/accounts-receivable";
 import * as categories from "@/routes/api/financeiro/categories";
 
 vi.mock("@/server/financeiro/repositories.js", () => ({
@@ -64,12 +65,18 @@ vi.mock("@/server/financeiro/accounts-payable-service.js", () => ({
   payAccountPayable: vi.fn(),
 }));
 
+vi.mock("@/server/financeiro/accounts-receivable-service.js", () => ({
+  receiveAccountReceivable: vi.fn(),
+}));
+
 import {
   financialEntryRepo,
   categoryRepo,
   accountPayableRepo,
+  accountReceivableRepo,
 } from "@/server/financeiro/repositories.js";
 import { payAccountPayable } from "@/server/financeiro/accounts-payable-service.js";
+import { receiveAccountReceivable } from "@/server/financeiro/accounts-receivable-service.js";
 
 const MOCK_ENTRY = {
   id: "11111111-1111-1111-1111-111111111111",
@@ -127,6 +134,32 @@ const MOCK_PAYABLE = {
   deletedAt: null,
   category: MOCK_CATEGORY,
   costCenter: null,
+};
+
+const MOCK_RECEIVABLE = {
+  id: "33333333-3333-3333-3333-333333333333",
+  description: "Cliente teste",
+  amount: 450,
+  dueDate: new Date("2026-07-05"),
+  receivedDate: new Date("2026-07-06"),
+  status: "received",
+  categoryId: "00000000-0000-0000-0000-000000000001",
+  costCenterId: null,
+  client: "Cliente",
+  userId: "00000000-0000-0000-0000-000000000002",
+  notes: null,
+  createdAt: new Date("2026-07-01"),
+  updatedAt: new Date("2026-07-06"),
+  deletedAt: null,
+  category: MOCK_CATEGORY,
+  costCenter: null,
+};
+
+const MOCK_ORIGINATED_ENTRY = {
+  ...MOCK_ENTRY,
+  id: "44444444-4444-4444-4444-444444444444",
+  notes:
+    "[originType=accounts_receivable;originId=33333333-3333-3333-3333-333333333333]",
 };
 
 describe("_utils", () => {
@@ -270,12 +303,78 @@ describe("entries route module", () => {
     expect(response.status).toBe(201);
   });
 
+  it("blocks manual creation of originated financial entry", async () => {
+    const request = new Request("http://localhost/api/financeiro/entries", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        description: "Entrada automatica falsa",
+        amount: 500,
+        type: "receita",
+        date: "2026-07-01",
+        categoryId: "00000000-0000-0000-0000-000000000001",
+        userId: "00000000-0000-0000-0000-000000000002",
+        notes:
+          "[originType=accounts_receivable;originId=33333333-3333-3333-3333-333333333333]",
+      }),
+    });
+
+    const response = await entries.action({ request, params: {} });
+
+    expect(response.status).toBe(409);
+    expect(financialEntryRepo.create).not.toHaveBeenCalled();
+  });
+
   it("retorna 405 para método não suportado", async () => {
     const request = new Request("http://localhost/api/financeiro/entries", {
       method: "PATCH",
     });
     const response = await entries.action({ request, params: {} });
     expect(response.status).toBe(405);
+  });
+
+  it("blocks direct update of originated financial entry", async () => {
+    vi.mocked(financialEntryRepo.findById).mockResolvedValue(
+      MOCK_ORIGINATED_ENTRY as never
+    );
+    const request = new Request(
+      "http://localhost/api/financeiro/entries/44444444-4444-4444-4444-444444444444",
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          description: "Alteracao direta",
+        }),
+      }
+    );
+
+    const response = await entries.action({
+      request,
+      params: { id: "44444444-4444-4444-4444-444444444444" },
+    });
+
+    expect(response.status).toBe(409);
+    expect(financialEntryRepo.update).not.toHaveBeenCalled();
+  });
+
+  it("blocks direct delete of originated financial entry", async () => {
+    vi.mocked(financialEntryRepo.findById).mockResolvedValue(
+      MOCK_ORIGINATED_ENTRY as never
+    );
+    const request = new Request(
+      "http://localhost/api/financeiro/entries/44444444-4444-4444-4444-444444444444",
+      {
+        method: "DELETE",
+      }
+    );
+
+    const response = await entries.action({
+      request,
+      params: { id: "44444444-4444-4444-4444-444444444444" },
+    });
+
+    expect(response.status).toBe(409);
+    expect(financialEntryRepo.softDelete).not.toHaveBeenCalled();
   });
 });
 
@@ -420,5 +519,126 @@ describe("accounts payable route module", () => {
       error:
         "Conta paga nao pode ser excluida. Defina uma rotina de estorno antes de remover.",
     });
+  });
+});
+
+describe("accounts receivable route module", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("receives account via transactional service", async () => {
+    vi.mocked(receiveAccountReceivable).mockResolvedValue({
+      account: MOCK_RECEIVABLE,
+      financialEntry: MOCK_ENTRY,
+      message: "Recebimento registrado com sucesso.",
+    } as never);
+    const request = new Request(
+      "http://localhost/api/financeiro/accounts-receivable/33333333-3333-3333-3333-333333333333",
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: "received",
+          receivedDate: "2026-07-06",
+          receivedAmount: 450,
+          paymentMethod: "pix",
+          bankAccount: "Banco teste",
+          userId: "00000000-0000-0000-0000-000000000002",
+        }),
+      }
+    );
+    const response = await accountsReceivable.action({
+      request,
+      params: { id: "33333333-3333-3333-3333-333333333333" },
+    });
+
+    expect(response.status).toBe(200);
+    expect(receiveAccountReceivable).toHaveBeenCalledWith(
+      "33333333-3333-3333-3333-333333333333",
+      expect.objectContaining({
+        receivedAmount: 450,
+        paymentMethod: "pix",
+        bankAccount: "Banco teste",
+      })
+    );
+  });
+
+  it("returns 409 when duplicated receipt is rejected", async () => {
+    vi.mocked(receiveAccountReceivable).mockRejectedValue(
+      Object.assign(
+        new Error(
+          "Esta conta ja foi recebida e o lancamento financeiro ja existe."
+        ),
+        {
+          name: "ValidationError",
+          status: 409,
+        }
+      )
+    );
+    const request = new Request(
+      "http://localhost/api/financeiro/accounts-receivable/33333333-3333-3333-3333-333333333333",
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: "received",
+          receivedDate: "2026-07-06",
+          receivedAmount: 450,
+          paymentMethod: "pix",
+          userId: "00000000-0000-0000-0000-000000000002",
+        }),
+      }
+    );
+    const response = await accountsReceivable.action({
+      request,
+      params: { id: "33333333-3333-3333-3333-333333333333" },
+    });
+
+    expect(response.status).toBe(409);
+  });
+
+  it("blocks direct update of received account", async () => {
+    vi.mocked(accountReceivableRepo.findById).mockResolvedValue(
+      MOCK_RECEIVABLE as never
+    );
+    const request = new Request(
+      "http://localhost/api/financeiro/accounts-receivable/33333333-3333-3333-3333-333333333333",
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          description: "Cliente alterado",
+        }),
+      }
+    );
+
+    const response = await accountsReceivable.action({
+      request,
+      params: { id: "33333333-3333-3333-3333-333333333333" },
+    });
+
+    expect(response.status).toBe(409);
+    expect(accountReceivableRepo.update).not.toHaveBeenCalled();
+  });
+
+  it("blocks delete of received account", async () => {
+    vi.mocked(accountReceivableRepo.findById).mockResolvedValue(
+      MOCK_RECEIVABLE as never
+    );
+    const request = new Request(
+      "http://localhost/api/financeiro/accounts-receivable/33333333-3333-3333-3333-333333333333",
+      {
+        method: "DELETE",
+      }
+    );
+
+    const response = await accountsReceivable.action({
+      request,
+      params: { id: "33333333-3333-3333-3333-333333333333" },
+    });
+
+    expect(response.status).toBe(409);
+    expect(accountReceivableRepo.softDelete).not.toHaveBeenCalled();
   });
 });

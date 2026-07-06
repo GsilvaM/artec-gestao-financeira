@@ -3,10 +3,13 @@ import { toast } from "sonner";
 import {
   Banknote,
   CalendarCheck,
+  CheckCircle2,
   CircleDollarSign,
   Clock,
+  Clock3,
   MoreHorizontal,
   Pencil,
+  ReceiptText,
   Trash2,
 } from "lucide-react";
 import { FormField as Field } from "@/components/forms/form-field";
@@ -39,6 +42,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Table,
   TableBody,
@@ -52,8 +56,10 @@ import {
   useCreateAccountReceivable,
   useUpdateAccountReceivable,
   useDeleteAccountReceivable,
+  useReceiveAccountReceivable,
 } from "@/domain/financeiro/hooks/use-accounts";
 import { useCategories } from "@/domain/financeiro/hooks/use-categories";
+import { useCostCenters } from "@/domain/financeiro/hooks/use-cost-centers";
 import { useAuthStore } from "@/lib/supabase/auth-store";
 import {
   formatDate,
@@ -72,6 +78,51 @@ const AR_STATUS_MAP: Record<string, string> = {
   vencido: "overdue",
 };
 
+const RECEIPT_METHOD_OPTIONS = [
+  { value: "pix", label: "Pix" },
+  { value: "boleto", label: "Boleto" },
+  { value: "transferencia", label: "Transferência" },
+  { value: "cartao_credito", label: "Cartão de crédito" },
+  { value: "cartao_debito", label: "Cartão de débito" },
+  { value: "dinheiro", label: "Dinheiro" },
+];
+
+function toDateInputValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function getDateInputValue(value: string | null | undefined) {
+  if (!value) return "";
+  return toDateInputValue(
+    new Date(value + (value.includes("T") ? "" : "T00:00:00"))
+  );
+}
+
+function canReceive(entry: AccountReceivableRow) {
+  return entry.status === "pending" || entry.status === "overdue";
+}
+
+function isReceived(entry: AccountReceivableRow) {
+  return entry.status === "received";
+}
+
+function getDueHelper(entry: AccountReceivableRow, todayKey: string) {
+  if (entry.status === "received") {
+    return entry.receivedDate
+      ? `Recebida em ${formatDate(entry.receivedDate)}`
+      : "Recebida";
+  }
+  if (entry.status === "cancelled") return "Cancelada";
+
+  const dueKey = entry.dueDate.slice(0, 10);
+  if (dueKey < todayKey) return "Vencida";
+  if (dueKey === todayKey) return "Vence hoje";
+  return "A vencer";
+}
+
 export function Component() {
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -81,10 +132,19 @@ export function Component() {
   const [dueDate, setDueDate] = useState("");
   const [client, setClient] = useState("");
   const [categoryId, setCategoryId] = useState("");
+  const [costCenterId, setCostCenterId] = useState("");
+  const [notes, setNotes] = useState("");
   const [status, setStatus] =
     useState<AccountReceivableRow["status"]>("pending");
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
+  const [receivingEntry, setReceivingEntry] =
+    useState<AccountReceivableRow | null>(null);
+  const [receiptDate, setReceiptDate] = useState("");
+  const [receivedAmount, setReceivedAmount] = useState("");
+  const [receiptMethod, setReceiptMethod] = useState("");
+  const [bankAccount, setBankAccount] = useState("");
+  const [receiptNotes, setReceiptNotes] = useState("");
 
   const filters = useMemo<AccountReceivableFilters | undefined>(() => {
     const f: AccountReceivableFilters = {};
@@ -98,12 +158,15 @@ export function Component() {
   const user = useAuthStore((state) => state.user);
   const { data: entries, isLoading } = useAccountsReceivable(filters);
   const { data: categories } = useCategories();
+  const { data: costCenters } = useCostCenters();
   const { mutateAsync: createEntry, isPending: creating } =
     useCreateAccountReceivable();
   const { mutateAsync: updateEntry, isPending: updating } =
     useUpdateAccountReceivable();
   const { mutateAsync: deleteEntry, isPending: deleting } =
     useDeleteAccountReceivable();
+  const { mutateAsync: receiveEntry, isPending: receiving } =
+    useReceiveAccountReceivable();
 
   const isEditing = !!editingId;
   const isWorking = creating || updating;
@@ -114,31 +177,67 @@ export function Component() {
     setDueDate("");
     setClient("");
     setCategoryId("");
+    setCostCenterId("");
+    setNotes("");
     setStatus("pending");
     setEditingId(null);
   }
 
   function handleEdit(entry: AccountReceivableRow) {
+    if (isReceived(entry)) {
+      toast.info(
+        "Conta recebida fica bloqueada para edicao ate existir rotina de estorno."
+      );
+      return;
+    }
     setDescription(entry.description);
     setAmount(String(entry.amount));
-    setDueDate(
-      entry.dueDate
-        ? new Date(
-            entry.dueDate + (entry.dueDate.includes("T") ? "" : "T00:00:00")
-          )
-            .toISOString()
-            .slice(0, 10)
-        : ""
-    );
+    setDueDate(getDateInputValue(entry.dueDate));
     setClient(entry.client ?? "");
     setCategoryId(entry.categoryId);
+    setCostCenterId(entry.costCenterId ?? "");
+    setNotes(entry.notes ?? "");
     setStatus(entry.status);
     setEditingId(entry.id);
     setOpen(true);
   }
 
   function handleDelete(entry: AccountReceivableRow) {
+    if (isReceived(entry)) {
+      toast.info(
+        "Conta recebida nao pode ser excluida sem uma rotina de estorno."
+      );
+      return;
+    }
     setDeletingId(entry.id);
+  }
+
+  function openReceiptDialog(entry: AccountReceivableRow) {
+    if (isReceived(entry)) {
+      toast.info(
+        "Esta conta ja foi recebida e o lancamento financeiro ja existe."
+      );
+      return;
+    }
+    if (entry.status === "cancelled") {
+      toast.info("Conta cancelada nao pode ser marcada como recebida.");
+      return;
+    }
+    setReceivingEntry(entry);
+    setReceiptDate(toDateInputValue(new Date()));
+    setReceivedAmount(String(entry.amount));
+    setReceiptMethod("");
+    setBankAccount("");
+    setReceiptNotes("");
+  }
+
+  function closeReceiptDialog() {
+    setReceivingEntry(null);
+    setReceiptDate("");
+    setReceivedAmount("");
+    setReceiptMethod("");
+    setBankAccount("");
+    setReceiptNotes("");
   }
 
   async function confirmDelete() {
@@ -186,10 +285,18 @@ export function Component() {
         dueDate: new Date(dueDate + "T00:00:00"),
         status,
         categoryId,
+        costCenterId: costCenterId || undefined,
         client: client.trim() || undefined,
+        notes: notes.trim() || undefined,
         userId: user.id,
       };
       if (editingId) {
+        if (status === "received") {
+          toast.error(
+            "Use a ação Marcar como recebida para registrar o recebimento."
+          );
+          return;
+        }
         await updateEntry({ id: editingId, data: payload });
         toast.success("Conta a receber atualizada");
       } else {
@@ -206,7 +313,53 @@ export function Component() {
     }
   }
 
+  async function confirmReceipt() {
+    if (!receivingEntry) return;
+    const parsedAmount = parseMoneyInput(receivedAmount);
+    if (!receiptDate) {
+      toast.error("Informe a data do recebimento");
+      return;
+    }
+    if (Number.isNaN(parsedAmount) || parsedAmount <= 0) {
+      toast.error("Informe um valor recebido valido");
+      return;
+    }
+    if (!receiptMethod.trim()) {
+      toast.error("Informe a forma de recebimento");
+      return;
+    }
+    if (!user) {
+      toast.error("Usuário não autenticado");
+      return;
+    }
+
+    try {
+      await receiveEntry({
+        id: receivingEntry.id,
+        data: {
+          receivedDate: new Date(receiptDate + "T00:00:00"),
+          receivedAmount: parsedAmount,
+          paymentMethod: receiptMethod.trim(),
+          bankAccount: bankAccount.trim() || undefined,
+          notes: receiptNotes.trim() || undefined,
+          userId: user.id,
+        },
+      });
+      toast.success(
+        "Recebimento registrado com sucesso. Um lançamento de receita foi criado automaticamente no Financeiro."
+      );
+      closeReceiptDialog();
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "Erro ao registrar recebimento";
+      console.error("[receive-accounts-receivable]", msg, err);
+      toast.error(msg);
+    }
+  }
+
   const receivableEntries = entries ?? [];
+  const todayKey = toDateInputValue(new Date());
+  const currentMonthKey = todayKey.slice(0, 7);
   const openEntries = receivableEntries.filter(
     (e) => e.status === "pending" || e.status === "overdue"
   );
@@ -214,16 +367,42 @@ export function Component() {
     (sum, e) => sum + toFiniteNumber(e.amount),
     0
   );
-  const receivedAmount = receivableEntries
+  const receivedTotalAmount = receivableEntries
     .filter((e) => e.status === "received")
+    .reduce((sum, e) => sum + toFiniteNumber(e.amount), 0);
+  const dueTodayCount = receivableEntries.filter(
+    (e) =>
+      !isReceived(e) &&
+      e.status !== "cancelled" &&
+      e.dueDate.slice(0, 10) === todayKey
+  ).length;
+  const receivedThisMonthAmount = receivableEntries
+    .filter(
+      (e) =>
+        e.status === "received" &&
+        e.receivedDate?.slice(0, 7) === currentMonthKey
+    )
     .reduce((sum, e) => sum + toFiniteNumber(e.amount), 0);
 
   const statusOptions = [
     { value: "pending", label: "Pendente" },
-    { value: "received", label: "Recebido" },
     { value: "overdue", label: "Vencido" },
     { value: "cancelled", label: "Cancelado" },
   ];
+  if (status === "received")
+    statusOptions.unshift({ value: "received", label: "Recebido" });
+  const receivedAmountNumber = parseMoneyInput(receivedAmount);
+  const hasReceiptDifference =
+    !!receivingEntry &&
+    Number.isFinite(receivedAmountNumber) &&
+    Math.abs(receivedAmountNumber - toFiniteNumber(receivingEntry.amount)) >=
+      0.01;
+  const canConfirmReceipt =
+    !!receiptDate &&
+    Number.isFinite(receivedAmountNumber) &&
+    receivedAmountNumber > 0 &&
+    !!receiptMethod.trim() &&
+    !receiving;
 
   return (
     <PageShell
@@ -246,17 +425,21 @@ export function Component() {
         />
         <MetricCard
           title="Recebidas"
-          value={formatMoney(receivedAmount)}
+          value={formatMoney(receivedTotalAmount)}
           icon={CalendarCheck}
           tone="blue"
         />
         <MetricCard
-          title="Pendentes"
-          value={String(
-            receivableEntries.filter((e) => e.status === "pending").length
-          )}
+          title="Vence hoje"
+          value={String(dueTodayCount)}
           icon={Clock}
           tone="amber"
+        />
+        <MetricCard
+          title="Recebidas no mês"
+          value={formatMoney(receivedThisMonthAmount)}
+          icon={CheckCircle2}
+          tone="green"
         />
       </div>
       <FilterBar
@@ -265,7 +448,18 @@ export function Component() {
         onSearchChange={setSearch}
         activeFilters={
           filterStatus
-            ? [{ key: "status", label: filterStatus === "pago" ? "Pago" : filterStatus === "vencido" ? "Vencido" : "Aberto", onRemove: () => setFilterStatus("") }]
+            ? [
+                {
+                  key: "status",
+                  label:
+                    filterStatus === "pago"
+                      ? "Pago"
+                      : filterStatus === "vencido"
+                        ? "Vencido"
+                        : "Aberto",
+                  onRemove: () => setFilterStatus(""),
+                },
+              ]
             : []
         }
       >
@@ -302,7 +496,16 @@ export function Component() {
               ) : entries?.length ? (
                 entries.map((entry) => (
                   <TableRow key={entry.id}>
-                    <TableCell>{formatDate(entry.dueDate)}</TableCell>
+                    <TableCell>
+                      <div className="flex min-w-32 flex-col gap-1">
+                        <span className="font-medium">
+                          {formatDate(entry.dueDate)}
+                        </span>
+                        <span className="text-muted-foreground text-xs">
+                          {getDueHelper(entry, todayKey)}
+                        </span>
+                      </div>
+                    </TableCell>
                     <TableCell>{entry.client ?? "-"}</TableCell>
                     <TableCell className="font-medium">
                       {entry.description}
@@ -313,31 +516,51 @@ export function Component() {
                       <StatusBadge status={entry.status} />
                     </TableCell>
                     <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
+                      <div className="flex items-center justify-end gap-2">
+                        {canReceive(entry) ? (
                           <Button
-                            variant="ghost"
-                            size="icon"
-                            aria-label="Ações"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openReceiptDialog(entry)}
                           >
-                            <MoreHorizontal className="size-4" />
+                            <Banknote className="size-4" />
+                            Receber
                           </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                          <DropdownMenuItem onClick={() => handleEdit(entry)}>
-                            <Pencil className="size-4" />
-                            Editar
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            destructive
-                            onClick={() => handleDelete(entry)}
-                          >
-                            <Trash2 className="size-4" />
-                            Excluir
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                        ) : null}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label="Ações"
+                            >
+                              <MoreHorizontal className="size-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent>
+                            <DropdownMenuItem onClick={() => handleEdit(entry)}>
+                              <Pencil className="size-4" />
+                              Editar
+                            </DropdownMenuItem>
+                            {canReceive(entry) ? (
+                              <DropdownMenuItem
+                                onClick={() => openReceiptDialog(entry)}
+                              >
+                                <CheckCircle2 className="size-4" />
+                                Marcar como recebida
+                              </DropdownMenuItem>
+                            ) : null}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              destructive
+                              onClick={() => handleDelete(entry)}
+                            >
+                              <Trash2 className="size-4" />
+                              Excluir
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -365,6 +588,7 @@ export function Component() {
         isLoading={isLoading}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        onReceive={openReceiptDialog}
         onNew={() => {
           resetForm();
           setOpen(true);
@@ -436,6 +660,17 @@ export function Component() {
                 placeholder="Selecione..."
               />
             </Field>
+            <Field label="Centro de custo">
+              <Select
+                value={costCenterId}
+                onChange={(e) => setCostCenterId(e.target.value)}
+                options={(costCenters ?? []).map((c) => ({
+                  value: c.id,
+                  label: c.code ? `${c.code} - ${c.name}` : c.name,
+                }))}
+                placeholder="Sem centro"
+              />
+            </Field>
             <Field label="Status">
               <Select
                 value={status}
@@ -445,6 +680,15 @@ export function Component() {
                 options={statusOptions}
               />
             </Field>
+            <div className="sm:col-span-2">
+              <Field label="Observações">
+                <Textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Detalhes internos da previsão"
+                />
+              </Field>
+            </div>
           </div>
           <DialogFooter>
             <Button
@@ -458,6 +702,110 @@ export function Component() {
             </Button>
             <Button onClick={handleSave} disabled={isWorking}>
               {isWorking ? "Salvando..." : isEditing ? "Atualizar" : "Salvar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog
+        open={!!receivingEntry}
+        onOpenChange={(v) => {
+          if (!v) closeReceiptDialog();
+        }}
+      >
+        <DialogContent className="relative">
+          <DialogCloseButton onClick={closeReceiptDialog} />
+          <DialogHeader>
+            <DialogTitle>Registrar recebimento</DialogTitle>
+            <DialogDescription>
+              Confirme os dados para efetivar a receita no Financeiro.
+            </DialogDescription>
+          </DialogHeader>
+          {receivingEntry ? (
+            <div className="border-border bg-surface-muted rounded-[var(--radius-card)] border p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <p className="text-muted-foreground flex items-center gap-2 text-xs font-bold tracking-[0.04em] uppercase">
+                    <ReceiptText className="size-4" />
+                    Recebível selecionado
+                  </p>
+                  <p className="text-foreground mt-1 truncate text-sm font-bold">
+                    {receivingEntry.description}
+                  </p>
+                  <p className="text-muted-foreground mt-1 text-xs">
+                    {receivingEntry.client ?? "Cliente nao informado"} -{" "}
+                    {receivingEntry.categoryName}
+                  </p>
+                </div>
+                <div className="shrink-0 text-left sm:text-right">
+                  <p className="text-foreground text-sm font-bold">
+                    {formatMoney(receivingEntry.amount)}
+                  </p>
+                  <p className="text-muted-foreground mt-1 text-xs">
+                    Vence em {formatDate(receivingEntry.dueDate)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : null}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Data do recebimento">
+              <DatePicker
+                value={receiptDate}
+                onChange={setReceiptDate}
+                ariaLabel="Data do recebimento"
+              />
+            </Field>
+            <Field label="Valor recebido">
+              <Input
+                type="text"
+                inputMode="decimal"
+                value={receivedAmount}
+                onChange={(e) => setReceivedAmount(e.target.value)}
+                placeholder="R$ 0,00"
+              />
+            </Field>
+            <Field label="Forma de recebimento">
+              <Select
+                value={receiptMethod}
+                onChange={(e) => setReceiptMethod(e.target.value)}
+                options={RECEIPT_METHOD_OPTIONS}
+                placeholder="Selecione..."
+              />
+            </Field>
+            <Field label="Conta/Banco">
+              <Input
+                value={bankAccount}
+                onChange={(e) => setBankAccount(e.target.value)}
+                placeholder="Banco, conta ou carteira"
+              />
+            </Field>
+            <div className="sm:col-span-2">
+              <Field label="Observações">
+                <Textarea
+                  value={receiptNotes}
+                  onChange={(e) => setReceiptNotes(e.target.value)}
+                  placeholder="Observações do recebimento"
+                />
+              </Field>
+            </div>
+          </div>
+          {hasReceiptDifference && receivingEntry ? (
+            <div className="text-muted-foreground flex items-start gap-2 rounded-[var(--radius-field)] border border-amber-300/70 bg-amber-50 px-3 py-2 text-xs dark:border-amber-400/30 dark:bg-amber-400/10">
+              <Clock3 className="mt-0.5 size-4 shrink-0 text-amber-600" />
+              <span>
+                O valor recebido difere do valor original de{" "}
+                {formatMoney(receivingEntry.amount)}. O financeiro sera criado
+                com o valor confirmado aqui.
+              </span>
+            </div>
+          ) : null}
+          <DialogFooter>
+            <Button variant="outline" onClick={closeReceiptDialog}>
+              Cancelar
+            </Button>
+            <Button onClick={confirmReceipt} disabled={!canConfirmReceipt}>
+              <Banknote className="size-4" />
+              {receiving ? "Registrando..." : "Confirmar recebimento"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -499,14 +847,18 @@ function AccountReceivableMobileList({
   isLoading,
   onEdit,
   onDelete,
+  onReceive,
   onNew,
 }: {
   entries: AccountReceivableRow[] | undefined;
   isLoading: boolean;
   onEdit: (entry: AccountReceivableRow) => void;
   onDelete: (entry: AccountReceivableRow) => void;
+  onReceive: (entry: AccountReceivableRow) => void;
   onNew: () => void;
 }) {
+  const todayKey = toDateInputValue(new Date());
+
   if (isLoading) {
     return (
       <div className="mobile-list">
@@ -550,6 +902,10 @@ function AccountReceivableMobileList({
               <p className="text-text-secondary mt-1 text-xs">
                 {entry.client ?? "Cliente nao informado"}
               </p>
+              <p className="text-muted-foreground mt-1 text-xs">
+                {getDueHelper(entry, todayKey)}
+                {entry.costCenterName ? ` - ${entry.costCenterName}` : ""}
+              </p>
             </div>
             <strong className="money money-income">
               {formatMoney(entry.amount)}
@@ -557,28 +913,42 @@ function AccountReceivableMobileList({
           </div>
           <div className="mobile-record-bottom">
             <StatusBadge status={entry.status} />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Ações da conta a receber"
-                >
-                  <MoreHorizontal className="size-4" />
+            <div className="flex items-center gap-2">
+              {canReceive(entry) ? (
+                <Button size="sm" onClick={() => onReceive(entry)}>
+                  <Banknote className="size-4" />
+                  Receber
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => onEdit(entry)}>
-                  <Pencil className="size-4" />
-                  Editar
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem destructive onClick={() => onDelete(entry)}>
-                  <Trash2 className="size-4" />
-                  Excluir
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+              ) : null}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Ações da conta a receber"
+                  >
+                    <MoreHorizontal className="size-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={() => onEdit(entry)}>
+                    <Pencil className="size-4" />
+                    Editar
+                  </DropdownMenuItem>
+                  {canReceive(entry) ? (
+                    <DropdownMenuItem onClick={() => onReceive(entry)}>
+                      <CheckCircle2 className="size-4" />
+                      Marcar como recebida
+                    </DropdownMenuItem>
+                  ) : null}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem destructive onClick={() => onDelete(entry)}>
+                    <Trash2 className="size-4" />
+                    Excluir
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </article>
       ))}

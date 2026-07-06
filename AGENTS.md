@@ -29,6 +29,17 @@ Agentes podem alterar frontend, layout, design system, componentes visuais e CSS
 
 Agentes podem alterar backend, APIs, rotas de recurso, services, queries, mutations, contratos internos e regras de negocio somente quando a tarefa pedir explicitamente mudanca de backend, integracao, persistencia, fluxo de dados, regra de negocio ou correcao funcional que dependa dessas camadas.
 
+## Regra financeira para contas futuras
+
+Contas a Pagar e Contas a Receber representam obrigacoes/previsoes futuras.
+
+- Criar ou editar uma conta pendente nao deve criar lancamento financeiro.
+- Contas a Pagar so podem gerar despesa quando forem pagas por fluxo transacional proprio.
+- Contas a Receber so podem gerar receita quando forem recebidas por fluxo transacional proprio.
+- Lancamentos financeiros criados a partir dessas contas devem manter marcador de origem e nao devem ser editados/excluidos diretamente pela tela de Lancamentos.
+- Conta ja paga/recebida nao deve voltar para pendente, ser editada ou excluida por fluxo comum enquanto nao existir rotina explicita de estorno/cancelamento.
+- Operacoes que atualizam a conta e criam lancamento financeiro devem ser transacionais, idempotentes e protegidas contra duplicidade.
+
 Quando uma tarefa pedir backend, agir de forma conservadora:
 
 - Entender primeiro o fluxo existente antes de editar.

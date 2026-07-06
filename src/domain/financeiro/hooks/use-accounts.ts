@@ -1,11 +1,23 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { accountPayableKeys, accountReceivableKeys, cashFlowKeys, financialEntryKeys } from '../query-keys.js';
-import { clientApi } from '@/server/financeiro/client-api';
-import { toFiniteNumber } from '@/lib/utils';
-import type { AccountPayableFilters, AccountReceivableFilters, AccountPayableRow, AccountPayableUpdate, AccountReceivableRow, AccountReceivableUpdate } from '../types.js';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  accountPayableKeys,
+  accountReceivableKeys,
+  cashFlowKeys,
+  financialEntryKeys,
+} from "../query-keys.js";
+import { clientApi } from "@/server/financeiro/client-api";
+import { toFiniteNumber } from "@/lib/utils";
+import type {
+  AccountPayableFilters,
+  AccountReceivableFilters,
+  AccountPayableRow,
+  AccountPayableUpdate,
+  AccountReceivableRow,
+  AccountReceivableUpdate,
+} from "../types.js";
 
-const dashboardKey = ['dashboard'] as const;
-const dreKey = ['dre'] as const;
+const dashboardKey = ["dashboard"] as const;
+const dreKey = ["dre"] as const;
 
 type AccountPayableApiResponse = {
   id: string;
@@ -25,7 +37,10 @@ type AccountPayableApiResponse = {
   updatedAt: string;
 };
 
-type AccountReceivableApiResponse = Omit<AccountPayableApiResponse, 'paidDate' | 'supplier'> & {
+type AccountReceivableApiResponse = Omit<
+  AccountPayableApiResponse,
+  "paidDate" | "supplier"
+> & {
   receivedDate: string | null;
   client: string | null;
 };
@@ -37,9 +52,9 @@ function toPayableRow(entry: AccountPayableApiResponse): AccountPayableRow {
     amount: toFiniteNumber(entry.amount),
     dueDate: entry.dueDate,
     paidDate: entry.paidDate,
-    status: entry.status as AccountPayableRow['status'],
+    status: entry.status as AccountPayableRow["status"],
     categoryId: entry.categoryId,
-    categoryName: entry.category?.name ?? '',
+    categoryName: entry.category?.name ?? "",
     categoryColor: entry.category?.color ?? null,
     costCenterId: entry.costCenterId,
     costCenterName: entry.costCenter?.name ?? null,
@@ -51,16 +66,18 @@ function toPayableRow(entry: AccountPayableApiResponse): AccountPayableRow {
   };
 }
 
-function toReceivableRow(entry: AccountReceivableApiResponse): AccountReceivableRow {
+function toReceivableRow(
+  entry: AccountReceivableApiResponse
+): AccountReceivableRow {
   return {
     id: entry.id,
     description: entry.description,
     amount: toFiniteNumber(entry.amount),
     dueDate: entry.dueDate,
     receivedDate: entry.receivedDate,
-    status: entry.status as AccountReceivableRow['status'],
+    status: entry.status as AccountReceivableRow["status"],
     categoryId: entry.categoryId,
-    categoryName: entry.category?.name ?? '',
+    categoryName: entry.category?.name ?? "",
     categoryColor: entry.category?.color ?? null,
     costCenterId: entry.costCenterId,
     costCenterName: entry.costCenter?.name ?? null,
@@ -78,7 +95,9 @@ export function useAccountsPayable(filters?: AccountPayableFilters) {
   return useQuery({
     queryKey: accountPayableKeys.list(filters),
     queryFn: async () => {
-      const entries = (await clientApi.accountsPayable.findAll(filters as Record<string, unknown>)) as AccountPayableApiResponse[];
+      const entries = (await clientApi.accountsPayable.findAll(
+        filters as Record<string, unknown>
+      )) as AccountPayableApiResponse[];
       return entries.map(toPayableRow);
     },
   });
@@ -87,7 +106,12 @@ export function useAccountsPayable(filters?: AccountPayableFilters) {
 export function useAccountPayable(id: string) {
   return useQuery({
     queryKey: accountPayableKeys.byId(id),
-    queryFn: async () => toPayableRow((await clientApi.accountsPayable.findById(id)) as AccountPayableApiResponse),
+    queryFn: async () =>
+      toPayableRow(
+        (await clientApi.accountsPayable.findById(
+          id
+        )) as AccountPayableApiResponse
+      ),
     enabled: !!id,
   });
 }
@@ -147,7 +171,9 @@ export function useAccountsReceivable(filters?: AccountReceivableFilters) {
   return useQuery({
     queryKey: accountReceivableKeys.list(filters),
     queryFn: async () => {
-      const entries = (await clientApi.accountsReceivable.findAll(filters as Record<string, unknown>)) as AccountReceivableApiResponse[];
+      const entries = (await clientApi.accountsReceivable.findAll(
+        filters as Record<string, unknown>
+      )) as AccountReceivableApiResponse[];
       return entries.map(toReceivableRow);
     },
   });
@@ -156,7 +182,12 @@ export function useAccountsReceivable(filters?: AccountReceivableFilters) {
 export function useAccountReceivable(id: string) {
   return useQuery({
     queryKey: accountReceivableKeys.byId(id),
-    queryFn: async () => toReceivableRow((await clientApi.accountsReceivable.findById(id)) as AccountReceivableApiResponse),
+    queryFn: async () =>
+      toReceivableRow(
+        (await clientApi.accountsReceivable.findById(
+          id
+        )) as AccountReceivableApiResponse
+      ),
     enabled: !!id,
   });
 }
@@ -180,6 +211,21 @@ export function useUpdateAccountReceivable() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: accountReceivableKeys.all });
       void qc.invalidateQueries({ queryKey: dashboardKey });
+    },
+  });
+}
+
+export function useReceiveAccountReceivable() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: unknown }) =>
+      clientApi.accountsReceivable.receive(id, data),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: accountReceivableKeys.all });
+      void qc.invalidateQueries({ queryKey: financialEntryKeys.all });
+      void qc.invalidateQueries({ queryKey: cashFlowKeys.all });
+      void qc.invalidateQueries({ queryKey: dashboardKey });
+      void qc.invalidateQueries({ queryKey: dreKey });
     },
   });
 }

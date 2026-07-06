@@ -1,12 +1,34 @@
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
-import { ArrowDownCircle, ArrowUpCircle, Banknote, FileText, ListChecks } from "lucide-react";
-import { LancamentoModal, type LancamentoFormState } from "@/components/lancamentos/LancamentoModal";
+import {
+  ArrowDownCircle,
+  ArrowUpCircle,
+  Banknote,
+  FileText,
+  ListChecks,
+} from "lucide-react";
+import {
+  LancamentoModal,
+  type LancamentoFormState,
+} from "@/components/lancamentos/LancamentoModal";
 import { PageShell } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogCloseButton, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useFinancialEntries, useCreateFinancialEntry, useUpdateFinancialEntry, useDeleteFinancialEntry } from "@/domain/financeiro/hooks/use-financial-entries";
+import {
+  Dialog,
+  DialogCloseButton,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  useFinancialEntries,
+  useCreateFinancialEntry,
+  useUpdateFinancialEntry,
+  useDeleteFinancialEntry,
+} from "@/domain/financeiro/hooks/use-financial-entries";
 import { useCategories } from "@/domain/financeiro/hooks/use-categories";
 import { useCollaborators } from "@/domain/financeiro/hooks/use-collaborators";
 import { useAuthStore } from "@/lib/supabase/auth-store";
@@ -15,7 +37,10 @@ import { formatMoney } from "@/lib/utils";
 import { SummaryCard } from "@/components/lancamentos/SummaryCard";
 import { TransactionFilters } from "@/components/lancamentos/TransactionFilters";
 import { ResponsiveTransactionList } from "./responsive-transaction-list";
-import type { FinancialEntryRow, FinancialEntryFilters } from "@/domain/financeiro/types";
+import type {
+  FinancialEntryRow,
+  FinancialEntryFilters,
+} from "@/domain/financeiro/types";
 
 const schema = z.object({
   data: z.string().min(1, "Informe a data"),
@@ -24,16 +49,15 @@ const schema = z.object({
   descricao: z.string().min(3, "Informe a descrição"),
   cliente: z.string().optional(),
   colaborador: z.string().optional(),
-  valor: z.preprocess(
-    (v) => {
-      if (typeof v !== "string") return v;
-      const input = v.trim();
-      if (!input) return undefined;
-      const normalized = input.includes(",") ? input.replace(/\./g, "").replace(",", ".") : input;
-      return Number(normalized);
-    },
-    z.number().positive("Informe um valor maior que zero"),
-  ),
+  valor: z.preprocess((v) => {
+    if (typeof v !== "string") return v;
+    const input = v.trim();
+    if (!input) return undefined;
+    const normalized = input.includes(",")
+      ? input.replace(/\./g, "").replace(",", ".")
+      : input;
+    return Number(normalized);
+  }, z.number().positive("Informe um valor maior que zero")),
   status: z.enum(["aberto", "pago", "vencido"]),
   observacoes: z.string().optional(),
 });
@@ -62,12 +86,22 @@ const STATUS_REVERSE: Record<string, string> = {
   cancelled: "vencido",
 };
 
+function isOriginatedEntry(entry: FinancialEntryRow) {
+  return (
+    entry.notes?.includes("[originType=accounts_payable;") ||
+    entry.notes?.includes("[originType=accounts_receivable;")
+  );
+}
+
 export function Component() {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<"criar" | "editar" | "duplicar">("criar");
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingEntry, setEditingEntry] = useState<FinancialEntryRow | null>(null);
-  const [duplicatingEntry, setDuplicatingEntry] = useState<FinancialEntryRow | null>(null);
+  const [editingEntry, setEditingEntry] = useState<FinancialEntryRow | null>(
+    null
+  );
+  const [duplicatingEntry, setDuplicatingEntry] =
+    useState<FinancialEntryRow | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [form, setForm] = useState<LancamentoFormState>(initialForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -78,7 +112,9 @@ export function Component() {
   const filters = useMemo<FinancialEntryFilters | undefined>(() => {
     const f: FinancialEntryFilters = {};
     if (search) f.search = search;
-    if (filterStatus) f.status = (STATUS_MAP[filterStatus] ?? filterStatus) as FinancialEntryFilters["status"];
+    if (filterStatus)
+      f.status = (STATUS_MAP[filterStatus] ??
+        filterStatus) as FinancialEntryFilters["status"];
     if (filterMonth) {
       const [year, month] = filterMonth.split("-");
       f.dateFrom = new Date(Number(year), Number(month) - 1, 1);
@@ -91,12 +127,17 @@ export function Component() {
   const { data: entries, isLoading, error } = useFinancialEntries(filters);
   const { data: categories } = useCategories();
   const { data: collaborators } = useCollaborators();
-  const { mutateAsync: createEntry, isPending: saving } = useCreateFinancialEntry();
-  const { mutateAsync: updateEntry, isPending: updating } = useUpdateFinancialEntry();
-  const { mutateAsync: deleteEntry, isPending: deleting } = useDeleteFinancialEntry();
+  const { mutateAsync: createEntry, isPending: saving } =
+    useCreateFinancialEntry();
+  const { mutateAsync: updateEntry, isPending: updating } =
+    useUpdateFinancialEntry();
+  const { mutateAsync: deleteEntry, isPending: deleting } =
+    useDeleteFinancialEntry();
 
   const isWorking = saving || updating;
-  const { receitas, despesas, saldo } = calculateFinancialSummary(entries ?? []);
+  const { receitas, despesas, saldo } = calculateFinancialSummary(
+    entries ?? []
+  );
 
   function resetForm() {
     setForm(initialForm);
@@ -114,23 +155,44 @@ export function Component() {
 
   function findCategoryId(name: string): string | null {
     const match = (categories ?? []).find(
-      (c) => c.name.toLowerCase() === name.toLowerCase() && c.type === form.tipo,
+      (c) => c.name.toLowerCase() === name.toLowerCase() && c.type === form.tipo
     );
     return match?.id ?? null;
   }
 
   function handleEdit(entry: FinancialEntryRow) {
-    const parsedDate = entry.date ? new Date(entry.date + (entry.date.includes("T") ? "" : "T00:00:00")) : new Date();
+    if (isOriginatedEntry(entry)) {
+      toast.info(
+        "Lancamento automatico de contas a pagar/receber fica bloqueado para edicao direta."
+      );
+      return;
+    }
+    const parsedDate = entry.date
+      ? new Date(entry.date + (entry.date.includes("T") ? "" : "T00:00:00"))
+      : new Date();
     setForm({
       data: parsedDate.toISOString().slice(0, 10),
       tipo: entry.type,
       categoria: entry.categoryName,
       descricao: entry.description,
-      cliente: entry.clientName ?? (entry.notes?.startsWith("Cliente/Fornecedor: ") ? entry.notes.replace("Cliente/Fornecedor: ", "").split(" | ")[0] : "") ?? "",
+      cliente:
+        entry.clientName ??
+        (entry.notes?.startsWith("Cliente/Fornecedor: ")
+          ? entry.notes.replace("Cliente/Fornecedor: ", "").split(" | ")[0]
+          : "") ??
+        "",
       colaborador: entry.collaboratorId ?? "",
-      valor: entry.amount.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-      status: (STATUS_REVERSE[entry.status] ?? "aberto") as "aberto" | "pago" | "vencido",
-      observacoes: entry.notes?.startsWith("Cliente/Fornecedor: ") ? entry.notes.split(" | ").slice(1).join(" | ") : entry.notes ?? "",
+      valor: entry.amount.toLocaleString("pt-BR", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }),
+      status: (STATUS_REVERSE[entry.status] ?? "aberto") as
+        | "aberto"
+        | "pago"
+        | "vencido",
+      observacoes: entry.notes?.startsWith("Cliente/Fornecedor: ")
+        ? entry.notes.split(" | ").slice(1).join(" | ")
+        : (entry.notes ?? ""),
     });
     setEditingId(entry.id);
     setEditingEntry(entry);
@@ -140,16 +202,35 @@ export function Component() {
   }
 
   function handleDuplicate(entry: FinancialEntryRow) {
+    if (isOriginatedEntry(entry)) {
+      toast.info(
+        "Lancamento automatico de contas a pagar/receber nao pode ser duplicado diretamente."
+      );
+      return;
+    }
     setForm({
       data: "",
       tipo: entry.type,
       categoria: entry.categoryName,
       descricao: entry.description,
-      cliente: entry.clientName ?? (entry.notes?.startsWith("Cliente/Fornecedor: ") ? entry.notes.replace("Cliente/Fornecedor: ", "").split(" | ")[0] : "") ?? "",
+      cliente:
+        entry.clientName ??
+        (entry.notes?.startsWith("Cliente/Fornecedor: ")
+          ? entry.notes.replace("Cliente/Fornecedor: ", "").split(" | ")[0]
+          : "") ??
+        "",
       colaborador: entry.collaboratorId ?? "",
-      valor: entry.amount.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-      status: (STATUS_REVERSE[entry.status] ?? "aberto") as "aberto" | "pago" | "vencido",
-      observacoes: entry.notes?.startsWith("Cliente/Fornecedor: ") ? entry.notes.split(" | ").slice(1).join(" | ") : entry.notes ?? "",
+      valor: entry.amount.toLocaleString("pt-BR", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }),
+      status: (STATUS_REVERSE[entry.status] ?? "aberto") as
+        | "aberto"
+        | "pago"
+        | "vencido",
+      observacoes: entry.notes?.startsWith("Cliente/Fornecedor: ")
+        ? entry.notes.split(" | ").slice(1).join(" | ")
+        : (entry.notes ?? ""),
     });
     setEditingId(null);
     setEditingEntry(null);
@@ -160,6 +241,12 @@ export function Component() {
   }
 
   function handleDelete(entry: FinancialEntryRow) {
+    if (isOriginatedEntry(entry)) {
+      toast.info(
+        "Lancamento automatico de contas a pagar/receber fica bloqueado ate existir rotina de estorno."
+      );
+      return;
+    }
     setDeletingId(entry.id);
   }
 
@@ -169,7 +256,8 @@ export function Component() {
       await deleteEntry(deletingId);
       toast.success("Lançamento excluído");
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Erro ao excluir lançamento";
+      const msg =
+        err instanceof Error ? err.message : "Erro ao excluir lançamento";
       console.error("[delete-entry]", msg, err);
       toast.error(msg);
     } finally {
@@ -180,7 +268,14 @@ export function Component() {
   async function handleSave() {
     const parsed = schema.safeParse(form);
     if (!parsed.success) {
-      setErrors(Object.fromEntries(parsed.error.issues.map((issue) => [String(issue.path[0]), issue.message])));
+      setErrors(
+        Object.fromEntries(
+          parsed.error.issues.map((issue) => [
+            String(issue.path[0]),
+            issue.message,
+          ])
+        )
+      );
       toast.error("Revise os campos do lançamento");
       return;
     }
@@ -192,7 +287,9 @@ export function Component() {
 
     const categoryId = findCategoryId(parsed.data.categoria);
     if (!categoryId) {
-      toast.error("Categoria não encontrada. Cadastre-a em Financeiro > Categorias primeiro.");
+      toast.error(
+        "Categoria não encontrada. Cadastre-a em Financeiro > Categorias primeiro."
+      );
       return;
     }
 
@@ -209,7 +306,10 @@ export function Component() {
             amount: parsed.data.valor,
             type: parsed.data.tipo,
             date: new Date(parsed.data.data + "T00:00:00"),
-            status: (STATUS_MAP[parsed.data.status] ?? "pending") as "pending" | "confirmed" | "cancelled",
+            status: (STATUS_MAP[parsed.data.status] ?? "pending") as
+              | "pending"
+              | "confirmed"
+              | "cancelled",
             categoryId,
             clientName,
             collaboratorId,
@@ -235,19 +335,53 @@ export function Component() {
       setOpen(false);
       resetForm();
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Erro ao salvar lançamento";
+      const msg =
+        err instanceof Error ? err.message : "Erro ao salvar lançamento";
       console.error("[save-entry]", msg, err);
       toast.error(msg);
     }
   }
 
   return (
-    <PageShell icon={FileText} title="Lançamentos" subtitle="Cadastre receitas, custos e despesas com menos cliques." actionLabel="Novo lançamento" onAction={() => { resetForm(); setOpen(true); }}>
+    <PageShell
+      icon={FileText}
+      title="Lançamentos"
+      subtitle="Cadastre receitas, custos e despesas com menos cliques."
+      actionLabel="Novo lançamento"
+      onAction={() => {
+        resetForm();
+        setOpen(true);
+      }}
+    >
       <div className="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <SummaryCard label="Lançamentos" value={String(entries?.length ?? 0)} icon={ListChecks} iconColor="blue" footer="Registros encontrados" />
-        <SummaryCard label="Receitas" value={formatMoney(receitas)} icon={ArrowUpCircle} iconColor="green" footer="Entradas confirmadas" />
-        <SummaryCard label="Despesas" value={formatMoney(despesas)} icon={ArrowDownCircle} iconColor="red" footer="Saídas registradas" />
-        <SummaryCard label="Saldo" value={formatMoney(saldo)} icon={Banknote} iconColor={saldo < 0 ? "red" : "blue"} footer="Receitas menos despesas" />
+        <SummaryCard
+          label="Lançamentos"
+          value={String(entries?.length ?? 0)}
+          icon={ListChecks}
+          iconColor="blue"
+          footer="Registros encontrados"
+        />
+        <SummaryCard
+          label="Receitas"
+          value={formatMoney(receitas)}
+          icon={ArrowUpCircle}
+          iconColor="green"
+          footer="Entradas confirmadas"
+        />
+        <SummaryCard
+          label="Despesas"
+          value={formatMoney(despesas)}
+          icon={ArrowDownCircle}
+          iconColor="red"
+          footer="Saídas registradas"
+        />
+        <SummaryCard
+          label="Saldo"
+          value={formatMoney(saldo)}
+          icon={Banknote}
+          iconColor={saldo < 0 ? "red" : "blue"}
+          footer="Receitas menos despesas"
+        />
       </div>
 
       <TransactionFilters
@@ -259,7 +393,14 @@ export function Component() {
         onStatusChange={setFilterStatus}
       />
 
-      <ResponsiveTransactionList entries={entries} isLoading={isLoading} error={error} onEdit={handleEdit} onDuplicate={handleDuplicate} onDelete={handleDelete} />
+      <ResponsiveTransactionList
+        entries={entries}
+        isLoading={isLoading}
+        error={error}
+        onEdit={handleEdit}
+        onDuplicate={handleDuplicate}
+        onDelete={handleDelete}
+      />
 
       <LancamentoModal
         open={open}
@@ -275,20 +416,41 @@ export function Component() {
         isWorking={isWorking}
         onFieldChange={updateField}
         onSave={handleSave}
-        onClose={() => { resetForm(); setOpen(false); }}
-        onOpenChange={(v) => { if (!v) resetForm(); setOpen(v); }}
+        onClose={() => {
+          resetForm();
+          setOpen(false);
+        }}
+        onOpenChange={(v) => {
+          if (!v) resetForm();
+          setOpen(v);
+        }}
       />
 
-      <Dialog open={!!deletingId} onOpenChange={(v) => { if (!v) setDeletingId(null); }}>
+      <Dialog
+        open={!!deletingId}
+        onOpenChange={(v) => {
+          if (!v) setDeletingId(null);
+        }}
+      >
         <DialogContent className="relative">
           <DialogCloseButton onClick={() => setDeletingId(null)} />
           <DialogHeader>
             <DialogTitle>Excluir lançamento</DialogTitle>
-            <DialogDescription>Esta ação não pode ser desfeita. Confirma a exclusão?</DialogDescription>
+            <DialogDescription>
+              Esta ação não pode ser desfeita. Confirma a exclusão?
+            </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeletingId(null)}>Cancelar</Button>
-            <Button variant="destructive" onClick={confirmDelete} disabled={deleting}>{deleting ? "Excluindo..." : "Excluir"}</Button>
+            <Button variant="outline" onClick={() => setDeletingId(null)}>
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={deleting}
+            >
+              {deleting ? "Excluindo..." : "Excluir"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
