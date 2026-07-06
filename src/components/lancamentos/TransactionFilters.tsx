@@ -66,8 +66,6 @@ export function TransactionFilters({
   onOriginChange,
   paymentMethod,
   onPaymentMethodChange,
-  bankAccount,
-  onBankAccountChange,
 }: {
   search: string;
   onSearchChange: (value: string) => void;
@@ -88,8 +86,6 @@ export function TransactionFilters({
   onOriginChange: (value: string) => void;
   paymentMethod: string;
   onPaymentMethodChange: (value: string) => void;
-  bankAccount: string;
-  onBankAccountChange: (value: string) => void;
 }) {
   const category = categories.find((item) => item.id === categoryId);
   const activeFilters = [
@@ -101,7 +97,6 @@ export function TransactionFilters({
     categoryId ? { key: "category", label: category?.name ?? "Categoria", onRemove: () => onCategoryChange("") } : null,
     origin ? { key: "origin", label: originLabels[origin] ?? origin, onRemove: () => onOriginChange("") } : null,
     paymentMethod ? { key: "payment", label: paymentMethodOptions.find((item) => item.value === paymentMethod)?.label ?? paymentMethod, onRemove: () => onPaymentMethodChange("") } : null,
-    bankAccount ? { key: "bank", label: `Conta: ${bankAccount}`, onRemove: () => onBankAccountChange("") } : null,
   ].filter((filter): filter is { key: string; label: string; onRemove: () => void } => Boolean(filter));
 
   return (
@@ -110,6 +105,7 @@ export function TransactionFilters({
       search={search}
       onSearchChange={onSearchChange}
       activeFilters={activeFilters}
+      defaultOpen="desktop"
     >
       <Select
         aria-label="Filtrar por tipo"
@@ -180,12 +176,6 @@ export function TransactionFilters({
         onChange={(event) => onPaymentMethodChange(event.target.value)}
         options={paymentMethodOptions}
         placeholder="Forma de pagamento"
-      />
-      <Input
-        aria-label="Filtrar por conta bancária"
-        value={bankAccount}
-        onChange={(event) => onBankAccountChange(event.target.value)}
-        placeholder="Conta/Banco"
       />
     </FilterBar>
   );

@@ -74,6 +74,14 @@ function businessError(message: string, status = 400) {
   return Object.assign(new Error(message), { name: "ValidationError", status });
 }
 
+function getLegacyReceiptDate(account: {
+  receivedDate: Date | null;
+  updatedAt: Date;
+  dueDate: Date;
+}) {
+  return account.receivedDate ?? account.updatedAt ?? account.dueDate;
+}
+
 export async function receiveAccountReceivable(
   accountReceivableId: string,
   input: ReceiveAccountReceivableInput
@@ -225,19 +233,94 @@ export async function reverseAccountReceivableReceipt(
       throw businessError("Apenas conta recebida pode ser estornada.", 409);
     }
 
-    const financialEntry = await tx.financialEntry.findFirst({
+    const originMarker = accountReceivableOriginMarker(accountReceivableId);
+    let financialEntry = await tx.financialEntry.findFirst({
       where: {
         deletedAt: null,
-        notes: { contains: accountReceivableOriginMarker(accountReceivableId) },
+        status: { not: "reversed" },
+        notes: { contains: originMarker },
       },
       include: { category: true, costCenter: true, collaborator: true },
     });
 
     if (!financialEntry) {
-      throw businessError(
-        "Lancamento financeiro vinculado a conta recebida nao foi encontrado.",
-        409
-      );
+      const reversedFinancialEntry = await tx.financialEntry.findFirst({
+        where: {
+          deletedAt: null,
+          status: "reversed",
+          notes: { contains: originMarker },
+        },
+        include: { category: true, costCenter: true, collaborator: true },
+      });
+
+      if (reversedFinancialEntry) {
+        const reconciledAccount = await tx.accountReceivable.update({
+          where: { id: accountReceivableId },
+          data: { status: "reversed" },
+          include: { category: true, costCenter: true },
+        });
+
+        await tx.auditLog.create({
+          data: {
+            userId: input.userId,
+            action: "account_receivable_reconciled_after_reversed_entry",
+            entity: "AccountReceivable",
+            entityId: accountReceivableId,
+            metadata: {
+              financialEntryId: reversedFinancialEntry.id,
+              reversalDate: input.reversalDate.toISOString(),
+              reason: input.reason.trim(),
+              notes: input.notes ?? null,
+            },
+          },
+        });
+
+        return {
+          account: reconciledAccount,
+          financialEntry: reversedFinancialEntry,
+          message:
+            "Recebimento reconciliado. O lancamento financeiro ja estava estornado.",
+        };
+      }
+    }
+
+    if (!financialEntry) {
+      financialEntry = await tx.financialEntry.create({
+        data: {
+          description: account.description,
+          amount: account.amount,
+          type: "receita",
+          date: getLegacyReceiptDate(account),
+          status: "confirmed",
+          categoryId: account.categoryId,
+          costCenterId: account.costCenterId,
+          clientName: account.client,
+          userId: account.userId,
+          notes: [
+            originMarker,
+            "[legacyReconstruction=true]",
+            "Lancamento reconstruido automaticamente antes do estorno por ausencia de vinculo historico.",
+          ].join("\n"),
+        },
+        include: { category: true, costCenter: true, collaborator: true },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          userId: input.userId,
+          action: "financial_entry_reconstructed_from_account_receivable",
+          entity: "FinancialEntry",
+          entityId: financialEntry.id,
+          metadata: {
+            originType: FINANCIAL_ORIGINS.ACCOUNTS_RECEIVABLE,
+            originId: accountReceivableId,
+            amount: Number(account.amount),
+            date: getLegacyReceiptDate(account).toISOString(),
+            reason:
+              "Conta recebida sem lancamento financeiro vinculado encontrada durante estorno.",
+          },
+        },
+      });
     }
 
     if (financialEntry.status === "reversed") {

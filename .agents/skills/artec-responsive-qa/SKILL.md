@@ -36,7 +36,14 @@ Ler `docs/ui-refactor/UX_CRITERIA.md` antes de validar.
 - Dialog e DropdownMenu locais com Escape, click outside e atributos ARIA
 - charts sem corte e sem legenda poluida em mobile
 - toasts sonner sem sobrepor controles criticos
+- paginacao responsiva: desktop com primeira/anterior/numeros/proxima/ultima,
+  mobile com anterior, pagina X de Y e proxima
+- controles de page size e ir para pagina sem overflow horizontal
 
 ## Proibido
 
 Nao alterar backend, banco, auth, rotas, regras financeiras, package.json ou lockfiles.
+
+Excecao: se a tarefa pedir explicitamente paginacao real/backend, validar apenas
+o comportamento responsivo e delegar arquitetura de dados para
+`.agents/skills/artec-pagination-performance/SKILL.md`.

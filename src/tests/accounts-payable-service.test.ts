@@ -172,4 +172,118 @@ describe("reverseAccountPayablePayment", () => {
     );
     expect(result.account.status).toBe("reversed");
   });
+
+  it("reconstructs a missing legacy financial entry before reversing it", async () => {
+    const reconstructedEntry = {
+      ...createdFinancialEntry,
+      id: "77777777-7777-7777-7777-777777777777",
+      notes: `[originType=accounts_payable;originId=${ACCOUNT_ID}]\n[legacyReconstruction=true]`,
+    };
+    const tx = {
+      accountPayable: {
+        findFirst: vi.fn().mockResolvedValue({
+          ...paidAccount,
+          paidDate: null,
+        }),
+        update: vi.fn().mockResolvedValue({ ...paidAccount, status: "reversed" }),
+      },
+      financialEntry: {
+        findFirst: vi.fn().mockResolvedValue(null),
+        create: vi.fn().mockResolvedValue(reconstructedEntry),
+        update: vi.fn().mockResolvedValue({
+          ...reconstructedEntry,
+          status: "reversed",
+        }),
+      },
+      auditLog: {
+        create: vi.fn().mockResolvedValue({ id: "audit-id" }),
+      },
+    };
+
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) =>
+      callback(tx as unknown as Parameters<typeof callback>[0])
+    );
+
+    await reverseAccountPayablePayment(ACCOUNT_ID, {
+      reversalDate: new Date("2026-07-07T00:00:00"),
+      reason: "Pagamento legado incorreto",
+      userId: USER_ID,
+    });
+
+    expect(tx.financialEntry.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          type: "despesa",
+          status: "confirmed",
+          amount: paidAccount.amount,
+          notes: expect.stringContaining("[legacyReconstruction=true]"),
+        }),
+      })
+    );
+    expect(tx.financialEntry.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: reconstructedEntry.id },
+        data: expect.objectContaining({ status: "reversed" }),
+      })
+    );
+    expect(tx.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          action: "financial_entry_reconstructed_from_account_payable",
+        }),
+      })
+    );
+  });
+
+  it("reconciles a paid account when the linked financial entry is already reversed", async () => {
+    const reversedEntry = {
+      ...createdFinancialEntry,
+      status: "reversed",
+      notes: `[originType=accounts_payable;originId=${ACCOUNT_ID}]`,
+    };
+    const tx = {
+      accountPayable: {
+        findFirst: vi.fn().mockResolvedValue(paidAccount),
+        update: vi.fn().mockResolvedValue({ ...paidAccount, status: "reversed" }),
+      },
+      financialEntry: {
+        findFirst: vi.fn()
+          .mockResolvedValueOnce(null)
+          .mockResolvedValueOnce(reversedEntry),
+        create: vi.fn(),
+        update: vi.fn(),
+      },
+      auditLog: {
+        create: vi.fn().mockResolvedValue({ id: "audit-id" }),
+      },
+    };
+
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) =>
+      callback(tx as unknown as Parameters<typeof callback>[0])
+    );
+
+    const result = await reverseAccountPayablePayment(ACCOUNT_ID, {
+      reversalDate: new Date("2026-07-07T00:00:00"),
+      reason: "Finalizar estorno parcial",
+      userId: USER_ID,
+    });
+
+    expect(tx.accountPayable.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: ACCOUNT_ID },
+        data: { status: "reversed" },
+      })
+    );
+    expect(tx.financialEntry.create).not.toHaveBeenCalled();
+    expect(tx.financialEntry.update).not.toHaveBeenCalled();
+    expect(tx.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          action: "account_payable_reconciled_after_reversed_entry",
+        }),
+      })
+    );
+    expect(result.account.status).toBe("reversed");
+    expect(result.financialEntry).toBe(reversedEntry);
+  });
 });

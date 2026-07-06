@@ -19,6 +19,21 @@ npm run e2e
 `npm run e2e` deve ser executado quando o ambiente permitir. Se falhar por ambiente,
 registrar claramente a causa.
 
+## Validacao extra para paginacao
+
+Quando a tarefa envolver paginacao/performance:
+
+- testar contrato `{ items, pagination }`;
+- testar `page`, `pageSize`, filtros, busca e ordenacao juntos;
+- testar reset para pagina 1 ao mudar filtro/busca;
+- testar estados primeira/ultima pagina e pagina inexistente;
+- testar responsividade dos controles de paginacao;
+- garantir que queries de listagem nao carreguem tabela inteira para paginar no frontend.
+
 ## Proibido
 
 Nao mascarar erro com `any`, `@ts-ignore`, mock indevido, remocao de teste ou alteracao de backend/banco.
+
+Excecao: backend/banco podem ser alterados quando a tarefa pedir explicitamente
+paginacao real, persistencia ou otimizacao de consulta. Nesses casos, exigir
+testes relacionados e registrar riscos remanescentes.

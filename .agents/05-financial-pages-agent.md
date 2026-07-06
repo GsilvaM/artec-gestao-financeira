@@ -24,7 +24,14 @@ Usar `docs/ui-refactor/UX_CRITERIA.md`.
 - Atalhos rapidos no padrao do Dashboard.
 - Charts estruturados com recharts e cores via CSS variables.
 - Toasts com sonner.
+- Listagens financeiras devem usar paginacao real no backend quando a tarefa
+  envolver performance, escala ou volume de dados.
+- Para paginacao, filtros e ordenacao, seguir `.agents/10-pagination-performance-agent.md`.
 
 ## Proibido
 
 Nao alterar queries, mutations, regras financeiras, payloads, backend, banco, package.json ou lockfiles.
+
+Excecao: quando a tarefa pedir explicitamente backend/persistencia/paginacao real,
+alterar somente o necessario para paginação, mantendo regras financeiras,
+contratos publicos compativeis e testes de API/hook.

@@ -14,8 +14,11 @@ Use esta skill quando a tarefa envolver refatoracao visual ampla do Artec Gestao
 3. Ler `docs/ui-refactor/DESIGN_SYSTEM_SPEC.md` e `docs/ui-refactor/BUTTON_ALIGNMENT_SPEC.md`.
 4. Auditar stack real com `rg "cva\\(" src`, `rg "lucide-react" src`, `rg "recharts" src` e tokens em `src/index.css`.
 5. Auditar botoes, tabelas, mobile, dark mode, charts, toasts e forms.
-6. Executar alteracoes incrementais somente em frontend, layout, CSS e componentes visuais.
-7. Validar com typecheck, lint, test, build e e2e quando possivel.
+6. Quando a tarefa envolver paginação, performance ou grandes volumes de listagem,
+   usar tambem `.agents/skills/artec-pagination-performance/SKILL.md`.
+7. Executar alteracoes incrementais somente em frontend, layout, CSS e componentes visuais,
+   exceto quando a tarefa autorizar explicitamente backend/persistencia para paginacao real.
+8. Validar com typecheck, lint, test, build e e2e quando possivel.
 
 ## Prioridades
 
@@ -29,3 +32,6 @@ Use esta skill quando a tarefa envolver refatoracao visual ampla do Artec Gestao
 
 Nao alterar Prisma, Supabase, adapter-pg, auth, rotas, payloads, permissoes,
 regras de calculo financeiro, package.json, lockfiles, variaveis de ambiente ou deploy.
+
+Excecao: paginacao real, performance de consulta e indices podem alterar backend/banco
+somente quando a tarefa pedir explicitamente e seguindo AGENTS.md.

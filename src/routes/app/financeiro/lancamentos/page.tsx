@@ -172,7 +172,6 @@ export function Component() {
   const [filterCategoryId, setFilterCategoryId] = useState("");
   const [filterOrigin, setFilterOrigin] = useState("");
   const [filterPaymentMethod, setFilterPaymentMethod] = useState("");
-  const [filterBankAccount, setFilterBankAccount] = useState("");
 
   const filters = useMemo<FinancialEntryFilters | undefined>(() => {
     const f: FinancialEntryFilters = {};
@@ -185,7 +184,6 @@ export function Component() {
     if (filterCategoryId) f.categoryId = filterCategoryId;
     if (filterOrigin) f.origin = filterOrigin as FinancialEntryFilters["origin"];
     if (filterPaymentMethod) f.paymentMethod = filterPaymentMethod;
-    if (filterBankAccount) f.bankAccount = filterBankAccount;
 
     const period = resolvePeriod(filterPeriod, filterDateFrom, filterDateTo);
     if (period.dateFrom) f.dateFrom = period.dateFrom;
@@ -198,7 +196,6 @@ export function Component() {
     filterCategoryId,
     filterOrigin,
     filterPaymentMethod,
-    filterBankAccount,
     filterPeriod,
     filterDateFrom,
     filterDateTo,
@@ -485,8 +482,6 @@ export function Component() {
         onOriginChange={setFilterOrigin}
         paymentMethod={filterPaymentMethod}
         onPaymentMethodChange={setFilterPaymentMethod}
-        bankAccount={filterBankAccount}
-        onBankAccountChange={setFilterBankAccount}
       />
 
       <ResponsiveTransactionList

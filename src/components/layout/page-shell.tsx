@@ -176,6 +176,7 @@ interface FilterBarProps {
   search?: string;
   onSearchChange?: (value: string) => void;
   activeFilters?: { key: string; label: string; onRemove: () => void }[];
+  defaultOpen?: boolean | "desktop";
   children?: ReactNode;
 }
 
@@ -184,9 +185,18 @@ export function FilterBar({
   search,
   onSearchChange,
   activeFilters = [],
+  defaultOpen = true,
   children,
 }: FilterBarProps) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(() => {
+    if (defaultOpen === "desktop") {
+      return typeof window === "undefined"
+        || typeof window.matchMedia !== "function"
+        ? true
+        : window.matchMedia("(min-width: 769px)").matches;
+    }
+    return defaultOpen;
+  });
   const hasFilters = Boolean(children);
   const hasActiveFilters = activeFilters.length > 0;
 

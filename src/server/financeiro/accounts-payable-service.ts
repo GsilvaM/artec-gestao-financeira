@@ -45,6 +45,14 @@ function businessError(message: string, status = 400) {
   return Object.assign(new Error(message), { name: "ValidationError", status });
 }
 
+function getLegacyPaymentDate(account: {
+  paidDate: Date | null;
+  updatedAt: Date;
+  dueDate: Date;
+}) {
+  return account.paidDate ?? account.updatedAt ?? account.dueDate;
+}
+
 export async function payAccountPayable(
   accountPayableId: string,
   input: PayAccountPayableInput
@@ -190,19 +198,94 @@ export async function reverseAccountPayablePayment(
       throw businessError("Apenas conta paga pode ser estornada.", 409);
     }
 
-    const financialEntry = await tx.financialEntry.findFirst({
+    const originMarker = accountPayableOriginMarker(accountPayableId);
+    let financialEntry = await tx.financialEntry.findFirst({
       where: {
         deletedAt: null,
-        notes: { contains: accountPayableOriginMarker(accountPayableId) },
+        status: { not: "reversed" },
+        notes: { contains: originMarker },
       },
       include: { category: true, costCenter: true, collaborator: true },
     });
 
     if (!financialEntry) {
-      throw businessError(
-        "Lancamento financeiro vinculado a conta paga nao foi encontrado.",
-        409
-      );
+      const reversedFinancialEntry = await tx.financialEntry.findFirst({
+        where: {
+          deletedAt: null,
+          status: "reversed",
+          notes: { contains: originMarker },
+        },
+        include: { category: true, costCenter: true, collaborator: true },
+      });
+
+      if (reversedFinancialEntry) {
+        const reconciledAccount = await tx.accountPayable.update({
+          where: { id: accountPayableId },
+          data: { status: "reversed" },
+          include: { category: true, costCenter: true },
+        });
+
+        await tx.auditLog.create({
+          data: {
+            userId: input.userId,
+            action: "account_payable_reconciled_after_reversed_entry",
+            entity: "AccountPayable",
+            entityId: accountPayableId,
+            metadata: {
+              financialEntryId: reversedFinancialEntry.id,
+              reversalDate: input.reversalDate.toISOString(),
+              reason: input.reason.trim(),
+              notes: input.notes ?? null,
+            },
+          },
+        });
+
+        return {
+          account: reconciledAccount,
+          financialEntry: reversedFinancialEntry,
+          message:
+            "Pagamento reconciliado. O lancamento financeiro ja estava estornado.",
+        };
+      }
+    }
+
+    if (!financialEntry) {
+      financialEntry = await tx.financialEntry.create({
+        data: {
+          description: account.description,
+          amount: account.amount,
+          type: "despesa",
+          date: getLegacyPaymentDate(account),
+          status: "confirmed",
+          categoryId: account.categoryId,
+          costCenterId: account.costCenterId,
+          clientName: account.supplier,
+          userId: account.userId,
+          notes: [
+            originMarker,
+            "[legacyReconstruction=true]",
+            "Lancamento reconstruido automaticamente antes do estorno por ausencia de vinculo historico.",
+          ].join("\n"),
+        },
+        include: { category: true, costCenter: true, collaborator: true },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          userId: input.userId,
+          action: "financial_entry_reconstructed_from_account_payable",
+          entity: "FinancialEntry",
+          entityId: financialEntry.id,
+          metadata: {
+            originType: FINANCIAL_ORIGINS.ACCOUNTS_PAYABLE,
+            originId: accountPayableId,
+            amount: Number(account.amount),
+            date: getLegacyPaymentDate(account).toISOString(),
+            reason:
+              "Conta paga sem lancamento financeiro vinculado encontrada durante estorno.",
+          },
+        },
+      });
     }
 
     if (financialEntry.status === "reversed") {

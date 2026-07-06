@@ -213,4 +213,124 @@ describe("reverseAccountReceivableReceipt", () => {
     );
     expect(result.account.status).toBe("reversed");
   });
+
+  it("reconstructs a missing legacy financial entry before reversing it", async () => {
+    const reconstructedEntry = {
+      ...createdFinancialEntry,
+      id: "66666666-6666-6666-6666-666666666666",
+      notes: `[originType=accounts_receivable;originId=${ACCOUNT_ID}]\n[legacyReconstruction=true]`,
+    };
+    const tx = {
+      accountReceivable: {
+        findFirst: vi.fn().mockResolvedValue({
+          ...receivedAccount,
+          receivedDate: null,
+        }),
+        update: vi.fn().mockResolvedValue({
+          ...receivedAccount,
+          status: "reversed",
+        }),
+      },
+      financialEntry: {
+        findFirst: vi.fn().mockResolvedValue(null),
+        create: vi.fn().mockResolvedValue(reconstructedEntry),
+        update: vi.fn().mockResolvedValue({
+          ...reconstructedEntry,
+          status: "reversed",
+        }),
+      },
+      auditLog: {
+        create: vi.fn().mockResolvedValue({ id: "audit-id" }),
+      },
+    };
+
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) =>
+      callback(tx as unknown as Parameters<typeof callback>[0])
+    );
+
+    await reverseAccountReceivableReceipt(ACCOUNT_ID, {
+      reversalDate: new Date("2026-07-07T00:00:00"),
+      reason: "Recebimento legado incorreto",
+      userId: USER_ID,
+    });
+
+    expect(tx.financialEntry.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          type: "receita",
+          status: "confirmed",
+          amount: receivedAccount.amount,
+          notes: expect.stringContaining("[legacyReconstruction=true]"),
+        }),
+      })
+    );
+    expect(tx.financialEntry.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: reconstructedEntry.id },
+        data: expect.objectContaining({ status: "reversed" }),
+      })
+    );
+    expect(tx.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          action: "financial_entry_reconstructed_from_account_receivable",
+        }),
+      })
+    );
+  });
+
+  it("reconciles a received account when the linked financial entry is already reversed", async () => {
+    const reversedEntry = {
+      ...createdFinancialEntry,
+      status: "reversed",
+      notes: `[originType=accounts_receivable;originId=${ACCOUNT_ID}]`,
+    };
+    const tx = {
+      accountReceivable: {
+        findFirst: vi.fn().mockResolvedValue(receivedAccount),
+        update: vi.fn().mockResolvedValue({
+          ...receivedAccount,
+          status: "reversed",
+        }),
+      },
+      financialEntry: {
+        findFirst: vi.fn()
+          .mockResolvedValueOnce(null)
+          .mockResolvedValueOnce(reversedEntry),
+        create: vi.fn(),
+        update: vi.fn(),
+      },
+      auditLog: {
+        create: vi.fn().mockResolvedValue({ id: "audit-id" }),
+      },
+    };
+
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) =>
+      callback(tx as unknown as Parameters<typeof callback>[0])
+    );
+
+    const result = await reverseAccountReceivableReceipt(ACCOUNT_ID, {
+      reversalDate: new Date("2026-07-07T00:00:00"),
+      reason: "Finalizar estorno parcial",
+      userId: USER_ID,
+    });
+
+    expect(tx.accountReceivable.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: ACCOUNT_ID },
+        data: { status: "reversed" },
+      })
+    );
+    expect(tx.financialEntry.create).not.toHaveBeenCalled();
+    expect(tx.financialEntry.update).not.toHaveBeenCalled();
+    expect(tx.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          action: "account_receivable_reconciled_after_reversed_entry",
+        }),
+      })
+    );
+    expect(result.account.status).toBe("reversed");
+    expect(result.financialEntry).toBe(reversedEntry);
+  });
 });
