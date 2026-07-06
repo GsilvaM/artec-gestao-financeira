@@ -154,6 +154,21 @@ export function usePayAccountPayable() {
   });
 }
 
+export function useReverseAccountPayablePayment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: unknown }) =>
+      clientApi.accountsPayable.reversePayment(id, data),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: accountPayableKeys.all });
+      void qc.invalidateQueries({ queryKey: financialEntryKeys.all });
+      void qc.invalidateQueries({ queryKey: cashFlowKeys.all });
+      void qc.invalidateQueries({ queryKey: dashboardKey });
+      void qc.invalidateQueries({ queryKey: dreKey });
+    },
+  });
+}
+
 export function useDeleteAccountPayable() {
   const qc = useQueryClient();
   return useMutation({
@@ -220,6 +235,21 @@ export function useReceiveAccountReceivable() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: unknown }) =>
       clientApi.accountsReceivable.receive(id, data),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: accountReceivableKeys.all });
+      void qc.invalidateQueries({ queryKey: financialEntryKeys.all });
+      void qc.invalidateQueries({ queryKey: cashFlowKeys.all });
+      void qc.invalidateQueries({ queryKey: dashboardKey });
+      void qc.invalidateQueries({ queryKey: dreKey });
+    },
+  });
+}
+
+export function useReverseAccountReceivableReceipt() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: unknown }) =>
+      clientApi.accountsReceivable.reverseReceipt(id, data),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: accountReceivableKeys.all });
       void qc.invalidateQueries({ queryKey: financialEntryKeys.all });

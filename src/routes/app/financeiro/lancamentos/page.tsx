@@ -78,6 +78,8 @@ const STATUS_MAP: Record<string, string> = {
   aberto: "pending",
   pago: "confirmed",
   vencido: "cancelled",
+  cancelado: "cancelled",
+  estornado: "reversed",
 };
 
 const STATUS_REVERSE: Record<string, string> = {
@@ -90,6 +92,62 @@ function isOriginatedEntry(entry: FinancialEntryRow) {
   return (
     entry.notes?.includes("[originType=accounts_payable;") ||
     entry.notes?.includes("[originType=accounts_receivable;")
+  );
+}
+
+function resolvePeriod(
+  period: string,
+  dateFrom: string,
+  dateTo: string,
+): { dateFrom?: Date; dateTo?: Date } {
+  const now = new Date();
+  if (period === "today") {
+    return {
+      dateFrom: startOfDay(now),
+      dateTo: endOfDay(now),
+    };
+  }
+  if (period === "week") {
+    const start = startOfDay(now);
+    start.setDate(now.getDate() - now.getDay());
+    const end = endOfDay(start);
+    end.setDate(start.getDate() + 6);
+    return { dateFrom: start, dateTo: end };
+  }
+  if (period === "month") {
+    return {
+      dateFrom: new Date(now.getFullYear(), now.getMonth(), 1),
+      dateTo: new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999),
+    };
+  }
+  if (period === "year") {
+    return {
+      dateFrom: new Date(now.getFullYear(), 0, 1),
+      dateTo: new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999),
+    };
+  }
+  if (period === "custom") {
+    return {
+      dateFrom: dateFrom ? new Date(dateFrom + "T00:00:00") : undefined,
+      dateTo: dateTo ? new Date(dateTo + "T23:59:59.999") : undefined,
+    };
+  }
+  return {};
+}
+
+function startOfDay(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function endOfDay(date: Date) {
+  return new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+    23,
+    59,
+    59,
+    999
   );
 }
 
@@ -106,22 +164,45 @@ export function Component() {
   const [form, setForm] = useState<LancamentoFormState>(initialForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [search, setSearch] = useState("");
-  const [filterMonth, setFilterMonth] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
+  const [filterType, setFilterType] = useState("");
+  const [filterPeriod, setFilterPeriod] = useState("");
+  const [filterDateFrom, setFilterDateFrom] = useState("");
+  const [filterDateTo, setFilterDateTo] = useState("");
+  const [filterCategoryId, setFilterCategoryId] = useState("");
+  const [filterOrigin, setFilterOrigin] = useState("");
+  const [filterPaymentMethod, setFilterPaymentMethod] = useState("");
+  const [filterBankAccount, setFilterBankAccount] = useState("");
 
   const filters = useMemo<FinancialEntryFilters | undefined>(() => {
     const f: FinancialEntryFilters = {};
     if (search) f.search = search;
+    if (filterType)
+      f.type = filterType as FinancialEntryFilters["type"];
     if (filterStatus)
       f.status = (STATUS_MAP[filterStatus] ??
         filterStatus) as FinancialEntryFilters["status"];
-    if (filterMonth) {
-      const [year, month] = filterMonth.split("-");
-      f.dateFrom = new Date(Number(year), Number(month) - 1, 1);
-      f.dateTo = new Date(Number(year), Number(month), 0, 23, 59, 59, 999);
-    }
+    if (filterCategoryId) f.categoryId = filterCategoryId;
+    if (filterOrigin) f.origin = filterOrigin as FinancialEntryFilters["origin"];
+    if (filterPaymentMethod) f.paymentMethod = filterPaymentMethod;
+    if (filterBankAccount) f.bankAccount = filterBankAccount;
+
+    const period = resolvePeriod(filterPeriod, filterDateFrom, filterDateTo);
+    if (period.dateFrom) f.dateFrom = period.dateFrom;
+    if (period.dateTo) f.dateTo = period.dateTo;
     return Object.keys(f).length ? f : undefined;
-  }, [search, filterMonth, filterStatus]);
+  }, [
+    search,
+    filterType,
+    filterStatus,
+    filterCategoryId,
+    filterOrigin,
+    filterPaymentMethod,
+    filterBankAccount,
+    filterPeriod,
+    filterDateFrom,
+    filterDateTo,
+  ]);
 
   const user = useAuthStore((state) => state.user);
   const { data: entries, isLoading, error } = useFinancialEntries(filters);
@@ -387,10 +468,25 @@ export function Component() {
       <TransactionFilters
         search={search}
         onSearchChange={setSearch}
-        month={filterMonth}
-        onMonthChange={setFilterMonth}
         status={filterStatus}
         onStatusChange={setFilterStatus}
+        type={filterType}
+        onTypeChange={setFilterType}
+        period={filterPeriod}
+        onPeriodChange={setFilterPeriod}
+        dateFrom={filterDateFrom}
+        onDateFromChange={setFilterDateFrom}
+        dateTo={filterDateTo}
+        onDateToChange={setFilterDateTo}
+        categoryId={filterCategoryId}
+        onCategoryChange={setFilterCategoryId}
+        categories={categories ?? []}
+        origin={filterOrigin}
+        onOriginChange={setFilterOrigin}
+        paymentMethod={filterPaymentMethod}
+        onPaymentMethodChange={setFilterPaymentMethod}
+        bankAccount={filterBankAccount}
+        onBankAccountChange={setFilterBankAccount}
       />
 
       <ResponsiveTransactionList

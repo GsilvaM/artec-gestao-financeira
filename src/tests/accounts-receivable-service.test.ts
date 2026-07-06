@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { receiveAccountReceivable } from "@/server/financeiro/accounts-receivable-service";
+import {
+  receiveAccountReceivable,
+  reverseAccountReceivableReceipt,
+} from "@/server/financeiro/accounts-receivable-service";
 import { prisma } from "@/lib/prisma/client.js";
 
 vi.mock("@/lib/prisma/client.js", () => ({
@@ -139,5 +142,75 @@ describe("receiveAccountReceivable", () => {
       })
     );
     expect(result.financialEntry).toBe(createdFinancialEntry);
+  });
+});
+
+describe("reverseAccountReceivableReceipt", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("marks receivable and linked financial entry as reversed in one transaction", async () => {
+    const tx = {
+      accountReceivable: {
+        findFirst: vi.fn().mockResolvedValue(receivedAccount),
+        update: vi.fn().mockResolvedValue({
+          ...receivedAccount,
+          status: "reversed",
+        }),
+      },
+      financialEntry: {
+        findFirst: vi.fn().mockResolvedValue({
+          ...createdFinancialEntry,
+          notes: `[originType=accounts_receivable;originId=${ACCOUNT_ID}]`,
+        }),
+        update: vi.fn().mockResolvedValue({
+          ...createdFinancialEntry,
+          status: "reversed",
+        }),
+      },
+      auditLog: {
+        create: vi.fn().mockResolvedValue({ id: "audit-id" }),
+      },
+    };
+
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) =>
+      callback(tx as unknown as Parameters<typeof callback>[0])
+    );
+
+    const reversalDate = new Date("2026-07-07T00:00:00");
+    const result = await reverseAccountReceivableReceipt(ACCOUNT_ID, {
+      reversalDate,
+      reason: "Recebimento incorreto",
+      notes: "Duplicado no banco",
+      userId: USER_ID,
+    });
+
+    expect(tx.accountReceivable.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: { status: "reversed" },
+      })
+    );
+    expect(tx.financialEntry.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          status: "reversed",
+          notes: expect.stringContaining(
+            "Motivo do estorno: Recebimento incorreto"
+          ),
+        }),
+      })
+    );
+    expect(tx.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          action: "account_receivable_receipt_reversed",
+          metadata: expect.objectContaining({
+            reason: "Recebimento incorreto",
+          }),
+        }),
+      })
+    );
+    expect(result.account.status).toBe("reversed");
   });
 });

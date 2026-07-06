@@ -148,6 +148,7 @@ export function getPreviousMonthRange(monthValue: string): MonthRange {
 
 export function buildMonthRangeFilters(range: MonthRange, search?: string): FinancialEntryFilters {
   const filters: FinancialEntryFilters = {
+    status: "confirmed",
     dateFrom: range.dateFrom,
     dateTo: range.dateTo,
   };
@@ -158,21 +159,24 @@ export function buildMonthRangeFilters(range: MonthRange, search?: string): Fina
 export function buildHistoryFilters(monthsBack: 6 | 12, referenceMonth: string): FinancialEntryFilters {
   const { year, month } = parseMonthValue(referenceMonth);
   return {
+    status: "confirmed",
     dateFrom: new Date(year, month - monthsBack, 1),
     dateTo: new Date(year, month, 0, 23, 59, 59, 999),
   };
 }
 
 export function buildDre(entries: FinancialEntryRow[], previousEntries: FinancialEntryRow[] = []) {
-  const totalReceitas = sumByType(entries, "receita");
-  const totalDespesas = sumByType(entries, "despesa");
-  const previousReceitas = sumByType(previousEntries, "receita");
-  const previousDespesas = sumByType(previousEntries, "despesa");
+  const realizedEntries = entries.filter((entry) => entry.status === "confirmed");
+  const realizedPreviousEntries = previousEntries.filter((entry) => entry.status === "confirmed");
+  const totalReceitas = sumByType(realizedEntries, "receita");
+  const totalDespesas = sumByType(realizedEntries, "despesa");
+  const previousReceitas = sumByType(realizedPreviousEntries, "receita");
+  const previousDespesas = sumByType(realizedPreviousEntries, "despesa");
   const resultado = roundCurrency(totalReceitas - totalDespesas);
   const previousResultado = roundCurrency(previousReceitas - previousDespesas);
 
-  const previousByCategory = buildCategoryMap(previousEntries, 0);
-  const categoryRows = buildCategoryMap(entries, totalReceitas);
+  const previousByCategory = buildCategoryMap(realizedPreviousEntries, 0);
+  const categoryRows = buildCategoryMap(realizedEntries, totalReceitas);
 
   const rows = [...categoryRows.values()]
     .map((row) => {
@@ -189,7 +193,7 @@ export function buildDre(entries: FinancialEntryRow[], previousEntries: Financia
       return b.amount - a.amount;
     });
 
-  if (entries.length) {
+  if (realizedEntries.length) {
     rows.unshift({
       id: "total-receitas",
       group: "Receitas",
@@ -287,7 +291,7 @@ export function buildExpenseComposition(rows: DreLine[]): FatiaComposicao[] {
 export function buildMonthlyEvolution(entries: FinancialEntryRow[]): PontoMensal[] {
   const points = new Map<string, PontoMensal>();
 
-  for (const entry of entries) {
+  for (const entry of entries.filter((item) => item.status === "confirmed")) {
     const month = getEntryMonth(entry.date);
     if (!month) continue;
     const point = points.get(month) ?? { mes: month, receita: 0, despesa: 0, resultado: 0, margem: null, hasData: true };

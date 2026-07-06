@@ -12,12 +12,14 @@ export const ENTRY_STATUS = {
   PENDING: 'pending',
   CONFIRMED: 'confirmed',
   CANCELLED: 'cancelled',
+  REVERSED: 'reversed',
 } as const;
 
 export const ENTRY_STATUS_LABELS = {
   pending: 'Pendente',
   confirmed: 'Confirmado',
   cancelled: 'Cancelado',
+  reversed: 'Estornado',
 } as const;
 
 export const ACCOUNT_PAYABLE_STATUS = {
@@ -25,6 +27,7 @@ export const ACCOUNT_PAYABLE_STATUS = {
   PAID: 'paid',
   OVERDUE: 'overdue',
   CANCELLED: 'cancelled',
+  REVERSED: 'reversed',
 } as const;
 
 export const ACCOUNT_PAYABLE_STATUS_LABELS = {
@@ -32,6 +35,7 @@ export const ACCOUNT_PAYABLE_STATUS_LABELS = {
   paid: 'Pago',
   overdue: 'Vencido',
   cancelled: 'Cancelado',
+  reversed: 'Estornado',
 } as const;
 
 export const ACCOUNT_RECEIVABLE_STATUS = {
@@ -39,6 +43,7 @@ export const ACCOUNT_RECEIVABLE_STATUS = {
   RECEIVED: 'received',
   OVERDUE: 'overdue',
   CANCELLED: 'cancelled',
+  REVERSED: 'reversed',
 } as const;
 
 export const ACCOUNT_RECEIVABLE_STATUS_LABELS = {
@@ -46,6 +51,7 @@ export const ACCOUNT_RECEIVABLE_STATUS_LABELS = {
   received: 'Recebido',
   overdue: 'Vencido',
   cancelled: 'Cancelado',
+  reversed: 'Estornado',
 } as const;
 
 export const CATEGORY_TYPES = {

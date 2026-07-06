@@ -28,7 +28,7 @@ export const financialEntryCreateSchema = z.object({
   type: z.enum(["receita", "despesa"]),
   amount: positiveDecimal,
   date: z.coerce.date(),
-  status: z.enum(["pending", "confirmed", "cancelled"]).default("pending"),
+  status: z.enum(["pending", "confirmed", "cancelled", "reversed"]).default("pending"),
   categoryId: uuidField,
   costCenterId: uuidField.optional(),
   collaboratorId: uuidField.nullable().optional(),
@@ -45,7 +45,7 @@ export const accountPayableCreateSchema = z.object({
   description: z.string().min(1),
   amount: positiveDecimal,
   dueDate: z.coerce.date(),
-  status: z.enum(["pending", "cancelled", "paid", "overdue"]).default("pending"),
+  status: z.enum(["pending", "cancelled", "paid", "overdue", "reversed"]).default("pending"),
   paidDate: z.coerce.date().optional(),
   supplier: z.string().optional(),
   categoryId: uuidField,
@@ -62,7 +62,7 @@ export const accountReceivableCreateSchema = z.object({
   description: z.string().min(1),
   amount: positiveDecimal,
   dueDate: z.coerce.date(),
-  status: z.enum(["received", "pending", "cancelled", "overdue"]).default("pending"),
+  status: z.enum(["received", "pending", "cancelled", "overdue", "reversed"]).default("pending"),
   receivedDate: z.coerce.date().optional(),
   client: z.string().optional(),
   categoryId: uuidField,
@@ -100,11 +100,28 @@ export const costCenterUpdateSchema = costCenterCreateSchema.partial();
 export const financialEntryFilterSchema = z.object({
   type: z.enum([ENTRY_TYPES.RECEITA, ENTRY_TYPES.DESPESA]).optional(),
   status: z
-    .enum([ENTRY_STATUS.PENDING, ENTRY_STATUS.CONFIRMED, ENTRY_STATUS.CANCELLED])
+    .enum([
+      ENTRY_STATUS.PENDING,
+      ENTRY_STATUS.CONFIRMED,
+      ENTRY_STATUS.CANCELLED,
+      ENTRY_STATUS.REVERSED,
+    ])
     .optional(),
   categoryId: uuidField.optional(),
   costCenterId: uuidField.optional(),
   collaboratorId: uuidField.optional(),
+  paymentMethod: z.string().optional(),
+  bankAccount: z.string().optional(),
+  origin: z
+    .enum([
+      "manual",
+      "accounts_payable",
+      "accounts_receivable",
+      "import",
+      "system",
+      "reversal",
+    ])
+    .optional(),
   dateFrom: dateField.optional(),
   dateTo: dateField.optional(),
   search: z.string().optional(),
@@ -117,6 +134,7 @@ export const accountPayableFilterSchema = z.object({
       ACCOUNT_PAYABLE_STATUS.PAID,
       ACCOUNT_PAYABLE_STATUS.OVERDUE,
       ACCOUNT_PAYABLE_STATUS.CANCELLED,
+      ACCOUNT_PAYABLE_STATUS.REVERSED,
     ])
     .optional(),
   categoryId: uuidField.optional(),
@@ -133,6 +151,7 @@ export const accountReceivableFilterSchema = z.object({
       ACCOUNT_RECEIVABLE_STATUS.RECEIVED,
       ACCOUNT_RECEIVABLE_STATUS.OVERDUE,
       ACCOUNT_RECEIVABLE_STATUS.CANCELLED,
+      ACCOUNT_RECEIVABLE_STATUS.REVERSED,
     ])
     .optional(),
   categoryId: uuidField.optional(),

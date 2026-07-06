@@ -160,6 +160,19 @@ export const clientApi = {
           })
         )
         .then(handleResponse),
+    reversePayment: (id: string, data: unknown) =>
+      getAuthHeaders(true)
+        .then((headers) =>
+          apiFetch(`${BASE_URL}/accounts-payable/${id}`, {
+            method: "PUT",
+            headers,
+            body: JSON.stringify({
+              ...(data as Record<string, unknown>),
+              status: "reversed",
+            }),
+          })
+        )
+        .then(handleResponse),
     softDelete: (id: string) =>
       getAuthHeaders()
         .then((headers) =>
@@ -216,6 +229,19 @@ export const clientApi = {
             body: JSON.stringify({
               ...(data as Record<string, unknown>),
               status: "received",
+            }),
+          })
+        )
+        .then(handleResponse),
+    reverseReceipt: (id: string, data: unknown) =>
+      getAuthHeaders(true)
+        .then((headers) =>
+          apiFetch(`${BASE_URL}/accounts-receivable/${id}`, {
+            method: "PUT",
+            headers,
+            body: JSON.stringify({
+              ...(data as Record<string, unknown>),
+              status: "reversed",
             }),
           })
         )

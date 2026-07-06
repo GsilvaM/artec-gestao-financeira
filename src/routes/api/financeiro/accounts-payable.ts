@@ -6,7 +6,10 @@ import {
   accountPayableCreateSchema,
   accountPayableUpdateSchema,
 } from "../../../domain/financeiro/schemas.js";
-import { payAccountPayable } from "../../../server/financeiro/accounts-payable-service.js";
+import {
+  payAccountPayable,
+  reverseAccountPayablePayment,
+} from "../../../server/financeiro/accounts-payable-service.js";
 import { z } from "zod";
 import {
   json,
@@ -28,6 +31,14 @@ const paymentSchema = z.object({
   paidAmount: z.coerce.number().positive(),
   paymentMethod: z.string().min(1),
   bankAccount: z.string().optional(),
+  notes: z.string().optional(),
+  userId: uuidField,
+});
+
+const reversalSchema = z.object({
+  status: z.literal("reversed"),
+  reversalDate: z.coerce.date(),
+  reason: z.string().min(1),
   notes: z.string().optional(),
   userId: uuidField,
 });
@@ -63,6 +74,12 @@ export async function action({ request, params }: RouteArgs) {
     if (request.method === "POST") {
       const body = await request.json();
       const data = createSchema.parse(body) as CreateAccountPayableData;
+      if (data.status === "paid" || data.status === "reversed") {
+        throw businessError(
+          "Conta a pagar paga ou estornada deve ser registrada por rotina transacional propria.",
+          409
+        );
+      }
 
       return json(await accountPayableRepo.create(data), { status: 201 });
     }
@@ -87,11 +104,27 @@ export async function action({ request, params }: RouteArgs) {
           })
         );
       }
+      if (
+        body &&
+        typeof body === "object" &&
+        "status" in body &&
+        body.status === "reversed"
+      ) {
+        const data = reversalSchema.parse(body);
+        return json(
+          await reverseAccountPayablePayment(id!, {
+            reversalDate: data.reversalDate,
+            reason: data.reason.trim(),
+            notes: data.notes?.trim() || null,
+            userId: data.userId,
+          })
+        );
+      }
 
       const currentAccount = await accountPayableRepo.findById(id!);
-      if (currentAccount.status === "paid") {
+      if (currentAccount.status === "paid" || currentAccount.status === "reversed") {
         throw businessError(
-          "Conta paga nao pode ser editada diretamente. Defina uma rotina de estorno antes de alterar.",
+          "Conta paga ou estornada nao pode ser editada diretamente.",
           409
         );
       }
@@ -106,9 +139,9 @@ export async function action({ request, params }: RouteArgs) {
     if (request.method === "DELETE") {
       requireId(id);
       const currentAccount = await accountPayableRepo.findById(id!);
-      if (currentAccount.status === "paid") {
+      if (currentAccount.status === "paid" || currentAccount.status === "reversed") {
         throw businessError(
-          "Conta paga nao pode ser excluida. Defina uma rotina de estorno antes de remover.",
+          "Conta paga ou estornada nao pode ser excluida.",
           409
         );
       }

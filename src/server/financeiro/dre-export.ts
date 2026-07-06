@@ -190,8 +190,16 @@ export function buildDreExportPayload(
 export async function getDreExportPayload(query: DreExportQuery): Promise<DreExportPayload> {
   const period = resolveDreExportPeriod(query);
   const [entries, previousEntries] = await Promise.all([
-    financialEntryRepo.findAll({ dateFrom: period.dateFrom, dateTo: period.dateTo }),
-    financialEntryRepo.findAll({ dateFrom: period.previousDateFrom, dateTo: period.previousDateTo }),
+    financialEntryRepo.findAll({
+      status: "confirmed",
+      dateFrom: period.dateFrom,
+      dateTo: period.dateTo,
+    }),
+    financialEntryRepo.findAll({
+      status: "confirmed",
+      dateFrom: period.previousDateFrom,
+      dateTo: period.previousDateTo,
+    }),
   ]);
 
   return buildDreExportPayload(
@@ -245,7 +253,12 @@ function toFinancialEntryRow(entry: RepoEntry): FinancialEntryRow {
     amount: Number(entry.amount),
     type: entry.type === "receita" ? "receita" : "despesa",
     date: entry.date.toISOString(),
-    status: entry.status === "pending" || entry.status === "cancelled" ? entry.status : "confirmed",
+    status:
+      entry.status === "pending" ||
+      entry.status === "cancelled" ||
+      entry.status === "reversed"
+        ? entry.status
+        : "confirmed",
     categoryId: entry.categoryId,
     categoryName: entry.category?.name ?? "",
     categoryColor: entry.category?.color ?? null,

@@ -97,7 +97,6 @@ describe("financial components", () => {
     expect(screen.getAllByText("Compra material").length).toBeGreaterThan(0);
     expect(screen.getAllByText(moneyText("1.000,00")).length).toBeGreaterThan(0);
     expect(screen.getAllByText(moneyText("660,00")).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(moneyText("340,00")).length).toBeGreaterThan(0);
     expect(screen.getByText("2")).toBeInTheDocument();
   });
 

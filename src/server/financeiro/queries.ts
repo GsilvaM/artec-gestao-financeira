@@ -56,6 +56,7 @@ export async function getDre(year: number): Promise<DreReport> {
       SUM(fe.amount)::text AS total
     FROM financial_entries fe
     WHERE fe.deleted_at IS NULL
+      AND fe.status = 'confirmed'
       AND fe.date >= ${startDate}
       AND fe.date <= ${endDate}
     GROUP BY DATE_TRUNC('month', fe.date), fe.type
@@ -110,6 +111,7 @@ export async function getCashFlow(
       SELECT DATE_TRUNC(${trunc}, fe.date)::date AS period, fe.type, fe.amount
       FROM financial_entries fe
       WHERE fe.deleted_at IS NULL
+        AND fe.status = 'confirmed'
         AND fe.date >= ${dateFrom}
         AND fe.date <= ${dateTo}
     ) grouped
@@ -139,7 +141,7 @@ export async function getDashboardKpis(): Promise<DashboardKpis> {
       where: {
         deletedAt: null,
         type: "receita",
-        status: { in: ["pending", "confirmed"] },
+        status: "confirmed",
       },
       _sum: { amount: true },
     }),
@@ -147,7 +149,7 @@ export async function getDashboardKpis(): Promise<DashboardKpis> {
       where: {
         deletedAt: null,
         type: "despesa",
-        status: { in: ["pending", "confirmed"] },
+        status: "confirmed",
       },
       _sum: { amount: true },
     }),

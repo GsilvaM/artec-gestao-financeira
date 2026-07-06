@@ -114,6 +114,7 @@ const statusStyles: Record<string, string> = {
   vencido: "bg-danger-50 text-danger-600 border-danger-100",
   overdue: "bg-danger-50 text-danger-600 border-danger-100",
   cancelled: "bg-surface-soft text-text-muted border-border-soft",
+  reversed: "bg-danger-50 text-danger-600 border-danger-100",
   rascunho: "bg-warning-50 text-warning-600 border-warning-100",
   ativo: "bg-primary-50 text-primary-600 border-primary-100",
 };
@@ -131,6 +132,7 @@ const statusLabels: Record<string, string> = {
   vencido: "Vencido",
   overdue: "Vencido",
   cancelled: "Cancelado",
+  reversed: "Estornado",
   rascunho: "Rascunho",
   ativo: "Ativo",
 };
@@ -434,6 +436,8 @@ export function StatusSelect({ value, onValueChange }: StatusSelectProps) {
       <option value="aberto">Aberto</option>
       <option value="pago">Pago</option>
       <option value="vencido">Vencido</option>
+      <option value="cancelado">Cancelado</option>
+      <option value="estornado">Estornado</option>
     </select>
   );
 }

@@ -10,6 +10,7 @@ import {
   MoreHorizontal,
   Pencil,
   ReceiptText,
+  RotateCcw,
   Trash2,
 } from "lucide-react";
 import { FormField as Field } from "@/components/forms/form-field";
@@ -57,6 +58,7 @@ import {
   useUpdateAccountReceivable,
   useDeleteAccountReceivable,
   useReceiveAccountReceivable,
+  useReverseAccountReceivableReceipt,
 } from "@/domain/financeiro/hooks/use-accounts";
 import { useCategories } from "@/domain/financeiro/hooks/use-categories";
 import { useCostCenters } from "@/domain/financeiro/hooks/use-cost-centers";
@@ -76,6 +78,8 @@ const AR_STATUS_MAP: Record<string, string> = {
   aberto: "pending",
   pago: "received",
   vencido: "overdue",
+  cancelado: "cancelled",
+  estornado: "reversed",
 };
 
 const RECEIPT_METHOD_OPTIONS = [
@@ -109,6 +113,10 @@ function isReceived(entry: AccountReceivableRow) {
   return entry.status === "received";
 }
 
+function isReversed(entry: AccountReceivableRow) {
+  return entry.status === "reversed";
+}
+
 function getDueHelper(entry: AccountReceivableRow, todayKey: string) {
   if (entry.status === "received") {
     return entry.receivedDate
@@ -116,6 +124,7 @@ function getDueHelper(entry: AccountReceivableRow, todayKey: string) {
       : "Recebida";
   }
   if (entry.status === "cancelled") return "Cancelada";
+  if (entry.status === "reversed") return "Recebimento estornado";
 
   const dueKey = entry.dueDate.slice(0, 10);
   if (dueKey < todayKey) return "Vencida";
@@ -145,6 +154,11 @@ export function Component() {
   const [receiptMethod, setReceiptMethod] = useState("");
   const [bankAccount, setBankAccount] = useState("");
   const [receiptNotes, setReceiptNotes] = useState("");
+  const [reversalEntry, setReversalEntry] =
+    useState<AccountReceivableRow | null>(null);
+  const [reversalDate, setReversalDate] = useState("");
+  const [reversalReason, setReversalReason] = useState("");
+  const [reversalNotes, setReversalNotes] = useState("");
 
   const filters = useMemo<AccountReceivableFilters | undefined>(() => {
     const f: AccountReceivableFilters = {};
@@ -167,6 +181,8 @@ export function Component() {
     useDeleteAccountReceivable();
   const { mutateAsync: receiveEntry, isPending: receiving } =
     useReceiveAccountReceivable();
+  const { mutateAsync: reverseReceipt, isPending: reversing } =
+    useReverseAccountReceivableReceipt();
 
   const isEditing = !!editingId;
   const isWorking = creating || updating;
@@ -184,9 +200,9 @@ export function Component() {
   }
 
   function handleEdit(entry: AccountReceivableRow) {
-    if (isReceived(entry)) {
+    if (isReceived(entry) || isReversed(entry)) {
       toast.info(
-        "Conta recebida fica bloqueada para edicao ate existir rotina de estorno."
+        "Conta recebida ou estornada fica bloqueada para edicao direta."
       );
       return;
     }
@@ -203,10 +219,8 @@ export function Component() {
   }
 
   function handleDelete(entry: AccountReceivableRow) {
-    if (isReceived(entry)) {
-      toast.info(
-        "Conta recebida nao pode ser excluida sem uma rotina de estorno."
-      );
+    if (isReceived(entry) || isReversed(entry)) {
+      toast.info("Conta recebida ou estornada nao pode ser excluida.");
       return;
     }
     setDeletingId(entry.id);
@@ -223,12 +237,34 @@ export function Component() {
       toast.info("Conta cancelada nao pode ser marcada como recebida.");
       return;
     }
+    if (isReversed(entry)) {
+      toast.info("Recebimento estornado nao pode ser recebido novamente.");
+      return;
+    }
     setReceivingEntry(entry);
     setReceiptDate(toDateInputValue(new Date()));
     setReceivedAmount(String(entry.amount));
     setReceiptMethod("");
     setBankAccount("");
     setReceiptNotes("");
+  }
+
+  function openReversalDialog(entry: AccountReceivableRow) {
+    if (!isReceived(entry)) {
+      toast.info("Apenas conta recebida pode ser estornada.");
+      return;
+    }
+    setReversalEntry(entry);
+    setReversalDate(toDateInputValue(new Date()));
+    setReversalReason("");
+    setReversalNotes("");
+  }
+
+  function closeReversalDialog() {
+    setReversalEntry(null);
+    setReversalDate("");
+    setReversalReason("");
+    setReversalNotes("");
   }
 
   function closeReceiptDialog() {
@@ -357,6 +393,43 @@ export function Component() {
     }
   }
 
+  async function confirmReversal() {
+    if (!reversalEntry) return;
+    if (!reversalDate) {
+      toast.error("Informe a data do estorno");
+      return;
+    }
+    if (!reversalReason.trim()) {
+      toast.error("Informe o motivo do estorno");
+      return;
+    }
+    if (!user) {
+      toast.error("Usuário não autenticado");
+      return;
+    }
+
+    try {
+      await reverseReceipt({
+        id: reversalEntry.id,
+        data: {
+          reversalDate: new Date(reversalDate + "T00:00:00"),
+          reason: reversalReason.trim(),
+          notes: reversalNotes.trim() || undefined,
+          userId: user.id,
+        },
+      });
+      toast.success(
+        "Recebimento estornado com sucesso. O lançamento financeiro foi atualizado."
+      );
+      closeReversalDialog();
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "Erro ao estornar recebimento";
+      console.error("[reverse-accounts-receivable]", msg, err);
+      toast.error(msg);
+    }
+  }
+
   const receivableEntries = entries ?? [];
   const todayKey = toDateInputValue(new Date());
   const currentMonthKey = todayKey.slice(0, 7);
@@ -374,6 +447,7 @@ export function Component() {
     (e) =>
       !isReceived(e) &&
       e.status !== "cancelled" &&
+      e.status !== "reversed" &&
       e.dueDate.slice(0, 10) === todayKey
   ).length;
   const receivedThisMonthAmount = receivableEntries
@@ -388,6 +462,7 @@ export function Component() {
     { value: "pending", label: "Pendente" },
     { value: "overdue", label: "Vencido" },
     { value: "cancelled", label: "Cancelado" },
+    { value: "reversed", label: "Estornado" },
   ];
   if (status === "received")
     statusOptions.unshift({ value: "received", label: "Recebido" });
@@ -454,6 +529,10 @@ export function Component() {
                   label:
                     filterStatus === "pago"
                       ? "Pago"
+                      : filterStatus === "estornado"
+                        ? "Estornado"
+                        : filterStatus === "cancelado"
+                          ? "Cancelado"
                       : filterStatus === "vencido"
                         ? "Vencido"
                         : "Aberto",
@@ -550,6 +629,14 @@ export function Component() {
                                 Marcar como recebida
                               </DropdownMenuItem>
                             ) : null}
+                            {isReceived(entry) ? (
+                              <DropdownMenuItem
+                                onClick={() => openReversalDialog(entry)}
+                              >
+                                <RotateCcw className="size-4" />
+                                Estornar recebimento
+                              </DropdownMenuItem>
+                            ) : null}
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               destructive
@@ -589,6 +676,7 @@ export function Component() {
         onEdit={handleEdit}
         onDelete={handleDelete}
         onReceive={openReceiptDialog}
+        onReverse={openReversalDialog}
         onNew={() => {
           resetForm();
           setOpen(true);
@@ -838,6 +926,71 @@ export function Component() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <Dialog
+        open={!!reversalEntry}
+        onOpenChange={(v) => {
+          if (!v) closeReversalDialog();
+        }}
+      >
+        <DialogContent className="relative">
+          <DialogCloseButton onClick={closeReversalDialog} />
+          <DialogHeader>
+            <DialogTitle>Estornar recebimento</DialogTitle>
+            <DialogDescription>
+              Registre o motivo para preservar o histórico financeiro.
+            </DialogDescription>
+          </DialogHeader>
+          {reversalEntry ? (
+            <div className="border-border bg-surface-muted rounded-[var(--radius-card)] border p-4">
+              <p className="text-foreground text-sm font-bold">
+                {reversalEntry.description}
+              </p>
+              <p className="text-muted-foreground mt-1 text-xs">
+                {formatMoney(reversalEntry.amount)} - Recebida em{" "}
+                {formatDate(reversalEntry.receivedDate)}
+              </p>
+            </div>
+          ) : null}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Data do estorno">
+              <DatePicker
+                value={reversalDate}
+                onChange={setReversalDate}
+                ariaLabel="Data do estorno"
+              />
+            </Field>
+            <Field label="Motivo">
+              <Input
+                value={reversalReason}
+                onChange={(e) => setReversalReason(e.target.value)}
+                placeholder="Ex: recebimento lançado incorretamente"
+              />
+            </Field>
+            <div className="sm:col-span-2">
+              <Field label="Observações">
+                <Textarea
+                  value={reversalNotes}
+                  onChange={(e) => setReversalNotes(e.target.value)}
+                  placeholder="Detalhes adicionais do estorno"
+                />
+              </Field>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={closeReversalDialog}>
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmReversal}
+              disabled={reversing}
+            >
+              <RotateCcw className="size-4" />
+              {reversing ? "Estornando..." : "Confirmar estorno"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PageShell>
   );
 }
@@ -848,6 +1001,7 @@ function AccountReceivableMobileList({
   onEdit,
   onDelete,
   onReceive,
+  onReverse,
   onNew,
 }: {
   entries: AccountReceivableRow[] | undefined;
@@ -855,6 +1009,7 @@ function AccountReceivableMobileList({
   onEdit: (entry: AccountReceivableRow) => void;
   onDelete: (entry: AccountReceivableRow) => void;
   onReceive: (entry: AccountReceivableRow) => void;
+  onReverse: (entry: AccountReceivableRow) => void;
   onNew: () => void;
 }) {
   const todayKey = toDateInputValue(new Date());
@@ -939,6 +1094,12 @@ function AccountReceivableMobileList({
                     <DropdownMenuItem onClick={() => onReceive(entry)}>
                       <CheckCircle2 className="size-4" />
                       Marcar como recebida
+                    </DropdownMenuItem>
+                  ) : null}
+                  {isReceived(entry) ? (
+                    <DropdownMenuItem onClick={() => onReverse(entry)}>
+                      <RotateCcw className="size-4" />
+                      Estornar recebimento
                     </DropdownMenuItem>
                   ) : null}
                   <DropdownMenuSeparator />

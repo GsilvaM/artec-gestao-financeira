@@ -10,6 +10,7 @@ import {
   MoreHorizontal,
   Pencil,
   ReceiptText,
+  RotateCcw,
   Trash2,
   WalletCards,
 } from "lucide-react";
@@ -58,6 +59,7 @@ import {
   useUpdateAccountPayable,
   useDeleteAccountPayable,
   usePayAccountPayable,
+  useReverseAccountPayablePayment,
 } from "@/domain/financeiro/hooks/use-accounts";
 import { useCategories } from "@/domain/financeiro/hooks/use-categories";
 import { useCostCenters } from "@/domain/financeiro/hooks/use-cost-centers";
@@ -77,6 +79,8 @@ const AP_STATUS_MAP: Record<string, string> = {
   aberto: "pending",
   pago: "paid",
   vencido: "overdue",
+  cancelado: "cancelled",
+  estornado: "reversed",
 };
 
 const PAYMENT_METHOD_OPTIONS = [
@@ -110,11 +114,16 @@ function isPaid(entry: AccountPayableRow) {
   return entry.status === "paid";
 }
 
+function isReversed(entry: AccountPayableRow) {
+  return entry.status === "reversed";
+}
+
 function getDueHelper(entry: AccountPayableRow, todayKey: string) {
   if (entry.status === "paid") {
     return entry.paidDate ? `Pago em ${formatDate(entry.paidDate)}` : "Pago";
   }
   if (entry.status === "cancelled") return "Cancelada";
+  if (entry.status === "reversed") return "Pagamento estornado";
 
   const dueKey = entry.dueDate.slice(0, 10);
   if (dueKey < todayKey) return "Vencida";
@@ -144,6 +153,12 @@ export function Component() {
   const [paymentMethod, setPaymentMethod] = useState("");
   const [bankAccount, setBankAccount] = useState("");
   const [paymentNotes, setPaymentNotes] = useState("");
+  const [reversalEntry, setReversalEntry] = useState<AccountPayableRow | null>(
+    null
+  );
+  const [reversalDate, setReversalDate] = useState("");
+  const [reversalReason, setReversalReason] = useState("");
+  const [reversalNotes, setReversalNotes] = useState("");
 
   const filters = useMemo<AccountPayableFilters | undefined>(() => {
     const f: AccountPayableFilters = {};
@@ -165,6 +180,8 @@ export function Component() {
   const { mutateAsync: deleteEntry, isPending: deleting } =
     useDeleteAccountPayable();
   const { mutateAsync: payEntry, isPending: paying } = usePayAccountPayable();
+  const { mutateAsync: reversePayment, isPending: reversing } =
+    useReverseAccountPayablePayment();
 
   const isEditing = !!editingId;
   const isWorking = creating || updating;
@@ -182,9 +199,9 @@ export function Component() {
   }
 
   function handleEdit(entry: AccountPayableRow) {
-    if (isPaid(entry)) {
+    if (isPaid(entry) || isReversed(entry)) {
       toast.info(
-        "Conta paga fica bloqueada para edicao ate existir rotina de estorno."
+        "Conta paga ou estornada fica bloqueada para edicao direta."
       );
       return;
     }
@@ -201,8 +218,8 @@ export function Component() {
   }
 
   function handleDelete(entry: AccountPayableRow) {
-    if (isPaid(entry)) {
-      toast.info("Conta paga nao pode ser excluida sem uma rotina de estorno.");
+    if (isPaid(entry) || isReversed(entry)) {
+      toast.info("Conta paga ou estornada nao pode ser excluida.");
       return;
     }
     setDeletingId(entry.id);
@@ -219,12 +236,34 @@ export function Component() {
       toast.info("Conta cancelada nao pode ser marcada como paga.");
       return;
     }
+    if (isReversed(entry)) {
+      toast.info("Pagamento estornado nao pode ser pago novamente.");
+      return;
+    }
     setPayingEntry(entry);
     setPaymentDate(toDateInputValue(new Date()));
     setPaidAmount(String(entry.amount));
     setPaymentMethod("");
     setBankAccount("");
     setPaymentNotes("");
+  }
+
+  function openReversalDialog(entry: AccountPayableRow) {
+    if (!isPaid(entry)) {
+      toast.info("Apenas conta paga pode ser estornada.");
+      return;
+    }
+    setReversalEntry(entry);
+    setReversalDate(toDateInputValue(new Date()));
+    setReversalReason("");
+    setReversalNotes("");
+  }
+
+  function closeReversalDialog() {
+    setReversalEntry(null);
+    setReversalDate("");
+    setReversalReason("");
+    setReversalNotes("");
   }
 
   function closePaymentDialog() {
@@ -353,6 +392,43 @@ export function Component() {
     }
   }
 
+  async function confirmReversal() {
+    if (!reversalEntry) return;
+    if (!reversalDate) {
+      toast.error("Informe a data do estorno");
+      return;
+    }
+    if (!reversalReason.trim()) {
+      toast.error("Informe o motivo do estorno");
+      return;
+    }
+    if (!user) {
+      toast.error("Usuário não autenticado");
+      return;
+    }
+
+    try {
+      await reversePayment({
+        id: reversalEntry.id,
+        data: {
+          reversalDate: new Date(reversalDate + "T00:00:00"),
+          reason: reversalReason.trim(),
+          notes: reversalNotes.trim() || undefined,
+          userId: user.id,
+        },
+      });
+      toast.success(
+        "Pagamento estornado com sucesso. O lançamento financeiro foi atualizado."
+      );
+      closeReversalDialog();
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "Erro ao estornar pagamento";
+      console.error("[reverse-accounts-payable]", msg, err);
+      toast.error(msg);
+    }
+  }
+
   const payableEntries = entries ?? [];
   const visibleEntries = filterStatus
     ? payableEntries
@@ -373,6 +449,7 @@ export function Component() {
     (e) =>
       !isPaid(e) &&
       e.status !== "cancelled" &&
+      e.status !== "reversed" &&
       e.dueDate.slice(0, 10) === todayKey
   ).length;
   const paidThisMonthAmount = payableEntries
@@ -385,6 +462,7 @@ export function Component() {
     { value: "pending", label: "Pendente" },
     { value: "overdue", label: "Vencido" },
     { value: "cancelled", label: "Cancelado" },
+    { value: "reversed", label: "Estornado" },
   ];
   if (status === "paid")
     statusOptions.unshift({ value: "paid", label: "Pago" });
@@ -450,6 +528,10 @@ export function Component() {
                   label:
                     filterStatus === "pago"
                       ? "Pago"
+                      : filterStatus === "estornado"
+                        ? "Estornado"
+                        : filterStatus === "cancelado"
+                          ? "Cancelado"
                       : filterStatus === "vencido"
                         ? "Vencido"
                         : "Aberto",
@@ -546,6 +628,14 @@ export function Component() {
                                 Marcar como paga
                               </DropdownMenuItem>
                             ) : null}
+                            {isPaid(entry) ? (
+                              <DropdownMenuItem
+                                onClick={() => openReversalDialog(entry)}
+                              >
+                                <RotateCcw className="size-4" />
+                                Estornar pagamento
+                              </DropdownMenuItem>
+                            ) : null}
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               destructive
@@ -585,6 +675,7 @@ export function Component() {
         onEdit={handleEdit}
         onDelete={handleDelete}
         onPay={openPaymentDialog}
+        onReverse={openReversalDialog}
         onNew={() => {
           resetForm();
           setOpen(true);
@@ -834,6 +925,71 @@ export function Component() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <Dialog
+        open={!!reversalEntry}
+        onOpenChange={(v) => {
+          if (!v) closeReversalDialog();
+        }}
+      >
+        <DialogContent className="relative">
+          <DialogCloseButton onClick={closeReversalDialog} />
+          <DialogHeader>
+            <DialogTitle>Estornar pagamento</DialogTitle>
+            <DialogDescription>
+              Registre o motivo para preservar o histórico financeiro.
+            </DialogDescription>
+          </DialogHeader>
+          {reversalEntry ? (
+            <div className="border-border bg-surface-muted rounded-[var(--radius-card)] border p-4">
+              <p className="text-foreground text-sm font-bold">
+                {reversalEntry.description}
+              </p>
+              <p className="text-muted-foreground mt-1 text-xs">
+                {formatMoney(reversalEntry.amount)} - Pago em{" "}
+                {formatDate(reversalEntry.paidDate)}
+              </p>
+            </div>
+          ) : null}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Data do estorno">
+              <DatePicker
+                value={reversalDate}
+                onChange={setReversalDate}
+                ariaLabel="Data do estorno"
+              />
+            </Field>
+            <Field label="Motivo">
+              <Input
+                value={reversalReason}
+                onChange={(e) => setReversalReason(e.target.value)}
+                placeholder="Ex: pagamento lançado incorretamente"
+              />
+            </Field>
+            <div className="sm:col-span-2">
+              <Field label="Observações">
+                <Textarea
+                  value={reversalNotes}
+                  onChange={(e) => setReversalNotes(e.target.value)}
+                  placeholder="Detalhes adicionais do estorno"
+                />
+              </Field>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={closeReversalDialog}>
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmReversal}
+              disabled={reversing}
+            >
+              <RotateCcw className="size-4" />
+              {reversing ? "Estornando..." : "Confirmar estorno"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PageShell>
   );
 }
@@ -844,6 +1000,7 @@ function AccountPayableMobileList({
   onEdit,
   onDelete,
   onPay,
+  onReverse,
   onNew,
 }: {
   entries: AccountPayableRow[] | undefined;
@@ -851,6 +1008,7 @@ function AccountPayableMobileList({
   onEdit: (entry: AccountPayableRow) => void;
   onDelete: (entry: AccountPayableRow) => void;
   onPay: (entry: AccountPayableRow) => void;
+  onReverse: (entry: AccountPayableRow) => void;
   onNew: () => void;
 }) {
   const todayKey = toDateInputValue(new Date());
@@ -935,6 +1093,12 @@ function AccountPayableMobileList({
                     <DropdownMenuItem onClick={() => onPay(entry)}>
                       <CheckCircle2 className="size-4" />
                       Marcar como paga
+                    </DropdownMenuItem>
+                  ) : null}
+                  {isPaid(entry) ? (
+                    <DropdownMenuItem onClick={() => onReverse(entry)}>
+                      <RotateCcw className="size-4" />
+                      Estornar pagamento
                     </DropdownMenuItem>
                   ) : null}
                   <DropdownMenuSeparator />

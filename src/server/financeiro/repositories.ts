@@ -1,5 +1,11 @@
 import { prisma } from "../../lib/prisma/client.js";
 import type { Prisma } from "@prisma/client";
+import {
+  FINANCIAL_ORIGINS,
+  appendMetadata,
+  hasOriginMarker,
+  originMarker,
+} from "./financial-origin.js";
 
 export class RepositoryError extends Error {
   public readonly code: string;
@@ -82,6 +88,9 @@ export interface FinancialEntryFilters {
   categoryId?: string;
   costCenterId?: string;
   collaboratorId?: string;
+  paymentMethod?: string;
+  bankAccount?: string;
+  origin?: string;
   userId?: string;
   dateFrom?: Date;
   dateTo?: Date;
@@ -90,6 +99,24 @@ export interface FinancialEntryFilters {
 
 export const financialEntryRepo = {
   async findAll(filters?: FinancialEntryFilters) {
+    const andFilters: Prisma.FinancialEntryWhereInput[] = [];
+    if (filters?.paymentMethod) {
+      andFilters.push({
+        notes: { contains: filters.paymentMethod, mode: "insensitive" },
+      });
+    }
+    if (filters?.bankAccount) {
+      andFilters.push({
+        notes: { contains: filters.bankAccount, mode: "insensitive" },
+      });
+    }
+    if (filters?.origin && filters.origin !== "manual") {
+      andFilters.push({ notes: { contains: `[originType=${filters.origin};` } });
+    }
+    if (filters?.origin === "manual") {
+      andFilters.push({ notes: { contains: `[originType=${FINANCIAL_ORIGINS.MANUAL};` } });
+    }
+
     const where: Prisma.FinancialEntryWhereInput = {
       ...whereNotDeleted(),
       ...(filters?.type ? { type: filters.type } : {}),
@@ -98,6 +125,7 @@ export const financialEntryRepo = {
       ...(filters?.costCenterId ? { costCenterId: filters.costCenterId } : {}),
       ...(filters?.collaboratorId ? { collaboratorId: filters.collaboratorId } : {}),
       ...(filters?.userId ? { userId: filters.userId } : {}),
+      ...(andFilters.length ? { AND: andFilters } : {}),
       ...(filters?.dateFrom || filters?.dateTo
         ? {
             date: {
@@ -148,7 +176,11 @@ export const financialEntryRepo = {
         collaboratorId: data.collaboratorId ?? null,
         clientName: data.clientName ?? null,
         userId: data.userId,
-        notes: data.notes ?? null,
+        notes: hasOriginMarker(data.notes)
+          ? (data.notes ?? null)
+          : appendMetadata(data.notes, [
+              originMarker(FINANCIAL_ORIGINS.MANUAL, "manual"),
+            ]),
       },
       include: { category: true, costCenter: true, collaborator: true },
     });

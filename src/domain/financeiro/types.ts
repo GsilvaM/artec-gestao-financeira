@@ -54,7 +54,7 @@ export interface FinancialEntryRow {
   amount: number;
   type: 'receita' | 'despesa';
   date: string;
-  status: 'pending' | 'confirmed' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'cancelled' | 'reversed';
   categoryId: string;
   categoryName: string;
   categoryColor: string | null;
@@ -75,7 +75,7 @@ export interface AccountPayableRow {
   amount: number;
   dueDate: string;
   paidDate: string | null;
-  status: 'pending' | 'paid' | 'overdue' | 'cancelled';
+  status: 'pending' | 'paid' | 'overdue' | 'cancelled' | 'reversed';
   categoryId: string;
   categoryName: string;
   categoryColor: string | null;
@@ -94,7 +94,7 @@ export interface AccountReceivableRow {
   amount: number;
   dueDate: string;
   receivedDate: string | null;
-  status: 'pending' | 'received' | 'overdue' | 'cancelled';
+  status: 'pending' | 'received' | 'overdue' | 'cancelled' | 'reversed';
   categoryId: string;
   categoryName: string;
   categoryColor: string | null;

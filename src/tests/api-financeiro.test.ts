@@ -63,10 +63,12 @@ vi.mock("@/server/financeiro/queries.js", () => ({
 
 vi.mock("@/server/financeiro/accounts-payable-service.js", () => ({
   payAccountPayable: vi.fn(),
+  reverseAccountPayablePayment: vi.fn(),
 }));
 
 vi.mock("@/server/financeiro/accounts-receivable-service.js", () => ({
   receiveAccountReceivable: vi.fn(),
+  reverseAccountReceivableReceipt: vi.fn(),
 }));
 
 import {
@@ -76,7 +78,11 @@ import {
   accountReceivableRepo,
 } from "@/server/financeiro/repositories.js";
 import { payAccountPayable } from "@/server/financeiro/accounts-payable-service.js";
-import { receiveAccountReceivable } from "@/server/financeiro/accounts-receivable-service.js";
+import {
+  receiveAccountReceivable,
+  reverseAccountReceivableReceipt,
+} from "@/server/financeiro/accounts-receivable-service.js";
+import { reverseAccountPayablePayment } from "@/server/financeiro/accounts-payable-service.js";
 
 const MOCK_ENTRY = {
   id: "11111111-1111-1111-1111-111111111111",
@@ -493,7 +499,7 @@ describe("accounts payable route module", () => {
     expect(accountPayableRepo.update).not.toHaveBeenCalled();
     await expect(response.json()).resolves.toMatchObject({
       error:
-        "Conta paga nao pode ser editada diretamente. Defina uma rotina de estorno antes de alterar.",
+        "Conta paga ou estornada nao pode ser editada diretamente.",
     });
   });
 
@@ -516,9 +522,41 @@ describe("accounts payable route module", () => {
     expect(response.status).toBe(409);
     expect(accountPayableRepo.softDelete).not.toHaveBeenCalled();
     await expect(response.json()).resolves.toMatchObject({
-      error:
-        "Conta paga nao pode ser excluida. Defina uma rotina de estorno antes de remover.",
+      error: "Conta paga ou estornada nao pode ser excluida.",
     });
+  });
+
+  it("estorna pagamento via servico transacional", async () => {
+    vi.mocked(reverseAccountPayablePayment).mockResolvedValue({
+      account: { ...MOCK_PAYABLE, status: "reversed" },
+      financialEntry: { ...MOCK_ENTRY, status: "reversed" },
+      message: "Pagamento estornado com sucesso.",
+    } as never);
+    const request = new Request(
+      "http://localhost/api/financeiro/accounts-payable/22222222-2222-2222-2222-222222222222",
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: "reversed",
+          reversalDate: "2026-07-07",
+          reason: "Lancamento incorreto",
+          userId: "00000000-0000-0000-0000-000000000002",
+        }),
+      }
+    );
+    const response = await accountsPayable.action({
+      request,
+      params: { id: "22222222-2222-2222-2222-222222222222" },
+    });
+
+    expect(response.status).toBe(200);
+    expect(reverseAccountPayablePayment).toHaveBeenCalledWith(
+      "22222222-2222-2222-2222-222222222222",
+      expect.objectContaining({
+        reason: "Lancamento incorreto",
+      })
+    );
   });
 });
 
@@ -591,7 +629,7 @@ describe("accounts receivable route module", () => {
     expect(accountReceivableRepo.create).not.toHaveBeenCalled();
     await expect(response.json()).resolves.toMatchObject({
       error:
-        "Conta a receber recebida deve ser registrada pela rotina de recebimento para alterar o lancamento financeiro.",
+        "Conta a receber recebida ou estornada deve ser registrada por rotina transacional propria.",
     });
   });
 
@@ -671,5 +709,38 @@ describe("accounts receivable route module", () => {
 
     expect(response.status).toBe(409);
     expect(accountReceivableRepo.softDelete).not.toHaveBeenCalled();
+  });
+
+  it("reverses receipt via transactional service", async () => {
+    vi.mocked(reverseAccountReceivableReceipt).mockResolvedValue({
+      account: { ...MOCK_RECEIVABLE, status: "reversed" },
+      financialEntry: { ...MOCK_ENTRY, status: "reversed" },
+      message: "Recebimento estornado com sucesso.",
+    } as never);
+    const request = new Request(
+      "http://localhost/api/financeiro/accounts-receivable/33333333-3333-3333-3333-333333333333",
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: "reversed",
+          reversalDate: "2026-07-07",
+          reason: "Recebimento incorreto",
+          userId: "00000000-0000-0000-0000-000000000002",
+        }),
+      }
+    );
+    const response = await accountsReceivable.action({
+      request,
+      params: { id: "33333333-3333-3333-3333-333333333333" },
+    });
+
+    expect(response.status).toBe(200);
+    expect(reverseAccountReceivableReceipt).toHaveBeenCalledWith(
+      "33333333-3333-3333-3333-333333333333",
+      expect.objectContaining({
+        reason: "Recebimento incorreto",
+      })
+    );
   });
 });

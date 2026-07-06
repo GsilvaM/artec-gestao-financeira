@@ -1,5 +1,10 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma/client.js";
+import {
+  FINANCIAL_ORIGINS,
+  appendMetadata,
+  originMarker,
+} from "./financial-origin.js";
 import { NotFoundError } from "./repositories.js";
 
 export interface PayAccountPayableInput {
@@ -11,10 +16,15 @@ export interface PayAccountPayableInput {
   userId: string;
 }
 
-const ORIGIN_TYPE = "accounts_payable";
+export interface ReverseAccountPayablePaymentInput {
+  reversalDate: Date;
+  reason: string;
+  notes?: string | null;
+  userId: string;
+}
 
-function originMarker(accountPayableId: string) {
-  return `[originType=${ORIGIN_TYPE};originId=${accountPayableId}]`;
+function accountPayableOriginMarker(accountPayableId: string) {
+  return originMarker(FINANCIAL_ORIGINS.ACCOUNTS_PAYABLE, accountPayableId);
 }
 
 function buildFinancialEntryNotes(
@@ -22,10 +32,10 @@ function buildFinancialEntryNotes(
   input: PayAccountPayableInput
 ) {
   const metadata = [
-    originMarker(accountPayableId),
+    accountPayableOriginMarker(accountPayableId),
     `Forma de pagamento: ${input.paymentMethod}`,
     input.bankAccount ? `Conta/Banco: ${input.bankAccount}` : null,
-    input.notes ? `Observações do pagamento: ${input.notes}` : null,
+    input.notes ? `Observacoes do pagamento: ${input.notes}` : null,
   ].filter(Boolean);
 
   return metadata.join("\n");
@@ -47,7 +57,7 @@ export async function payAccountPayable(
     !Number.isFinite(Number(input.paidAmount)) ||
     Number(input.paidAmount) <= 0
   ) {
-    throw businessError("Informe um valor pago válido.");
+    throw businessError("Informe um valor pago valido.");
   }
 
   if (!input.paymentMethod.trim()) {
@@ -65,19 +75,27 @@ export async function payAccountPayable(
     const existingFinancialEntry = await tx.financialEntry.findFirst({
       where: {
         deletedAt: null,
-        notes: { contains: originMarker(accountPayableId) },
+        status: { not: "reversed" },
+        notes: { contains: accountPayableOriginMarker(accountPayableId) },
       },
     });
 
     if (account.status === "paid" || existingFinancialEntry) {
       throw businessError(
-        "Esta conta já está paga e o lançamento financeiro já existe.",
+        "Esta conta ja esta paga e o lancamento financeiro ja existe.",
         409
       );
     }
 
     if (account.status === "cancelled") {
       throw businessError("Conta cancelada nao pode ser paga.", 409);
+    }
+
+    if (account.status === "reversed") {
+      throw businessError(
+        "Pagamento estornado nao pode ser pago novamente sem rotina explicita de reaprovacao.",
+        409
+      );
     }
 
     const paidAccount = await tx.accountPayable.update({
@@ -129,7 +147,7 @@ export async function payAccountPayable(
         entity: "FinancialEntry",
         entityId: financialEntry.id,
         metadata: {
-          originType: ORIGIN_TYPE,
+          originType: FINANCIAL_ORIGINS.ACCOUNTS_PAYABLE,
           originId: accountPayableId,
         },
       },
@@ -139,7 +157,113 @@ export async function payAccountPayable(
       account: paidAccount,
       financialEntry,
       message:
-        "Pagamento registrado com sucesso. Um lançamento de despesa foi criado automaticamente no Financeiro.",
+        "Pagamento registrado com sucesso. O lancamento financeiro foi criado automaticamente.",
+    };
+  });
+}
+
+export async function reverseAccountPayablePayment(
+  accountPayableId: string,
+  input: ReverseAccountPayablePaymentInput
+) {
+  if (!Number.isFinite(input.reversalDate.getTime())) {
+    throw businessError("Informe uma data de estorno valida.");
+  }
+
+  if (!input.reason.trim()) {
+    throw businessError("Informe o motivo do estorno.");
+  }
+
+  return prisma.$transaction(async (tx) => {
+    const account = await tx.accountPayable.findFirst({
+      where: { id: accountPayableId, deletedAt: null },
+      include: { category: true, costCenter: true },
+    });
+
+    if (!account) throw new NotFoundError("AccountPayable", accountPayableId);
+
+    if (account.status === "reversed") {
+      throw businessError("Pagamento desta conta ja foi estornado.", 409);
+    }
+
+    if (account.status !== "paid") {
+      throw businessError("Apenas conta paga pode ser estornada.", 409);
+    }
+
+    const financialEntry = await tx.financialEntry.findFirst({
+      where: {
+        deletedAt: null,
+        notes: { contains: accountPayableOriginMarker(accountPayableId) },
+      },
+      include: { category: true, costCenter: true, collaborator: true },
+    });
+
+    if (!financialEntry) {
+      throw businessError(
+        "Lancamento financeiro vinculado a conta paga nao foi encontrado.",
+        409
+      );
+    }
+
+    if (financialEntry.status === "reversed") {
+      throw businessError("Lancamento financeiro ja esta estornado.", 409);
+    }
+
+    const reversedAccount = await tx.accountPayable.update({
+      where: { id: accountPayableId },
+      data: { status: "reversed" },
+      include: { category: true, costCenter: true },
+    });
+
+    const reversedEntry = await tx.financialEntry.update({
+      where: { id: financialEntry.id },
+      data: {
+        status: "reversed",
+        notes: appendMetadata(financialEntry.notes, [
+          `[reversalDate=${input.reversalDate.toISOString()}]`,
+          `[reversalUserId=${input.userId}]`,
+          `Motivo do estorno: ${input.reason.trim()}`,
+          input.notes ? `Observacoes do estorno: ${input.notes}` : null,
+        ]),
+      },
+      include: { category: true, costCenter: true, collaborator: true },
+    });
+
+    await tx.auditLog.create({
+      data: {
+        userId: input.userId,
+        action: "account_payable_payment_reversed",
+        entity: "AccountPayable",
+        entityId: accountPayableId,
+        metadata: {
+          reversalDate: input.reversalDate.toISOString(),
+          reason: input.reason.trim(),
+          notes: input.notes ?? null,
+          financialEntryId: financialEntry.id,
+        },
+      },
+    });
+
+    await tx.auditLog.create({
+      data: {
+        userId: input.userId,
+        action: "financial_entry_reversed_from_account_payable",
+        entity: "FinancialEntry",
+        entityId: financialEntry.id,
+        metadata: {
+          originType: FINANCIAL_ORIGINS.ACCOUNTS_PAYABLE,
+          originId: accountPayableId,
+          reversalDate: input.reversalDate.toISOString(),
+          reason: input.reason.trim(),
+        },
+      },
+    });
+
+    return {
+      account: reversedAccount,
+      financialEntry: reversedEntry,
+      message:
+        "Pagamento estornado com sucesso. O lancamento financeiro foi atualizado.",
     };
   });
 }

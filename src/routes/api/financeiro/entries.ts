@@ -6,6 +6,7 @@ import {
   financialEntryCreateSchema,
   financialEntryUpdateSchema,
 } from "../../../domain/financeiro/schemas.js";
+import { isAccountOriginatedEntry } from "../../../server/financeiro/financial-origin.js";
 import { z } from "zod";
 import {
   json,
@@ -25,13 +26,6 @@ function businessError(message: string, status = 400) {
   return Object.assign(new Error(message), { name: "ValidationError", status });
 }
 
-function isOriginatedEntry(notes: string | null | undefined) {
-  return (
-    notes?.includes("[originType=accounts_payable;") ||
-    notes?.includes("[originType=accounts_receivable;")
-  );
-}
-
 export async function loader({ request }: RouteArgs) {
   const url = new URL(request.url);
   const id = url.searchParams.get("id");
@@ -46,6 +40,9 @@ export async function loader({ request }: RouteArgs) {
         categoryId: url.searchParams.get("categoryId") ?? undefined,
         costCenterId: url.searchParams.get("costCenterId") ?? undefined,
         collaboratorId: url.searchParams.get("collaboratorId") ?? undefined,
+        paymentMethod: url.searchParams.get("paymentMethod") ?? undefined,
+        bankAccount: url.searchParams.get("bankAccount") ?? undefined,
+        origin: url.searchParams.get("origin") ?? undefined,
         dateFrom: parseDate(url.searchParams.get("dateFrom")),
         dateTo: parseDate(url.searchParams.get("dateTo")),
         search: url.searchParams.get("search") ?? undefined,
@@ -63,7 +60,7 @@ export async function action({ request, params }: RouteArgs) {
     if (request.method === "POST") {
       const body = await request.json();
       const data = createSchema.parse(body) as CreateFinancialEntryData;
-      if (isOriginatedEntry(data.notes)) {
+      if (isAccountOriginatedEntry(data.notes)) {
         throw businessError(
           "Lancamento com origem de contas a pagar/receber deve ser criado pela rotina da conta.",
           409
@@ -77,7 +74,7 @@ export async function action({ request, params }: RouteArgs) {
       requireId(id);
       const body = await request.json();
       const currentEntry = await financialEntryRepo.findById(id!);
-      if (isOriginatedEntry(currentEntry.notes)) {
+      if (isAccountOriginatedEntry(currentEntry.notes)) {
         throw businessError(
           "Lancamento originado de contas a pagar/receber nao pode ser editado diretamente. Use a rotina de estorno da origem.",
           409
@@ -95,7 +92,7 @@ export async function action({ request, params }: RouteArgs) {
     if (request.method === "DELETE") {
       requireId(id);
       const currentEntry = await financialEntryRepo.findById(id!);
-      if (isOriginatedEntry(currentEntry.notes)) {
+      if (isAccountOriginatedEntry(currentEntry.notes)) {
         throw businessError(
           "Lancamento originado de contas a pagar/receber nao pode ser excluido diretamente. Use a rotina de estorno da origem.",
           409

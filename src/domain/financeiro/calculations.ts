@@ -33,14 +33,17 @@ export function sumAmounts(entries: Array<{ amount: unknown }>): number {
 }
 
 export function calculateFinancialSummary(entries: FinancialEntryLike[]): FinancialSummary {
-  const receitas = sumAmounts(entries.filter((entry) => entry.type === "receita"));
-  const despesas = sumAmounts(entries.filter((entry) => entry.type === "despesa"));
+  const realizedEntries = entries.filter(
+    (entry) => entry.status === undefined || entry.status === "confirmed"
+  );
+  const receitas = sumAmounts(realizedEntries.filter((entry) => entry.type === "receita"));
+  const despesas = sumAmounts(realizedEntries.filter((entry) => entry.type === "despesa"));
 
   return {
     receitas,
     despesas,
     saldo: roundCurrency(receitas - despesas),
-    total: entries.length,
+    total: realizedEntries.length,
   };
 }
 

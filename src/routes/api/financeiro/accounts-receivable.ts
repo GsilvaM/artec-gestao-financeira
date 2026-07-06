@@ -6,7 +6,10 @@ import {
   accountReceivableCreateSchema,
   accountReceivableUpdateSchema,
 } from "../../../domain/financeiro/schemas.js";
-import { receiveAccountReceivable } from "../../../server/financeiro/accounts-receivable-service.js";
+import {
+  receiveAccountReceivable,
+  reverseAccountReceivableReceipt,
+} from "../../../server/financeiro/accounts-receivable-service.js";
 import { z } from "zod";
 import {
   json,
@@ -28,6 +31,14 @@ const receiptSchema = z.object({
   receivedAmount: z.coerce.number().positive(),
   paymentMethod: z.string().min(1),
   bankAccount: z.string().optional(),
+  notes: z.string().optional(),
+  userId: uuidField,
+});
+
+const reversalSchema = z.object({
+  status: z.literal("reversed"),
+  reversalDate: z.coerce.date(),
+  reason: z.string().min(1),
   notes: z.string().optional(),
   userId: uuidField,
 });
@@ -63,9 +74,9 @@ export async function action({ request, params }: RouteArgs) {
     if (request.method === "POST") {
       const body = await request.json();
       const data = createSchema.parse(body) as CreateAccountReceivableData;
-      if (data.status === "received") {
+      if (data.status === "received" || data.status === "reversed") {
         throw businessError(
-          "Conta a receber recebida deve ser registrada pela rotina de recebimento para alterar o lancamento financeiro.",
+          "Conta a receber recebida ou estornada deve ser registrada por rotina transacional propria.",
           409
         );
       }
@@ -93,11 +104,27 @@ export async function action({ request, params }: RouteArgs) {
           })
         );
       }
+      if (
+        body &&
+        typeof body === "object" &&
+        "status" in body &&
+        body.status === "reversed"
+      ) {
+        const data = reversalSchema.parse(body);
+        return json(
+          await reverseAccountReceivableReceipt(id!, {
+            reversalDate: data.reversalDate,
+            reason: data.reason.trim(),
+            notes: data.notes?.trim() || null,
+            userId: data.userId,
+          })
+        );
+      }
 
       const currentAccount = await accountReceivableRepo.findById(id!);
-      if (currentAccount.status === "received") {
+      if (currentAccount.status === "received" || currentAccount.status === "reversed") {
         throw businessError(
-          "Conta recebida nao pode ser editada diretamente. Defina uma rotina de estorno antes de alterar.",
+          "Conta recebida ou estornada nao pode ser editada diretamente.",
           409
         );
       }
@@ -112,9 +139,9 @@ export async function action({ request, params }: RouteArgs) {
     if (request.method === "DELETE") {
       requireId(id);
       const currentAccount = await accountReceivableRepo.findById(id!);
-      if (currentAccount.status === "received") {
+      if (currentAccount.status === "received" || currentAccount.status === "reversed") {
         throw businessError(
-          "Conta recebida nao pode ser excluida. Defina uma rotina de estorno antes de remover.",
+          "Conta recebida ou estornada nao pode ser excluida.",
           409
         );
       }
