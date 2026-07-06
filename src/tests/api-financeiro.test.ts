@@ -564,6 +564,37 @@ describe("accounts receivable route module", () => {
     );
   });
 
+  it("blocks creating received account outside the receipt routine", async () => {
+    const request = new Request(
+      "http://localhost/api/financeiro/accounts-receivable",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          description: "Recebimento direto",
+          amount: 450,
+          dueDate: "2026-07-06",
+          status: "received",
+          receivedDate: "2026-07-06",
+          categoryId: "00000000-0000-0000-0000-000000000001",
+          userId: "00000000-0000-0000-0000-000000000002",
+        }),
+      }
+    );
+
+    const response = await accountsReceivable.action({
+      request,
+      params: {},
+    });
+
+    expect(response.status).toBe(409);
+    expect(accountReceivableRepo.create).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toMatchObject({
+      error:
+        "Conta a receber recebida deve ser registrada pela rotina de recebimento para alterar o lancamento financeiro.",
+    });
+  });
+
   it("returns 409 when duplicated receipt is rejected", async () => {
     vi.mocked(receiveAccountReceivable).mockRejectedValue(
       Object.assign(

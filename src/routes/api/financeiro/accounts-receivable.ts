@@ -63,6 +63,12 @@ export async function action({ request, params }: RouteArgs) {
     if (request.method === "POST") {
       const body = await request.json();
       const data = createSchema.parse(body) as CreateAccountReceivableData;
+      if (data.status === "received") {
+        throw businessError(
+          "Conta a receber recebida deve ser registrada pela rotina de recebimento para alterar o lancamento financeiro.",
+          409
+        );
+      }
 
       return json(await accountReceivableRepo.create(data), { status: 201 });
     }

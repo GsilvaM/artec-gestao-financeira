@@ -31,6 +31,32 @@ function buildFinancialEntryNotes(
   return metadata.join("\n");
 }
 
+function buildFinancialEntryData(
+  accountReceivableId: string,
+  account: {
+    description: string;
+    categoryId: string;
+    costCenterId: string | null;
+    client: string | null;
+  },
+  input: ReceiveAccountReceivableInput
+): Prisma.FinancialEntryCreateInput {
+  return {
+    description: account.description,
+    amount: input.receivedAmount,
+    type: "receita",
+    date: input.receivedDate,
+    status: "confirmed",
+    category: { connect: { id: account.categoryId } },
+    ...(account.costCenterId
+      ? { costCenter: { connect: { id: account.costCenterId } } }
+      : {}),
+    clientName: account.client,
+    userId: input.userId,
+    notes: buildFinancialEntryNotes(accountReceivableId, input),
+  };
+}
+
 function businessError(message: string, status = 400) {
   return Object.assign(new Error(message), { name: "ValidationError", status });
 }
@@ -91,19 +117,14 @@ export async function receiveAccountReceivable(
       include: { category: true, costCenter: true },
     });
 
+    const financialEntryData = buildFinancialEntryData(
+      accountReceivableId,
+      account,
+      input
+    );
+
     const financialEntry = await tx.financialEntry.create({
-      data: {
-        description: account.description,
-        amount: input.receivedAmount,
-        type: "receita",
-        date: input.receivedDate,
-        status: "confirmed",
-        categoryId: account.categoryId,
-        costCenterId: account.costCenterId,
-        clientName: account.client,
-        userId: input.userId,
-        notes: buildFinancialEntryNotes(accountReceivableId, input),
-      },
+      data: financialEntryData,
       include: { category: true, costCenter: true, collaborator: true },
     });
 
@@ -119,6 +140,15 @@ export async function receiveAccountReceivable(
           paymentMethod: input.paymentMethod,
           bankAccount: input.bankAccount ?? null,
           financialEntryId: financialEntry.id,
+          financialEntry: {
+            amount: Number(input.receivedAmount),
+            date: input.receivedDate.toISOString(),
+            type: "receita",
+            status: "confirmed",
+            categoryId: account.categoryId,
+            costCenterId: account.costCenterId,
+            clientName: account.client,
+          },
         },
       },
     });
