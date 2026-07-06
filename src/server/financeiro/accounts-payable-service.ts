@@ -17,7 +17,10 @@ function originMarker(accountPayableId: string) {
   return `[originType=${ORIGIN_TYPE};originId=${accountPayableId}]`;
 }
 
-function buildFinancialEntryNotes(accountPayableId: string, input: PayAccountPayableInput) {
+function buildFinancialEntryNotes(
+  accountPayableId: string,
+  input: PayAccountPayableInput
+) {
   const metadata = [
     originMarker(accountPayableId),
     `Forma de pagamento: ${input.paymentMethod}`,
@@ -32,8 +35,18 @@ function businessError(message: string, status = 400) {
   return Object.assign(new Error(message), { name: "ValidationError", status });
 }
 
-export async function payAccountPayable(accountPayableId: string, input: PayAccountPayableInput) {
-  if (!Number.isFinite(Number(input.paidAmount)) || Number(input.paidAmount) <= 0) {
+export async function payAccountPayable(
+  accountPayableId: string,
+  input: PayAccountPayableInput
+) {
+  if (!Number.isFinite(input.paymentDate.getTime())) {
+    throw businessError("Informe uma data de pagamento valida.");
+  }
+
+  if (
+    !Number.isFinite(Number(input.paidAmount)) ||
+    Number(input.paidAmount) <= 0
+  ) {
     throw businessError("Informe um valor pago válido.");
   }
 
@@ -57,7 +70,14 @@ export async function payAccountPayable(accountPayableId: string, input: PayAcco
     });
 
     if (account.status === "paid" || existingFinancialEntry) {
-      throw businessError("Esta conta já está paga e o lançamento financeiro já existe.", 409);
+      throw businessError(
+        "Esta conta já está paga e o lançamento financeiro já existe.",
+        409
+      );
+    }
+
+    if (account.status === "cancelled") {
+      throw businessError("Conta cancelada nao pode ser paga.", 409);
     }
 
     const paidAccount = await tx.accountPayable.update({
@@ -118,7 +138,8 @@ export async function payAccountPayable(accountPayableId: string, input: PayAcco
     return {
       account: paidAccount,
       financialEntry,
-      message: "Pagamento registrado com sucesso. Um lançamento de despesa foi criado automaticamente no Financeiro.",
+      message:
+        "Pagamento registrado com sucesso. Um lançamento de despesa foi criado automaticamente no Financeiro.",
     };
   });
 }

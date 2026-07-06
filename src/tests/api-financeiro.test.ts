@@ -64,7 +64,11 @@ vi.mock("@/server/financeiro/accounts-payable-service.js", () => ({
   payAccountPayable: vi.fn(),
 }));
 
-import { financialEntryRepo, categoryRepo } from "@/server/financeiro/repositories.js";
+import {
+  financialEntryRepo,
+  categoryRepo,
+  accountPayableRepo,
+} from "@/server/financeiro/repositories.js";
 import { payAccountPayable } from "@/server/financeiro/accounts-payable-service.js";
 
 const MOCK_ENTRY = {
@@ -83,7 +87,15 @@ const MOCK_ENTRY = {
   createdAt: new Date("2026-06-10"),
   updatedAt: new Date("2026-06-10"),
   deletedAt: null,
-  category: { id: "00000000-0000-0000-0000-000000000001", name: "Serviços", type: "receita", color: "#10B981", createdAt: new Date("2026-01-01"), updatedAt: new Date("2026-06-10"), deletedAt: null },
+  category: {
+    id: "00000000-0000-0000-0000-000000000001",
+    name: "Serviços",
+    type: "receita",
+    color: "#10B981",
+    createdAt: new Date("2026-01-01"),
+    updatedAt: new Date("2026-06-10"),
+    deletedAt: null,
+  },
   costCenter: null,
   collaborator: null,
 };
@@ -198,7 +210,9 @@ describe("handler dispatcher", () => {
   });
 
   it("routes entries GET to entries loader", async () => {
-    vi.mocked(financialEntryRepo.findAll).mockResolvedValue([MOCK_ENTRY] as never);
+    vi.mocked(financialEntryRepo.findAll).mockResolvedValue([
+      MOCK_ENTRY,
+    ] as never);
     const request = new Request("http://localhost/api/financeiro/entries");
     const response = await handler(request);
     expect(response.status).toBe(200);
@@ -211,7 +225,9 @@ describe("entries route module", () => {
   });
 
   it("retorna lista de lançamentos via loader", async () => {
-    vi.mocked(financialEntryRepo.findAll).mockResolvedValue([MOCK_ENTRY] as never);
+    vi.mocked(financialEntryRepo.findAll).mockResolvedValue([
+      MOCK_ENTRY,
+    ] as never);
     const request = new Request("http://localhost/api/financeiro/entries");
     const response = await entries.loader({ request, params: {} });
     expect(response.status).toBe(200);
@@ -222,9 +238,13 @@ describe("entries route module", () => {
 
   it("retorna 404 para id inexistente via loader", async () => {
     vi.mocked(financialEntryRepo.findById).mockRejectedValue(
-      Object.assign(new Error("FinancialEntry with id x not found"), { name: "NotFoundError" }),
+      Object.assign(new Error("FinancialEntry with id x not found"), {
+        name: "NotFoundError",
+      })
     );
-    const request = new Request("http://localhost/api/financeiro/entries?id=uuid-inexistente");
+    const request = new Request(
+      "http://localhost/api/financeiro/entries?id=uuid-inexistente"
+    );
     const response = await entries.loader({ request, params: {} });
     expect(response.status).toBe(404);
     const body = await response.json();
@@ -251,7 +271,9 @@ describe("entries route module", () => {
   });
 
   it("retorna 405 para método não suportado", async () => {
-    const request = new Request("http://localhost/api/financeiro/entries", { method: "PATCH" });
+    const request = new Request("http://localhost/api/financeiro/entries", {
+      method: "PATCH",
+    });
     const response = await entries.action({ request, params: {} });
     expect(response.status).toBe(405);
   });
@@ -280,18 +302,21 @@ describe("accounts payable route module", () => {
       financialEntry: MOCK_ENTRY,
       message: "Pagamento registrado com sucesso.",
     } as never);
-    const request = new Request("http://localhost/api/financeiro/accounts-payable/22222222-2222-2222-2222-222222222222", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        status: "paid",
-        paymentDate: "2026-07-06",
-        paidAmount: 300,
-        paymentMethod: "pix",
-        bankAccount: "Banco teste",
-        userId: "00000000-0000-0000-0000-000000000002",
-      }),
-    });
+    const request = new Request(
+      "http://localhost/api/financeiro/accounts-payable/22222222-2222-2222-2222-222222222222",
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: "paid",
+          paymentDate: "2026-07-06",
+          paidAmount: 300,
+          paymentMethod: "pix",
+          bankAccount: "Banco teste",
+          userId: "00000000-0000-0000-0000-000000000002",
+        }),
+      }
+    );
     const response = await accountsPayable.action({
       request,
       params: { id: "22222222-2222-2222-2222-222222222222" },
@@ -304,28 +329,36 @@ describe("accounts payable route module", () => {
         paidAmount: 300,
         paymentMethod: "pix",
         bankAccount: "Banco teste",
-      }),
+      })
     );
   });
 
   it("retorna 409 quando pagamento duplicado é rejeitado", async () => {
     vi.mocked(payAccountPayable).mockRejectedValue(
-      Object.assign(new Error("Esta conta já está paga e o lançamento financeiro já existe."), {
-        name: "ValidationError",
-        status: 409,
-      }),
+      Object.assign(
+        new Error(
+          "Esta conta já está paga e o lançamento financeiro já existe."
+        ),
+        {
+          name: "ValidationError",
+          status: 409,
+        }
+      )
     );
-    const request = new Request("http://localhost/api/financeiro/accounts-payable/22222222-2222-2222-2222-222222222222", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        status: "paid",
-        paymentDate: "2026-07-06",
-        paidAmount: 300,
-        paymentMethod: "pix",
-        userId: "00000000-0000-0000-0000-000000000002",
-      }),
-    });
+    const request = new Request(
+      "http://localhost/api/financeiro/accounts-payable/22222222-2222-2222-2222-222222222222",
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: "paid",
+          paymentDate: "2026-07-06",
+          paidAmount: 300,
+          paymentMethod: "pix",
+          userId: "00000000-0000-0000-0000-000000000002",
+        }),
+      }
+    );
     const response = await accountsPayable.action({
       request,
       params: { id: "22222222-2222-2222-2222-222222222222" },
@@ -334,6 +367,58 @@ describe("accounts payable route module", () => {
     expect(response.status).toBe(409);
     await expect(response.json()).resolves.toMatchObject({
       error: "Esta conta já está paga e o lançamento financeiro já existe.",
+    });
+  });
+
+  it("bloqueia edicao direta de conta ja paga", async () => {
+    vi.mocked(accountPayableRepo.findById).mockResolvedValue(
+      MOCK_PAYABLE as never
+    );
+    const request = new Request(
+      "http://localhost/api/financeiro/accounts-payable/22222222-2222-2222-2222-222222222222",
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          description: "Fornecedor alterado",
+        }),
+      }
+    );
+
+    const response = await accountsPayable.action({
+      request,
+      params: { id: "22222222-2222-2222-2222-222222222222" },
+    });
+
+    expect(response.status).toBe(409);
+    expect(accountPayableRepo.update).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toMatchObject({
+      error:
+        "Conta paga nao pode ser editada diretamente. Defina uma rotina de estorno antes de alterar.",
+    });
+  });
+
+  it("bloqueia exclusao de conta ja paga", async () => {
+    vi.mocked(accountPayableRepo.findById).mockResolvedValue(
+      MOCK_PAYABLE as never
+    );
+    const request = new Request(
+      "http://localhost/api/financeiro/accounts-payable/22222222-2222-2222-2222-222222222222",
+      {
+        method: "DELETE",
+      }
+    );
+
+    const response = await accountsPayable.action({
+      request,
+      params: { id: "22222222-2222-2222-2222-222222222222" },
+    });
+
+    expect(response.status).toBe(409);
+    expect(accountPayableRepo.softDelete).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toMatchObject({
+      error:
+        "Conta paga nao pode ser excluida. Defina uma rotina de estorno antes de remover.",
     });
   });
 });

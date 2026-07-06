@@ -5,9 +5,11 @@ import {
   Banknote,
   CalendarClock,
   CheckCircle2,
+  Clock3,
   CreditCard,
   MoreHorizontal,
   Pencil,
+  ReceiptText,
   Trash2,
   WalletCards,
 } from "lucide-react";
@@ -41,6 +43,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Table,
   TableBody,
@@ -57,6 +60,7 @@ import {
   usePayAccountPayable,
 } from "@/domain/financeiro/hooks/use-accounts";
 import { useCategories } from "@/domain/financeiro/hooks/use-categories";
+import { useCostCenters } from "@/domain/financeiro/hooks/use-cost-centers";
 import { useAuthStore } from "@/lib/supabase/auth-store";
 import {
   formatDate,
@@ -75,6 +79,49 @@ const AP_STATUS_MAP: Record<string, string> = {
   vencido: "overdue",
 };
 
+const PAYMENT_METHOD_OPTIONS = [
+  { value: "pix", label: "Pix" },
+  { value: "boleto", label: "Boleto" },
+  { value: "transferencia", label: "Transferência" },
+  { value: "cartao_credito", label: "Cartão de crédito" },
+  { value: "cartao_debito", label: "Cartão de débito" },
+  { value: "dinheiro", label: "Dinheiro" },
+];
+
+function toDateInputValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function getDateInputValue(value: string | null | undefined) {
+  if (!value) return "";
+  return toDateInputValue(
+    new Date(value + (value.includes("T") ? "" : "T00:00:00"))
+  );
+}
+
+function canPay(entry: AccountPayableRow) {
+  return entry.status === "pending" || entry.status === "overdue";
+}
+
+function isPaid(entry: AccountPayableRow) {
+  return entry.status === "paid";
+}
+
+function getDueHelper(entry: AccountPayableRow, todayKey: string) {
+  if (entry.status === "paid") {
+    return entry.paidDate ? `Pago em ${formatDate(entry.paidDate)}` : "Pago";
+  }
+  if (entry.status === "cancelled") return "Cancelada";
+
+  const dueKey = entry.dueDate.slice(0, 10);
+  if (dueKey < todayKey) return "Vencida";
+  if (dueKey === todayKey) return "Vence hoje";
+  return "A vencer";
+}
+
 export function Component() {
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -84,10 +131,14 @@ export function Component() {
   const [dueDate, setDueDate] = useState("");
   const [supplier, setSupplier] = useState("");
   const [categoryId, setCategoryId] = useState("");
+  const [costCenterId, setCostCenterId] = useState("");
+  const [notes, setNotes] = useState("");
   const [status, setStatus] = useState<AccountPayableRow["status"]>("pending");
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
-  const [payingEntry, setPayingEntry] = useState<AccountPayableRow | null>(null);
+  const [payingEntry, setPayingEntry] = useState<AccountPayableRow | null>(
+    null
+  );
   const [paymentDate, setPaymentDate] = useState("");
   const [paidAmount, setPaidAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
@@ -106,14 +157,14 @@ export function Component() {
   const user = useAuthStore((state) => state.user);
   const { data: entries, isLoading } = useAccountsPayable(filters);
   const { data: categories } = useCategories();
+  const { data: costCenters } = useCostCenters();
   const { mutateAsync: createEntry, isPending: creating } =
     useCreateAccountPayable();
   const { mutateAsync: updateEntry, isPending: updating } =
     useUpdateAccountPayable();
   const { mutateAsync: deleteEntry, isPending: deleting } =
     useDeleteAccountPayable();
-  const { mutateAsync: payEntry, isPending: paying } =
-    usePayAccountPayable();
+  const { mutateAsync: payEntry, isPending: paying } = usePayAccountPayable();
 
   const isEditing = !!editingId;
   const isWorking = creating || updating;
@@ -124,40 +175,52 @@ export function Component() {
     setDueDate("");
     setSupplier("");
     setCategoryId("");
+    setCostCenterId("");
+    setNotes("");
     setStatus("pending");
     setEditingId(null);
   }
 
   function handleEdit(entry: AccountPayableRow) {
+    if (isPaid(entry)) {
+      toast.info(
+        "Conta paga fica bloqueada para edicao ate existir rotina de estorno."
+      );
+      return;
+    }
     setDescription(entry.description);
     setAmount(String(entry.amount));
-    setDueDate(
-      entry.dueDate
-        ? new Date(
-            entry.dueDate + (entry.dueDate.includes("T") ? "" : "T00:00:00")
-          )
-            .toISOString()
-            .slice(0, 10)
-        : ""
-    );
+    setDueDate(getDateInputValue(entry.dueDate));
     setSupplier(entry.supplier ?? "");
     setCategoryId(entry.categoryId);
+    setCostCenterId(entry.costCenterId ?? "");
+    setNotes(entry.notes ?? "");
     setStatus(entry.status);
     setEditingId(entry.id);
     setOpen(true);
   }
 
   function handleDelete(entry: AccountPayableRow) {
+    if (isPaid(entry)) {
+      toast.info("Conta paga nao pode ser excluida sem uma rotina de estorno.");
+      return;
+    }
     setDeletingId(entry.id);
   }
 
   function openPaymentDialog(entry: AccountPayableRow) {
-    if (entry.status === "paid") {
-      toast.info("Esta conta já está paga e o lançamento financeiro já existe.");
+    if (isPaid(entry)) {
+      toast.info(
+        "Esta conta já está paga e o lançamento financeiro já existe."
+      );
+      return;
+    }
+    if (entry.status === "cancelled") {
+      toast.info("Conta cancelada nao pode ser marcada como paga.");
       return;
     }
     setPayingEntry(entry);
-    setPaymentDate(new Date().toISOString().slice(0, 10));
+    setPaymentDate(toDateInputValue(new Date()));
     setPaidAmount(String(entry.amount));
     setPaymentMethod("");
     setBankAccount("");
@@ -218,12 +281,16 @@ export function Component() {
         dueDate: new Date(dueDate + "T00:00:00"),
         status,
         categoryId,
+        costCenterId: costCenterId || undefined,
         supplier: supplier.trim() || undefined,
+        notes: notes.trim() || undefined,
         userId: user.id,
       };
       if (editingId) {
         if (status === "paid") {
-          toast.error("Use a ação Marcar como paga para registrar o pagamento.");
+          toast.error(
+            "Use a ação Marcar como paga para registrar o pagamento."
+          );
           return;
         }
         await updateEntry({ id: editingId, data: payload });
@@ -287,6 +354,8 @@ export function Component() {
   }
 
   const payableEntries = entries ?? [];
+  const todayKey = toDateInputValue(new Date());
+  const currentMonthKey = todayKey.slice(0, 7);
   const openEntries = payableEntries.filter(
     (e) => e.status === "pending" || e.status === "overdue"
   );
@@ -297,22 +366,36 @@ export function Component() {
   const overdueAmount = payableEntries
     .filter((e) => e.status === "overdue")
     .reduce((sum, e) => sum + toFiniteNumber(e.amount), 0);
+  const dueTodayCount = payableEntries.filter(
+    (e) =>
+      !isPaid(e) &&
+      e.status !== "cancelled" &&
+      e.dueDate.slice(0, 10) === todayKey
+  ).length;
+  const paidThisMonthAmount = payableEntries
+    .filter(
+      (e) => e.status === "paid" && e.paidDate?.slice(0, 7) === currentMonthKey
+    )
+    .reduce((sum, e) => sum + toFiniteNumber(e.amount), 0);
 
   const statusOptions = [
     { value: "pending", label: "Pendente" },
     { value: "overdue", label: "Vencido" },
     { value: "cancelled", label: "Cancelado" },
   ];
-  if (status === "paid") statusOptions.unshift({ value: "paid", label: "Pago" });
-
-  const paymentMethodOptions = [
-    { value: "pix", label: "Pix" },
-    { value: "boleto", label: "Boleto" },
-    { value: "transferencia", label: "Transferência" },
-    { value: "cartao_credito", label: "Cartão de crédito" },
-    { value: "cartao_debito", label: "Cartão de débito" },
-    { value: "dinheiro", label: "Dinheiro" },
-  ];
+  if (status === "paid")
+    statusOptions.unshift({ value: "paid", label: "Pago" });
+  const paidAmountNumber = parseMoneyInput(paidAmount);
+  const hasPaymentDifference =
+    !!payingEntry &&
+    Number.isFinite(paidAmountNumber) &&
+    Math.abs(paidAmountNumber - toFiniteNumber(payingEntry.amount)) >= 0.01;
+  const canConfirmPayment =
+    !!paymentDate &&
+    Number.isFinite(paidAmountNumber) &&
+    paidAmountNumber > 0 &&
+    !!paymentMethod.trim() &&
+    !paying;
 
   return (
     <PageShell
@@ -335,12 +418,7 @@ export function Component() {
         />
         <MetricCard
           title="Vence hoje"
-          value={String(
-            payableEntries.filter(
-              (e) =>
-                e.dueDate.slice(0, 10) === new Date().toISOString().slice(0, 10)
-            ).length
-          )}
+          value={String(dueTodayCount)}
           icon={CalendarClock}
           tone="amber"
         />
@@ -350,6 +428,12 @@ export function Component() {
           icon={AlertTriangle}
           tone="red"
         />
+        <MetricCard
+          title="Pagas no mês"
+          value={formatMoney(paidThisMonthAmount)}
+          icon={CheckCircle2}
+          tone="green"
+        />
       </div>
       <FilterBar
         searchPlaceholder="Buscar conta a pagar..."
@@ -357,7 +441,18 @@ export function Component() {
         onSearchChange={setSearch}
         activeFilters={
           filterStatus
-            ? [{ key: "status", label: filterStatus === "pago" ? "Pago" : filterStatus === "vencido" ? "Vencido" : "Aberto", onRemove: () => setFilterStatus("") }]
+            ? [
+                {
+                  key: "status",
+                  label:
+                    filterStatus === "pago"
+                      ? "Pago"
+                      : filterStatus === "vencido"
+                        ? "Vencido"
+                        : "Aberto",
+                  onRemove: () => setFilterStatus(""),
+                },
+              ]
             : []
         }
       >
@@ -394,7 +489,16 @@ export function Component() {
               ) : entries?.length ? (
                 entries.map((entry) => (
                   <TableRow key={entry.id}>
-                    <TableCell>{formatDate(entry.dueDate)}</TableCell>
+                    <TableCell>
+                      <div className="flex min-w-32 flex-col gap-1">
+                        <span className="font-medium">
+                          {formatDate(entry.dueDate)}
+                        </span>
+                        <span className="text-muted-foreground text-xs">
+                          {getDueHelper(entry, todayKey)}
+                        </span>
+                      </div>
+                    </TableCell>
                     <TableCell>{entry.supplier ?? "-"}</TableCell>
                     <TableCell className="font-medium">
                       {entry.description}
@@ -405,35 +509,51 @@ export function Component() {
                       <StatusBadge status={entry.status} />
                     </TableCell>
                     <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
+                      <div className="flex items-center justify-end gap-2">
+                        {canPay(entry) ? (
                           <Button
-                            variant="ghost"
-                            size="icon"
-                            aria-label="Ações"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openPaymentDialog(entry)}
                           >
-                            <MoreHorizontal className="size-4" />
+                            <Banknote className="size-4" />
+                            Pagar
                           </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                          <DropdownMenuItem onClick={() => handleEdit(entry)}>
-                            <Pencil className="size-4" />
-                            Editar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => openPaymentDialog(entry)}>
-                            <CheckCircle2 className="size-4" />
-                            Marcar como paga
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            destructive
-                            onClick={() => handleDelete(entry)}
-                          >
-                            <Trash2 className="size-4" />
-                            Excluir
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                        ) : null}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label="Ações"
+                            >
+                              <MoreHorizontal className="size-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent>
+                            <DropdownMenuItem onClick={() => handleEdit(entry)}>
+                              <Pencil className="size-4" />
+                              Editar
+                            </DropdownMenuItem>
+                            {canPay(entry) ? (
+                              <DropdownMenuItem
+                                onClick={() => openPaymentDialog(entry)}
+                              >
+                                <CheckCircle2 className="size-4" />
+                                Marcar como paga
+                              </DropdownMenuItem>
+                            ) : null}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              destructive
+                              onClick={() => handleDelete(entry)}
+                            >
+                              <Trash2 className="size-4" />
+                              Excluir
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -533,6 +653,17 @@ export function Component() {
                 placeholder="Selecione..."
               />
             </Field>
+            <Field label="Centro de custo">
+              <Select
+                value={costCenterId}
+                onChange={(e) => setCostCenterId(e.target.value)}
+                options={(costCenters ?? []).map((c) => ({
+                  value: c.id,
+                  label: c.code ? `${c.code} - ${c.name}` : c.name,
+                }))}
+                placeholder="Sem centro"
+              />
+            </Field>
             <Field label="Status">
               <Select
                 value={status}
@@ -542,6 +673,15 @@ export function Component() {
                 options={statusOptions}
               />
             </Field>
+            <div className="sm:col-span-2">
+              <Field label="Observações">
+                <Textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Detalhes internos da obrigação"
+                />
+              </Field>
+            </div>
           </div>
           <DialogFooter>
             <Button
@@ -573,6 +713,33 @@ export function Component() {
               Confirme os dados para efetivar a despesa no Financeiro.
             </DialogDescription>
           </DialogHeader>
+          {payingEntry ? (
+            <div className="border-border bg-surface-muted rounded-[var(--radius-card)] border p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <p className="text-muted-foreground flex items-center gap-2 text-xs font-bold tracking-[0.04em] uppercase">
+                    <ReceiptText className="size-4" />
+                    Obrigação selecionada
+                  </p>
+                  <p className="text-foreground mt-1 truncate text-sm font-bold">
+                    {payingEntry.description}
+                  </p>
+                  <p className="text-muted-foreground mt-1 text-xs">
+                    {payingEntry.supplier ?? "Fornecedor nao informado"} -{" "}
+                    {payingEntry.categoryName}
+                  </p>
+                </div>
+                <div className="shrink-0 text-left sm:text-right">
+                  <p className="text-foreground text-sm font-bold">
+                    {formatMoney(payingEntry.amount)}
+                  </p>
+                  <p className="text-muted-foreground mt-1 text-xs">
+                    Vence em {formatDate(payingEntry.dueDate)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : null}
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Data do pagamento">
               <DatePicker
@@ -594,7 +761,7 @@ export function Component() {
               <Select
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value)}
-                options={paymentMethodOptions}
+                options={PAYMENT_METHOD_OPTIONS}
                 placeholder="Selecione..."
               />
             </Field>
@@ -605,19 +772,31 @@ export function Component() {
                 placeholder="Banco, conta ou carteira"
               />
             </Field>
-            <Field label="Observações">
-              <Input
-                value={paymentNotes}
-                onChange={(e) => setPaymentNotes(e.target.value)}
-                placeholder="Observações do pagamento"
-              />
-            </Field>
+            <div className="sm:col-span-2">
+              <Field label="Observações">
+                <Textarea
+                  value={paymentNotes}
+                  onChange={(e) => setPaymentNotes(e.target.value)}
+                  placeholder="Observações do pagamento"
+                />
+              </Field>
+            </div>
           </div>
+          {hasPaymentDifference && payingEntry ? (
+            <div className="text-muted-foreground flex items-start gap-2 rounded-[var(--radius-field)] border border-amber-300/70 bg-amber-50 px-3 py-2 text-xs dark:border-amber-400/30 dark:bg-amber-400/10">
+              <Clock3 className="mt-0.5 size-4 shrink-0 text-amber-600" />
+              <span>
+                O valor pago difere do valor original de{" "}
+                {formatMoney(payingEntry.amount)}. O financeiro sera criado com
+                o valor confirmado aqui.
+              </span>
+            </div>
+          ) : null}
           <DialogFooter>
             <Button variant="outline" onClick={closePaymentDialog}>
               Cancelar
             </Button>
-            <Button onClick={confirmPayment} disabled={paying}>
+            <Button onClick={confirmPayment} disabled={!canConfirmPayment}>
               <Banknote className="size-4" />
               {paying ? "Registrando..." : "Confirmar pagamento"}
             </Button>
@@ -671,6 +850,8 @@ function AccountPayableMobileList({
   onPay: (entry: AccountPayableRow) => void;
   onNew: () => void;
 }) {
+  const todayKey = toDateInputValue(new Date());
+
   if (isLoading) {
     return (
       <div className="mobile-list">
@@ -714,6 +895,10 @@ function AccountPayableMobileList({
               <p className="text-text-secondary mt-1 text-xs">
                 {entry.supplier ?? "Fornecedor nao informado"}
               </p>
+              <p className="text-muted-foreground mt-1 text-xs">
+                {getDueHelper(entry, todayKey)}
+                {entry.costCenterName ? ` - ${entry.costCenterName}` : ""}
+              </p>
             </div>
             <strong className="money money-expense">
               {formatMoney(entry.amount)}
@@ -721,32 +906,42 @@ function AccountPayableMobileList({
           </div>
           <div className="mobile-record-bottom">
             <StatusBadge status={entry.status} />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Ações da conta a pagar"
-                >
-                  <MoreHorizontal className="size-4" />
+            <div className="flex items-center gap-2">
+              {canPay(entry) ? (
+                <Button size="sm" onClick={() => onPay(entry)}>
+                  <Banknote className="size-4" />
+                  Pagar
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => onEdit(entry)}>
-                  <Pencil className="size-4" />
-                  Editar
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onPay(entry)}>
-                  <CheckCircle2 className="size-4" />
-                  Marcar como paga
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem destructive onClick={() => onDelete(entry)}>
-                  <Trash2 className="size-4" />
-                  Excluir
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+              ) : null}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Ações da conta a pagar"
+                  >
+                    <MoreHorizontal className="size-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={() => onEdit(entry)}>
+                    <Pencil className="size-4" />
+                    Editar
+                  </DropdownMenuItem>
+                  {canPay(entry) ? (
+                    <DropdownMenuItem onClick={() => onPay(entry)}>
+                      <CheckCircle2 className="size-4" />
+                      Marcar como paga
+                    </DropdownMenuItem>
+                  ) : null}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem destructive onClick={() => onDelete(entry)}>
+                    <Trash2 className="size-4" />
+                    Excluir
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </article>
       ))}
