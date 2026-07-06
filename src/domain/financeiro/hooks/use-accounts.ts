@@ -31,6 +31,9 @@ type AccountPayableApiResponse = {
   costCenterId: string | null;
   costCenter: { name: string } | null;
   supplier: string | null;
+  beneficiaryType: string | null;
+  beneficiaryId: string | null;
+  beneficiaryName: string | null;
   userId: string;
   notes: string | null;
   createdAt: string;
@@ -39,7 +42,7 @@ type AccountPayableApiResponse = {
 
 type AccountReceivableApiResponse = Omit<
   AccountPayableApiResponse,
-  "paidDate" | "supplier"
+  "paidDate" | "supplier" | "beneficiaryType" | "beneficiaryId" | "beneficiaryName"
 > & {
   receivedDate: string | null;
   client: string | null;
@@ -59,6 +62,10 @@ function toPayableRow(entry: AccountPayableApiResponse): AccountPayableRow {
     costCenterId: entry.costCenterId,
     costCenterName: entry.costCenter?.name ?? null,
     supplier: entry.supplier,
+    beneficiaryType:
+      entry.beneficiaryType === "collaborator" ? "collaborator" : "supplier",
+    beneficiaryId: entry.beneficiaryId,
+    beneficiaryName: entry.beneficiaryName ?? entry.supplier,
     userId: entry.userId,
     notes: entry.notes,
     createdAt: entry.createdAt,

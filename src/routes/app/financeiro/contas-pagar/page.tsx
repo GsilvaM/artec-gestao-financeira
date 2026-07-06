@@ -62,6 +62,7 @@ import {
   useReverseAccountPayablePayment,
 } from "@/domain/financeiro/hooks/use-accounts";
 import { useCategories } from "@/domain/financeiro/hooks/use-categories";
+import { useCollaborators } from "@/domain/financeiro/hooks/use-collaborators";
 import { useCostCenters } from "@/domain/financeiro/hooks/use-cost-centers";
 import { useAuthStore } from "@/lib/supabase/auth-store";
 import {
@@ -71,8 +72,10 @@ import {
   toFiniteNumber,
 } from "@/lib/utils";
 import type {
+  AccountPayableBeneficiaryType,
   AccountPayableFilters,
   AccountPayableRow,
+  CollaboratorRow,
 } from "@/domain/financeiro/types";
 
 const AP_STATUS_MAP: Record<string, string> = {
@@ -131,6 +134,24 @@ function getDueHelper(entry: AccountPayableRow, todayKey: string) {
   return "A vencer";
 }
 
+function getBeneficiaryLabel(entry: AccountPayableRow) {
+  return entry.beneficiaryName ?? entry.supplier ?? "Favorecido nao informado";
+}
+
+function getBeneficiaryTypeLabel(type: AccountPayableBeneficiaryType) {
+  return type === "collaborator" ? "Colaborador" : "Fornecedor";
+}
+
+function findCollaboratorByName(
+  collaborators: CollaboratorRow[],
+  name: string
+) {
+  const normalized = name.trim().toLocaleLowerCase();
+  return collaborators.find(
+    (collaborator) => collaborator.name.toLocaleLowerCase() === normalized
+  );
+}
+
 export function Component() {
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -138,6 +159,10 @@ export function Component() {
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [dueDate, setDueDate] = useState("");
+  const [beneficiaryType, setBeneficiaryType] =
+    useState<AccountPayableBeneficiaryType>("supplier");
+  const [beneficiaryId, setBeneficiaryId] = useState("");
+  const [collaboratorSearch, setCollaboratorSearch] = useState("");
   const [supplier, setSupplier] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [costCenterId, setCostCenterId] = useState("");
@@ -145,6 +170,7 @@ export function Component() {
   const [status, setStatus] = useState<AccountPayableRow["status"]>("pending");
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
+  const [filterBeneficiaryType, setFilterBeneficiaryType] = useState("");
   const [payingEntry, setPayingEntry] = useState<AccountPayableRow | null>(
     null
   );
@@ -166,12 +192,17 @@ export function Component() {
     if (filterStatus)
       f.status = (AP_STATUS_MAP[filterStatus] ??
         filterStatus) as AccountPayableFilters["status"];
+    if (filterBeneficiaryType) {
+      f.beneficiaryType =
+        filterBeneficiaryType as AccountPayableBeneficiaryType;
+    }
     return Object.keys(f).length ? f : undefined;
-  }, [search, filterStatus]);
+  }, [search, filterStatus, filterBeneficiaryType]);
 
   const user = useAuthStore((state) => state.user);
   const { data: entries, isLoading } = useAccountsPayable(filters);
   const { data: categories } = useCategories();
+  const { data: collaborators } = useCollaborators();
   const { data: costCenters } = useCostCenters();
   const { mutateAsync: createEntry, isPending: creating } =
     useCreateAccountPayable();
@@ -185,11 +216,34 @@ export function Component() {
 
   const isEditing = !!editingId;
   const isWorking = creating || updating;
+  const activeCollaborators = collaborators ?? [];
+  const selectedCollaborator =
+    activeCollaborators.find((collaborator) => collaborator.id === beneficiaryId) ??
+    findCollaboratorByName(activeCollaborators, collaboratorSearch);
+  const datalistCollaborators =
+    isEditing && beneficiaryType === "collaborator" && beneficiaryId && !selectedCollaborator
+      ? [
+          ...activeCollaborators,
+          {
+            id: beneficiaryId,
+            name: collaboratorSearch,
+            email: null,
+            phone: null,
+            role: null,
+            active: false,
+            createdAt: "",
+            updatedAt: "",
+          } as CollaboratorRow,
+        ]
+      : activeCollaborators;
 
   function resetForm() {
     setDescription("");
     setAmount("");
     setDueDate("");
+    setBeneficiaryType("supplier");
+    setBeneficiaryId("");
+    setCollaboratorSearch("");
     setSupplier("");
     setCategoryId("");
     setCostCenterId("");
@@ -208,7 +262,14 @@ export function Component() {
     setDescription(entry.description);
     setAmount(String(entry.amount));
     setDueDate(getDateInputValue(entry.dueDate));
-    setSupplier(entry.supplier ?? "");
+    setBeneficiaryType(entry.beneficiaryType);
+    setBeneficiaryId(entry.beneficiaryId ?? "");
+    setCollaboratorSearch(
+      entry.beneficiaryType === "collaborator" ? getBeneficiaryLabel(entry) : ""
+    );
+    setSupplier(
+      entry.beneficiaryType === "supplier" ? getBeneficiaryLabel(entry) : ""
+    );
     setCategoryId(entry.categoryId);
     setCostCenterId(entry.costCenterId ?? "");
     setNotes(entry.notes ?? "");
@@ -308,6 +369,14 @@ export function Component() {
       toast.error("Selecione a categoria");
       return;
     }
+    if (beneficiaryType === "supplier" && !supplier.trim()) {
+      toast.error("Informe o fornecedor");
+      return;
+    }
+    if (beneficiaryType === "collaborator" && !selectedCollaborator) {
+      toast.error("Selecione um colaborador ativo da lista");
+      return;
+    }
     if (!user) {
       toast.error("Usuário não autenticado");
       return;
@@ -321,7 +390,16 @@ export function Component() {
         status,
         categoryId,
         costCenterId: costCenterId || undefined,
-        supplier: supplier.trim() || undefined,
+        beneficiaryType,
+        beneficiaryId:
+          beneficiaryType === "collaborator"
+            ? selectedCollaborator?.id
+            : undefined,
+        beneficiaryName:
+          beneficiaryType === "collaborator"
+            ? selectedCollaborator?.name
+            : supplier.trim(),
+        supplier: beneficiaryType === "supplier" ? supplier.trim() : undefined,
         notes: notes.trim() || undefined,
         userId: user.id,
       };
@@ -477,6 +555,32 @@ export function Component() {
     paidAmountNumber > 0 &&
     !!paymentMethod.trim() &&
     !paying;
+  const activeFilters = [];
+  if (filterStatus) {
+    activeFilters.push({
+      key: "status",
+      label:
+        filterStatus === "pago"
+          ? "Pago"
+          : filterStatus === "estornado"
+            ? "Estornado"
+            : filterStatus === "cancelado"
+              ? "Cancelado"
+              : filterStatus === "vencido"
+                ? "Vencido"
+                : "Aberto",
+      onRemove: () => setFilterStatus(""),
+    });
+  }
+  if (filterBeneficiaryType) {
+    activeFilters.push({
+      key: "beneficiaryType",
+      label: getBeneficiaryTypeLabel(
+        filterBeneficiaryType as AccountPayableBeneficiaryType
+      ),
+      onRemove: () => setFilterBeneficiaryType(""),
+    });
+  }
 
   return (
     <PageShell
@@ -520,28 +624,18 @@ export function Component() {
         searchPlaceholder="Buscar conta a pagar..."
         search={search}
         onSearchChange={setSearch}
-        activeFilters={
-          filterStatus
-            ? [
-                {
-                  key: "status",
-                  label:
-                    filterStatus === "pago"
-                      ? "Pago"
-                      : filterStatus === "estornado"
-                        ? "Estornado"
-                        : filterStatus === "cancelado"
-                          ? "Cancelado"
-                      : filterStatus === "vencido"
-                        ? "Vencido"
-                        : "Aberto",
-                  onRemove: () => setFilterStatus(""),
-                },
-              ]
-            : []
-        }
+        activeFilters={activeFilters}
       >
         <StatusSelect value={filterStatus} onValueChange={setFilterStatus} />
+        <Select
+          value={filterBeneficiaryType}
+          onChange={(e) => setFilterBeneficiaryType(e.target.value)}
+          options={[
+            { value: "supplier", label: "Fornecedor" },
+            { value: "collaborator", label: "Colaborador" },
+          ]}
+          placeholder="Tipo do favorecido"
+        />
       </FilterBar>
       <div className="desktop-table">
         <Card className="overflow-hidden">
@@ -550,7 +644,7 @@ export function Component() {
               <TableRow>
                 {[
                   "Vencimento",
-                  "Fornecedor",
+                  "Favorecido",
                   "Descrição",
                   "Categoria",
                   "Valor",
@@ -584,7 +678,16 @@ export function Component() {
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell>{entry.supplier ?? "-"}</TableCell>
+                    <TableCell>
+                      <div className="flex min-w-32 flex-col gap-1">
+                        <span className="font-medium">
+                          {getBeneficiaryLabel(entry)}
+                        </span>
+                        <span className="text-muted-foreground text-xs">
+                          {getBeneficiaryTypeLabel(entry.beneficiaryType)}
+                        </span>
+                      </div>
+                    </TableCell>
                     <TableCell className="font-medium">
                       {entry.description}
                     </TableCell>
@@ -713,13 +816,54 @@ export function Component() {
                 placeholder="Descrição da conta"
               />
             </Field>
-            <Field label="Fornecedor">
-              <Input
-                value={supplier}
-                onChange={(e) => setSupplier(e.target.value)}
-                placeholder="Nome do fornecedor"
+            <Field label="Tipo do favorecido">
+              <Select
+                value={beneficiaryType}
+                onChange={(e) => {
+                  const nextType = e.target
+                    .value as AccountPayableBeneficiaryType;
+                  setBeneficiaryType(nextType);
+                  setBeneficiaryId("");
+                  setCollaboratorSearch("");
+                  setSupplier("");
+                }}
+                options={[
+                  { value: "supplier", label: "Fornecedor" },
+                  { value: "collaborator", label: "Colaborador" },
+                ]}
               />
             </Field>
+            {beneficiaryType === "supplier" ? (
+              <Field label="Fornecedor">
+                <Input
+                  value={supplier}
+                  onChange={(e) => setSupplier(e.target.value)}
+                  placeholder="Nome do fornecedor"
+                />
+              </Field>
+            ) : (
+              <Field label="Selecionar colaborador">
+                <Input
+                  list="account-payable-collaborators"
+                  value={collaboratorSearch}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    const collaborator = findCollaboratorByName(
+                      datalistCollaborators,
+                      value
+                    );
+                    setCollaboratorSearch(value);
+                    setBeneficiaryId(collaborator?.id ?? "");
+                  }}
+                  placeholder="Pesquisar por nome"
+                />
+                <datalist id="account-payable-collaborators">
+                  {datalistCollaborators.map((collaborator) => (
+                    <option key={collaborator.id} value={collaborator.name} />
+                  ))}
+                </datalist>
+              </Field>
+            )}
             <Field label="Valor">
               <Input
                 type="text"
@@ -819,7 +963,7 @@ export function Component() {
                     {payingEntry.description}
                   </p>
                   <p className="text-muted-foreground mt-1 text-xs">
-                    {payingEntry.supplier ?? "Fornecedor nao informado"} -{" "}
+                    {getBeneficiaryLabel(payingEntry)} -{" "}
                     {payingEntry.categoryName}
                   </p>
                 </div>
@@ -1054,7 +1198,7 @@ function AccountPayableMobileList({
                 {entry.categoryName} - {formatDate(entry.dueDate)}
               </p>
               <p className="text-text-secondary mt-1 text-xs">
-                {entry.supplier ?? "Fornecedor nao informado"}
+                {getBeneficiaryLabel(entry)}
               </p>
               <p className="text-muted-foreground mt-1 text-xs">
                 {getDueHelper(entry, todayKey)}

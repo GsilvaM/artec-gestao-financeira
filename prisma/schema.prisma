@@ -130,6 +130,9 @@ model AccountPayable {
   categoryId   String      @map("category_id") @db.Uuid
   costCenterId String?     @map("cost_center_id") @db.Uuid
   supplier     String?
+  beneficiaryType String   @default("supplier") @map("beneficiary_type")
+  beneficiaryId String?    @map("beneficiary_id") @db.Uuid
+  beneficiaryName String?  @map("beneficiary_name")
   userId       String      @map("user_id") @db.Uuid
   notes        String?
   createdAt    DateTime    @default(now()) @map("created_at")
@@ -144,6 +147,9 @@ model AccountPayable {
   @@index([status])
   @@index([categoryId])
   @@index([costCenterId])
+  @@index([beneficiaryType])
+  @@index([beneficiaryId])
+  @@index([deletedAt, beneficiaryType, dueDate])
   @@index([userId])
   @@map("accounts_payable")
 }

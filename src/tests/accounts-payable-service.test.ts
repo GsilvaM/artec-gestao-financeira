@@ -11,6 +11,7 @@ vi.mock("@/lib/prisma/client.js", () => ({
 const ACCOUNT_ID = "22222222-2222-2222-2222-222222222222";
 const USER_ID = "00000000-0000-0000-0000-000000000002";
 const CATEGORY_ID = "00000000-0000-0000-0000-000000000001";
+const COLLABORATOR_ID = "00000000-0000-0000-0000-000000000003";
 
 const account = {
   id: ACCOUNT_ID,
@@ -22,6 +23,9 @@ const account = {
   categoryId: CATEGORY_ID,
   costCenterId: null,
   supplier: "Fornecedor Artec",
+  beneficiaryType: "supplier",
+  beneficiaryId: null,
+  beneficiaryName: "Fornecedor Artec",
   userId: USER_ID,
   notes: "Observacao original",
   createdAt: new Date("2026-07-01T00:00:00"),
@@ -56,6 +60,15 @@ const createdFinancialEntry = {
   category: account.category,
   costCenter: null,
   collaborator: null,
+};
+
+const collaboratorAccount = {
+  ...account,
+  description: "Salario",
+  supplier: null,
+  beneficiaryType: "collaborator",
+  beneficiaryId: COLLABORATOR_ID,
+  beneficiaryName: "Joao Silva",
 };
 
 describe("payAccountPayable", () => {
@@ -109,6 +122,56 @@ describe("payAccountPayable", () => {
       })
     );
     expect(result.financialEntry).toBe(createdFinancialEntry);
+  });
+
+  it("creates a collaborator expense entry when payable beneficiary is collaborator", async () => {
+    const collaboratorFinancialEntry = {
+      ...createdFinancialEntry,
+      description: "Salario - Joao Silva",
+      collaboratorId: COLLABORATOR_ID,
+      clientName: "Joao Silva",
+    };
+    const tx = {
+      accountPayable: {
+        findFirst: vi.fn().mockResolvedValue(collaboratorAccount),
+        update: vi.fn().mockResolvedValue({
+          ...collaboratorAccount,
+          status: "paid",
+          paidDate: new Date("2026-07-06T00:00:00"),
+        }),
+      },
+      financialEntry: {
+        findFirst: vi.fn().mockResolvedValue(null),
+        create: vi.fn().mockResolvedValue(collaboratorFinancialEntry),
+      },
+      auditLog: {
+        create: vi.fn().mockResolvedValue({ id: "audit-id" }),
+      },
+    };
+
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) =>
+      callback(tx as unknown as Parameters<typeof callback>[0])
+    );
+
+    const result = await payAccountPayable(ACCOUNT_ID, {
+      paymentDate: new Date("2026-07-06T00:00:00"),
+      paidAmount: 300,
+      paymentMethod: "pix",
+      userId: USER_ID,
+    });
+
+    expect(tx.financialEntry.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          description: "Salario - Joao Silva",
+          collaboratorId: COLLABORATOR_ID,
+          clientName: "Joao Silva",
+          type: "despesa",
+          status: "confirmed",
+        }),
+      })
+    );
+    expect(result.financialEntry).toBe(collaboratorFinancialEntry);
   });
 });
 

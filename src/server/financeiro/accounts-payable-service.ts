@@ -53,6 +53,38 @@ function getLegacyPaymentDate(account: {
   return account.paidDate ?? account.updatedAt ?? account.dueDate;
 }
 
+function getBeneficiaryName(account: {
+  beneficiaryName?: string | null;
+  supplier?: string | null;
+}) {
+  return account.beneficiaryName ?? account.supplier ?? null;
+}
+
+function getFinancialEntryDescription(account: {
+  description: string;
+  beneficiaryType?: string | null;
+  beneficiaryName?: string | null;
+  supplier?: string | null;
+}) {
+  const beneficiaryName = getBeneficiaryName(account);
+  if (
+    account.beneficiaryType === "collaborator" &&
+    beneficiaryName &&
+    !account.description.toLocaleLowerCase().includes(beneficiaryName.toLocaleLowerCase())
+  ) {
+    return `${account.description} - ${beneficiaryName}`;
+  }
+
+  return account.description;
+}
+
+function getCollaboratorId(account: {
+  beneficiaryType?: string | null;
+  beneficiaryId?: string | null;
+}) {
+  return account.beneficiaryType === "collaborator" ? account.beneficiaryId ?? null : null;
+}
+
 export async function payAccountPayable(
   accountPayableId: string,
   input: PayAccountPayableInput
@@ -118,14 +150,15 @@ export async function payAccountPayable(
 
     const financialEntry = await tx.financialEntry.create({
       data: {
-        description: account.description,
+        description: getFinancialEntryDescription(account),
         amount: input.paidAmount,
         type: "despesa",
         date: input.paymentDate,
         status: "confirmed",
         categoryId: account.categoryId,
         costCenterId: account.costCenterId,
-        clientName: account.supplier,
+        collaboratorId: getCollaboratorId(account),
+        clientName: getBeneficiaryName(account),
         userId: input.userId,
         notes: buildFinancialEntryNotes(accountPayableId, input),
       },
@@ -144,6 +177,9 @@ export async function payAccountPayable(
           paymentMethod: input.paymentMethod,
           bankAccount: input.bankAccount ?? null,
           financialEntryId: financialEntry.id,
+          beneficiaryType: account.beneficiaryType,
+          beneficiaryId: account.beneficiaryId,
+          beneficiaryName: getBeneficiaryName(account),
         },
       },
     });
@@ -252,14 +288,15 @@ export async function reverseAccountPayablePayment(
     if (!financialEntry) {
       financialEntry = await tx.financialEntry.create({
         data: {
-          description: account.description,
+          description: getFinancialEntryDescription(account),
           amount: account.amount,
           type: "despesa",
           date: getLegacyPaymentDate(account),
           status: "confirmed",
           categoryId: account.categoryId,
           costCenterId: account.costCenterId,
-          clientName: account.supplier,
+          collaboratorId: getCollaboratorId(account),
+          clientName: getBeneficiaryName(account),
           userId: account.userId,
           notes: [
             originMarker,
@@ -281,6 +318,9 @@ export async function reverseAccountPayablePayment(
             originId: accountPayableId,
             amount: Number(account.amount),
             date: getLegacyPaymentDate(account).toISOString(),
+            beneficiaryType: account.beneficiaryType,
+            beneficiaryId: account.beneficiaryId,
+            beneficiaryName: getBeneficiaryName(account),
             reason:
               "Conta paga sem lancamento financeiro vinculado encontrada durante estorno.",
           },

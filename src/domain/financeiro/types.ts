@@ -45,6 +45,7 @@ export type AccountReceivableFilters = z.infer<typeof accountReceivableFilterSch
 export type CategoryFilters = z.infer<typeof categoryFilterSchema>;
 export type CostCenterFilters = z.infer<typeof costCenterFilterSchema>;
 export type CollaboratorFilters = z.infer<typeof collaboratorFilterSchema>;
+export type AccountPayableBeneficiaryType = 'supplier' | 'collaborator';
 
 // ── Row / query result types ─────────────────────────────────────────
 
@@ -82,6 +83,9 @@ export interface AccountPayableRow {
   costCenterId: string | null;
   costCenterName: string | null;
   supplier: string | null;
+  beneficiaryType: AccountPayableBeneficiaryType;
+  beneficiaryId: string | null;
+  beneficiaryName: string | null;
   userId: string;
   notes: string | null;
   createdAt: string;

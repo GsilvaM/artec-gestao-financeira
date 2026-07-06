@@ -23,6 +23,14 @@ export class NotFoundError extends RepositoryError {
   }
 }
 
+export class ValidationError extends RepositoryError {
+  public readonly status = 400;
+  constructor(message: string) {
+    super("VALIDATION_ERROR", message);
+    this.name = "ValidationError";
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Filters
 // ---------------------------------------------------------------------------
@@ -321,6 +329,9 @@ export interface CreateAccountPayableData {
   status?: string;
   categoryId: string;
   costCenterId?: string | null;
+  beneficiaryType?: "supplier" | "collaborator";
+  beneficiaryId?: string | null;
+  beneficiaryName?: string | null;
   supplier?: string | null;
   userId: string;
   notes?: string | null;
@@ -334,7 +345,12 @@ export interface UpdateAccountPayableData {
   status?: string;
   categoryId?: string;
   costCenterId?: string | null;
+  beneficiaryType?: "supplier" | "collaborator";
+  beneficiaryId?: string | null;
+  beneficiaryName?: string | null;
   supplier?: string | null;
+  /** Audit-only; not persisted to the model. */
+  userId?: string;
   notes?: string | null;
 }
 
@@ -342,22 +358,138 @@ export interface AccountPayableFilters {
   status?: string;
   categoryId?: string;
   costCenterId?: string;
+  beneficiaryType?: "supplier" | "collaborator";
+  beneficiaryId?: string;
   supplier?: string;
   dueDateFrom?: Date;
   dueDateTo?: Date;
   search?: string;
 }
 
+function cleanOptionalText(value: string | null | undefined) {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+}
+
+function hasBeneficiaryChange(data: UpdateAccountPayableData) {
+  return (
+    "beneficiaryType" in data ||
+    "beneficiaryId" in data ||
+    "beneficiaryName" in data ||
+    "supplier" in data
+  );
+}
+
+async function resolveAccountPayableBeneficiary(
+  data: Pick<
+    CreateAccountPayableData,
+    "beneficiaryType" | "beneficiaryId" | "beneficiaryName" | "supplier"
+  >,
+  db: Prisma.TransactionClient | typeof prisma = prisma
+) {
+  const type =
+    data.beneficiaryType ?? (data.beneficiaryId ? "collaborator" : "supplier");
+  const supplier = cleanOptionalText(data.supplier);
+  const beneficiaryName = cleanOptionalText(data.beneficiaryName);
+
+  if (type === "supplier") {
+    if (data.beneficiaryId) {
+      throw new ValidationError(
+        "Conta a pagar deve ter apenas um favorecido: fornecedor ou colaborador."
+      );
+    }
+
+    const name = supplier ?? beneficiaryName;
+    if (!name) {
+      throw new ValidationError("Informe o fornecedor da conta a pagar.");
+    }
+
+    return {
+      beneficiaryType: "supplier",
+      beneficiaryId: null,
+      beneficiaryName: name,
+      supplier: name,
+    } satisfies Pick<
+      Prisma.AccountPayableCreateInput,
+      "beneficiaryType" | "beneficiaryId" | "beneficiaryName" | "supplier"
+    >;
+  }
+
+  if (supplier) {
+    throw new ValidationError(
+      "Conta a pagar deve ter apenas um favorecido: fornecedor ou colaborador."
+    );
+  }
+
+  if (!data.beneficiaryId) {
+    throw new ValidationError("Selecione um colaborador ativo para a conta a pagar.");
+  }
+
+  const collaborator = await db.collaborator.findFirst({
+    where: {
+      id: data.beneficiaryId,
+      active: true,
+      deletedAt: null,
+    },
+  });
+
+  if (!collaborator) {
+    throw new ValidationError("Selecione um colaborador ativo para a conta a pagar.");
+  }
+
+  return {
+    beneficiaryType: "collaborator",
+    beneficiaryId: collaborator.id,
+    beneficiaryName: collaborator.name,
+    supplier: null,
+  } satisfies Pick<
+    Prisma.AccountPayableCreateInput,
+    "beneficiaryType" | "beneficiaryId" | "beneficiaryName" | "supplier"
+  >;
+}
+
 export const accountPayableRepo = {
   async findAll(filters?: AccountPayableFilters) {
+    const andFilters: Prisma.AccountPayableWhereInput[] = [];
+    if (filters?.supplier) {
+      andFilters.push({
+        OR: [
+          { supplier: { contains: filters.supplier, mode: "insensitive" } },
+          {
+            beneficiaryName: {
+              contains: filters.supplier,
+              mode: "insensitive",
+            },
+          },
+        ],
+      });
+    }
+    if (filters?.search) {
+      andFilters.push({
+        OR: [
+          { description: { contains: filters.search, mode: "insensitive" } },
+          { supplier: { contains: filters.search, mode: "insensitive" } },
+          {
+            beneficiaryName: {
+              contains: filters.search,
+              mode: "insensitive",
+            },
+          },
+          { notes: { contains: filters.search, mode: "insensitive" } },
+          { category: { name: { contains: filters.search, mode: "insensitive" } } },
+        ],
+      });
+    }
+
     const where: Prisma.AccountPayableWhereInput = {
       ...accountPayableWhereNotDeleted(),
       ...(filters?.status ? { status: filters.status } : {}),
       ...(filters?.categoryId ? { categoryId: filters.categoryId } : {}),
       ...(filters?.costCenterId ? { costCenterId: filters.costCenterId } : {}),
-      ...(filters?.supplier
-        ? { supplier: { contains: filters.supplier, mode: "insensitive" } }
+      ...(filters?.beneficiaryType
+        ? { beneficiaryType: filters.beneficiaryType }
         : {}),
+      ...(filters?.beneficiaryId ? { beneficiaryId: filters.beneficiaryId } : {}),
       ...(filters?.dueDateFrom || filters?.dueDateTo
         ? {
             dueDate: {
@@ -366,16 +498,7 @@ export const accountPayableRepo = {
             },
           }
         : {}),
-      ...(filters?.search
-        ? {
-            OR: [
-              { description: { contains: filters.search, mode: "insensitive" } },
-              { supplier: { contains: filters.search, mode: "insensitive" } },
-              { notes: { contains: filters.search, mode: "insensitive" } },
-              { category: { name: { contains: filters.search, mode: "insensitive" } } },
-            ],
-          }
-        : {}),
+      ...(andFilters.length ? { AND: andFilters } : {}),
     };
 
     return prisma.accountPayable.findMany({
@@ -395,32 +518,145 @@ export const accountPayableRepo = {
   },
 
   async create(data: CreateAccountPayableData) {
-    return prisma.accountPayable.create({
-      data: {
-        description: data.description,
-        amount: data.amount,
-        dueDate: data.dueDate,
-        status: data.status ?? "pending",
-        categoryId: data.categoryId,
-        costCenterId: data.costCenterId ?? null,
-        supplier: data.supplier ?? null,
-        userId: data.userId,
-        notes: data.notes ?? null,
-      },
-      include: { category: true, costCenter: true },
+    return prisma.$transaction(async (tx) => {
+      const beneficiary = await resolveAccountPayableBeneficiary(data, tx);
+      const account = await tx.accountPayable.create({
+        data: {
+          description: data.description,
+          amount: data.amount,
+          dueDate: data.dueDate,
+          status: data.status ?? "pending",
+          categoryId: data.categoryId,
+          costCenterId: data.costCenterId ?? null,
+          ...beneficiary,
+          userId: data.userId,
+          notes: data.notes ?? null,
+        },
+        include: { category: true, costCenter: true },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          userId: data.userId,
+          action: "account_payable_created",
+          entity: "AccountPayable",
+          entityId: account.id,
+          metadata: {
+            amount: Number(data.amount),
+            dueDate: data.dueDate.toISOString(),
+            categoryId: data.categoryId,
+            costCenterId: data.costCenterId ?? null,
+            beneficiary,
+          },
+        },
+      });
+
+      return account;
     });
   },
 
   async update(id: string, data: UpdateAccountPayableData) {
-    const existing = await prisma.accountPayable.findFirst({
-      where: { id, deletedAt: null },
-    });
-    if (!existing) throw new NotFoundError("AccountPayable", id);
+    return prisma.$transaction(async (tx) => {
+      const existing = await tx.accountPayable.findFirst({
+        where: { id, deletedAt: null },
+      });
+      if (!existing) throw new NotFoundError("AccountPayable", id);
 
-    return prisma.accountPayable.update({
-      where: { id },
-      data,
-      include: { category: true, costCenter: true },
+      const currentBeneficiaryType = (existing.beneficiaryType ?? "supplier") as
+        | "supplier"
+        | "collaborator";
+      const nextBeneficiaryType = data.beneficiaryType ?? currentBeneficiaryType;
+      const beneficiary = hasBeneficiaryChange(data)
+        ? await resolveAccountPayableBeneficiary(
+            {
+              beneficiaryType: nextBeneficiaryType,
+              beneficiaryId:
+                "beneficiaryId" in data
+                  ? data.beneficiaryId
+                  : nextBeneficiaryType === "supplier"
+                    ? null
+                    : existing.beneficiaryId,
+              beneficiaryName:
+                "beneficiaryName" in data
+                  ? data.beneficiaryName
+                  : existing.beneficiaryName,
+              supplier:
+                "supplier" in data
+                  ? data.supplier
+                  : nextBeneficiaryType === "collaborator"
+                    ? null
+                    : existing.supplier,
+            },
+            tx
+          )
+        : {};
+      const { userId, ...accountData } = data;
+      const account = await tx.accountPayable.update({
+        where: { id },
+        data: {
+          ...accountData,
+          ...beneficiary,
+        },
+        include: { category: true, costCenter: true },
+      });
+
+      if (userId) {
+        await tx.auditLog.create({
+          data: {
+            userId,
+            action: "account_payable_updated",
+            entity: "AccountPayable",
+            entityId: id,
+            metadata: {
+              fields: Object.keys(accountData),
+              previousBeneficiary: {
+                beneficiaryType: existing.beneficiaryType,
+                beneficiaryId: existing.beneficiaryId,
+                beneficiaryName: existing.beneficiaryName ?? existing.supplier,
+              },
+              beneficiary: hasBeneficiaryChange(data)
+                ? beneficiary
+                : {
+                    beneficiaryType: existing.beneficiaryType,
+                    beneficiaryId: existing.beneficiaryId,
+                    beneficiaryName: existing.beneficiaryName ?? existing.supplier,
+                    supplier: existing.supplier,
+                  },
+            },
+          },
+        });
+
+        if (
+          hasBeneficiaryChange(data) &&
+          (existing.beneficiaryType !== account.beneficiaryType ||
+            existing.beneficiaryId !== account.beneficiaryId ||
+            (existing.beneficiaryName ?? existing.supplier) !==
+              account.beneficiaryName)
+        ) {
+          await tx.auditLog.create({
+            data: {
+              userId,
+              action: "account_payable_beneficiary_changed",
+              entity: "AccountPayable",
+              entityId: id,
+              metadata: {
+                previous: {
+                  beneficiaryType: existing.beneficiaryType,
+                  beneficiaryId: existing.beneficiaryId,
+                  beneficiaryName: existing.beneficiaryName ?? existing.supplier,
+                },
+                current: {
+                  beneficiaryType: account.beneficiaryType,
+                  beneficiaryId: account.beneficiaryId,
+                  beneficiaryName: account.beneficiaryName,
+                },
+              },
+            },
+          });
+        }
+      }
+
+      return account;
     });
   },
 

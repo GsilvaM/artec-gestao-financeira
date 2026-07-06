@@ -5,6 +5,7 @@ import {
 import {
   accountPayableCreateSchema,
   accountPayableUpdateSchema,
+  accountPayableFilterSchema,
 } from "../../../domain/financeiro/schemas.js";
 import {
   payAccountPayable,
@@ -25,6 +26,10 @@ const createSchema = accountPayableCreateSchema.extend({
   userId: uuidField,
 });
 
+const updateSchema = accountPayableUpdateSchema.extend({
+  userId: uuidField.optional(),
+});
+
 const paymentSchema = z.object({
   status: z.literal("paid"),
   paymentDate: z.coerce.date(),
@@ -43,6 +48,12 @@ const reversalSchema = z.object({
   userId: uuidField,
 });
 
+const loaderFilterSchema = accountPayableFilterSchema
+  .extend({
+    supplier: z.string().optional(),
+  })
+  .passthrough();
+
 function businessError(message: string, status = 400) {
   return Object.assign(new Error(message), { name: "ValidationError", status });
 }
@@ -52,15 +63,28 @@ export async function loader({ request }: RouteArgs) {
   const id = url.searchParams.get("id");
   try {
     if (id) return json(await accountPayableRepo.findById(id));
+
+    const raw = {
+      status: url.searchParams.get("status") ?? undefined,
+      categoryId: url.searchParams.get("categoryId") ?? undefined,
+      costCenterId: url.searchParams.get("costCenterId") ?? undefined,
+      beneficiaryType: url.searchParams.get("beneficiaryType") ?? undefined,
+      beneficiaryId: url.searchParams.get("beneficiaryId") ?? undefined,
+      supplier: url.searchParams.get("supplier") ?? undefined,
+      dueDateFrom: parseDate(url.searchParams.get("dueDateFrom")),
+      dueDateTo: parseDate(url.searchParams.get("dueDateTo")),
+      search: url.searchParams.get("search") ?? undefined,
+    };
+
+    const parsed = loaderFilterSchema.parse(raw);
+
     return json(
       await accountPayableRepo.findAll({
-        status: url.searchParams.get("status") ?? undefined,
-        categoryId: url.searchParams.get("categoryId") ?? undefined,
-        costCenterId: url.searchParams.get("costCenterId") ?? undefined,
-        supplier: url.searchParams.get("supplier") ?? undefined,
-        dueDateFrom: parseDate(url.searchParams.get("dueDateFrom")),
-        dueDateTo: parseDate(url.searchParams.get("dueDateTo")),
-        search: url.searchParams.get("search") ?? undefined,
+        ...parsed,
+        beneficiaryType: parsed.beneficiaryType as
+          | "supplier"
+          | "collaborator"
+          | undefined,
       })
     );
   } catch (err) {
@@ -132,7 +156,7 @@ export async function action({ request, params }: RouteArgs) {
       return json(
         await accountPayableRepo.update(
           id!,
-          accountPayableUpdateSchema.parse(body)
+          updateSchema.parse(body)
         )
       );
     }
