@@ -10,7 +10,16 @@ export function Component() {
         <MetricCard title="Margem média" value="0%" icon={Percent} tone="green" />
         <MetricCard title="Resultado" value={formatMoney(0)} icon={WalletCards} tone="slate" />
       </div>
-      <FilterBar searchPlaceholder="Buscar centro de custo..."><MonthSelect /></FilterBar>
+      <FilterBar
+        searchPlaceholder="Buscar centro de custo..."
+        filters={[
+          {
+            key: "month",
+            label: "Mes",
+            control: <MonthSelect />,
+          },
+        ]}
+      />
       <EmptyTable columns={["Centro", "Receita", "Custo", "Margem", "Resultado", "Tendência"]} emptyTitle="Nenhum centro de custo com dados no período." emptyDescription="Cadastre lançamentos vinculados a centros de custo para preencher o relatório." />
     </PageShell>
   );

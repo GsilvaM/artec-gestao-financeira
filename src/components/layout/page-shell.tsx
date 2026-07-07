@@ -7,7 +7,14 @@ import {
   SlidersHorizontal,
   X,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import {
+  Children,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -176,8 +183,16 @@ interface FilterBarProps {
   search?: string;
   onSearchChange?: (value: string) => void;
   activeFilters?: { key: string; label: string; onRemove: () => void }[];
-  defaultOpen?: boolean | "desktop";
+  filters?: FilterBarFilter[];
+  resultCount?: number;
   children?: ReactNode;
+}
+
+interface FilterBarFilter {
+  key: string;
+  label: string;
+  control: ReactNode;
+  primary?: boolean;
 }
 
 export function FilterBar({
@@ -185,20 +200,92 @@ export function FilterBar({
   search,
   onSearchChange,
   activeFilters = [],
-  defaultOpen = true,
+  filters,
+  resultCount,
   children,
 }: FilterBarProps) {
-  const [open, setOpen] = useState(() => {
-    if (defaultOpen === "desktop") {
-      return typeof window === "undefined"
-        || typeof window.matchMedia !== "function"
-        ? true
-        : window.matchMedia("(min-width: 769px)").matches;
-    }
-    return defaultOpen;
-  });
-  const hasFilters = Boolean(children);
+  const [desktopOpen, setDesktopOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const popoverRef = useRef<HTMLDivElement>(null);
+  const desktopButtonRef = useRef<HTMLButtonElement>(null);
+  const mobileButtonRef = useRef<HTMLButtonElement>(null);
+  const mobileDialogRef = useRef<HTMLDialogElement>(null);
+  const generatedFilters = useMemo<FilterBarFilter[]>(() => {
+    if (filters) return filters;
+    return Children.toArray(children).map((child, index) => ({
+      key: `filter-${index}`,
+      label: `Filtro ${index + 1}`,
+      control: child,
+    }));
+  }, [children, filters]);
+  const primaryFilters = generatedFilters.filter((filter) => filter.primary).slice(0, 2);
+  const advancedFilters = generatedFilters.filter((filter) => !filter.primary);
+  const hasFilters = generatedFilters.length > 0;
   const hasActiveFilters = activeFilters.length > 0;
+  const advancedActiveCount = activeFilters.filter(
+    (filter) => !primaryFilters.some((primary) => primary.key === filter.key),
+  ).length;
+  const applyLabel =
+    typeof resultCount === "number" ? `Aplicar (${resultCount})` : "Aplicar";
+
+  useEffect(() => {
+    if (!desktopOpen) return;
+    function handlePointerDown(event: PointerEvent) {
+      const target = event.target as Node;
+      if (popoverRef.current?.contains(target)) return;
+      if (desktopButtonRef.current?.contains(target)) return;
+      setDesktopOpen(false);
+    }
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setDesktopOpen(false);
+    }
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [desktopOpen]);
+
+  useEffect(() => {
+    const dialog = mobileDialogRef.current;
+    if (!dialog) return;
+    if (mobileOpen && !dialog.open) dialog.showModal();
+    if (!mobileOpen && dialog.open) dialog.close();
+  }, [mobileOpen]);
+
+  useEffect(() => {
+    const dialog = mobileDialogRef.current;
+    if (!dialog) return;
+    const close = () => setMobileOpen(false);
+    dialog.addEventListener("close", close);
+    return () => dialog.removeEventListener("close", close);
+  }, []);
+
+  function clearAllFilters() {
+    activeFilters.forEach((filter) => filter.onRemove());
+  }
+
+  function openFilterPanel(filterKey?: string) {
+    if (
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(max-width: 768px)").matches
+    ) {
+      setMobileOpen(true);
+    } else {
+      setDesktopOpen(true);
+    }
+
+    if (!filterKey) return;
+    window.setTimeout(() => {
+      const target = document.querySelector<HTMLElement>(
+        `[data-filter-panel-key="${filterKey}"] select, [data-filter-panel-key="${filterKey}"] input, [data-filter-panel-key="${filterKey}"] button`,
+      );
+      target?.focus();
+      target?.scrollIntoView({ block: "center", behavior: "smooth" });
+    }, 80);
+  }
 
   return (
     <>
@@ -214,48 +301,176 @@ export function FilterBar({
               onChange={(e) => onSearchChange?.(e.target.value)}
             />
           </div>
+          <div className="filter-primary-slot">
+            {primaryFilters.map((filter) => (
+              <div key={filter.key} className="filter-primary-control">
+                {filter.control}
+              </div>
+            ))}
+          </div>
           {hasFilters && (
             <Button
+              ref={desktopButtonRef}
               type="button"
               variant="outline"
-              size="lg"
-              className={cn("filter-toggle", hasActiveFilters && "filter-toggle-active")}
-              onClick={() => setOpen((v) => !v)}
-              aria-expanded={open}
+              size="default"
+              className={cn("filter-toggle filter-toggle-desktop", advancedActiveCount && "filter-toggle-active")}
+              onClick={() => setDesktopOpen((v) => !v)}
+              aria-expanded={desktopOpen}
+              aria-controls="filter-popover"
             >
               <SlidersHorizontal size={16} />
-              Filtros
+              Mais filtros{advancedActiveCount ? ` (${advancedActiveCount})` : ""}
               <ChevronDown
                 size={14}
-                className={cn("transition-transform", open && "rotate-180")}
+                className={cn("transition-transform", desktopOpen && "rotate-180")}
               />
+            </Button>
+          )}
+          {hasFilters && (
+            <Button
+              ref={mobileButtonRef}
+              type="button"
+              variant="outline"
+              size="icon"
+              className={cn("filter-toggle filter-toggle-mobile", hasActiveFilters && "filter-toggle-active")}
+              onClick={() => setMobileOpen(true)}
+              aria-label={`Abrir filtros${hasActiveFilters ? `, ${activeFilters.length} ativos` : ""}`}
+              aria-expanded={mobileOpen}
+            >
+              <SlidersHorizontal size={16} />
+              {hasActiveFilters ? (
+                <span className="filter-count-badge">{activeFilters.length}</span>
+              ) : null}
             </Button>
           )}
         </div>
         {hasActiveFilters && (
           <div className="active-filter-row" aria-label="Filtros ativos">
             {activeFilters.map((filter) => (
-              <button
+              <span
                 key={filter.key}
-                type="button"
                 className="active-filter-chip"
-                onClick={filter.onRemove}
-                aria-label={`Remover filtro ${filter.label}`}
+                title={filter.label}
               >
-                {filter.label}
-                <X className="size-3.5" />
-              </button>
+                <button
+                  type="button"
+                  className="active-filter-chip-label"
+                  onClick={() => openFilterPanel(filter.key)}
+                  aria-label={`Editar filtro ${filter.label}`}
+                  title={filter.label}
+                >
+                  {filter.label}
+                </button>
+                <button
+                  type="button"
+                  className="active-filter-chip-remove"
+                  onClick={filter.onRemove}
+                  aria-label={`Remover filtro ${filter.label}`}
+                >
+                  <X className="size-3.5" />
+                </button>
+              </span>
             ))}
+            {activeFilters.length > 1 ? (
+              <button type="button" className="active-filter-clear" onClick={clearAllFilters}>
+                Limpar tudo
+              </button>
+            ) : null}
           </div>
         )}
-        {hasFilters && open && <div className="filter-content">{children}</div>}
+        {hasFilters && desktopOpen ? (
+          <div
+            id="filter-popover"
+            className="filter-popover"
+            ref={popoverRef}
+            role="dialog"
+            aria-label="Mais filtros"
+          >
+            <div className="filter-panel-grid">
+              {(advancedFilters.length ? advancedFilters : generatedFilters).map((filter) => (
+                <label key={filter.key} className="filter-panel-field" data-filter-panel-key={filter.key}>
+                  <span>{filter.label}</span>
+                  {filter.control}
+                </label>
+              ))}
+            </div>
+            <div className="filter-panel-footer">
+              <Button type="button" variant="ghost" size="sm" onClick={clearAllFilters} disabled={!hasActiveFilters}>
+                Limpar
+              </Button>
+              <Button type="button" size="sm" onClick={() => setDesktopOpen(false)}>
+                {applyLabel}
+              </Button>
+            </div>
+          </div>
+        ) : null}
       </div>
+      {hasFilters && mobileOpen ? (
+        <dialog
+          ref={mobileDialogRef}
+          className="filter-sheet"
+          onClick={(event) => {
+            if (event.target === mobileDialogRef.current) setMobileOpen(false);
+          }}
+        >
+          <div className="filter-sheet-panel">
+            <div className="filter-sheet-handle" aria-hidden="true" />
+            <div className="filter-sheet-header">
+              <h2>Filtros</h2>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setMobileOpen(false)}
+                aria-label="Fechar filtros"
+              >
+                <X className="size-4" />
+              </Button>
+            </div>
+            <div className="filter-sheet-body">
+              {generatedFilters.map((filter) => (
+                <label key={filter.key} className="filter-panel-field" data-filter-panel-key={filter.key}>
+                  <span>{filter.label}</span>
+                  {filter.control}
+                </label>
+              ))}
+            </div>
+            <div className="filter-sheet-footer">
+              <Button type="button" variant="outline" onClick={clearAllFilters} disabled={!hasActiveFilters}>
+                Limpar tudo
+              </Button>
+              <Button type="button" onClick={() => setMobileOpen(false)}>
+                {applyLabel}
+              </Button>
+            </div>
+          </div>
+        </dialog>
+      ) : null}
       <style>{filterStyles}</style>
     </>
   );
 }
 
 const filterStyles = `
+.filter-card {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  border-radius: 16px;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface);
+  padding: 8px;
+  box-shadow: var(--shadow-xs);
+}
+
+.filter-row {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 8px;
+}
+
 .search-input {
   height: 44px;
   width: 100%;
@@ -282,6 +497,44 @@ const filterStyles = `
 .search-input:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 2px var(--primary-ring);
+}
+
+.filter-primary-slot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-primary-control {
+  width: 168px;
+  min-width: 140px;
+}
+
+.filter-toggle {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.filter-toggle-mobile {
+  display: none;
+}
+
+.filter-count-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  display: inline-flex;
+  min-width: 18px;
+  height: 18px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  padding: 0 5px;
+  font-size: 0.6875rem;
+  font-weight: 850;
+  line-height: 1;
 }
 
 .select-input {
@@ -319,34 +572,84 @@ const filterStyles = `
 
 .active-filter-row {
   display: flex;
+  min-width: 0;
   flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
-  margin-top: 10px;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 8px;
 }
 
 .active-filter-chip {
   display: inline-flex;
+  max-width: min(280px, 100%);
   height: 32px;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  overflow: hidden;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--primary) 26%, var(--color-border));
   background: color-mix(in srgb, var(--primary) 9%, var(--surface));
   color: var(--text-primary);
-  padding: 0 10px;
+  padding: 0 4px 0 10px;
   font-size: 0.75rem;
   font-weight: 750;
   line-height: 1;
   transition:
     background-color 150ms ease,
     border-color 150ms ease,
-    color 150ms ease;
+  color 150ms ease;
 }
 
-.active-filter-chip:hover {
+.active-filter-chip:hover,
+.active-filter-chip:focus-within {
   border-color: var(--primary);
   color: var(--primary);
+}
+
+.active-filter-chip-label,
+.active-filter-chip-remove,
+.active-filter-clear {
+  display: inline-flex;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: 1;
+}
+
+.active-filter-chip-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.active-filter-chip-remove {
+  width: 26px;
+  flex: 0 0 26px;
+  border-radius: 999px;
+}
+
+.active-filter-chip-remove:hover {
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+.active-filter-clear {
+  height: 32px;
+  margin-left: auto;
+  border-radius: 999px;
+  padding: 0 10px;
+  color: var(--primary);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.active-filter-clear:hover {
+  background: var(--primary-soft);
 }
 
 .active-filter-chip svg {
@@ -360,6 +663,115 @@ const filterStyles = `
   color: var(--primary);
 }
 
+.filter-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 8px;
+  z-index: 50;
+  width: min(420px, calc(100vw - 32px));
+  border-radius: 18px;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface);
+  padding: 12px;
+  box-shadow: var(--shadow-elevated);
+}
+
+.filter-panel-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.filter-panel-field {
+  display: grid;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.filter-panel-field > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filter-panel-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 12px;
+}
+
+.filter-sheet {
+  width: 100%;
+  max-width: none;
+  max-height: 85dvh;
+  margin: auto auto 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  padding: 0;
+}
+
+.filter-sheet::backdrop {
+  background: rgba(3, 10, 24, 0.42);
+  backdrop-filter: blur(8px);
+}
+
+.filter-sheet-panel {
+  display: grid;
+  max-height: 85dvh;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  overflow: hidden;
+  border-radius: 24px 24px 0 0;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface);
+  box-shadow: var(--shadow-elevated);
+}
+
+.filter-sheet-handle {
+  justify-self: center;
+  width: 42px;
+  height: 4px;
+  margin-top: 10px;
+  border-radius: 999px;
+  background: var(--border);
+}
+
+.filter-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 12px 16px;
+}
+
+.filter-sheet-header h2 {
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.filter-sheet-body {
+  display: grid;
+  gap: 12px;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.filter-sheet-footer {
+  position: sticky;
+  bottom: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--surface);
+  padding: 12px 16px 16px;
+}
+
 @media (max-width: 768px) {
   .search-input,
   .select-input {
@@ -368,12 +780,21 @@ const filterStyles = `
   }
 
   .filter-card {
-    display: grid;
-    gap: 12px;
+    gap: 8px;
+    padding: 6px;
   }
 
   .filter-row {
     gap: 8px;
+  }
+
+  .filter-primary-slot,
+  .filter-toggle-desktop {
+    display: none;
+  }
+
+  .filter-toggle-mobile {
+    display: inline-flex;
   }
 
   .filter-toggle {
@@ -381,12 +802,30 @@ const filterStyles = `
   }
 
   .active-filter-row {
-    margin-top: 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    border-top: 1px solid var(--border-subtle);
+    padding: 8px 2px 2px;
+    scrollbar-width: thin;
   }
 
   .active-filter-chip {
-    max-width: 100%;
+    max-width: 240px;
+    flex: 0 0 auto;
     justify-content: flex-start;
+  }
+
+  .active-filter-clear {
+    flex: 0 0 auto;
+    margin-left: 0;
+    border: 1px solid var(--border-subtle);
+    background: var(--surface-2);
+  }
+}
+
+@media (min-width: 769px) {
+  .filter-card {
+    min-height: 56px;
   }
 }
 `;

@@ -204,21 +204,29 @@ export function Component() {
         activeFilters={
           includeInactive
             ? [{ key: "includeInactive", label: "Inclui inativos", onRemove: () => setIncludeInactive(false) }]
-            : []
+              : []
         }
-      >
-        <Select
-          value={includeInactive ? "true" : "false"}
-          onChange={(event) =>
-            setIncludeInactive(event.target.value === "true")
-          }
-          options={[
-            { value: "false", label: "Somente ativos" },
-            { value: "true", label: "Todos" },
-          ]}
-          aria-label="Filtrar colaboradores por status"
-        />
-      </FilterBar>
+        filters={[
+          {
+            key: "includeInactive",
+            label: "Status",
+            primary: true,
+            control: (
+              <Select
+                value={includeInactive ? "true" : "false"}
+                onChange={(event) =>
+                  setIncludeInactive(event.target.value === "true")
+                }
+                options={[
+                  { value: "false", label: "Somente ativos" },
+                  { value: "true", label: "Todos" },
+                ]}
+                aria-label="Filtrar colaboradores por status"
+              />
+            ),
+          },
+        ]}
+      />
 
       <div className="desktop-table">
         <Card className="overflow-hidden">

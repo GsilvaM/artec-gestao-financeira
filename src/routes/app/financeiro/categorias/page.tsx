@@ -97,9 +97,27 @@ export function Component() {
         <MetricCard title="Categorias ativas" value={String(categories?.length ?? 0)} icon={FolderTree} tone="blue" />
       </div>
 
-      <FilterBar searchPlaceholder="Buscar categoria..." search={search} onSearchChange={setSearch}>
-        <Select value={type} onChange={(e) => setType(e.target.value as "receita" | "despesa")} options={[{ value: "receita", label: "Receita" }, { value: "despesa", label: "Despesa" }]} />
-      </FilterBar>
+      <FilterBar
+        searchPlaceholder="Buscar categoria..."
+        search={search}
+        onSearchChange={setSearch}
+        filters={[
+          {
+            key: "type",
+            label: "Tipo",
+            primary: true,
+            control: (
+              <Select
+                value={type}
+                onChange={(e) => setType(e.target.value as "receita" | "despesa")}
+                options={[{ value: "receita", label: "Receita" }, { value: "despesa", label: "Despesa" }]}
+                placeholder="Tipo"
+                aria-label="Filtrar categorias por tipo"
+              />
+            ),
+          },
+        ]}
+      />
 
       <div className="desktop-table">
         <DesktopCategoryTable

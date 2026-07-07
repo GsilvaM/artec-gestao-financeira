@@ -115,24 +115,53 @@ export function Component() {
 
       <Card className="dre-filter-panel p-4 sm:p-5">
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
-          <FilterBar searchPlaceholder="Buscar categoria ou descricao..." search={search} onSearchChange={setSearch} activeFilters={activeFilters}>
-            <MonthSelect value={filterMonth} onValueChange={setFilterMonth} />
-            <select className="select-input" aria-label="Filtrar por grupo" value={groupFilter} onChange={(event) => setGroupFilter(event.target.value)}>
-              <option value="todos">Todos os grupos</option>
-              <option value="Receitas">Receitas</option>
-              <option value="Despesas">Despesas</option>
-              <option value="Resultado">Resultado</option>
-            </select>
-            <select className="select-input" aria-label="Filtrar por categoria" value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}>
-              <option value="todos">Todas as categorias</option>
-              {categories.map((category) => <option key={category} value={category}>{category}</option>)}
-            </select>
-            <select className="select-input" aria-label="Ordenar DRE" value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
-              <option value="estrutura">Ordem gerencial</option>
-              <option value="valor">Maior valor realizado</option>
-              <option value="receita">Maior % da receita</option>
-            </select>
-          </FilterBar>
+          <FilterBar
+            searchPlaceholder="Buscar categoria ou descricao..."
+            search={search}
+            onSearchChange={setSearch}
+            activeFilters={activeFilters}
+            filters={[
+              {
+                key: "month",
+                label: "Periodo",
+                primary: true,
+                control: <MonthSelect value={filterMonth} onValueChange={setFilterMonth} />,
+              },
+              {
+                key: "group",
+                label: "Grupo",
+                control: (
+                  <select className="select-input" aria-label="Filtrar por grupo" value={groupFilter} onChange={(event) => setGroupFilter(event.target.value)}>
+                    <option value="todos">Todos os grupos</option>
+                    <option value="Receitas">Receitas</option>
+                    <option value="Despesas">Despesas</option>
+                    <option value="Resultado">Resultado</option>
+                  </select>
+                ),
+              },
+              {
+                key: "category",
+                label: "Categoria",
+                control: (
+                  <select className="select-input" aria-label="Filtrar por categoria" value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}>
+                    <option value="todos">Todas as categorias</option>
+                    {categories.map((category) => <option key={category} value={category}>{category}</option>)}
+                  </select>
+                ),
+              },
+              {
+                key: "sort",
+                label: "Ordenacao",
+                control: (
+                  <select className="select-input" aria-label="Ordenar DRE" value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
+                    <option value="estrutura">Ordem gerencial</option>
+                    <option value="valor">Maior valor realizado</option>
+                    <option value="receita">Maior % da receita</option>
+                  </select>
+                ),
+              },
+            ]}
+          />
           <div className="dre-filter-actions">
             <Button type="button" variant="outline" className="w-full lg:w-auto" onClick={() => setExportOpen(true)}>
               <FileDown className="size-4" />

@@ -80,15 +80,23 @@ export function Component() {
           search={search}
           onSearchChange={setSearch}
           activeFilters={statusFilter ? [{ key: "status", label: "Ativo", onRemove: () => setStatusFilter("") }] : []}
-        >
-          <Select
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
-            placeholder="Todos os status"
-            aria-label="Filtrar clientes por status"
-            options={[{ value: "ativo", label: "Ativos" }]}
-          />
-        </FilterBar>
+          filters={[
+            {
+              key: "status",
+              label: "Status",
+              primary: true,
+              control: (
+                <Select
+                  value={statusFilter}
+                  onChange={(event) => setStatusFilter(event.target.value)}
+                  placeholder="Todos os status"
+                  aria-label="Filtrar clientes por status"
+                  options={[{ value: "ativo", label: "Ativos" }]}
+                />
+              ),
+            },
+          ]}
+        />
 
         <Card className="overflow-hidden">
           <Table>

@@ -42,9 +42,14 @@ export function Component() {
             ? [{ key: "month", label: formatMonthFilter(filterMonth), onRemove: () => setFilterMonth("") }]
             : []
         }
-      >
-        <MonthSelect value={filterMonth} onValueChange={setFilterMonth} />
-      </FilterBar>
+        filters={[
+          {
+            key: "month",
+            label: "Mes",
+            control: <MonthSelect value={filterMonth} onValueChange={setFilterMonth} />,
+          },
+        ]}
+      />
 
       <div className="desktop-table">
         <CashFlowTable rows={rows} isLoading={isLoading} hasError={Boolean(error)} />

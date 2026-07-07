@@ -284,6 +284,21 @@ describe("financial components", () => {
     expect(dialog).toHaveClass("max-h-[calc(100dvh-2rem)]");
   });
 
+  it("keeps financial filters compact until more filters is requested", async () => {
+    renderWithClient(<Lancamentos />);
+
+    await screen.findByRole("table");
+    expect(screen.getByLabelText(/filtrar por tipo/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/filtrar por status/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/filtrar por periodo/i)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /mais filtros/i }));
+
+    expect(screen.getByLabelText(/filtrar por periodo/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/filtrar por categoria/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /aplicar/i })).toBeInTheDocument();
+  });
+
   it("shows empty collaborator autocomplete state", async () => {
     mockAccountsPayableFetch({ beneficiaries: "empty" });
     renderWithClient(<ContasPagar />);

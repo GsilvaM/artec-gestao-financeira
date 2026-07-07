@@ -698,18 +698,32 @@ export function Component() {
         search={search}
         onSearchChange={setSearch}
         activeFilters={activeFilters}
-      >
-        <StatusSelect value={filterStatus} onValueChange={setFilterStatus} />
-        <Select
-          value={filterBeneficiaryType}
-          onChange={(e) => setFilterBeneficiaryType(e.target.value)}
-          options={[
-            { value: "supplier", label: "Fornecedor" },
-            { value: "collaborator", label: "Colaborador" },
-          ]}
-          placeholder="Tipo do favorecido"
-        />
-      </FilterBar>
+        filters={[
+          {
+            key: "status",
+            label: "Status",
+            primary: true,
+            control: (
+              <StatusSelect value={filterStatus} onValueChange={setFilterStatus} />
+            ),
+          },
+          {
+            key: "beneficiaryType",
+            label: "Tipo do favorecido",
+            control: (
+              <Select
+                value={filterBeneficiaryType}
+                onChange={(e) => setFilterBeneficiaryType(e.target.value)}
+                options={[
+                  { value: "supplier", label: "Fornecedor" },
+                  { value: "collaborator", label: "Colaborador" },
+                ]}
+                placeholder="Tipo do favorecido"
+              />
+            ),
+          },
+        ]}
+      />
       <div className="desktop-table">
         <Card className="overflow-hidden">
           <Table>

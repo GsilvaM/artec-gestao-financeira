@@ -60,10 +60,24 @@ export function Component() {
         <MetricCard title="Indicadores" value={String(rows.length)} icon={AreaChart} tone="slate" />
       </div>
 
-      <FilterBar searchPlaceholder="Buscar indicador financeiro..." search={search} onSearchChange={setSearch} activeFilters={activeFilters}>
-        <MonthSelect value={filterMonth} onValueChange={setFilterMonth} />
-        <StatusSelect value={filterStatus} onValueChange={setFilterStatus} />
-      </FilterBar>
+      <FilterBar
+        searchPlaceholder="Buscar indicador financeiro..."
+        search={search}
+        onSearchChange={setSearch}
+        activeFilters={activeFilters}
+        filters={[
+          {
+            key: "month",
+            label: "Mes",
+            control: <MonthSelect value={filterMonth} onValueChange={setFilterMonth} />,
+          },
+          {
+            key: "status",
+            label: "Status",
+            control: <StatusSelect value={filterStatus} onValueChange={setFilterStatus} />,
+          },
+        ]}
+      />
 
       <div className="desktop-table">
         <FinancialReportTable rows={rows} isLoading={isLoading} hasError={Boolean(error)} periodLabel={periodLabel} />

@@ -229,22 +229,30 @@ export function Component() {
         activeFilters={
           statusFilter
             ? [{ key: "status", label: statusLabel(statusFilter), onRemove: () => setStatusFilter("") }]
-            : []
+              : []
         }
-      >
-        <Select
-          value={statusFilter}
-          onChange={(event) => setStatusFilter(event.target.value)}
-          placeholder="Todos os status"
-          aria-label="Filtrar por status"
-          options={[
-            { value: "pending", label: "Pendentes" },
-            { value: "approved", label: "Aprovados" },
-            { value: "rejected", label: "Rejeitados" },
-            { value: "disabled", label: "Desativados" },
-          ]}
-        />
-      </FilterBar>
+        filters={[
+          {
+            key: "status",
+            label: "Status",
+            primary: true,
+            control: (
+              <Select
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value)}
+                placeholder="Todos os status"
+                aria-label="Filtrar por status"
+                options={[
+                  { value: "pending", label: "Pendentes" },
+                  { value: "approved", label: "Aprovados" },
+                  { value: "rejected", label: "Rejeitados" },
+                  { value: "disabled", label: "Desativados" },
+                ]}
+              />
+            ),
+          },
+        ]}
+      />
 
       <Card className="overflow-hidden">
         <div className="desktop-table">

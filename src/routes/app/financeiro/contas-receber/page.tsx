@@ -545,9 +545,17 @@ export function Component() {
               ]
             : []
         }
-      >
-        <StatusSelect value={filterStatus} onValueChange={setFilterStatus} />
-      </FilterBar>
+        filters={[
+          {
+            key: "status",
+            label: "Status",
+            primary: true,
+            control: (
+              <StatusSelect value={filterStatus} onValueChange={setFilterStatus} />
+            ),
+          },
+        ]}
+      />
       <div className="desktop-table">
         <Card className="overflow-hidden">
           <Table>
