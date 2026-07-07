@@ -826,6 +826,30 @@ describe("accounts payable route module", () => {
     });
   });
 
+  it("bloqueia exclusao de conta ja estornada", async () => {
+    vi.mocked(accountPayableRepo.findById).mockResolvedValue(
+      { ...MOCK_PAYABLE, status: "reversed" } as never
+    );
+    const request = new Request(
+      "http://localhost/api/financeiro/accounts-payable/22222222-2222-2222-2222-222222222222",
+      {
+        method: "DELETE",
+      }
+    );
+
+    const response = await accountsPayable.action({
+      request,
+      params: { id: "22222222-2222-2222-2222-222222222222" },
+      authenticatedUserId: AUTHENTICATED_USER_ID,
+    });
+
+    expect(response.status).toBe(409);
+    expect(accountPayableRepo.softDelete).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toMatchObject({
+      error: "Conta paga ou estornada nao pode ser excluida.",
+    });
+  });
+
   it("estorna pagamento via servico transacional", async () => {
     vi.mocked(reverseAccountPayablePayment).mockResolvedValue({
       account: { ...MOCK_PAYABLE, status: "reversed" },
@@ -1037,6 +1061,68 @@ describe("accounts receivable route module", () => {
     expect(accountReceivableRepo.update).not.toHaveBeenCalled();
   });
 
+  it("blocks direct update of reversed account", async () => {
+    vi.mocked(accountReceivableRepo.findById).mockResolvedValue(
+      { ...MOCK_RECEIVABLE, status: "reversed" } as never
+    );
+    const request = new Request(
+      "http://localhost/api/financeiro/accounts-receivable/33333333-3333-3333-3333-333333333333",
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          description: "Cliente alterado",
+        }),
+      }
+    );
+
+    const response = await accountsReceivable.action({
+      request,
+      params: { id: "33333333-3333-3333-3333-333333333333" },
+      authenticatedUserId: AUTHENTICATED_USER_ID,
+    });
+
+    expect(response.status).toBe(409);
+    expect(accountReceivableRepo.update).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toMatchObject({
+      error: "Conta recebida ou estornada nao pode ser editada diretamente.",
+    });
+  });
+
+  it("keeps pending receivable account editable", async () => {
+    vi.mocked(accountReceivableRepo.findById).mockResolvedValue(
+      { ...MOCK_RECEIVABLE, status: "pending", receivedDate: null } as never
+    );
+    vi.mocked(accountReceivableRepo.update).mockResolvedValue({
+      ...MOCK_RECEIVABLE,
+      description: "Cliente alterado",
+      status: "pending",
+      receivedDate: null,
+    } as never);
+    const request = new Request(
+      "http://localhost/api/financeiro/accounts-receivable/33333333-3333-3333-3333-333333333333",
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          description: "Cliente alterado",
+        }),
+      }
+    );
+
+    const response = await accountsReceivable.action({
+      request,
+      params: { id: "33333333-3333-3333-3333-333333333333" },
+      authenticatedUserId: AUTHENTICATED_USER_ID,
+    });
+
+    expect(response.status).toBe(200);
+    expect(accountReceivableRepo.update).toHaveBeenCalledWith(
+      "33333333-3333-3333-3333-333333333333",
+      expect.objectContaining({ description: "Cliente alterado" })
+    );
+  });
+
   it("blocks delete of received account", async () => {
     vi.mocked(accountReceivableRepo.findById).mockResolvedValue(
       MOCK_RECEIVABLE as never
@@ -1056,6 +1142,30 @@ describe("accounts receivable route module", () => {
 
     expect(response.status).toBe(409);
     expect(accountReceivableRepo.softDelete).not.toHaveBeenCalled();
+  });
+
+  it("blocks delete of reversed account", async () => {
+    vi.mocked(accountReceivableRepo.findById).mockResolvedValue(
+      { ...MOCK_RECEIVABLE, status: "reversed" } as never
+    );
+    const request = new Request(
+      "http://localhost/api/financeiro/accounts-receivable/33333333-3333-3333-3333-333333333333",
+      {
+        method: "DELETE",
+      }
+    );
+
+    const response = await accountsReceivable.action({
+      request,
+      params: { id: "33333333-3333-3333-3333-333333333333" },
+      authenticatedUserId: AUTHENTICATED_USER_ID,
+    });
+
+    expect(response.status).toBe(409);
+    expect(accountReceivableRepo.softDelete).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toMatchObject({
+      error: "Conta recebida ou estornada nao pode ser excluida.",
+    });
   });
 
   it("reverses receipt via transactional service", async () => {

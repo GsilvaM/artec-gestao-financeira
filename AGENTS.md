@@ -57,6 +57,13 @@ Contas a Pagar e Contas a Receber representam obrigacoes/previsoes futuras.
 - Conta a pagar com `beneficiaryType = collaborator` futuramente deve exigir subcategoria explicita (`SALARY`, `COMMISSION`, `TRANSPORT_VOUCHER`, `REIMBURSEMENT`) antes de gerar descricao automatica de lancamento. Essa regra depende de alteracao de schema/migration e nao deve ser simulada em campo livre.
 - Hoje nao ha permissao distinta entre conta a pagar para fornecedor e para colaborador; dados de pagamento de colaborador podem ser sensiveis e a segregacao de acesso deve ser tratada antes de uso como folha/pagamento recorrente.
 
+## Regras de Negocio - Contas a Receber
+
+- Conta a receber recebida ou estornada nao e editavel por fluxo comum.
+- Conta a receber recebida ou estornada nao pode ser excluida por fluxo comum; usar rotina explicita de estorno/cancelamento quando existir.
+- Conta a receber estornada nao deve ser recebida novamente por fluxo comum.
+- Edicao e exclusao comuns devem ser bloqueadas tanto no frontend quanto nas rotas/API, com erro de negocio explicito quando houver chamada direta.
+
 Quando uma tarefa pedir backend, agir de forma conservadora:
 
 - Entender primeiro o fluxo existente antes de editar.

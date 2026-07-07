@@ -117,6 +117,10 @@ function isReversed(entry: AccountReceivableRow) {
   return entry.status === "reversed";
 }
 
+function canEditOrDelete(entry: AccountReceivableRow) {
+  return !isReceived(entry) && !isReversed(entry);
+}
+
 function getDueHelper(entry: AccountReceivableRow, todayKey: string) {
   if (entry.status === "received") {
     return entry.receivedDate
@@ -573,7 +577,12 @@ export function Component() {
                   </TableCell>
                 </TableRow>
               ) : entries?.length ? (
-                entries.map((entry) => (
+                entries.map((entry) => {
+                  const showCommonActions = canEditOrDelete(entry);
+                  const showMenu =
+                    showCommonActions || canReceive(entry) || isReceived(entry);
+
+                  return (
                   <TableRow key={entry.id}>
                     <TableCell>
                       <div className="flex min-w-32 flex-col gap-1">
@@ -606,51 +615,60 @@ export function Component() {
                             Receber
                           </Button>
                         ) : null}
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              aria-label="Ações"
-                            >
-                              <MoreHorizontal className="size-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent>
-                            <DropdownMenuItem onClick={() => handleEdit(entry)}>
-                              <Pencil className="size-4" />
-                              Editar
-                            </DropdownMenuItem>
-                            {canReceive(entry) ? (
-                              <DropdownMenuItem
-                                onClick={() => openReceiptDialog(entry)}
+                        {showMenu ? (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                aria-label="Ações"
                               >
-                                <CheckCircle2 className="size-4" />
-                                Marcar como recebida
-                              </DropdownMenuItem>
-                            ) : null}
-                            {isReceived(entry) ? (
-                              <DropdownMenuItem
-                                onClick={() => openReversalDialog(entry)}
-                              >
-                                <RotateCcw className="size-4" />
-                                Estornar recebimento
-                              </DropdownMenuItem>
-                            ) : null}
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              destructive
-                              onClick={() => handleDelete(entry)}
-                            >
-                              <Trash2 className="size-4" />
-                              Excluir
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                                <MoreHorizontal className="size-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                              {showCommonActions ? (
+                                <DropdownMenuItem onClick={() => handleEdit(entry)}>
+                                  <Pencil className="size-4" />
+                                  Editar
+                                </DropdownMenuItem>
+                              ) : null}
+                              {canReceive(entry) ? (
+                                <DropdownMenuItem
+                                  onClick={() => openReceiptDialog(entry)}
+                                >
+                                  <CheckCircle2 className="size-4" />
+                                  Marcar como recebida
+                                </DropdownMenuItem>
+                              ) : null}
+                              {isReceived(entry) ? (
+                                <DropdownMenuItem
+                                  onClick={() => openReversalDialog(entry)}
+                                >
+                                  <RotateCcw className="size-4" />
+                                  Estornar recebimento
+                                </DropdownMenuItem>
+                              ) : null}
+                              {showCommonActions ? (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    destructive
+                                    onClick={() => handleDelete(entry)}
+                                  >
+                                    <Trash2 className="size-4" />
+                                    Excluir
+                                  </DropdownMenuItem>
+                                </>
+                              ) : null}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        ) : null}
                       </div>
                     </TableCell>
                   </TableRow>
-                ))
+                  );
+                })
               ) : (
                 <TableRow>
                   <TableCell colSpan={7} className="p-0">
@@ -1044,7 +1062,12 @@ function AccountReceivableMobileList({
 
   return (
     <div className="mobile-list">
-      {entries.map((entry) => (
+      {entries.map((entry) => {
+        const showCommonActions = canEditOrDelete(entry);
+        const showMenu =
+          showCommonActions || canReceive(entry) || isReceived(entry);
+
+        return (
         <article key={entry.id} className="mobile-record-card">
           <div className="mobile-record-top">
             <div className="min-w-0">
@@ -1075,44 +1098,53 @@ function AccountReceivableMobileList({
                   Receber
                 </Button>
               ) : null}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Ações da conta a receber"
-                  >
-                    <MoreHorizontal className="size-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem onClick={() => onEdit(entry)}>
-                    <Pencil className="size-4" />
-                    Editar
-                  </DropdownMenuItem>
-                  {canReceive(entry) ? (
-                    <DropdownMenuItem onClick={() => onReceive(entry)}>
-                      <CheckCircle2 className="size-4" />
-                      Marcar como recebida
-                    </DropdownMenuItem>
-                  ) : null}
-                  {isReceived(entry) ? (
-                    <DropdownMenuItem onClick={() => onReverse(entry)}>
-                      <RotateCcw className="size-4" />
-                      Estornar recebimento
-                    </DropdownMenuItem>
-                  ) : null}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem destructive onClick={() => onDelete(entry)}>
-                    <Trash2 className="size-4" />
-                    Excluir
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {showMenu ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Ações da conta a receber"
+                    >
+                      <MoreHorizontal className="size-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    {showCommonActions ? (
+                      <DropdownMenuItem onClick={() => onEdit(entry)}>
+                        <Pencil className="size-4" />
+                        Editar
+                      </DropdownMenuItem>
+                    ) : null}
+                    {canReceive(entry) ? (
+                      <DropdownMenuItem onClick={() => onReceive(entry)}>
+                        <CheckCircle2 className="size-4" />
+                        Marcar como recebida
+                      </DropdownMenuItem>
+                    ) : null}
+                    {isReceived(entry) ? (
+                      <DropdownMenuItem onClick={() => onReverse(entry)}>
+                        <RotateCcw className="size-4" />
+                        Estornar recebimento
+                      </DropdownMenuItem>
+                    ) : null}
+                    {showCommonActions ? (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem destructive onClick={() => onDelete(entry)}>
+                          <Trash2 className="size-4" />
+                          Excluir
+                        </DropdownMenuItem>
+                      </>
+                    ) : null}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : null}
             </div>
           </div>
         </article>
-      ))}
+        );
+      })}
     </div>
   );
 }

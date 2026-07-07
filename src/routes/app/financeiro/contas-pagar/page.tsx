@@ -121,6 +121,10 @@ function isReversed(entry: AccountPayableRow) {
   return entry.status === "reversed";
 }
 
+function canEditOrDelete(entry: AccountPayableRow) {
+  return !isPaid(entry) && !isReversed(entry);
+}
+
 function getDueHelper(entry: AccountPayableRow, todayKey: string) {
   if (entry.status === "paid") {
     return entry.paidDate ? `Pago em ${formatDate(entry.paidDate)}` : "Pago";
@@ -735,8 +739,12 @@ export function Component() {
                   </TableCell>
                 </TableRow>
               ) : visibleEntries.length ? (
-                visibleEntries.map((entry) => (
-                  <TableRow key={entry.id}>
+                visibleEntries.map((entry) => {
+                  const showCommonActions = canEditOrDelete(entry);
+                  const showMenu = showCommonActions || canPay(entry) || isPaid(entry);
+
+                  return (
+                    <TableRow key={entry.id}>
                     <TableCell>
                       <div className="flex min-w-32 flex-col gap-1">
                         <span className="font-medium">
@@ -783,51 +791,60 @@ export function Component() {
                             Pagar
                           </Button>
                         ) : null}
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              aria-label="Ações"
-                            >
-                              <MoreHorizontal className="size-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent>
-                            <DropdownMenuItem onClick={() => handleEdit(entry)}>
-                              <Pencil className="size-4" />
-                              Editar
-                            </DropdownMenuItem>
-                            {canPay(entry) ? (
-                              <DropdownMenuItem
-                                onClick={() => openPaymentDialog(entry)}
+                        {showMenu ? (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                aria-label="Ações"
                               >
-                                <CheckCircle2 className="size-4" />
-                                Marcar como paga
-                              </DropdownMenuItem>
-                            ) : null}
-                            {isPaid(entry) ? (
-                              <DropdownMenuItem
-                                onClick={() => openReversalDialog(entry)}
-                              >
-                                <RotateCcw className="size-4" />
-                                Estornar pagamento
-                              </DropdownMenuItem>
-                            ) : null}
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              destructive
-                              onClick={() => handleDelete(entry)}
-                            >
-                              <Trash2 className="size-4" />
-                              Excluir
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                                <MoreHorizontal className="size-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                              {showCommonActions ? (
+                                <DropdownMenuItem onClick={() => handleEdit(entry)}>
+                                  <Pencil className="size-4" />
+                                  Editar
+                                </DropdownMenuItem>
+                              ) : null}
+                              {canPay(entry) ? (
+                                <DropdownMenuItem
+                                  onClick={() => openPaymentDialog(entry)}
+                                >
+                                  <CheckCircle2 className="size-4" />
+                                  Marcar como paga
+                                </DropdownMenuItem>
+                              ) : null}
+                              {isPaid(entry) ? (
+                                <DropdownMenuItem
+                                  onClick={() => openReversalDialog(entry)}
+                                >
+                                  <RotateCcw className="size-4" />
+                                  Estornar pagamento
+                                </DropdownMenuItem>
+                              ) : null}
+                              {showCommonActions ? (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    destructive
+                                    onClick={() => handleDelete(entry)}
+                                  >
+                                    <Trash2 className="size-4" />
+                                    Excluir
+                                  </DropdownMenuItem>
+                                </>
+                              ) : null}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        ) : null}
                       </div>
                     </TableCell>
                   </TableRow>
-                ))
+                  );
+                })
               ) : (
                 <TableRow>
                   <TableCell colSpan={7} className="p-0">
@@ -1397,40 +1414,48 @@ function AccountPayableMobileList({
                   Pagar
                 </Button>
               ) : null}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Ações da conta a pagar"
-                  >
-                    <MoreHorizontal className="size-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem onClick={() => onEdit(entry)}>
-                    <Pencil className="size-4" />
-                    Editar
-                  </DropdownMenuItem>
-                  {canPay(entry) ? (
-                    <DropdownMenuItem onClick={() => onPay(entry)}>
-                      <CheckCircle2 className="size-4" />
-                      Marcar como paga
-                    </DropdownMenuItem>
-                  ) : null}
-                  {isPaid(entry) ? (
-                    <DropdownMenuItem onClick={() => onReverse(entry)}>
-                      <RotateCcw className="size-4" />
-                      Estornar pagamento
-                    </DropdownMenuItem>
-                  ) : null}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem destructive onClick={() => onDelete(entry)}>
-                    <Trash2 className="size-4" />
-                    Excluir
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {canEditOrDelete(entry) || canPay(entry) || isPaid(entry) ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Ações da conta a pagar"
+                    >
+                      <MoreHorizontal className="size-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    {canEditOrDelete(entry) ? (
+                      <DropdownMenuItem onClick={() => onEdit(entry)}>
+                        <Pencil className="size-4" />
+                        Editar
+                      </DropdownMenuItem>
+                    ) : null}
+                    {canPay(entry) ? (
+                      <DropdownMenuItem onClick={() => onPay(entry)}>
+                        <CheckCircle2 className="size-4" />
+                        Marcar como paga
+                      </DropdownMenuItem>
+                    ) : null}
+                    {isPaid(entry) ? (
+                      <DropdownMenuItem onClick={() => onReverse(entry)}>
+                        <RotateCcw className="size-4" />
+                        Estornar pagamento
+                      </DropdownMenuItem>
+                    ) : null}
+                    {canEditOrDelete(entry) ? (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem destructive onClick={() => onDelete(entry)}>
+                          <Trash2 className="size-4" />
+                          Excluir
+                        </DropdownMenuItem>
+                      </>
+                    ) : null}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : null}
             </div>
           </div>
         </article>

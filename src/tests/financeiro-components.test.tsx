@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Component as Dashboard } from "@/routes/app/dashboard";
 import { Component as Lancamentos } from "@/routes/app/financeiro/lancamentos/page";
 import { Component as ContasPagar } from "@/routes/app/financeiro/contas-pagar/page";
+import { Component as ContasReceber } from "@/routes/app/financeiro/contas-receber/page";
 import { useAuthStore } from "@/lib/supabase/auth-store";
 
 vi.mock("sonner", () => ({
@@ -82,6 +83,56 @@ const payableCollaborator = {
   updatedAt: "2026-07-01T00:00:00.000Z",
 };
 
+const payablePaid = {
+  ...payableCollaborator,
+  id: "payable-paid",
+  description: "Paga bloqueada",
+  status: "paid",
+  paidDate: "2026-07-16T00:00:00.000Z",
+};
+
+const payableReversed = {
+  ...payableCollaborator,
+  id: "payable-reversed",
+  description: "Pagar estornada bloqueada",
+  status: "reversed",
+};
+
+const receivablePending = {
+  id: "receivable-pending",
+  description: "Receber editavel",
+  amount: "500",
+  dueDate: "2026-07-20T00:00:00.000Z",
+  receivedDate: null,
+  status: "pending",
+  categoryId: "cat-r",
+  category: { name: "Servicos", color: "#10B981" },
+  costCenterId: null,
+  costCenter: null,
+  client: "Cliente aberto",
+  userId: "user-1",
+  notes: null,
+  createdAt: "2026-07-01T00:00:00.000Z",
+  updatedAt: "2026-07-01T00:00:00.000Z",
+};
+
+const receivableReceived = {
+  ...receivablePending,
+  id: "receivable-received",
+  description: "Recebida bloqueada",
+  client: "Cliente recebido",
+  status: "received",
+  receivedDate: "2026-07-21T00:00:00.000Z",
+};
+
+const receivableReversed = {
+  ...receivablePending,
+  id: "receivable-reversed",
+  description: "Estornada bloqueada",
+  client: "Cliente estornado",
+  status: "reversed",
+};
+
 function renderWithClient(ui: React.ReactElement) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>);
@@ -127,6 +178,35 @@ function mockAccountsPayableFetch(options: {
       return Promise.resolve(Response.json([]));
     }),
   );
+}
+
+function mockAccountsReceivableFetch(accounts: unknown[]) {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn((input: string | URL | Request) => {
+      const url = String(input);
+      if (url.includes("/api/financeiro/categories")) {
+        return Promise.resolve(Response.json(categories));
+      }
+      if (url.includes("/api/financeiro/cost-centers")) {
+        return Promise.resolve(Response.json([]));
+      }
+      if (url.includes("/api/financeiro/accounts-receivable")) {
+        return Promise.resolve(Response.json(accounts));
+      }
+      return Promise.resolve(Response.json([]));
+    }),
+  );
+}
+
+async function findDesktopRow(description: string) {
+  const table = await screen.findByRole("table");
+  await waitFor(() =>
+    expect(within(table).getByText(description)).toBeInTheDocument(),
+  );
+  const row = within(table).getByText(description).closest("tr");
+  expect(row).not.toBeNull();
+  return row as HTMLElement;
 }
 
 beforeEach(() => {
@@ -353,5 +433,60 @@ describe("financial components", () => {
     expect(
       await screen.findAllByLabelText("Tipo do favorecido: Colaborador"),
     ).not.toHaveLength(0);
+  });
+
+  it("hides common edit and delete actions for received receivable accounts", async () => {
+    mockAccountsReceivableFetch([receivableReceived]);
+    renderWithClient(<ContasReceber />);
+
+    const row = await findDesktopRow("Recebida bloqueada");
+    fireEvent.click(within(row).getByRole("button", { name: /acoes|ações/i }));
+
+    expect(await screen.findByRole("menuitem", { name: /estornar recebimento/i })).toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: /editar/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: /excluir/i })).not.toBeInTheDocument();
+  });
+
+  it("hides the action menu for reversed receivable accounts without common actions", async () => {
+    mockAccountsReceivableFetch([receivableReversed]);
+    renderWithClient(<ContasReceber />);
+
+    const row = await findDesktopRow("Estornada bloqueada");
+    expect(within(row).queryByRole("button", { name: /acoes|ações/i })).not.toBeInTheDocument();
+  });
+
+  it("keeps pending receivable accounts editable in the common flow", async () => {
+    mockAccountsReceivableFetch([receivablePending]);
+    renderWithClient(<ContasReceber />);
+
+    const row = await findDesktopRow("Receber editavel");
+    fireEvent.click(within(row).getByRole("button", { name: /acoes|ações/i }));
+
+    expect(await screen.findByRole("menuitem", { name: /editar/i })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: /excluir/i })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: /marcar como recebida/i })).toBeInTheDocument();
+  });
+
+  it("hides common edit and delete actions for paid payable accounts", async () => {
+    mockAccountsPayableFetch({ accounts: [payablePaid] });
+    renderWithClient(<ContasPagar />);
+    fireEvent.change(screen.getByLabelText(/filtrar por status/i), {
+      target: { value: "pago" },
+    });
+
+    const row = await findDesktopRow("Paga bloqueada");
+    fireEvent.click(within(row).getByRole("button", { name: /acoes|ações/i }));
+
+    expect(await screen.findByRole("menuitem", { name: /estornar pagamento/i })).toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: /editar/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: /excluir/i })).not.toBeInTheDocument();
+  });
+
+  it("hides the action menu for reversed payable accounts without common actions", async () => {
+    mockAccountsPayableFetch({ accounts: [payableReversed] });
+    renderWithClient(<ContasPagar />);
+
+    const row = await findDesktopRow("Pagar estornada bloqueada");
+    expect(within(row).queryByRole("button", { name: /acoes|ações/i })).not.toBeInTheDocument();
   });
 });
