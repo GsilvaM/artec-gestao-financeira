@@ -670,10 +670,11 @@ const filterStyles = `
   z-index: 50;
   width: min(420px, calc(100vw - 32px));
   border-radius: 18px;
-  border: 1px solid var(--border-subtle);
-  background: var(--surface);
+  border: 1px solid var(--border);
+  background: var(--popover);
   padding: 12px;
   box-shadow: var(--shadow-elevated);
+  color: var(--popover-foreground);
 }
 
 .filter-panel-grid {
@@ -727,9 +728,10 @@ const filterStyles = `
   grid-template-rows: auto auto minmax(0, 1fr) auto;
   overflow: hidden;
   border-radius: 24px 24px 0 0;
-  border: 1px solid var(--border-subtle);
-  background: var(--surface);
+  border: 1px solid var(--border);
+  background: var(--popover);
   box-shadow: var(--shadow-elevated);
+  color: var(--popover-foreground);
 }
 
 .filter-sheet-handle {

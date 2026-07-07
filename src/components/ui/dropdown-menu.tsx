@@ -177,7 +177,7 @@ export function DropdownMenuContent({ children, className, ...props }: React.HTM
       tabIndex={-1}
       style={contentStyle}
       className={cn(
-        "max-w-[calc(100vw-1rem)] origin-top-right animate-in fade-in-0 zoom-in-95 rounded-2xl border border-border/90 bg-popover/95 p-1.5 text-popover-foreground shadow-elevated backdrop-blur focus:outline-none",
+        "max-w-[calc(100vw-1rem)] origin-top-right animate-in fade-in-0 zoom-in-95 rounded-2xl border border-border bg-popover p-1.5 text-popover-foreground shadow-elevated focus:outline-none",
         className,
       )}
       {...props}
