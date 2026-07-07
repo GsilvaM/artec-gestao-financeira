@@ -4,6 +4,7 @@ import {
   FINANCIAL_ORIGINS,
   appendMetadata,
   originMarker,
+  reversalOriginMarker,
 } from "./financial-origin.js";
 import { NotFoundError } from "./repositories.js";
 
@@ -42,6 +43,24 @@ function buildFinancialEntryNotes(
   ].filter(Boolean);
 
   return metadata.join("\n");
+}
+
+function buildReversalEntryNotes(
+  accountReceivableId: string,
+  originalFinancialEntryId: string,
+  input: ReverseAccountReceivableReceiptInput
+) {
+  return [
+    reversalOriginMarker(FINANCIAL_ORIGINS.ACCOUNTS_RECEIVABLE, accountReceivableId),
+    `[reversalOfOriginType=${FINANCIAL_ORIGINS.ACCOUNTS_RECEIVABLE};reversalOfOriginId=${accountReceivableId}]`,
+    `[reversalOfFinancialEntryId=${originalFinancialEntryId}]`,
+    `[reversalDate=${input.reversalDate.toISOString()}]`,
+    `[reversalUserId=${input.userId}]`,
+    `Motivo do estorno: ${input.reason.trim()}`,
+    input.notes ? `Observacoes do estorno: ${input.notes}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 function buildFinancialEntryData(
@@ -234,6 +253,10 @@ export async function reverseAccountReceivableReceipt(
     }
 
     const originMarker = accountReceivableOriginMarker(accountReceivableId);
+    const reversalMarker = reversalOriginMarker(
+      FINANCIAL_ORIGINS.ACCOUNTS_RECEIVABLE,
+      accountReceivableId
+    );
     let financialEntry = await tx.financialEntry.findFirst({
       where: {
         deletedAt: null,
@@ -327,22 +350,79 @@ export async function reverseAccountReceivableReceipt(
       throw businessError("Lancamento financeiro ja esta estornado.", 409);
     }
 
+    const existingReversalEntry = await tx.financialEntry.findFirst({
+      where: {
+        deletedAt: null,
+        notes: { contains: reversalMarker },
+      },
+      include: { category: true, costCenter: true, collaborator: true },
+    });
+
+    if (existingReversalEntry) {
+      const reconciledAccount = await tx.accountReceivable.update({
+        where: { id: accountReceivableId },
+        data: { status: "reversed" },
+        include: { category: true, costCenter: true },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          userId: input.userId,
+          action: "account_receivable_reconciled_after_reversal_entry",
+          entity: "AccountReceivable",
+          entityId: accountReceivableId,
+          metadata: {
+            financialEntryId: financialEntry.id,
+            reversalEntryId: existingReversalEntry.id,
+            reversalDate: input.reversalDate.toISOString(),
+            reason: input.reason.trim(),
+            notes: input.notes ?? null,
+          },
+        },
+      });
+
+      return {
+        account: reconciledAccount,
+        financialEntry,
+        reversalEntry: existingReversalEntry,
+        message:
+          "Recebimento reconciliado. O lancamento de estorno ja existia.",
+      };
+    }
+
     const reversedAccount = await tx.accountReceivable.update({
       where: { id: accountReceivableId },
       data: { status: "reversed" },
       include: { category: true, costCenter: true },
     });
 
-    const reversedEntry = await tx.financialEntry.update({
+    const originalEntry = await tx.financialEntry.update({
       where: { id: financialEntry.id },
       data: {
-        status: "reversed",
         notes: appendMetadata(financialEntry.notes, [
           `[reversalDate=${input.reversalDate.toISOString()}]`,
           `[reversalUserId=${input.userId}]`,
+          `[reversalEntryOrigin=${reversalMarker}]`,
           `Motivo do estorno: ${input.reason.trim()}`,
           input.notes ? `Observacoes do estorno: ${input.notes}` : null,
         ]),
+      },
+      include: { category: true, costCenter: true, collaborator: true },
+    });
+
+    const reversalEntry = await tx.financialEntry.create({
+      data: {
+        description: `Estorno: ${financialEntry.description}`,
+        amount: financialEntry.amount,
+        type: "despesa",
+        date: input.reversalDate,
+        status: "confirmed",
+        categoryId: financialEntry.categoryId,
+        costCenterId: financialEntry.costCenterId,
+        collaboratorId: financialEntry.collaboratorId,
+        clientName: financialEntry.clientName,
+        userId: input.userId,
+        notes: buildReversalEntryNotes(accountReceivableId, financialEntry.id, input),
       },
       include: { category: true, costCenter: true, collaborator: true },
     });
@@ -358,6 +438,7 @@ export async function reverseAccountReceivableReceipt(
           reason: input.reason.trim(),
           notes: input.notes ?? null,
           financialEntryId: financialEntry.id,
+          reversalEntryId: reversalEntry.id,
         },
       },
     });
@@ -367,10 +448,13 @@ export async function reverseAccountReceivableReceipt(
         userId: input.userId,
         action: "financial_entry_reversed_from_account_receivable",
         entity: "FinancialEntry",
-        entityId: financialEntry.id,
+        entityId: reversalEntry.id,
         metadata: {
-          originType: FINANCIAL_ORIGINS.ACCOUNTS_RECEIVABLE,
+          originType: FINANCIAL_ORIGINS.REVERSAL,
           originId: accountReceivableId,
+          reversedOriginType: FINANCIAL_ORIGINS.ACCOUNTS_RECEIVABLE,
+          financialEntryId: financialEntry.id,
+          reversalEntryId: reversalEntry.id,
           reversalDate: input.reversalDate.toISOString(),
           reason: input.reason.trim(),
         },
@@ -379,9 +463,10 @@ export async function reverseAccountReceivableReceipt(
 
     return {
       account: reversedAccount,
-      financialEntry: reversedEntry,
+      financialEntry: originalEntry,
+      reversalEntry,
       message:
-        "Recebimento estornado com sucesso. O lancamento financeiro foi atualizado.",
+        "Recebimento estornado com sucesso. Um lancamento de contrapartida foi criado.",
     };
   });
 }

@@ -37,8 +37,15 @@ Contas a Pagar e Contas a Receber representam obrigacoes/previsoes futuras.
 - Contas a Pagar so podem gerar despesa quando forem pagas por fluxo transacional proprio.
 - Contas a Receber so podem gerar receita quando forem recebidas por fluxo transacional proprio.
 - Lancamentos financeiros criados a partir dessas contas devem manter marcador de origem e nao devem ser editados/excluidos diretamente pela tela de Lancamentos.
+- Estorno de pagamento/recebimento deve ser feito somente pela rotina transacional da conta de origem.
+- Estorno nao deve apagar, excluir ou transformar o lancamento financeiro original em pendente/cancelado; o lancamento original permanece como historico confirmado e recebe metadados do estorno.
+- Estorno deve criar lancamento financeiro de contrapartida confirmado, com `originType=reversal`, vinculando conta de origem e lancamento original.
+- Estorno de Conta a Pagar cria contrapartida de receita para neutralizar a despesa original.
+- Estorno de Conta a Receber cria contrapartida de despesa para neutralizar a receita original.
+- Lancamento de contrapartida de estorno tambem e gerenciado pelo sistema e nao pode ser editado/excluido diretamente pela tela de Lancamentos.
 - Conta ja paga/recebida nao deve voltar para pendente, ser editada ou excluida por fluxo comum enquanto nao existir rotina explicita de estorno/cancelamento.
-- Operacoes que atualizam a conta e criam lancamento financeiro devem ser transacionais, idempotentes e protegidas contra duplicidade.
+- Operacoes que atualizam a conta, criam lancamento financeiro ou criam contrapartida de estorno devem ser transacionais, idempotentes e protegidas contra duplicidade.
+- Rotas de API de pagamento, recebimento e estorno devem usar o usuario autenticado para auditoria; `userId` enviado no payload nao deve sobrepor a sessao.
 
 ## Regras de Negocio - Contas a Pagar / Favorecidos
 

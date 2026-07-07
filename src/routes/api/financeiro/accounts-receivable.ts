@@ -47,6 +47,16 @@ function businessError(message: string, status = 400) {
   return Object.assign(new Error(message), { name: "ValidationError", status });
 }
 
+function requireAuthenticatedUserId(authenticatedUserId: string | undefined) {
+  if (!authenticatedUserId) {
+    throw Object.assign(new Error("Usuario autenticado nao identificado."), {
+      name: "ValidationError",
+      status: 401,
+    });
+  }
+  return authenticatedUserId;
+}
+
 export async function loader({ request }: RouteArgs) {
   const url = new URL(request.url);
   const id = url.searchParams.get("id");
@@ -68,12 +78,16 @@ export async function loader({ request }: RouteArgs) {
   }
 }
 
-export async function action({ request, params }: RouteArgs) {
+export async function action({ request, params, authenticatedUserId }: RouteArgs) {
   const id = params.id;
   try {
+    const actorUserId = requireAuthenticatedUserId(authenticatedUserId);
     if (request.method === "POST") {
       const body = await request.json();
-      const data = createSchema.parse(body) as CreateAccountReceivableData;
+      const data = {
+        ...(createSchema.parse(body) as CreateAccountReceivableData),
+        userId: actorUserId,
+      };
       if (data.status === "received" || data.status === "reversed") {
         throw businessError(
           "Conta a receber recebida ou estornada deve ser registrada por rotina transacional propria.",
@@ -100,7 +114,7 @@ export async function action({ request, params }: RouteArgs) {
             paymentMethod: data.paymentMethod,
             bankAccount: data.bankAccount?.trim() || null,
             notes: data.notes?.trim() || null,
-            userId: data.userId,
+            userId: actorUserId,
           })
         );
       }
@@ -116,7 +130,7 @@ export async function action({ request, params }: RouteArgs) {
             reversalDate: data.reversalDate,
             reason: data.reason.trim(),
             notes: data.notes?.trim() || null,
-            userId: data.userId,
+            userId: actorUserId,
           })
         );
       }

@@ -62,7 +62,7 @@ export async function action({ request, params }: RouteArgs) {
       const data = createSchema.parse(body) as CreateFinancialEntryData;
       if (isAccountOriginatedEntry(data.notes)) {
         throw businessError(
-          "Lancamento com origem de contas a pagar/receber deve ser criado pela rotina da conta.",
+          "Lancamento gerenciado pelo sistema deve ser criado pela rotina de origem.",
           409
         );
       }
@@ -76,7 +76,7 @@ export async function action({ request, params }: RouteArgs) {
       const currentEntry = await financialEntryRepo.findById(id!);
       if (isAccountOriginatedEntry(currentEntry.notes)) {
         throw businessError(
-          "Lancamento originado de contas a pagar/receber nao pode ser editado diretamente. Use a rotina de estorno da origem.",
+          "Lancamento gerenciado pelo sistema nao pode ser editado diretamente. Use a rotina da origem.",
           409
         );
       }
@@ -94,7 +94,7 @@ export async function action({ request, params }: RouteArgs) {
       const currentEntry = await financialEntryRepo.findById(id!);
       if (isAccountOriginatedEntry(currentEntry.notes)) {
         throw businessError(
-          "Lancamento originado de contas a pagar/receber nao pode ser excluido diretamente. Use a rotina de estorno da origem.",
+          "Lancamento gerenciado pelo sistema nao pode ser excluido diretamente. Use a rotina da origem.",
           409
         );
       }

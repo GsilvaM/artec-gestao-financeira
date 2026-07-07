@@ -150,7 +150,15 @@ describe("reverseAccountReceivableReceipt", () => {
     vi.clearAllMocks();
   });
 
-  it("marks receivable and linked financial entry as reversed in one transaction", async () => {
+  it("marks receivable as reversed and creates a reversal expense entry in one transaction", async () => {
+    const reversalEntry = {
+      ...createdFinancialEntry,
+      id: "88888888-8888-8888-8888-888888888888",
+      description: `Estorno: ${createdFinancialEntry.description}`,
+      type: "despesa",
+      date: new Date("2026-07-07T00:00:00"),
+      notes: `[originType=reversal;originId=accounts_receivable:${ACCOUNT_ID}]`,
+    };
     const tx = {
       accountReceivable: {
         findFirst: vi.fn().mockResolvedValue(receivedAccount),
@@ -160,13 +168,16 @@ describe("reverseAccountReceivableReceipt", () => {
         }),
       },
       financialEntry: {
-        findFirst: vi.fn().mockResolvedValue({
-          ...createdFinancialEntry,
-          notes: `[originType=accounts_receivable;originId=${ACCOUNT_ID}]`,
-        }),
+        findFirst: vi.fn()
+          .mockResolvedValueOnce({
+            ...createdFinancialEntry,
+            notes: `[originType=accounts_receivable;originId=${ACCOUNT_ID}]`,
+          })
+          .mockResolvedValueOnce(null),
+        create: vi.fn().mockResolvedValue(reversalEntry),
         update: vi.fn().mockResolvedValue({
           ...createdFinancialEntry,
-          status: "reversed",
+          notes: `${createdFinancialEntry.notes}\nMotivo do estorno: Recebimento incorreto`,
         }),
       },
       auditLog: {
@@ -194,9 +205,21 @@ describe("reverseAccountReceivableReceipt", () => {
     expect(tx.financialEntry.update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          status: "reversed",
           notes: expect.stringContaining(
             "Motivo do estorno: Recebimento incorreto"
+          ),
+        }),
+      })
+    );
+    expect(tx.financialEntry.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          description: `Estorno: ${createdFinancialEntry.description}`,
+          amount: createdFinancialEntry.amount,
+          type: "despesa",
+          status: "confirmed",
+          notes: expect.stringContaining(
+            `[originType=reversal;originId=accounts_receivable:${ACCOUNT_ID}]`
           ),
         }),
       })
@@ -207,11 +230,14 @@ describe("reverseAccountReceivableReceipt", () => {
           action: "account_receivable_receipt_reversed",
           metadata: expect.objectContaining({
             reason: "Recebimento incorreto",
+            reversalEntryId: reversalEntry.id,
           }),
         }),
       })
     );
     expect(result.account.status).toBe("reversed");
+    expect(result.financialEntry.status).toBe("confirmed");
+    expect(result.reversalEntry).toBe(reversalEntry);
   });
 
   it("reconstructs a missing legacy financial entry before reversing it", async () => {
@@ -236,7 +262,7 @@ describe("reverseAccountReceivableReceipt", () => {
         create: vi.fn().mockResolvedValue(reconstructedEntry),
         update: vi.fn().mockResolvedValue({
           ...reconstructedEntry,
-          status: "reversed",
+          notes: `${reconstructedEntry.notes}\nMotivo do estorno: Recebimento legado incorreto`,
         }),
       },
       auditLog: {
@@ -267,7 +293,20 @@ describe("reverseAccountReceivableReceipt", () => {
     expect(tx.financialEntry.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: reconstructedEntry.id },
-        data: expect.objectContaining({ status: "reversed" }),
+        data: expect.objectContaining({
+          notes: expect.stringContaining("Motivo do estorno: Recebimento legado incorreto"),
+        }),
+      })
+    );
+    expect(tx.financialEntry.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          type: "despesa",
+          status: "confirmed",
+          notes: expect.stringContaining(
+            `[originType=reversal;originId=accounts_receivable:${ACCOUNT_ID}]`
+          ),
+        }),
       })
     );
     expect(tx.auditLog.create).toHaveBeenCalledWith(
@@ -332,5 +371,65 @@ describe("reverseAccountReceivableReceipt", () => {
     );
     expect(result.account.status).toBe("reversed");
     expect(result.financialEntry).toBe(reversedEntry);
+  });
+
+  it("reconciles a received account when a reversal entry already exists", async () => {
+    const reversalEntry = {
+      ...createdFinancialEntry,
+      id: "99999999-9999-9999-9999-999999999999",
+      type: "despesa",
+      notes: `[originType=reversal;originId=accounts_receivable:${ACCOUNT_ID}]`,
+    };
+    const tx = {
+      accountReceivable: {
+        findFirst: vi.fn().mockResolvedValue(receivedAccount),
+        update: vi.fn().mockResolvedValue({
+          ...receivedAccount,
+          status: "reversed",
+        }),
+      },
+      financialEntry: {
+        findFirst: vi.fn()
+          .mockResolvedValueOnce({
+            ...createdFinancialEntry,
+            notes: `[originType=accounts_receivable;originId=${ACCOUNT_ID}]`,
+          })
+          .mockResolvedValueOnce(reversalEntry),
+        create: vi.fn(),
+        update: vi.fn(),
+      },
+      auditLog: {
+        create: vi.fn().mockResolvedValue({ id: "audit-id" }),
+      },
+    };
+
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) =>
+      callback(tx as unknown as Parameters<typeof callback>[0])
+    );
+
+    const result = await reverseAccountReceivableReceipt(ACCOUNT_ID, {
+      reversalDate: new Date("2026-07-07T00:00:00"),
+      reason: "Finalizar estorno parcial",
+      userId: USER_ID,
+    });
+
+    expect(tx.accountReceivable.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: { status: "reversed" },
+      })
+    );
+    expect(tx.financialEntry.create).not.toHaveBeenCalled();
+    expect(tx.financialEntry.update).not.toHaveBeenCalled();
+    expect(tx.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          action: "account_receivable_reconciled_after_reversal_entry",
+        }),
+      })
+    );
+    expect(result.financialEntry.notes).toContain(
+      `[originType=accounts_receivable;originId=${ACCOUNT_ID}]`
+    );
+    expect(result.reversalEntry).toBe(reversalEntry);
   });
 });

@@ -21,8 +21,13 @@ export function hasOriginMarker(notes: string | null | undefined) {
 export function isAccountOriginatedEntry(notes: string | null | undefined) {
   return (
     notes?.includes(`[originType=${FINANCIAL_ORIGINS.ACCOUNTS_PAYABLE};`) ||
-    notes?.includes(`[originType=${FINANCIAL_ORIGINS.ACCOUNTS_RECEIVABLE};`)
+    notes?.includes(`[originType=${FINANCIAL_ORIGINS.ACCOUNTS_RECEIVABLE};`) ||
+    notes?.includes(`[originType=${FINANCIAL_ORIGINS.REVERSAL};`)
   );
+}
+
+export function reversalOriginMarker(originType: FinancialOrigin, originId: string) {
+  return originMarker(FINANCIAL_ORIGINS.REVERSAL, `${originType}:${originId}`);
 }
 
 export function appendMetadata(

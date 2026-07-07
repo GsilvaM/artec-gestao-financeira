@@ -829,7 +829,8 @@ describe("accounts payable route module", () => {
   it("estorna pagamento via servico transacional", async () => {
     vi.mocked(reverseAccountPayablePayment).mockResolvedValue({
       account: { ...MOCK_PAYABLE, status: "reversed" },
-      financialEntry: { ...MOCK_ENTRY, status: "reversed" },
+      financialEntry: MOCK_ENTRY,
+      reversalEntry: { ...MOCK_ENTRY, type: "receita" },
       message: "Pagamento estornado com sucesso.",
     } as never);
     const request = new Request(
@@ -864,7 +865,8 @@ describe("accounts payable route module", () => {
   it("usa usuario autenticado na auditoria de estorno mesmo quando payload tenta outro userId", async () => {
     vi.mocked(reverseAccountPayablePayment).mockResolvedValue({
       account: { ...MOCK_PAYABLE, status: "reversed" },
-      financialEntry: { ...MOCK_ENTRY, status: "reversed" },
+      financialEntry: MOCK_ENTRY,
+      reversalEntry: { ...MOCK_ENTRY, type: "receita" },
       message: "Pagamento estornado com sucesso.",
     } as never);
     const request = new Request(
@@ -928,6 +930,7 @@ describe("accounts receivable route module", () => {
     const response = await accountsReceivable.action({
       request,
       params: { id: "33333333-3333-3333-3333-333333333333" },
+      authenticatedUserId: AUTHENTICATED_USER_ID,
     });
 
     expect(response.status).toBe(200);
@@ -937,6 +940,7 @@ describe("accounts receivable route module", () => {
         receivedAmount: 450,
         paymentMethod: "pix",
         bankAccount: "Banco teste",
+        userId: AUTHENTICATED_USER_ID,
       })
     );
   });
@@ -962,6 +966,7 @@ describe("accounts receivable route module", () => {
     const response = await accountsReceivable.action({
       request,
       params: {},
+      authenticatedUserId: AUTHENTICATED_USER_ID,
     });
 
     expect(response.status).toBe(409);
@@ -1001,6 +1006,7 @@ describe("accounts receivable route module", () => {
     const response = await accountsReceivable.action({
       request,
       params: { id: "33333333-3333-3333-3333-333333333333" },
+      authenticatedUserId: AUTHENTICATED_USER_ID,
     });
 
     expect(response.status).toBe(409);
@@ -1024,6 +1030,7 @@ describe("accounts receivable route module", () => {
     const response = await accountsReceivable.action({
       request,
       params: { id: "33333333-3333-3333-3333-333333333333" },
+      authenticatedUserId: AUTHENTICATED_USER_ID,
     });
 
     expect(response.status).toBe(409);
@@ -1044,6 +1051,7 @@ describe("accounts receivable route module", () => {
     const response = await accountsReceivable.action({
       request,
       params: { id: "33333333-3333-3333-3333-333333333333" },
+      authenticatedUserId: AUTHENTICATED_USER_ID,
     });
 
     expect(response.status).toBe(409);
@@ -1053,7 +1061,8 @@ describe("accounts receivable route module", () => {
   it("reverses receipt via transactional service", async () => {
     vi.mocked(reverseAccountReceivableReceipt).mockResolvedValue({
       account: { ...MOCK_RECEIVABLE, status: "reversed" },
-      financialEntry: { ...MOCK_ENTRY, status: "reversed" },
+      financialEntry: MOCK_ENTRY,
+      reversalEntry: { ...MOCK_ENTRY, type: "despesa" },
       message: "Recebimento estornado com sucesso.",
     } as never);
     const request = new Request(
@@ -1072,6 +1081,7 @@ describe("accounts receivable route module", () => {
     const response = await accountsReceivable.action({
       request,
       params: { id: "33333333-3333-3333-3333-333333333333" },
+      authenticatedUserId: AUTHENTICATED_USER_ID,
     });
 
     expect(response.status).toBe(200);
@@ -1079,6 +1089,7 @@ describe("accounts receivable route module", () => {
       "33333333-3333-3333-3333-333333333333",
       expect.objectContaining({
         reason: "Recebimento incorreto",
+        userId: AUTHENTICATED_USER_ID,
       })
     );
   });
