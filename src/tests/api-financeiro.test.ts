@@ -9,6 +9,7 @@ import * as entries from "@/routes/api/financeiro/entries";
 import * as accountsPayable from "@/routes/api/financeiro/accounts-payable";
 import * as accountsReceivable from "@/routes/api/financeiro/accounts-receivable";
 import * as categories from "@/routes/api/financeiro/categories";
+import * as beneficiaries from "@/routes/api/financeiro/beneficiaries";
 
 vi.mock("@/server/financeiro/repositories.js", () => ({
   financialEntryRepo: {
@@ -71,6 +72,10 @@ vi.mock("@/server/financeiro/accounts-receivable-service.js", () => ({
   reverseAccountReceivableReceipt: vi.fn(),
 }));
 
+vi.mock("@/server/financeiro/beneficiaries-service.js", () => ({
+  searchBeneficiaries: vi.fn(),
+}));
+
 import {
   financialEntryRepo,
   categoryRepo,
@@ -83,6 +88,7 @@ import {
   reverseAccountReceivableReceipt,
 } from "@/server/financeiro/accounts-receivable-service.js";
 import { reverseAccountPayablePayment } from "@/server/financeiro/accounts-payable-service.js";
+import { searchBeneficiaries } from "@/server/financeiro/beneficiaries-service.js";
 
 const MOCK_ENTRY = {
   id: "11111111-1111-1111-1111-111111111111",
@@ -122,6 +128,9 @@ const MOCK_CATEGORY = {
   updatedAt: new Date("2026-06-10"),
   deletedAt: null,
 };
+
+const AUTHENTICATED_USER_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+const IMPERSONATED_USER_ID = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
 
 const MOCK_PAYABLE = {
   id: "22222222-2222-2222-2222-222222222222",
@@ -396,9 +405,88 @@ describe("categories route module", () => {
   });
 });
 
+describe("beneficiaries route module", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("retorna busca paginada de favorecidos", async () => {
+    vi.mocked(searchBeneficiaries).mockResolvedValue({
+      items: [
+        {
+          id: "00000000-0000-0000-0000-000000000003",
+          name: "Maria Teste",
+          type: "collaborator",
+        },
+      ],
+      pagination: {
+        page: 1,
+        pageSize: 20,
+        total: 1,
+        totalPages: 1,
+      },
+    });
+
+    const request = new Request(
+      "http://localhost/api/financeiro/beneficiaries?type=collaborator&q=maria&page=1&pageSize=20"
+    );
+    const response = await beneficiaries.loader({ request, params: {} });
+
+    expect(response.status).toBe(200);
+    expect(searchBeneficiaries).toHaveBeenCalledWith({
+      type: "collaborator",
+      q: "maria",
+      page: 1,
+      pageSize: 20,
+    });
+    await expect(response.json()).resolves.toMatchObject({
+      items: [{ name: "Maria Teste", type: "collaborator" }],
+      pagination: { total: 1 },
+    });
+  });
+});
+
 describe("accounts payable route module", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it("usa usuario autenticado na auditoria de criacao mesmo quando payload tenta outro userId", async () => {
+    vi.mocked(accountPayableRepo.create).mockResolvedValue({
+      ...MOCK_PAYABLE,
+      status: "pending",
+      paidDate: null,
+    } as never);
+    const request = new Request(
+      "http://localhost/api/financeiro/accounts-payable",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          description: "Conta fornecedor",
+          amount: 300,
+          dueDate: "2026-07-06",
+          categoryId: "00000000-0000-0000-0000-000000000001",
+          beneficiaryType: "supplier",
+          supplier: "Fornecedor teste",
+          userId: IMPERSONATED_USER_ID,
+        }),
+      }
+    );
+
+    const response = await accountsPayable.action({
+      request,
+      params: {},
+      authenticatedUserId: AUTHENTICATED_USER_ID,
+    });
+
+    expect(response.status).toBe(201);
+    expect(accountPayableRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: AUTHENTICATED_USER_ID })
+    );
+    expect(accountPayableRepo.create).not.toHaveBeenCalledWith(
+      expect.objectContaining({ userId: IMPERSONATED_USER_ID })
+    );
   });
 
   it("registra pagamento via serviço transacional", async () => {
@@ -425,6 +513,7 @@ describe("accounts payable route module", () => {
     const response = await accountsPayable.action({
       request,
       params: { id: "22222222-2222-2222-2222-222222222222" },
+      authenticatedUserId: AUTHENTICATED_USER_ID,
     });
 
     expect(response.status).toBe(200);
@@ -434,6 +523,49 @@ describe("accounts payable route module", () => {
         paidAmount: 300,
         paymentMethod: "pix",
         bankAccount: "Banco teste",
+        userId: AUTHENTICATED_USER_ID,
+      })
+    );
+  });
+
+  it("usa usuario autenticado na auditoria mesmo quando payload tenta outro userId", async () => {
+    vi.mocked(payAccountPayable).mockResolvedValue({
+      account: MOCK_PAYABLE,
+      financialEntry: MOCK_ENTRY,
+      message: "Pagamento registrado com sucesso.",
+    } as never);
+    const request = new Request(
+      "http://localhost/api/financeiro/accounts-payable/22222222-2222-2222-2222-222222222222",
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: "paid",
+          paymentDate: "2026-07-06",
+          paidAmount: 300,
+          paymentMethod: "pix",
+          userId: IMPERSONATED_USER_ID,
+        }),
+      }
+    );
+
+    const response = await accountsPayable.action({
+      request,
+      params: { id: "22222222-2222-2222-2222-222222222222" },
+      authenticatedUserId: AUTHENTICATED_USER_ID,
+    });
+
+    expect(response.status).toBe(200);
+    expect(payAccountPayable).toHaveBeenCalledWith(
+      "22222222-2222-2222-2222-222222222222",
+      expect.objectContaining({
+        userId: AUTHENTICATED_USER_ID,
+      })
+    );
+    expect(payAccountPayable).not.toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        userId: IMPERSONATED_USER_ID,
       })
     );
   });
@@ -467,6 +599,7 @@ describe("accounts payable route module", () => {
     const response = await accountsPayable.action({
       request,
       params: { id: "22222222-2222-2222-2222-222222222222" },
+      authenticatedUserId: AUTHENTICATED_USER_ID,
     });
 
     expect(response.status).toBe(409);
@@ -493,6 +626,7 @@ describe("accounts payable route module", () => {
     const response = await accountsPayable.action({
       request,
       params: { id: "22222222-2222-2222-2222-222222222222" },
+      authenticatedUserId: AUTHENTICATED_USER_ID,
     });
 
     expect(response.status).toBe(409);
@@ -500,6 +634,171 @@ describe("accounts payable route module", () => {
     await expect(response.json()).resolves.toMatchObject({
       error:
         "Conta paga ou estornada nao pode ser editada diretamente.",
+    });
+  });
+
+  it("bloqueia edicao direta de conta ja estornada", async () => {
+    vi.mocked(accountPayableRepo.findById).mockResolvedValue(
+      { ...MOCK_PAYABLE, status: "reversed" } as never
+    );
+    const request = new Request(
+      "http://localhost/api/financeiro/accounts-payable/22222222-2222-2222-2222-222222222222",
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          description: "Fornecedor alterado",
+        }),
+      }
+    );
+
+    const response = await accountsPayable.action({
+      request,
+      params: { id: "22222222-2222-2222-2222-222222222222" },
+      authenticatedUserId: AUTHENTICATED_USER_ID,
+    });
+
+    expect(response.status).toBe(409);
+    expect(accountPayableRepo.update).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toMatchObject({
+      error:
+        "Conta paga ou estornada nao pode ser editada diretamente.",
+    });
+  });
+
+  it("retorna 422 quando colaborador favorecido nao existe", async () => {
+    vi.mocked(accountPayableRepo.create).mockRejectedValue(
+      Object.assign(
+        new Error("Selecione um colaborador ativo para a conta a pagar."),
+        {
+          name: "ValidationError",
+          status: 422,
+        }
+      )
+    );
+    const request = new Request(
+      "http://localhost/api/financeiro/accounts-payable",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          description: "Conta colaborador inexistente",
+          amount: 300,
+          dueDate: "2026-07-06",
+          categoryId: "00000000-0000-0000-0000-000000000001",
+          beneficiaryType: "collaborator",
+          beneficiaryId: "00000000-0000-0000-0000-000000000999",
+          userId: "00000000-0000-0000-0000-000000000002",
+        }),
+      }
+    );
+
+    const response = await accountsPayable.action({
+      request,
+      params: {},
+      authenticatedUserId: AUTHENTICATED_USER_ID,
+    });
+
+    expect(response.status).toBe(422);
+    expect(accountPayableRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: AUTHENTICATED_USER_ID })
+    );
+    await expect(response.json()).resolves.toMatchObject({
+      error: "Selecione um colaborador ativo para a conta a pagar.",
+    });
+  });
+
+  it("usa usuario autenticado na auditoria de update e troca de favorecido", async () => {
+    vi.mocked(accountPayableRepo.findById).mockResolvedValue(
+      { ...MOCK_PAYABLE, status: "pending", paidDate: null } as never
+    );
+    vi.mocked(accountPayableRepo.update).mockResolvedValue({
+      ...MOCK_PAYABLE,
+      status: "pending",
+      paidDate: null,
+      beneficiaryType: "collaborator",
+      beneficiaryId: "00000000-0000-0000-0000-000000000003",
+      beneficiaryName: "Maria Teste",
+      supplier: null,
+    } as never);
+    const request = new Request(
+      "http://localhost/api/financeiro/accounts-payable/22222222-2222-2222-2222-222222222222",
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          beneficiaryType: "collaborator",
+          beneficiaryId: "00000000-0000-0000-0000-000000000003",
+          userId: IMPERSONATED_USER_ID,
+        }),
+      }
+    );
+
+    const response = await accountsPayable.action({
+      request,
+      params: { id: "22222222-2222-2222-2222-222222222222" },
+      authenticatedUserId: AUTHENTICATED_USER_ID,
+    });
+
+    expect(response.status).toBe(200);
+    expect(accountPayableRepo.update).toHaveBeenCalledWith(
+      "22222222-2222-2222-2222-222222222222",
+      expect.objectContaining({
+        beneficiaryType: "collaborator",
+        beneficiaryId: "00000000-0000-0000-0000-000000000003",
+        userId: AUTHENTICATED_USER_ID,
+      })
+    );
+    expect(accountPayableRepo.update).not.toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ userId: IMPERSONATED_USER_ID })
+    );
+  });
+
+  it("retorna 409 quando updatedAt esperado esta obsoleto", async () => {
+    vi.mocked(accountPayableRepo.findById).mockResolvedValue(
+      { ...MOCK_PAYABLE, status: "pending", paidDate: null } as never
+    );
+    vi.mocked(accountPayableRepo.update).mockRejectedValue(
+      Object.assign(
+        new Error(
+          "Conta a pagar foi alterada por outro usuario. Recarregue os dados antes de salvar."
+        ),
+        {
+          name: "ValidationError",
+          status: 409,
+        }
+      )
+    );
+    const request = new Request(
+      "http://localhost/api/financeiro/accounts-payable/22222222-2222-2222-2222-222222222222",
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          description: "Conta concorrente",
+          expectedUpdatedAt: "2026-07-05T00:00:00.000Z",
+        }),
+      }
+    );
+
+    const response = await accountsPayable.action({
+      request,
+      params: { id: "22222222-2222-2222-2222-222222222222" },
+      authenticatedUserId: AUTHENTICATED_USER_ID,
+    });
+
+    expect(response.status).toBe(409);
+    expect(accountPayableRepo.update).toHaveBeenCalledWith(
+      "22222222-2222-2222-2222-222222222222",
+      expect.objectContaining({
+        expectedUpdatedAt: new Date("2026-07-05T00:00:00.000Z"),
+        userId: AUTHENTICATED_USER_ID,
+      })
+    );
+    await expect(response.json()).resolves.toMatchObject({
+      error:
+        "Conta a pagar foi alterada por outro usuario. Recarregue os dados antes de salvar.",
     });
   });
 
@@ -517,6 +816,7 @@ describe("accounts payable route module", () => {
     const response = await accountsPayable.action({
       request,
       params: { id: "22222222-2222-2222-2222-222222222222" },
+      authenticatedUserId: AUTHENTICATED_USER_ID,
     });
 
     expect(response.status).toBe(409);
@@ -548,6 +848,7 @@ describe("accounts payable route module", () => {
     const response = await accountsPayable.action({
       request,
       params: { id: "22222222-2222-2222-2222-222222222222" },
+      authenticatedUserId: AUTHENTICATED_USER_ID,
     });
 
     expect(response.status).toBe(200);
@@ -555,7 +856,45 @@ describe("accounts payable route module", () => {
       "22222222-2222-2222-2222-222222222222",
       expect.objectContaining({
         reason: "Lancamento incorreto",
+        userId: AUTHENTICATED_USER_ID,
       })
+    );
+  });
+
+  it("usa usuario autenticado na auditoria de estorno mesmo quando payload tenta outro userId", async () => {
+    vi.mocked(reverseAccountPayablePayment).mockResolvedValue({
+      account: { ...MOCK_PAYABLE, status: "reversed" },
+      financialEntry: { ...MOCK_ENTRY, status: "reversed" },
+      message: "Pagamento estornado com sucesso.",
+    } as never);
+    const request = new Request(
+      "http://localhost/api/financeiro/accounts-payable/22222222-2222-2222-2222-222222222222",
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: "reversed",
+          reversalDate: "2026-07-07",
+          reason: "Lancamento incorreto",
+          userId: IMPERSONATED_USER_ID,
+        }),
+      }
+    );
+
+    const response = await accountsPayable.action({
+      request,
+      params: { id: "22222222-2222-2222-2222-222222222222" },
+      authenticatedUserId: AUTHENTICATED_USER_ID,
+    });
+
+    expect(response.status).toBe(200);
+    expect(reverseAccountPayablePayment).toHaveBeenCalledWith(
+      "22222222-2222-2222-2222-222222222222",
+      expect.objectContaining({ userId: AUTHENTICATED_USER_ID })
+    );
+    expect(reverseAccountPayablePayment).not.toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ userId: IMPERSONATED_USER_ID })
     );
   });
 });

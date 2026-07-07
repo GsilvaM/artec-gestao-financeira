@@ -1,5 +1,6 @@
-﻿import { useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import type { KeyboardEvent } from "react";
 import {
   AlertTriangle,
   Banknote,
@@ -55,6 +56,7 @@ import {
 } from "@/components/ui/table";
 import {
   useAccountsPayable,
+  useBeneficiarySearch,
   useCreateAccountPayable,
   useUpdateAccountPayable,
   useDeleteAccountPayable,
@@ -62,7 +64,6 @@ import {
   useReverseAccountPayablePayment,
 } from "@/domain/financeiro/hooks/use-accounts";
 import { useCategories } from "@/domain/financeiro/hooks/use-categories";
-import { useCollaborators } from "@/domain/financeiro/hooks/use-collaborators";
 import { useCostCenters } from "@/domain/financeiro/hooks/use-cost-centers";
 import { useAuthStore } from "@/lib/supabase/auth-store";
 import {
@@ -75,7 +76,6 @@ import type {
   AccountPayableBeneficiaryType,
   AccountPayableFilters,
   AccountPayableRow,
-  CollaboratorRow,
 } from "@/domain/financeiro/types";
 
 const AP_STATUS_MAP: Record<string, string> = {
@@ -142,19 +142,22 @@ function getBeneficiaryTypeLabel(type: AccountPayableBeneficiaryType) {
   return type === "collaborator" ? "Colaborador" : "Fornecedor";
 }
 
-function findCollaboratorByName(
-  collaborators: CollaboratorRow[],
-  name: string
-) {
-  const normalized = name.trim().toLocaleLowerCase();
-  return collaborators.find(
-    (collaborator) => collaborator.name.toLocaleLowerCase() === normalized
-  );
+function useDebouncedValue(value: string, delay = 300) {
+  const [debounced, setDebounced] = useState(value);
+
+  useEffect(() => {
+    if (debounced === value) return;
+    const timer = window.setTimeout(() => setDebounced(value), delay);
+    return () => window.clearTimeout(timer);
+  }, [debounced, delay, value]);
+
+  return debounced;
 }
 
 export function Component() {
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingUpdatedAt, setEditingUpdatedAt] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
@@ -162,7 +165,10 @@ export function Component() {
   const [beneficiaryType, setBeneficiaryType] =
     useState<AccountPayableBeneficiaryType>("supplier");
   const [beneficiaryId, setBeneficiaryId] = useState("");
+  const [beneficiaryError, setBeneficiaryError] = useState("");
   const [collaboratorSearch, setCollaboratorSearch] = useState("");
+  const [activeCollaboratorIndex, setActiveCollaboratorIndex] = useState(0);
+  const [selectedCollaboratorName, setSelectedCollaboratorName] = useState("");
   const [supplier, setSupplier] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [costCenterId, setCostCenterId] = useState("");
@@ -202,7 +208,6 @@ export function Component() {
   const user = useAuthStore((state) => state.user);
   const { data: entries, isLoading } = useAccountsPayable(filters);
   const { data: categories } = useCategories();
-  const { data: collaborators } = useCollaborators();
   const { data: costCenters } = useCostCenters();
   const { mutateAsync: createEntry, isPending: creating } =
     useCreateAccountPayable();
@@ -216,26 +221,26 @@ export function Component() {
 
   const isEditing = !!editingId;
   const isWorking = creating || updating;
-  const activeCollaborators = collaborators ?? [];
-  const selectedCollaborator =
-    activeCollaborators.find((collaborator) => collaborator.id === beneficiaryId) ??
-    findCollaboratorByName(activeCollaborators, collaboratorSearch);
-  const datalistCollaborators =
-    isEditing && beneficiaryType === "collaborator" && beneficiaryId && !selectedCollaborator
-      ? [
-          ...activeCollaborators,
-          {
-            id: beneficiaryId,
-            name: collaboratorSearch,
-            email: null,
-            phone: null,
-            role: null,
-            active: false,
-            createdAt: "",
-            updatedAt: "",
-          } as CollaboratorRow,
-        ]
-      : activeCollaborators;
+  const debouncedCollaboratorSearch = useDebouncedValue(collaboratorSearch);
+  const hasCollaboratorSearch = debouncedCollaboratorSearch.trim().length > 0;
+  const collaboratorSearchQuery = useBeneficiarySearch({
+    type: "collaborator",
+    q: debouncedCollaboratorSearch,
+    page: 1,
+    pageSize: 20,
+    enabled:
+      beneficiaryType === "collaborator" &&
+      !beneficiaryId &&
+      hasCollaboratorSearch,
+  });
+  const collaboratorOptions = collaboratorSearchQuery.data?.items ?? [];
+  const selectedCollaborator = beneficiaryId
+    ? { id: beneficiaryId, name: selectedCollaboratorName || collaboratorSearch }
+    : null;
+
+  useEffect(() => {
+    setActiveCollaboratorIndex((index) => (index === 0 ? index : 0));
+  }, [debouncedCollaboratorSearch, collaboratorOptions.length]);
 
   function resetForm() {
     setDescription("");
@@ -243,13 +248,17 @@ export function Component() {
     setDueDate("");
     setBeneficiaryType("supplier");
     setBeneficiaryId("");
+    setBeneficiaryError("");
     setCollaboratorSearch("");
+    setSelectedCollaboratorName("");
     setSupplier("");
     setCategoryId("");
     setCostCenterId("");
     setNotes("");
     setStatus("pending");
     setEditingId(null);
+    setEditingUpdatedAt(null);
+    setActiveCollaboratorIndex(0);
   }
 
   function handleEdit(entry: AccountPayableRow) {
@@ -264,7 +273,11 @@ export function Component() {
     setDueDate(getDateInputValue(entry.dueDate));
     setBeneficiaryType(entry.beneficiaryType);
     setBeneficiaryId(entry.beneficiaryId ?? "");
+    setBeneficiaryError("");
     setCollaboratorSearch(
+      entry.beneficiaryType === "collaborator" ? getBeneficiaryLabel(entry) : ""
+    );
+    setSelectedCollaboratorName(
       entry.beneficiaryType === "collaborator" ? getBeneficiaryLabel(entry) : ""
     );
     setSupplier(
@@ -275,7 +288,55 @@ export function Component() {
     setNotes(entry.notes ?? "");
     setStatus(entry.status);
     setEditingId(entry.id);
+    setEditingUpdatedAt(entry.updatedAt);
     setOpen(true);
+  }
+
+  function selectCollaborator(collaborator: { id: string; name: string }) {
+    setBeneficiaryId(collaborator.id);
+    setBeneficiaryError("");
+    setSelectedCollaboratorName(collaborator.name);
+    setCollaboratorSearch(collaborator.name);
+    setActiveCollaboratorIndex(0);
+  }
+
+  function handleCollaboratorKeyDown(
+    event: KeyboardEvent<HTMLInputElement>
+  ) {
+    if (selectedCollaborator || !collaboratorOptions.length) {
+      if (event.key === "Escape") {
+        setBeneficiaryId("");
+        setSelectedCollaboratorName("");
+        setCollaboratorSearch("");
+      }
+      return;
+    }
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setActiveCollaboratorIndex((index) =>
+        Math.min(index + 1, collaboratorOptions.length - 1)
+      );
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setActiveCollaboratorIndex((index) => Math.max(index - 1, 0));
+      return;
+    }
+
+    if (event.key === "Enter") {
+      event.preventDefault();
+      selectCollaborator(collaboratorOptions[activeCollaboratorIndex]!);
+      return;
+    }
+
+    if (event.key === "Escape") {
+      event.preventDefault();
+      setCollaboratorSearch("");
+      setActiveCollaboratorIndex(0);
+    }
   }
 
   function handleDelete(entry: AccountPayableRow) {
@@ -370,13 +431,18 @@ export function Component() {
       return;
     }
     if (beneficiaryType === "supplier" && !supplier.trim()) {
+      setBeneficiaryError("Informe o nome do fornecedor.");
       toast.error("Informe o fornecedor");
       return;
     }
     if (beneficiaryType === "collaborator" && !selectedCollaborator) {
+      setBeneficiaryError(
+        "Selecione um colaborador ativo da lista antes de salvar."
+      );
       toast.error("Selecione um colaborador ativo da lista");
       return;
     }
+    setBeneficiaryError("");
     if (!user) {
       toast.error("Usuário não autenticado");
       return;
@@ -402,6 +468,9 @@ export function Component() {
         supplier: beneficiaryType === "supplier" ? supplier.trim() : undefined,
         notes: notes.trim() || undefined,
         userId: user.id,
+        ...(editingId && editingUpdatedAt
+          ? { expectedUpdatedAt: editingUpdatedAt }
+          : {}),
       };
       if (editingId) {
         if (status === "paid") {
@@ -684,7 +753,13 @@ export function Component() {
                           {getBeneficiaryLabel(entry)}
                         </span>
                         <span className="text-muted-foreground text-xs">
-                          {getBeneficiaryTypeLabel(entry.beneficiaryType)}
+                          <span
+                            aria-label={`Tipo do favorecido: ${getBeneficiaryTypeLabel(
+                              entry.beneficiaryType
+                            )}`}
+                          >
+                            {getBeneficiaryTypeLabel(entry.beneficiaryType)}
+                          </span>
                         </span>
                       </div>
                     </TableCell>
@@ -824,7 +899,9 @@ export function Component() {
                     .value as AccountPayableBeneficiaryType;
                   setBeneficiaryType(nextType);
                   setBeneficiaryId("");
+                  setBeneficiaryError("");
                   setCollaboratorSearch("");
+                  setSelectedCollaboratorName("");
                   setSupplier("");
                 }}
                 options={[
@@ -834,34 +911,131 @@ export function Component() {
               />
             </Field>
             {beneficiaryType === "supplier" ? (
-              <Field label="Fornecedor">
+              <Field label="Fornecedor" error={beneficiaryError}>
                 <Input
                   value={supplier}
-                  onChange={(e) => setSupplier(e.target.value)}
+                  onChange={(e) => {
+                    setSupplier(e.target.value);
+                    setBeneficiaryError("");
+                  }}
                   placeholder="Nome do fornecedor"
                 />
               </Field>
             ) : (
               <Field label="Selecionar colaborador">
-                <Input
-                  list="account-payable-collaborators"
-                  value={collaboratorSearch}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    const collaborator = findCollaboratorByName(
-                      datalistCollaborators,
-                      value
-                    );
-                    setCollaboratorSearch(value);
-                    setBeneficiaryId(collaborator?.id ?? "");
-                  }}
-                  placeholder="Pesquisar por nome"
-                />
-                <datalist id="account-payable-collaborators">
-                  {datalistCollaborators.map((collaborator) => (
-                    <option key={collaborator.id} value={collaborator.name} />
-                  ))}
-                </datalist>
+                <div className="space-y-2">
+                  <Input
+                    value={collaboratorSearch}
+                    onChange={(e) => {
+                      setCollaboratorSearch(e.target.value);
+                      setBeneficiaryId("");
+                      setBeneficiaryError("");
+                      setSelectedCollaboratorName("");
+                    }}
+                    onKeyDown={handleCollaboratorKeyDown}
+                    placeholder="Digite para buscar um colaborador"
+                    aria-describedby={
+                      beneficiaryError
+                        ? "account-payable-collaborator-status account-payable-beneficiary-error"
+                        : "account-payable-collaborator-status"
+                    }
+                    aria-invalid={Boolean(beneficiaryError)}
+                    aria-autocomplete="list"
+                    aria-controls="account-payable-collaborator-options"
+                    aria-expanded={
+                      !selectedCollaborator && collaboratorOptions.length > 0
+                    }
+                    role="combobox"
+                  />
+                  <div
+                    id="account-payable-collaborator-status"
+                    className="rounded-[var(--radius-field)] border border-border bg-surface-soft p-2"
+                  >
+                    {selectedCollaborator ? (
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-bold text-foreground">
+                            {selectedCollaborator.name}
+                          </p>
+                          <p className="text-xs font-semibold text-muted-foreground">
+                            Colaborador selecionado
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setBeneficiaryId("");
+                            setBeneficiaryError("");
+                            setSelectedCollaboratorName("");
+                            setCollaboratorSearch("");
+                            setActiveCollaboratorIndex(0);
+                          }}
+                        >
+                          Trocar
+                        </Button>
+                      </div>
+                    ) : !collaboratorSearch.trim() ? (
+                      <p className="py-1 text-xs font-semibold text-muted-foreground">
+                        Digite para buscar um colaborador.
+                      </p>
+                    ) : collaboratorSearchQuery.isLoading ? (
+                      <div className="space-y-2 py-1">
+                        <div className="h-4 w-40 animate-pulse rounded-full bg-surface-muted" />
+                        <div className="h-4 w-28 animate-pulse rounded-full bg-surface-muted" />
+                      </div>
+                    ) : collaboratorSearchQuery.isError ? (
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs font-semibold text-destructive">
+                          Não foi possível buscar colaboradores. Tente novamente.
+                        </p>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => void collaboratorSearchQuery.refetch()}
+                        >
+                          Tentar novamente
+                        </Button>
+                      </div>
+                    ) : collaboratorOptions.length ? (
+                      <div
+                        id="account-payable-collaborator-options"
+                        className="grid gap-1"
+                        role="listbox"
+                        aria-label="Colaboradores encontrados"
+                      >
+                        {collaboratorOptions.map((collaborator, index) => (
+                          <button
+                            key={collaborator.id}
+                            type="button"
+                            role="option"
+                            aria-selected={index === activeCollaboratorIndex}
+                            className="inline-flex min-h-10 w-full items-center justify-start gap-2 rounded-[var(--radius-field)] px-3 text-left text-sm font-bold leading-none text-foreground transition hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 aria-selected:bg-surface aria-selected:ring-1 aria-selected:ring-primary/30"
+                            onMouseEnter={() => setActiveCollaboratorIndex(index)}
+                            onClick={() => selectCollaborator(collaborator)}
+                          >
+                            <span className="truncate">{collaborator.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="py-1 text-xs font-semibold text-muted-foreground">
+                        Nenhum colaborador ativo encontrado com esse nome.
+                      </p>
+                    )}
+                  </div>
+                  {beneficiaryError ? (
+                    <p
+                      id="account-payable-beneficiary-error"
+                      className="min-h-4 text-xs font-semibold leading-4 text-destructive"
+                      role="alert"
+                    >
+                      {beneficiaryError}
+                    </p>
+                  ) : null}
+                </div>
               </Field>
             )}
             <Field label="Valor">
@@ -1199,6 +1373,11 @@ function AccountPayableMobileList({
               </p>
               <p className="text-text-secondary mt-1 text-xs">
                 {getBeneficiaryLabel(entry)}
+                <span className="sr-only">
+                  {`Tipo do favorecido: ${getBeneficiaryTypeLabel(
+                    entry.beneficiaryType
+                  )}`}
+                </span>
               </p>
               <p className="text-muted-foreground mt-1 text-xs">
                 {getDueHelper(entry, todayKey)}

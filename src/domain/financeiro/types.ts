@@ -26,7 +26,9 @@ export type FinancialEntryCreate = z.infer<typeof financialEntrySchema>;
 export type FinancialEntryUpdate = z.infer<typeof financialEntryUpdateSchema>;
 
 export type AccountPayableCreate = z.infer<typeof accountPayableSchema>;
-export type AccountPayableUpdate = z.infer<typeof accountPayableUpdateSchema>;
+export type AccountPayableUpdate = z.infer<typeof accountPayableUpdateSchema> & {
+  expectedUpdatedAt?: Date | string;
+};
 
 export type AccountReceivableCreate = z.infer<typeof accountReceivableSchema>;
 export type AccountReceivableUpdate = z.infer<typeof accountReceivableUpdateSchema>;
@@ -46,6 +48,22 @@ export type CategoryFilters = z.infer<typeof categoryFilterSchema>;
 export type CostCenterFilters = z.infer<typeof costCenterFilterSchema>;
 export type CollaboratorFilters = z.infer<typeof collaboratorFilterSchema>;
 export type AccountPayableBeneficiaryType = 'supplier' | 'collaborator';
+
+export interface BeneficiarySearchItem {
+  id: string;
+  name: string;
+  type: AccountPayableBeneficiaryType;
+}
+
+export interface BeneficiarySearchResult {
+  items: BeneficiarySearchItem[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+  };
+}
 
 // ── Row / query result types ─────────────────────────────────────────
 

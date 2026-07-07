@@ -40,6 +40,16 @@ Contas a Pagar e Contas a Receber representam obrigacoes/previsoes futuras.
 - Conta ja paga/recebida nao deve voltar para pendente, ser editada ou excluida por fluxo comum enquanto nao existir rotina explicita de estorno/cancelamento.
 - Operacoes que atualizam a conta e criam lancamento financeiro devem ser transacionais, idempotentes e protegidas contra duplicidade.
 
+## Regras de Negocio - Contas a Pagar / Favorecidos
+
+- Uma Conta a Pagar deve ter exatamente um favorecido: fornecedor ou colaborador.
+- Fornecedor permanece como texto livre enquanto nao existir entidade/tabela propria de fornecedores; colaborador deve referenciar colaborador ativo e nao excluido.
+- Conta a pagar paga ou estornada nao e editavel por fluxo comum. RN04, edicao de conta paga com confirmacao e propagacao ao lancamento financeiro, nao se aplica enquanto essa restricao existir.
+- Conta a pagar paga ou estornada nao pode ser excluida por fluxo comum; usar rotina explicita de estorno/cancelamento quando existir.
+- Troca de fornecedor para colaborador, ou colaborador para fornecedor, deve limpar o vinculo anterior na mesma operacao e registrar auditoria de troca de favorecido.
+- Conta a pagar com `beneficiaryType = collaborator` futuramente deve exigir subcategoria explicita (`SALARY`, `COMMISSION`, `TRANSPORT_VOUCHER`, `REIMBURSEMENT`) antes de gerar descricao automatica de lancamento. Essa regra depende de alteracao de schema/migration e nao deve ser simulada em campo livre.
+- Hoje nao ha permissao distinta entre conta a pagar para fornecedor e para colaborador; dados de pagamento de colaborador podem ser sensiveis e a segregacao de acesso deve ser tratada antes de uso como folha/pagamento recorrente.
+
 Quando uma tarefa pedir backend, agir de forma conservadora:
 
 - Entender primeiro o fluxo existente antes de editar.

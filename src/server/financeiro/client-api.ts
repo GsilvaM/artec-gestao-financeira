@@ -395,6 +395,17 @@ export const clientApi = {
         .then(handleResponse),
   },
 
+  beneficiaries: {
+    search: (params: Record<string, unknown>) =>
+      getAuthHeaders()
+        .then((headers) =>
+          apiFetch(`${BASE_URL}/beneficiaries?${toSearchParams(params)}`, {
+            headers,
+          })
+        )
+        .then(handleResponse),
+  },
+
   dre: {
     getByYear: (year: number) =>
       getAuthHeaders()

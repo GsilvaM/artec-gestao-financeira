@@ -49,6 +49,12 @@ export const collaboratorKeys = {
     [...collaboratorKeys.all, 'list', ...(filters ? [filters] : [])] as const,
 };
 
+export const beneficiaryKeys = {
+  all: ['beneficiaries'] as const,
+  search: (params: { type: string; q: string; page: number; pageSize: number }) =>
+    [...beneficiaryKeys.all, 'search', params] as const,
+};
+
 export const dreKeys = {
   all: ['dre'] as const,
   byPeriod: (dateFrom: string, dateTo: string) =>

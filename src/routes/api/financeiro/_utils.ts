@@ -44,4 +44,5 @@ export async function measureStep<T>(label: string, fn: () => Promise<T>): Promi
 export interface RouteArgs {
   request: Request;
   params: Record<string, string | undefined>;
+  authenticatedUserId?: string;
 }

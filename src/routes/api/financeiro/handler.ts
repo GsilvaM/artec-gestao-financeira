@@ -4,6 +4,7 @@ import * as accountsReceivable from "./accounts-receivable.js";
 import * as categories from "./categories.js";
 import * as costCenters from "./cost-centers.js";
 import * as collaborators from "./collaborators.js";
+import * as beneficiaries from "./beneficiaries.js";
 import * as dre from "./dre.js";
 import * as cashFlow from "./cash-flow.js";
 import * as dashboard from "./dashboard.js";
@@ -11,8 +12,8 @@ import { json } from "./_utils.js";
 import { requireApprovedUser } from "../auth-utils.js";
 
 interface RouteModule {
-  loader?: (args: { request: Request; params: Record<string, string | undefined> }) => Promise<Response>;
-  action?: (args: { request: Request; params: Record<string, string | undefined> }) => Promise<Response>;
+  loader?: (args: { request: Request; params: Record<string, string | undefined>; authenticatedUserId?: string }) => Promise<Response>;
+  action?: (args: { request: Request; params: Record<string, string | undefined>; authenticatedUserId?: string }) => Promise<Response>;
 }
 
 const routes: Record<string, RouteModule> = {
@@ -22,6 +23,7 @@ const routes: Record<string, RouteModule> = {
   categories,
   "cost-centers": costCenters,
   collaborators,
+  beneficiaries,
   dre,
   "cash-flow": cashFlow,
   dashboard,
@@ -34,6 +36,7 @@ export default async function handler(request: Request): Promise<Response> {
   const resource = segments[0];
   const id = segments[1];
   const method = request.method;
+  let authenticatedUserId: string | undefined;
 
   if (!resource || !routes[resource]) {
     return json({ error: `Resource '${resource ?? ""}' not found` }, { status: 404 });
@@ -42,7 +45,8 @@ export default async function handler(request: Request): Promise<Response> {
   if (process.env.NODE_ENV !== "test") {
     try {
       const authStart = performance.now();
-      await requireApprovedUser(request);
+      const session = await requireApprovedUser(request);
+      authenticatedUserId = session.user.id;
       const authDuration = performance.now() - authStart;
       if (authDuration > 100 || process.env.PERF_LOG === "1") {
         console.log(`[PERF] financeiro.auth: ${authDuration.toFixed(2)}ms`);
@@ -57,7 +61,7 @@ export default async function handler(request: Request): Promise<Response> {
   }
 
   const mod = routes[resource];
-  const args = { request, params: { id } };
+  const args = { request, params: { id }, authenticatedUserId };
 
   if (method === "GET") {
     if (!mod.loader) return json({ error: "Método não permitido." }, { status: 405 });

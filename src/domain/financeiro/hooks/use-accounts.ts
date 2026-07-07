@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   accountPayableKeys,
   accountReceivableKeys,
+  beneficiaryKeys,
   cashFlowKeys,
   financialEntryKeys,
 } from "../query-keys.js";
@@ -14,6 +15,7 @@ import type {
   AccountPayableUpdate,
   AccountReceivableRow,
   AccountReceivableUpdate,
+  BeneficiarySearchResult,
 } from "../types.js";
 
 const dashboardKey = ["dashboard"] as const;
@@ -120,6 +122,34 @@ export function useAccountPayable(id: string) {
         )) as AccountPayableApiResponse
       ),
     enabled: !!id,
+  });
+}
+
+export function useBeneficiarySearch(params: {
+  type: "supplier" | "collaborator";
+  q: string;
+  page?: number;
+  pageSize?: number;
+  enabled?: boolean;
+}) {
+  const page = params.page ?? 1;
+  const pageSize = params.pageSize ?? 20;
+
+  return useQuery({
+    queryKey: beneficiaryKeys.search({
+      type: params.type,
+      q: params.q,
+      page,
+      pageSize,
+    }),
+    queryFn: async () =>
+      (await clientApi.beneficiaries.search({
+        type: params.type,
+        q: params.q,
+        page,
+        pageSize,
+      })) as BeneficiarySearchResult,
+    enabled: params.enabled ?? true,
   });
 }
 

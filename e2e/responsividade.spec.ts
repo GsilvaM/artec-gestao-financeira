@@ -66,4 +66,30 @@ for (const viewport of viewports) {
     expect(box!.height).toBeLessThanOrEqual(viewport.height);
     await expectNoGlobalHorizontalOverflow(page);
   });
+
+  test(`contas a pagar sem overflow e com favorecido utilizavel em ${viewport.name}`, async ({ page }) => {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    await page.goto("/app/financeiro/contas-pagar");
+    await expect(page.getByRole("heading", { name: "Contas a Pagar" })).toBeVisible();
+    await expectNoGlobalHorizontalOverflow(page);
+
+    if (viewport.width >= 1024) {
+      await expect(page.locator("table")).toBeVisible();
+    } else {
+      await expect(page.locator(".mobile-list")).toBeVisible();
+    }
+
+    await page.getByRole("button", { name: /nova conta/i }).first().click();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+    await dialog.getByLabel("Tipo do favorecido").selectOption("collaborator");
+    await dialog.getByPlaceholder("Digite para buscar um colaborador").fill("maria");
+    await expect(dialog.getByText(/Digite para buscar|Nenhum colaborador|Não foi possível|Colaborador selecionado|Carregando/i)).toBeVisible();
+
+    const box = await dialog.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.width).toBeLessThanOrEqual(viewport.width);
+    expect(box!.height).toBeLessThanOrEqual(viewport.height);
+    await expectNoGlobalHorizontalOverflow(page);
+  });
 }

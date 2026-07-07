@@ -24,10 +24,11 @@ export class NotFoundError extends RepositoryError {
 }
 
 export class ValidationError extends RepositoryError {
-  public readonly status = 400;
-  constructor(message: string) {
+  public readonly status: number;
+  constructor(message: string, status = 400) {
     super("VALIDATION_ERROR", message);
     this.name = "ValidationError";
+    this.status = status;
   }
 }
 
@@ -351,6 +352,8 @@ export interface UpdateAccountPayableData {
   supplier?: string | null;
   /** Audit-only; not persisted to the model. */
   userId?: string;
+  /** Optimistic lock token. Must match current updatedAt when provided. */
+  expectedUpdatedAt?: Date | string;
   notes?: string | null;
 }
 
@@ -378,6 +381,36 @@ function hasBeneficiaryChange(data: UpdateAccountPayableData) {
     "beneficiaryName" in data ||
     "supplier" in data
   );
+}
+
+type AuditJsonValue = Prisma.InputJsonValue | null;
+
+function toAuditValue(value: unknown): AuditJsonValue {
+  if (value instanceof Date) return value.toISOString();
+  if (value === null || value === undefined) return null;
+  if (
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean"
+  ) {
+    return value;
+  }
+  if (typeof value === "object" && "toString" in value) {
+    return String(value);
+  }
+  return String(value);
+}
+
+function changedField(
+  from: unknown,
+  to: unknown
+): { from: AuditJsonValue; to: AuditJsonValue } {
+  return { from: toAuditValue(from), to: toAuditValue(to) };
+}
+
+function sameTimestamp(left: Date, right: Date | string) {
+  const parsed = right instanceof Date ? right : new Date(right);
+  return Number.isFinite(parsed.getTime()) && left.getTime() === parsed.getTime();
 }
 
 async function resolveAccountPayableBeneficiary(
@@ -422,7 +455,7 @@ async function resolveAccountPayableBeneficiary(
   }
 
   if (!data.beneficiaryId) {
-    throw new ValidationError("Selecione um colaborador ativo para a conta a pagar.");
+    throw new ValidationError("Selecione um colaborador ativo para a conta a pagar.", 422);
   }
 
   const collaborator = await db.collaborator.findFirst({
@@ -434,7 +467,7 @@ async function resolveAccountPayableBeneficiary(
   });
 
   if (!collaborator) {
-    throw new ValidationError("Selecione um colaborador ativo para a conta a pagar.");
+    throw new ValidationError("Selecione um colaborador ativo para a conta a pagar.", 422);
   }
 
   return {
@@ -538,10 +571,24 @@ export const accountPayableRepo = {
       await tx.auditLog.create({
         data: {
           userId: data.userId,
-          action: "account_payable_created",
+          action: "CREATED",
           entity: "AccountPayable",
           entityId: account.id,
           metadata: {
+            entity_type: "AccountPayable",
+            entity_id: account.id,
+            action: "CREATED",
+            changed_fields: {
+              description: changedField(null, data.description),
+              amount: changedField(null, data.amount),
+              dueDate: changedField(null, data.dueDate),
+              categoryId: changedField(null, data.categoryId),
+              costCenterId: changedField(null, data.costCenterId ?? null),
+              beneficiaryType: changedField(null, beneficiary.beneficiaryType),
+              beneficiaryId: changedField(null, beneficiary.beneficiaryId),
+              beneficiaryName: changedField(null, beneficiary.beneficiaryName),
+            },
+            timestamp: new Date().toISOString(),
             amount: Number(data.amount),
             dueDate: data.dueDate.toISOString(),
             categoryId: data.categoryId,
@@ -561,6 +608,12 @@ export const accountPayableRepo = {
         where: { id, deletedAt: null },
       });
       if (!existing) throw new NotFoundError("AccountPayable", id);
+      if (data.expectedUpdatedAt && !sameTimestamp(existing.updatedAt, data.expectedUpdatedAt)) {
+        throw new ValidationError(
+          "Conta a pagar foi alterada por outro usuario. Recarregue os dados antes de salvar.",
+          409
+        );
+      }
 
       const currentBeneficiaryType = (existing.beneficiaryType ?? "supplier") as
         | "supplier"
@@ -590,7 +643,8 @@ export const accountPayableRepo = {
             tx
           )
         : {};
-      const { userId, ...accountData } = data;
+      const { userId, expectedUpdatedAt, ...accountData } = data;
+      void expectedUpdatedAt;
       const account = await tx.accountPayable.update({
         where: { id },
         data: {
@@ -601,13 +655,28 @@ export const accountPayableRepo = {
       });
 
       if (userId) {
+        const changedFields = Object.entries(accountData).reduce<
+          Record<string, ReturnType<typeof changedField>>
+        >((fields, [field, nextValue]) => {
+          const previousValue = existing[field as keyof typeof existing];
+          if (toAuditValue(previousValue) !== toAuditValue(nextValue)) {
+            fields[field] = changedField(previousValue, nextValue);
+          }
+          return fields;
+        }, {});
+
         await tx.auditLog.create({
           data: {
             userId,
-            action: "account_payable_updated",
+            action: "UPDATED",
             entity: "AccountPayable",
             entityId: id,
             metadata: {
+              entity_type: "AccountPayable",
+              entity_id: id,
+              action: "UPDATED",
+              changed_fields: changedFields,
+              timestamp: new Date().toISOString(),
               fields: Object.keys(accountData),
               previousBeneficiary: {
                 beneficiaryType: existing.beneficiaryType,
@@ -636,10 +705,22 @@ export const accountPayableRepo = {
           await tx.auditLog.create({
             data: {
               userId,
-              action: "account_payable_beneficiary_changed",
+              action: "BENEFICIARY_CHANGED",
               entity: "AccountPayable",
               entityId: id,
               metadata: {
+                entity_type: "AccountPayable",
+                entity_id: id,
+                action: "BENEFICIARY_CHANGED",
+                changed_fields: {
+                  beneficiaryType: changedField(existing.beneficiaryType, account.beneficiaryType),
+                  beneficiaryId: changedField(existing.beneficiaryId, account.beneficiaryId),
+                  beneficiaryName: changedField(
+                    existing.beneficiaryName ?? existing.supplier,
+                    account.beneficiaryName
+                  ),
+                },
+                timestamp: new Date().toISOString(),
                 previous: {
                   beneficiaryType: existing.beneficiaryType,
                   beneficiaryId: existing.beneficiaryId,

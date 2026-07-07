@@ -4,6 +4,12 @@ import { prisma } from "../lib/prisma/client.js";
 import { accountPayableRepo } from "../server/financeiro/repositories.js";
 import { payAccountPayable } from "../server/financeiro/accounts-payable-service.js";
 
+const TEST_USER_ID = "00000000-0000-0000-0000-000000000000";
+
+function asRecord(value: unknown) {
+  return value as Record<string, unknown>;
+}
+
 afterAll(async () => {
   await prisma.$disconnect();
 });
@@ -84,6 +90,27 @@ describe("accounts payable beneficiary integration", () => {
     await prisma.collaborator.delete({ where: { id: collaborator.id } });
   });
 
+  it("rejects nonexistent collaborator with 422", async () => {
+    const category = await prisma.category.findFirstOrThrow({
+      where: { type: "despesa", deletedAt: null },
+    });
+
+    await expect(
+      accountPayableRepo.create({
+        description: "Conta Colaborador Inexistente",
+        amount: 1000,
+        dueDate: new Date("2026-08-11"),
+        categoryId: category.id,
+        beneficiaryType: "collaborator",
+        beneficiaryId: "00000000-0000-0000-0000-000000000999",
+        userId: TEST_USER_ID,
+      })
+    ).rejects.toMatchObject({
+      message: "Selecione um colaborador ativo para a conta a pagar.",
+      status: 422,
+    });
+  });
+
   it("pays a collaborator account and creates financial entry with collaboratorId", async () => {
     const category = await prisma.category.findFirstOrThrow({
       where: { type: "despesa", deletedAt: null },
@@ -155,6 +182,159 @@ describe("accounts payable beneficiary integration", () => {
 
     await prisma.accountPayable.delete({ where: { id: account.id } });
     await prisma.collaborator.delete({ where: { id: collaborator.id } });
+  });
+
+  it("writes BENEFICIARY_CHANGED audit from supplier to collaborator", async () => {
+    const category = await prisma.category.findFirstOrThrow({
+      where: { type: "despesa", deletedAt: null },
+    });
+
+    const collaborator = await prisma.collaborator.create({
+      data: {
+        name: "Auditoria Colab",
+        email: `auditoria-colab-${Date.now()}@teste.com`,
+        active: true,
+      },
+    });
+
+    const account = await accountPayableRepo.create({
+      description: "Auditoria Fornecedor",
+      amount: 2100,
+      dueDate: new Date("2026-09-02"),
+      categoryId: category.id,
+      supplier: "Fornecedor Auditado",
+      userId: TEST_USER_ID,
+    });
+
+    await accountPayableRepo.update(account.id, {
+      beneficiaryType: "collaborator",
+      beneficiaryId: collaborator.id,
+      userId: TEST_USER_ID,
+    });
+
+    const audit = await prisma.auditLog.findFirstOrThrow({
+      where: {
+        entity: "AccountPayable",
+        entityId: account.id,
+        action: "BENEFICIARY_CHANGED",
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    const metadata = asRecord(audit.metadata);
+    const changedFields = asRecord(metadata.changed_fields);
+    const beneficiaryType = asRecord(changedFields.beneficiaryType);
+    const beneficiaryId = asRecord(changedFields.beneficiaryId);
+
+    expect(metadata.action).toBe("BENEFICIARY_CHANGED");
+    expect(metadata.entity_type).toBe("AccountPayable");
+    expect(beneficiaryType).toMatchObject({
+      from: "supplier",
+      to: "collaborator",
+    });
+    expect(beneficiaryId).toMatchObject({
+      from: null,
+      to: collaborator.id,
+    });
+
+    await prisma.auditLog.deleteMany({ where: { entityId: account.id } });
+    await prisma.accountPayable.delete({ where: { id: account.id } });
+    await prisma.collaborator.delete({ where: { id: collaborator.id } });
+  });
+
+  it("writes BENEFICIARY_CHANGED audit from collaborator to supplier", async () => {
+    const category = await prisma.category.findFirstOrThrow({
+      where: { type: "despesa", deletedAt: null },
+    });
+
+    const collaborator = await prisma.collaborator.create({
+      data: {
+        name: "Auditoria Volta",
+        email: `auditoria-volta-${Date.now()}@teste.com`,
+        active: true,
+      },
+    });
+
+    const account = await accountPayableRepo.create({
+      description: "Auditoria Colaborador",
+      amount: 2200,
+      dueDate: new Date("2026-09-03"),
+      categoryId: category.id,
+      beneficiaryType: "collaborator",
+      beneficiaryId: collaborator.id,
+      beneficiaryName: collaborator.name,
+      userId: TEST_USER_ID,
+    });
+
+    await accountPayableRepo.update(account.id, {
+      beneficiaryType: "supplier",
+      beneficiaryId: null,
+      supplier: "Fornecedor Novo",
+      userId: TEST_USER_ID,
+    });
+
+    const audit = await prisma.auditLog.findFirstOrThrow({
+      where: {
+        entity: "AccountPayable",
+        entityId: account.id,
+        action: "BENEFICIARY_CHANGED",
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    const metadata = asRecord(audit.metadata);
+    const changedFields = asRecord(metadata.changed_fields);
+    const beneficiaryType = asRecord(changedFields.beneficiaryType);
+    const beneficiaryId = asRecord(changedFields.beneficiaryId);
+
+    expect(metadata.action).toBe("BENEFICIARY_CHANGED");
+    expect(beneficiaryType).toMatchObject({
+      from: "collaborator",
+      to: "supplier",
+    });
+    expect(beneficiaryId).toMatchObject({
+      from: collaborator.id,
+      to: null,
+    });
+
+    await prisma.auditLog.deleteMany({ where: { entityId: account.id } });
+    await prisma.accountPayable.delete({ where: { id: account.id } });
+    await prisma.collaborator.delete({ where: { id: collaborator.id } });
+  });
+
+  it("rejects stale updatedAt with 409 optimistic lock", async () => {
+    const category = await prisma.category.findFirstOrThrow({
+      where: { type: "despesa", deletedAt: null },
+    });
+
+    const account = await accountPayableRepo.create({
+      description: "Conta Concorrente",
+      amount: 2300,
+      dueDate: new Date("2026-09-04"),
+      categoryId: category.id,
+      supplier: "Fornecedor Concorrente",
+      userId: TEST_USER_ID,
+    });
+    const expectedUpdatedAt = account.updatedAt;
+
+    await accountPayableRepo.update(account.id, {
+      description: "Conta Concorrente Atualizada",
+      expectedUpdatedAt,
+      userId: TEST_USER_ID,
+    });
+
+    await expect(
+      accountPayableRepo.update(account.id, {
+        notes: "Atualizacao obsoleta",
+        expectedUpdatedAt,
+        userId: TEST_USER_ID,
+      })
+    ).rejects.toMatchObject({
+      message:
+        "Conta a pagar foi alterada por outro usuario. Recarregue os dados antes de salvar.",
+      status: 409,
+    });
+
+    await prisma.auditLog.deleteMany({ where: { entityId: account.id } });
+    await prisma.accountPayable.delete({ where: { id: account.id } });
   });
 
   it("filters accounts by beneficiaryType", async () => {

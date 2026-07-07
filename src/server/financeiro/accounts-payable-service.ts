@@ -187,6 +187,29 @@ export async function payAccountPayable(
     await tx.auditLog.create({
       data: {
         userId: input.userId,
+        action: "PAID",
+        entity: "AccountPayable",
+        entityId: accountPayableId,
+        metadata: {
+          entity_type: "AccountPayable",
+          entity_id: accountPayableId,
+          action: "PAID",
+          changed_fields: {
+            status: { from: account.status, to: paidAccount.status },
+            paidDate: {
+              from: account.paidDate?.toISOString() ?? null,
+              to: input.paymentDate.toISOString(),
+            },
+          },
+          timestamp: new Date().toISOString(),
+          financialEntryId: financialEntry.id,
+        },
+      },
+    });
+
+    await tx.auditLog.create({
+      data: {
+        userId: input.userId,
         action: "financial_entry_created_from_account_payable",
         entity: "FinancialEntry",
         entityId: financialEntry.id,
@@ -363,6 +386,26 @@ export async function reverseAccountPayablePayment(
           reason: input.reason.trim(),
           notes: input.notes ?? null,
           financialEntryId: financialEntry.id,
+        },
+      },
+    });
+
+    await tx.auditLog.create({
+      data: {
+        userId: input.userId,
+        action: "REVERSED",
+        entity: "AccountPayable",
+        entityId: accountPayableId,
+        metadata: {
+          entity_type: "AccountPayable",
+          entity_id: accountPayableId,
+          action: "REVERSED",
+          changed_fields: {
+            status: { from: account.status, to: reversedAccount.status },
+          },
+          timestamp: new Date().toISOString(),
+          financialEntryId: financialEntry.id,
+          reason: input.reason.trim(),
         },
       },
     });

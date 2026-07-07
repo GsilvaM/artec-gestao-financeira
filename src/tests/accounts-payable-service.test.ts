@@ -180,6 +180,44 @@ describe("reverseAccountPayablePayment", () => {
     vi.clearAllMocks();
   });
 
+  it("rejects an already reversed account without touching financial entries", async () => {
+    const tx = {
+      accountPayable: {
+        findFirst: vi.fn().mockResolvedValue({ ...paidAccount, status: "reversed" }),
+        update: vi.fn(),
+      },
+      financialEntry: {
+        findFirst: vi.fn(),
+        create: vi.fn(),
+        update: vi.fn(),
+      },
+      auditLog: {
+        create: vi.fn(),
+      },
+    };
+
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) =>
+      callback(tx as unknown as Parameters<typeof callback>[0])
+    );
+
+    await expect(
+      reverseAccountPayablePayment(ACCOUNT_ID, {
+        reversalDate: new Date("2026-07-07T00:00:00"),
+        reason: "Duplicado",
+        userId: USER_ID,
+      })
+    ).rejects.toMatchObject({
+      message: "Pagamento desta conta ja foi estornado.",
+      status: 409,
+    });
+
+    expect(tx.financialEntry.findFirst).not.toHaveBeenCalled();
+    expect(tx.financialEntry.create).not.toHaveBeenCalled();
+    expect(tx.financialEntry.update).not.toHaveBeenCalled();
+    expect(tx.accountPayable.update).not.toHaveBeenCalled();
+    expect(tx.auditLog.create).not.toHaveBeenCalled();
+  });
+
   it("marks payable and linked financial entry as reversed in one transaction", async () => {
     const tx = {
       accountPayable: {
