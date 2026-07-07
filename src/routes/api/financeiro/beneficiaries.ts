@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { searchBeneficiaries } from "../../../server/financeiro/beneficiaries-service.js";
+import type { BeneficiarySearchInput } from "../../../server/financeiro/beneficiaries-service.js";
 import { handleRepoError, json, type RouteArgs } from "./_utils.js";
 
 const searchSchema = z.object({
@@ -23,7 +24,7 @@ export async function loader({ request }: RouteArgs) {
         undefined,
     });
 
-    return json(await searchBeneficiaries(parsed));
+    return json(await searchBeneficiaries(parsed as BeneficiarySearchInput));
   } catch (err) {
     return handleRepoError(err);
   }
