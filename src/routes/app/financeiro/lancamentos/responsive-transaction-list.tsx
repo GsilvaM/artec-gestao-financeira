@@ -2,8 +2,8 @@ import { EmptyState } from "@/components/layout/page-shell";
 import { Card, CardContent } from "@/components/ui/card";
 import type { FinancialEntryRow } from "@/domain/financeiro/types";
 import { useEffect, useState } from "react";
-import { TransactionCard } from "./transaction-card";
-import { TransactionTable } from "./transaction-table";
+import { TransactionCard } from "./transaction-card.js";
+import { TransactionTable } from "./transaction-table.js";
 
 interface ResponsiveTransactionListProps {
   entries: FinancialEntryRow[] | undefined;

@@ -24,7 +24,7 @@ import {
   navigationIconMap,
   navigationItems,
   type NavigationItem,
-} from "./navigation";
+  } from "./navigation.js";
 
 function useSidebarCollapsed() {
   const [collapsed, setCollapsed] = useState(() => {

@@ -48,7 +48,7 @@ import type {
   FinancialEntryRow,
 } from "@/domain/financeiro/types";
 import { cn, formatMoney, toFiniteNumber } from "@/lib/utils";
-import { formatCompactMoney } from "./dashboard-utils";
+import { formatCompactMoney } from "./dashboard-utils.js";
 import { EmptyState, pageHeaderStyles } from "@/components/layout/page-shell";
 
 type ChartSeries = "receitas" | "despesas" | "saldo";

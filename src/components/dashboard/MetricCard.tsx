@@ -1,7 +1,7 @@
 import { ArrowDownRight, ArrowUpRight, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { SparklineChart } from "./SparklineChart";
+import { SparklineChart } from "./SparklineChart.js";
 
 type IconColor = "green" | "blue" | "red";
 

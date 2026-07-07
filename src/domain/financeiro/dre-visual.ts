@@ -1,4 +1,4 @@
-import type { FinancialEntryFilters, FinancialEntryRow } from "./types";
+import type { FinancialEntryFilters, FinancialEntryRow } from "./types.js";
 
 export const LIMIAR_ALERTA_DESPESA_PCT_RECEITA = 0.5;
 

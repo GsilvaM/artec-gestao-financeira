@@ -36,7 +36,7 @@ import { calculateFinancialSummary } from "@/domain/financeiro/calculations";
 import { formatMoney } from "@/lib/utils";
 import { SummaryCard } from "@/components/lancamentos/SummaryCard";
 import { TransactionFilters } from "@/components/lancamentos/TransactionFilters";
-import { ResponsiveTransactionList } from "./responsive-transaction-list";
+import { ResponsiveTransactionList } from "./responsive-transaction-list.js";
 import type {
   FinancialEntryRow,
   FinancialEntryFilters,

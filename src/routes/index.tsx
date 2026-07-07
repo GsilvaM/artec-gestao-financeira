@@ -3,7 +3,7 @@ import { AuthLayout } from "@/components/layout/auth-layout";
 import { AppLayout } from "@/components/layout/app-layout";
 import { ProtectedRoute } from "@/components/layout/protected-route";
 import { PublicRoute } from "@/components/layout/public-route";
-import { routeModuleLoaders } from "./preload";
+import { routeModuleLoaders } from "./preload.js";
 
 export const router = createBrowserRouter([
   {
