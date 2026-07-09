@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { useSearchParams } from "react-router";
 import { z } from "zod";
 import {
   ArrowDownCircle,
@@ -14,6 +15,7 @@ import {
 } from "@/components/lancamentos/LancamentoModal";
 import { PageShell } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
 import {
   Dialog,
   DialogCloseButton,
@@ -172,6 +174,11 @@ export function Component() {
   const [filterCategoryId, setFilterCategoryId] = useState("");
   const [filterOrigin, setFilterOrigin] = useState("");
   const [filterPaymentMethod, setFilterPaymentMethod] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const pageParam = Number.parseInt(searchParams.get("page") ?? "1", 10);
+  const currentPage = Number.isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
+  const pageSize = 20;
 
   const filters = useMemo<FinancialEntryFilters | undefined>(() => {
     const f: FinancialEntryFilters = {};
@@ -202,7 +209,10 @@ export function Component() {
   ]);
 
   const user = useAuthStore((state) => state.user);
-  const { data: entries, isLoading, error } = useFinancialEntries(filters);
+  const { data: entriesPage, isLoading, error } = useFinancialEntries(filters, {
+    page: currentPage,
+    pageSize,
+  });
   const { data: categories } = useCategories();
   const { data: collaborators } = useCollaborators();
   const { mutateAsync: createEntry, isPending: saving } =
@@ -213,9 +223,46 @@ export function Component() {
     useDeleteFinancialEntry();
 
   const isWorking = saving || updating;
-  const { receitas, despesas, saldo } = calculateFinancialSummary(
-    entries ?? []
-  );
+  const pagedEntries = Array.isArray(entriesPage)
+    ? entriesPage
+    : entriesPage?.items ?? [];
+  const pagination = Array.isArray(entriesPage)
+    ? undefined
+    : entriesPage?.pagination;
+  const summary = Array.isArray(entriesPage)
+    ? undefined
+    : entriesPage?.summary;
+  const { receitas, despesas, saldo } = summary
+    ? {
+        receitas: summary.receitas,
+        despesas: summary.despesas,
+        saldo: summary.saldo,
+      }
+    : calculateFinancialSummary(pagedEntries);
+
+  useEffect(() => {
+    if (!pagination) return;
+    if (currentPage > pagination.totalPages) {
+      const next = new URLSearchParams(searchParams);
+      next.set("page", String(pagination.totalPages));
+      setSearchParams(next, { replace: true });
+    }
+  }, [currentPage, pagination, searchParams, setSearchParams]);
+
+  function setPage(nextPage: number) {
+    const next = new URLSearchParams(searchParams);
+    if (nextPage <= 1) {
+      next.delete("page");
+    } else {
+      next.set("page", String(nextPage));
+    }
+    setSearchParams(next, { replace: false });
+  }
+
+  function handleFilterChange(change: () => void) {
+    change();
+    setPage(1);
+  }
 
   function resetForm() {
     setForm(initialForm);
@@ -434,7 +481,7 @@ export function Component() {
       <div className="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <SummaryCard
           label="Lançamentos"
-          value={String(entries?.length ?? 0)}
+          value={String(summary?.count ?? pagedEntries.length)}
           icon={ListChecks}
           iconColor="blue"
           footer="Registros encontrados"
@@ -464,34 +511,46 @@ export function Component() {
 
       <TransactionFilters
         search={search}
-        onSearchChange={setSearch}
+        onSearchChange={(value) => handleFilterChange(() => setSearch(value))}
         status={filterStatus}
-        onStatusChange={setFilterStatus}
+        onStatusChange={(value) => handleFilterChange(() => setFilterStatus(value))}
         type={filterType}
-        onTypeChange={setFilterType}
+        onTypeChange={(value) => handleFilterChange(() => setFilterType(value))}
         period={filterPeriod}
-        onPeriodChange={setFilterPeriod}
+        onPeriodChange={(value) => handleFilterChange(() => setFilterPeriod(value))}
         dateFrom={filterDateFrom}
-        onDateFromChange={setFilterDateFrom}
+        onDateFromChange={(value) => handleFilterChange(() => setFilterDateFrom(value))}
         dateTo={filterDateTo}
-        onDateToChange={setFilterDateTo}
+        onDateToChange={(value) => handleFilterChange(() => setFilterDateTo(value))}
         categoryId={filterCategoryId}
-        onCategoryChange={setFilterCategoryId}
+        onCategoryChange={(value) => handleFilterChange(() => setFilterCategoryId(value))}
         categories={categories ?? []}
         origin={filterOrigin}
-        onOriginChange={setFilterOrigin}
+        onOriginChange={(value) => handleFilterChange(() => setFilterOrigin(value))}
         paymentMethod={filterPaymentMethod}
-        onPaymentMethodChange={setFilterPaymentMethod}
+        onPaymentMethodChange={(value) => handleFilterChange(() => setFilterPaymentMethod(value))}
       />
 
       <ResponsiveTransactionList
-        entries={entries}
+        entries={pagedEntries}
         isLoading={isLoading}
         error={error}
         onEdit={handleEdit}
         onDuplicate={handleDuplicate}
         onDelete={handleDelete}
       />
+
+      {pagination && (
+        <DataTablePagination
+          currentPage={currentPage}
+          totalPages={pagination.totalPages}
+          total={pagination.total}
+          pageSize={pageSize}
+          label="lançamentos"
+          isLoading={isLoading}
+          onPageChange={setPage}
+        />
+      )}
 
       <LancamentoModal
         open={open}

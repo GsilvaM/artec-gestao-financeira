@@ -135,7 +135,11 @@ const receivableReversed = {
 
 function renderWithClient(ui: React.ReactElement) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
-  return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>);
+  return render(
+    <QueryClientProvider client={client}>
+      <MemoryRouter>{ui}</MemoryRouter>
+    </QueryClientProvider>
+  );
 }
 
 const moneyText = (value: string) => new RegExp(`R\\$\\s*${value.replace(".", "\\.")}`);
@@ -218,7 +222,13 @@ beforeEach(() => {
         return Promise.resolve(Response.json(categories));
       }
       if (url.includes("/api/financeiro/entries")) {
-        return Promise.resolve(Response.json(entries));
+        return Promise.resolve(
+          Response.json({
+            items: entries,
+            pagination: { page: 1, pageSize: 20, total: entries.length, totalPages: 1 },
+            summary: { receitas: 1000, despesas: 660, saldo: 340, count: entries.length },
+          })
+        );
       }
       if (url.includes("/api/financeiro/dashboard")) {
         return Promise.resolve(Response.json({
@@ -257,7 +267,7 @@ describe("financial components", () => {
   });
 
   it("renders dashboard cards from the same calculated totals", async () => {
-    renderWithClient(<MemoryRouter><Dashboard /></MemoryRouter>);
+    renderWithClient(<Dashboard />);
 
     await waitFor(() => expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/api/financeiro/dashboard")));
     expect((await screen.findAllByText(moneyText("1.000,00"))).length).toBeGreaterThan(0);
@@ -267,7 +277,7 @@ describe("financial components", () => {
 
   it("shows dashboard skeletons while KPI data is loading", () => {
     vi.stubGlobal("fetch", vi.fn(() => new Promise(() => undefined)));
-    const { container } = renderWithClient(<MemoryRouter><Dashboard /></MemoryRouter>);
+    const { container } = renderWithClient(<Dashboard />);
 
     expect(container.querySelectorAll(".animate-pulse").length).toBeGreaterThan(0);
   });

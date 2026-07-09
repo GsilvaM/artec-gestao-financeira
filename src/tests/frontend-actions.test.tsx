@@ -15,7 +15,7 @@ function renderWithQueryClient(ui: React.ReactElement) {
 
 describe("frontend actions", () => {
   it("opens the new financial entry dialog", () => {
-    renderWithQueryClient(<Lancamentos />);
+    renderWithQueryClient(<MemoryRouter><Lancamentos /></MemoryRouter>);
     fireEvent.click(screen.getAllByRole("button", { name: /novo lançamento/i })[0]!);
     expect(screen.getByRole("heading", { name: /novo lançamento/i })).toBeInTheDocument();
   });

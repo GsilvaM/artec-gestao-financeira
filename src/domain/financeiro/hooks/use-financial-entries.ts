@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { cashFlowKeys, financialEntryKeys } from '../query-keys.js';
 import { clientApi } from '@/server/financeiro/client-api';
 import { toFiniteNumber } from '@/lib/utils';
-import type { FinancialEntryRow, FinancialEntryFilters, FinancialEntryUpdate } from '../types.js';
+import type { FinancialEntryRow, FinancialEntryFilters, FinancialEntryPageResult, FinancialEntryUpdate } from '../types.js';
 
 type EntryApiResponse = {
   id: string;
@@ -30,6 +30,7 @@ const dashboardKey = ['dashboard'] as const;
 function invalidateFinancialSummaries(qc: ReturnType<typeof useQueryClient>) {
   void qc.invalidateQueries({ queryKey: dashboardKey });
   void qc.invalidateQueries({ queryKey: cashFlowKeys.all });
+  void qc.invalidateQueries({ queryKey: financialEntryListKey });
 }
 
 function toRow(e: EntryApiResponse): FinancialEntryRow {
@@ -55,10 +56,31 @@ function toRow(e: EntryApiResponse): FinancialEntryRow {
   };
 }
 
-export function useFinancialEntries(filters?: FinancialEntryFilters) {
-  return useQuery({
-    queryKey: financialEntryKeys.list(filters),
+export function useFinancialEntries(
+  filters?: FinancialEntryFilters,
+  pagination?: { page: number; pageSize: number }
+) {
+  return useQuery<FinancialEntryRow[] | FinancialEntryPageResult>({
+    queryKey: financialEntryKeys.list(filters, pagination),
     queryFn: async () => {
+      if (pagination) {
+        const result = (await clientApi.financialEntries.findPage(
+          filters as Record<string, unknown>,
+          pagination.page,
+          pagination.pageSize
+        )) as {
+          items: EntryApiResponse[];
+          pagination: FinancialEntryPageResult['pagination'];
+          summary: FinancialEntryPageResult['summary'];
+        };
+
+        return {
+          items: result.items.map(toRow),
+          pagination: result.pagination,
+          summary: result.summary,
+        };
+      }
+
       const entries = (await clientApi.financialEntries.findAll(filters as Record<string, unknown>)) as EntryApiResponse[];
       return entries.map(toRow);
     },
