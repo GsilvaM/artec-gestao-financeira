@@ -258,6 +258,19 @@ Usar como base:
 - `docs/ui-refactor/ACCEPTANCE_CHECKLIST.md`
 - `docs/ui-refactor/DRE_UX_PDF_PROMPT.md` quando a tarefa envolver a pagina DRE, graficos, filtros, tabela ou exportacao PDF.
 
+## Feature Fluxo de Caixa
+
+- Rota da tela: `/app/financeiro/fluxo-caixa`, exibida no menu Financeiro como "Fluxo de Caixa".
+- Componente principal: `src/routes/app/financeiro/fluxo-caixa/page.tsx`.
+- Funcao pura de calculo de projecao: `src/domain/financeiro/cash-flow.ts`, especialmente `buildProjectedCashFlow`.
+- Hook React Query: `src/domain/financeiro/hooks/use-cash-flow.ts`, com `useProjectedCashFlow` e query key incluindo filtros aplicados.
+- API: `src/routes/api/financeiro/cash-flow.ts`, usando `mode=projected` para a projecao sem remover o fluxo legado.
+- PDF: `src/server/financeiro/cash-flow-export.ts` e `src/server/financeiro/cash-flow-pdf.ts`, seguindo o padrao server-side da DRE com `@react-pdf/renderer`.
+- Excel: gerado no client pela propria pagina com `exceljs`, dependencia adicionada para criar `.xlsx` real com abas Resumo, Projecao e Lancamentos.
+- Filtros: querystring da rota -> parse local validado por opcoes permitidas -> parametros do hook -> query key do React Query. Defaults: proximos 15 dias, todos os bancos, todas as categorias, diaria, ambas.
+- Sem alteracao de schema Prisma. Como nao existe modelagem de contas bancarias nem hierarquia de categorias, banco fica limitado a "Todos (Consolidado)" e categoria usa filtro direto por categoria cadastrada.
+- Testes da funcao pura devem ficar em `src/tests/cash-flow.test.ts` e cobrir acumulado, saldo negativo e granularidade.
+
 ## Finalizacao
 
 Ao terminar uma tarefa, responder com:

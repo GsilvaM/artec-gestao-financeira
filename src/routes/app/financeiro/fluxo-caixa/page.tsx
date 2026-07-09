@@ -1,181 +1,698 @@
-import { useMemo, useState } from "react";
-import { Banknote, CalendarDays, TrendingDown, TrendingUp } from "lucide-react";
-import { EmptyState, FilterBar, MetricCard, MonthSelect, PageShell } from "@/components/layout/page-shell";
-import { Card } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useCashFlow } from "@/domain/financeiro/hooks/use-cash-flow";
-import { cn, formatMoney, toFiniteNumber } from "@/lib/utils";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router";
+import {
+  Area,
+  Bar,
+  CartesianGrid,
+  ComposedChart,
+  Legend,
+  Line,
+  ReferenceDot,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import {
+  ArrowDownCircle,
+  ArrowUpCircle,
+  Banknote,
+  CalendarDays,
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  FileDown,
+  FileSpreadsheet,
+  Info,
+  Landmark,
+  Layers3,
+  Loader2,
+  Pencil,
+  Search,
+  TrendingDown,
+  TrendingUp,
+  Wallet,
+} from "lucide-react";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState, MetricCard, PageShell } from "@/components/layout/page-shell";
+import { useCategories } from "@/domain/financeiro/hooks/use-categories";
+import { useProjectedCashFlow } from "@/domain/financeiro/hooks/use-cash-flow";
+import { clientApi } from "@/server/financeiro/client-api";
+import {
+  resolvePresetRange,
+  toDateKey,
+  type CashFlowGranularity,
+  type CashFlowView,
+  type ProjectedCashFlowPeriod,
+  type ProjectedCashFlowResult,
+  type ProjectedCashFlowTransaction,
+} from "@/domain/financeiro/cash-flow";
+import { cn, formatMoney } from "@/lib/utils";
 
-type CashFlowRow = { period?: string; receitas?: number; despesas?: number; saldo?: number };
+type PeriodPreset = "7d" | "15d" | "30d" | "60d" | "90d" | "custom";
+type ChartMode = "full" | "balance";
+
+interface CashFlowFilters {
+  preset: PeriodPreset;
+  dateFrom: string;
+  dateTo: string;
+  bank: string;
+  categoryId: string;
+  granularity: CashFlowGranularity;
+  view: CashFlowView;
+}
+
+const defaultRange = resolvePresetRange("15d");
+const defaultFilters: CashFlowFilters = {
+  preset: "15d",
+  dateFrom: toDateKey(defaultRange.from),
+  dateTo: toDateKey(defaultRange.to),
+  bank: "all",
+  categoryId: "all",
+  granularity: "day",
+  view: "both",
+};
+
+const periodOptions: Array<{ value: PeriodPreset; label: string }> = [
+  { value: "7d", label: "Proximos 7 dias" },
+  { value: "15d", label: "Proximos 15 dias" },
+  { value: "30d", label: "Proximos 30 dias" },
+  { value: "60d", label: "Proximos 60 dias" },
+  { value: "90d", label: "Proximos 90 dias" },
+  { value: "custom", label: "Personalizado" },
+];
 
 export function Component() {
-  const [filterMonth, setFilterMonth] = useState(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const appliedFilters = useMemo(() => parseFilters(searchParams), [searchParams]);
+  const [draftFilters, setDraftFilters] = useState(appliedFilters);
+  const [chartMode, setChartMode] = useState<ChartMode>("full");
+  const [minimumBalanceInput, setMinimumBalanceInput] = useState("0");
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(() => new Set());
+  const [exporting, setExporting] = useState<"excel" | "pdf" | null>(null);
+
+  useEffect(() => {
+    setDraftFilters(appliedFilters);
+  }, [appliedFilters]);
+
+  const minimumBalance = Number(minimumBalanceInput.replace(/\./g, "").replace(",", ".")) || 0;
+  const { data, isLoading, isError } = useProjectedCashFlow({
+    granularity: appliedFilters.granularity,
+    view: appliedFilters.view,
+    dateFrom: appliedFilters.dateFrom,
+    dateTo: appliedFilters.dateTo,
+    categoryId: appliedFilters.categoryId === "all" ? undefined : appliedFilters.categoryId,
+    bank: appliedFilters.bank,
   });
-  const [start, end] = useMemo(() => {
-    const fallback = new Date();
-    const fallbackMonth = `${fallback.getFullYear()}-${String(fallback.getMonth() + 1).padStart(2, "0")}`;
-    const [year, month] = (filterMonth || fallbackMonth).split("-");
-    return [
-      new Date(Number(year), Number(month) - 1, 1),
-      new Date(Number(year), Number(month), 0, 23, 59, 59, 999),
-    ];
-  }, [filterMonth]);
-  const { data, isLoading, error } = useCashFlow("month", start, end);
-  const rows = (data as CashFlowRow[] | undefined) ?? [];
-  const entradas = rows.reduce((sum, row) => sum + toFiniteNumber(row.receitas), 0);
-  const saidas = rows.reduce((sum, row) => sum + toFiniteNumber(row.despesas), 0);
-  const saldo = rows.reduce((sum, row) => sum + toFiniteNumber(row.saldo), 0);
+  const { data: categories = [] } = useCategories();
+  const result = data ?? emptyCashFlow(appliedFilters);
+  const visiblePeriods = useMemo(() => result.periods, [result.periods]);
+  const chartData = useMemo(() => toChartData(visiblePeriods), [visiblePeriods]);
+  const todayKey = toDateKey(new Date());
+  const todayPoint = chartData.find((point) => point.dateFrom <= todayKey && point.dateTo >= todayKey);
+  const activeCategory = categories.find((category) => category.id === appliedFilters.categoryId);
+  const activeFilters = buildActiveFilterLabels(appliedFilters, activeCategory?.name);
+
+  function updateDraft(patch: Partial<CashFlowFilters>) {
+    setDraftFilters((current) => {
+      const next = { ...current, ...patch };
+      if (patch.preset && patch.preset !== "custom") {
+        const range = resolvePresetRange(patch.preset);
+        next.dateFrom = toDateKey(range.from);
+        next.dateTo = toDateKey(range.to);
+      }
+      return next;
+    });
+  }
+
+  function applyFilters() {
+    setSearchParams(filtersToSearchParams(draftFilters), { replace: false });
+    setExpandedRows(new Set());
+  }
+
+  function clearFilters() {
+    setDraftFilters(defaultFilters);
+    setSearchParams(new URLSearchParams(), { replace: false });
+    setExpandedRows(new Set());
+  }
+
+  function toggleRow(id: string) {
+    setExpandedRows((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function expandAll() {
+    setExpandedRows(new Set(visiblePeriods.filter((period) => period.transactions.length > 0).map((period) => period.id)));
+  }
+
+  function collapseAll() {
+    setExpandedRows(new Set());
+  }
+
+  async function handleExportExcel() {
+    try {
+      setExporting("excel");
+      const ExcelJS = await import("exceljs");
+      const workbook = new ExcelJS.Workbook();
+      workbook.creator = "Artec Gestao";
+      workbook.created = new Date();
+
+      const summarySheet = workbook.addWorksheet("Resumo");
+      summarySheet.columns = [{ header: "Indicador", key: "label", width: 30 }, { header: "Valor", key: "value", width: 22 }];
+      summarySheet.addRows([
+        { label: "Saldo atual", value: result.summary.currentBalance },
+        { label: "Entradas previstas", value: result.summary.predictedInflows },
+        { label: "Saidas previstas", value: result.summary.predictedOutflows },
+        { label: "Saldo final projetado", value: result.summary.finalProjectedBalance },
+        { label: "Menor saldo projetado", value: result.summary.lowestProjectedBalance },
+      ]);
+      styleMoneyColumn(summarySheet, ["B"]);
+
+      const projectionSheet = workbook.addWorksheet("Projecao");
+      projectionSheet.columns = [
+        { header: "Periodo", key: "period", width: 22 },
+        { header: "Entradas", key: "inflows", width: 16 },
+        { header: "Saidas", key: "outflows", width: 16 },
+        { header: "Movimento liquido", key: "netMovement", width: 20 },
+        { header: "Saldo projetado", key: "projectedBalance", width: 20 },
+      ];
+      projectionSheet.addRow({ period: "Saldo inicial", projectedBalance: result.summary.currentBalance });
+      visiblePeriods.forEach((period) => projectionSheet.addRow({
+        period: period.label,
+        inflows: period.inflows,
+        outflows: period.outflows,
+        netMovement: period.netMovement,
+        projectedBalance: period.projectedBalance,
+      }));
+      styleMoneyColumn(projectionSheet, ["B", "C", "D", "E"]);
+
+      const transactionSheet = workbook.addWorksheet("Lancamentos");
+      transactionSheet.columns = [
+        { header: "Tipo", key: "type", width: 14 },
+        { header: "Descricao", key: "description", width: 42 },
+        { header: "Cliente / Fornecedor", key: "party", width: 28 },
+        { header: "Valor", key: "amount", width: 16 },
+        { header: "Vencimento", key: "dueDate", width: 16 },
+        { header: "Status", key: "status", width: 14 },
+        { header: "Em atraso", key: "overdue", width: 12 },
+      ];
+      visiblePeriods.flatMap((period) => period.transactions).forEach((transaction) => transactionSheet.addRow({
+        type: transaction.type === "inflow" ? "Entrada" : "Saida",
+        description: transaction.description,
+        party: transaction.party ?? "-",
+        amount: transaction.amount,
+        dueDate: transaction.dueDate,
+        status: transaction.status,
+        overdue: transaction.overdue ? "Sim" : "Nao",
+      }));
+      styleMoneyColumn(transactionSheet, ["D"]);
+      styleHeader(summarySheet);
+      styleHeader(projectionSheet);
+      styleHeader(transactionSheet);
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      downloadBlob(new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), `fluxo-de-caixa_${appliedFilters.dateFrom}_${appliedFilters.dateTo}_${timestampToken()}.xlsx`);
+      toast.success("Excel do Fluxo de Caixa gerado com sucesso.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Nao foi possivel gerar o Excel.");
+    } finally {
+      setExporting(null);
+    }
+  }
+
+  async function handleExportPdf() {
+    try {
+      setExporting("pdf");
+      const blob = await clientApi.cashFlow.exportPdf({
+        dateFrom: appliedFilters.dateFrom,
+        dateTo: appliedFilters.dateTo,
+        granularity: appliedFilters.granularity,
+        view: appliedFilters.view,
+        categoryId: appliedFilters.categoryId === "all" ? undefined : appliedFilters.categoryId,
+        bank: appliedFilters.bank,
+      });
+      downloadBlob(blob, `fluxo-de-caixa_${appliedFilters.dateFrom}_${appliedFilters.dateTo}_${timestampToken()}.pdf`);
+      toast.success("PDF do Fluxo de Caixa gerado com sucesso.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Nao foi possivel gerar o PDF.");
+    } finally {
+      setExporting(null);
+    }
+  }
 
   return (
-    <PageShell icon={CalendarDays} title="Fluxo de caixa" subtitle="Entradas, saidas e saldo previsto por periodo">
-      <div className="stats-grid">
-        <MetricCard title="Entradas" value={formatMoney(entradas)} icon={TrendingUp} tone="green" />
-        <MetricCard title="Saidas" value={formatMoney(saidas)} icon={TrendingDown} tone="red" />
-        <MetricCard title="Saldo previsto" value={formatMoney(saldo)} icon={Banknote} tone={saldo < 0 ? "red" : "blue"} />
+    <PageShell icon={CalendarDays} title="Fluxo de Caixa" subtitle="Entradas, saidas e saldo projetado por periodo">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+        <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={() => void handleExportExcel()} disabled={Boolean(exporting)}>
+          {exporting === "excel" ? <Loader2 className="size-4 animate-spin" /> : <FileSpreadsheet className="size-4" />}
+          Exportar Excel
+        </Button>
+        <Button type="button" className="w-full sm:w-auto" onClick={() => void handleExportPdf()} disabled={Boolean(exporting)}>
+          {exporting === "pdf" ? <Loader2 className="size-4 animate-spin" /> : <FileDown className="size-4" />}
+          Exportar PDF
+        </Button>
       </div>
 
-      <FilterBar
-        activeFilters={
-          filterMonth
-            ? [{ key: "month", label: formatMonthFilter(filterMonth), onRemove: () => setFilterMonth("") }]
-            : []
-        }
-        filters={[
-          {
-            key: "month",
-            label: "Mes",
-            control: <MonthSelect value={filterMonth} onValueChange={setFilterMonth} />,
-          },
-        ]}
+      <Card className="p-4">
+        <div className="cashflow-filter-grid">
+          <FilterField icon={CalendarDays} label="Periodo">
+            <select className="select-input" value={draftFilters.preset} onChange={(event) => updateDraft({ preset: event.target.value as PeriodPreset })}>
+              {periodOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+            </select>
+          </FilterField>
+          <FilterField icon={Landmark} label="Banco">
+            <select className="select-input" value={draftFilters.bank} onChange={(event) => updateDraft({ bank: event.target.value })}>
+              <option value="all">Todos (Consolidado)</option>
+            </select>
+          </FilterField>
+          <FilterField icon={Layers3} label="Categoria">
+            <select className="select-input" value={draftFilters.categoryId} onChange={(event) => updateDraft({ categoryId: event.target.value })}>
+              <option value="all">Todas</option>
+              {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+            </select>
+          </FilterField>
+          <FilterField icon={CalendarDays} label="Granularidade">
+            <select className="select-input" value={draftFilters.granularity} onChange={(event) => updateDraft({ granularity: event.target.value as CashFlowGranularity })}>
+              <option value="day">Diaria</option>
+              <option value="week">Semanal</option>
+              <option value="month">Mensal</option>
+            </select>
+          </FilterField>
+          <FilterField icon={Search} label="Visao">
+            <select className="select-input" value={draftFilters.view} onChange={(event) => updateDraft({ view: event.target.value as CashFlowView })}>
+              <option value="both">Ambas</option>
+              <option value="inflows">Apenas entradas</option>
+              <option value="outflows">Apenas saidas</option>
+            </select>
+          </FilterField>
+          <div className="cashflow-filter-actions">
+            <Button type="button" variant="outline" onClick={clearFilters}>Limpar</Button>
+            <Button type="button" onClick={applyFilters}>Aplicar</Button>
+          </div>
+        </div>
+        {draftFilters.preset === "custom" ? (
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <FilterField icon={CalendarDays} label="Data inicial">
+              <input className="select-input" type="date" value={draftFilters.dateFrom} onChange={(event) => updateDraft({ dateFrom: event.target.value })} />
+            </FilterField>
+            <FilterField icon={CalendarDays} label="Data final">
+              <input className="select-input" type="date" value={draftFilters.dateTo} onChange={(event) => updateDraft({ dateTo: event.target.value })} />
+            </FilterField>
+          </div>
+        ) : null}
+      </Card>
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm font-bold text-muted-foreground">Totais do periodo</p>
+        <p className="text-xs font-semibold text-muted-foreground">{activeFilters.join(" - ")}</p>
+      </div>
+
+      {isLoading ? <KpiSkeleton /> : (
+        <div className="cashflow-kpi-grid">
+          <MetricCard title="Saldo atual" value={formatMoney(result.summary.currentBalance)} icon={Wallet} tone="blue" helper="Conciliado pelos lancamentos confirmados" />
+          <MetricCard title="Entradas previstas" value={formatMoney(result.summary.predictedInflows)} icon={ArrowUpCircle} tone="green" helper={`${result.summary.inflowCount} lancamentos`} />
+          <MetricCard title="Saidas previstas" value={formatMoney(result.summary.predictedOutflows)} icon={ArrowDownCircle} tone="red" helper={`${result.summary.outflowCount} lancamentos`} />
+          <MetricCard title="Saldo final projetado" value={formatMoney(result.summary.finalProjectedBalance)} icon={Banknote} tone={result.summary.finalProjectedBalance < result.summary.currentBalance ? "amber" : "green"} helper={formatDelta(result.summary.finalProjectedBalance - result.summary.currentBalance)} />
+          <MetricCard title="Menor saldo projetado" value={formatMoney(result.summary.lowestProjectedBalance)} icon={TrendingDown} tone={result.summary.lowestProjectedBalance < minimumBalance ? "red" : "green"} helper={`em ${formatShortDate(result.summary.lowestProjectedBalanceDate)}`} />
+        </div>
+      )}
+
+      <Card className="overflow-hidden">
+        <CardHeader className="border-b border-border/80">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <CardTitle className="inline-flex items-center gap-2 text-base">
+                <TrendingUp className="size-4 text-primary" />
+                Evolucao do Saldo Projetado
+                <Info className="size-4 text-muted-foreground" />
+              </CardTitle>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <label className="flex items-center gap-2 text-xs font-bold text-muted-foreground">
+                Saldo minimo (R$)
+                <input className="cashflow-minimum-input" inputMode="decimal" value={minimumBalanceInput} onChange={(event) => setMinimumBalanceInput(event.target.value)} />
+                <Pencil className="size-4 text-primary" />
+              </label>
+              <div className="inline-flex rounded-xl border border-border bg-[var(--surface-2)] p-1">
+                <Button type="button" size="sm" variant={chartMode === "full" ? "default" : "ghost"} className="h-9 px-3" onClick={() => setChartMode("full")}>Entradas e Saidas</Button>
+                <Button type="button" size="sm" variant={chartMode === "balance" ? "default" : "ghost"} className="h-9 px-3" onClick={() => setChartMode("balance")}>Apenas Saldo</Button>
+              </div>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="p-4 sm:p-5">
+          {isError ? (
+            <div className="flex h-[320px] items-center justify-center rounded-xl border border-dashed border-destructive/30 bg-danger-50 text-sm font-semibold text-destructive">Erro ao carregar fluxo de caixa.</div>
+          ) : isLoading ? (
+            <div className="h-[320px] animate-pulse rounded-xl bg-surface-muted" />
+          ) : chartData.length ? (
+            <div className="cashflow-chart-frame">
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={chartData} margin={{ top: 18, right: 18, bottom: 8, left: 0 }}>
+                  <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="label" tick={{ fontSize: 12, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
+                  <YAxis tickFormatter={formatCompactMoney} tick={{ fontSize: 12, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} width={70} />
+                  <Tooltip content={<CashFlowTooltip />} />
+                  <Legend verticalAlign="top" align="right" iconType="circle" wrapperStyle={{ fontSize: 12, paddingBottom: 12 }} />
+                  <ReferenceLine y={minimumBalance} stroke="var(--warning)" strokeDasharray="4 4" />
+                  {chartMode === "full" && appliedFilters.view !== "outflows" ? <Bar dataKey="inflows" name="Entradas" fill="var(--chart-revenue)" radius={[6, 6, 0, 0]} maxBarSize={28} /> : null}
+                  {chartMode === "full" && appliedFilters.view !== "inflows" ? <Bar dataKey="outflows" name="Saidas" fill="var(--chart-expense)" radius={[6, 6, 0, 0]} maxBarSize={28} /> : null}
+                  <Area type="monotone" dataKey="projectedBalance" name="Saldo projetado" fill="var(--chart-balance)" fillOpacity={0.12} stroke="var(--chart-balance)" strokeWidth={2} />
+                  <Line type="monotone" dataKey="projectedBalance" name="Linha do saldo" stroke="var(--chart-balance)" strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 5 }} legendType="none" />
+                  {todayPoint ? <ReferenceDot x={todayPoint.label} y={todayPoint.projectedBalance} r={6} fill="var(--warning)" stroke="var(--surface)" strokeWidth={2} /> : null}
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <EmptyState title="Nenhuma projecao encontrada." description="Nao ha contas pendentes no periodo selecionado." />
+          )}
+        </CardContent>
+      </Card>
+
+      <ProjectionTable
+        periods={visiblePeriods}
+        initialBalance={result.summary.currentBalance}
+        isLoading={isLoading}
+        isError={isError}
+        expandedRows={expandedRows}
+        onToggleRow={toggleRow}
+        onExpandAll={expandAll}
+        onCollapseAll={collapseAll}
       />
-
-      <div className="desktop-table">
-        <CashFlowTable rows={rows} isLoading={isLoading} hasError={Boolean(error)} />
-      </div>
-
-      <div className="mobile-list">
-        <CashFlowMobileList rows={rows} isLoading={isLoading} hasError={Boolean(error)} />
-      </div>
     </PageShell>
   );
 }
 
-function CashFlowTable({ rows, isLoading, hasError }: { rows: CashFlowRow[]; isLoading: boolean; hasError: boolean }) {
+function ProjectionTable({ periods, initialBalance, isLoading, isError, expandedRows, onToggleRow, onExpandAll, onCollapseAll }: {
+  periods: ProjectedCashFlowPeriod[];
+  initialBalance: number;
+  isLoading: boolean;
+  isError: boolean;
+  expandedRows: Set<string>;
+  onToggleRow: (id: string) => void;
+  onExpandAll: () => void;
+  onCollapseAll: () => void;
+}) {
   return (
     <Card className="overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Periodo</TableHead>
-            <TableHead>Entrada</TableHead>
-            <TableHead>Saida</TableHead>
-            <TableHead>Saldo</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {isLoading ? (
-            <TableRow><TableCell colSpan={4} className="h-48 text-center text-sm text-muted-foreground">Carregando...</TableCell></TableRow>
-          ) : hasError ? (
-            <TableRow><TableCell colSpan={4} className="h-48 text-center text-sm font-medium text-destructive">Erro ao carregar fluxo de caixa.</TableCell></TableRow>
-          ) : rows.length ? rows.map((row) => {
-            const saldo = toFiniteNumber(row.saldo);
-            return (
-              <TableRow key={row.period}>
-                <TableCell className="font-medium">{formatPeriod(row.period)}</TableCell>
-                <TableCell className="font-semibold tabular-nums text-success">{formatMoney(row.receitas ?? 0)}</TableCell>
-                <TableCell className="font-semibold tabular-nums text-destructive">{formatMoney(row.despesas ?? 0)}</TableCell>
-                <TableCell className="font-semibold tabular-nums">{formatMoney(saldo)}</TableCell>
-              </TableRow>
-            );
-          }) : (
-            <TableRow>
-              <TableCell colSpan={4} className="p-0">
-                <EmptyState title="Nenhum fluxo de caixa encontrado." description="Nao ha movimentacoes financeiras no periodo selecionado." />
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+      <CardHeader className="border-b border-border/80">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <CardTitle className="inline-flex items-center gap-2 text-base">
+            <CalendarDays className="size-4 text-primary" />
+            Projecao Detalhada
+            <Info className="size-4 text-muted-foreground" />
+          </CardTitle>
+          <div className="flex gap-2">
+            <Button type="button" size="sm" variant="outline" onClick={onExpandAll}><ChevronDown className="size-4" />Expandir todos</Button>
+            <Button type="button" size="sm" variant="outline" onClick={onCollapseAll}><ChevronRight className="size-4" />Recolher todos</Button>
+          </div>
+        </div>
+      </CardHeader>
+      <div className="table-scroll">
+        <table className="cashflow-table">
+          <thead>
+            <tr>
+              <th>Periodo</th>
+              <th className="text-right">Entradas</th>
+              <th className="text-right">Saidas</th>
+              <th className="text-right">Movimento liquido</th>
+              <th className="text-right">Saldo projetado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr className="cashflow-initial-row">
+              <td><span className="inline-flex items-center gap-2"><CheckCircle2 className="size-4 text-primary" />Saldo inicial</span></td>
+              <td className="text-right">-</td>
+              <td className="text-right">-</td>
+              <td className="text-right">-</td>
+              <td className="text-right font-black text-primary">{formatMoney(initialBalance)}</td>
+            </tr>
+            {isLoading ? (
+              <tr><td colSpan={5} className="h-56 text-center text-sm font-semibold text-muted-foreground">Carregando projecao...</td></tr>
+            ) : isError ? (
+              <tr><td colSpan={5} className="h-56 text-center text-sm font-semibold text-destructive">Erro ao carregar fluxo de caixa.</td></tr>
+            ) : periods.length ? periods.map((period) => {
+              const hasTransactions = period.transactions.length > 0;
+              const expanded = expandedRows.has(period.id);
+              return (
+                <>
+                  <tr key={period.id} className={cn(hasTransactions && "cursor-pointer hover:bg-surface-2")} onClick={() => hasTransactions && onToggleRow(period.id)}>
+                    <td>
+                      <span className="inline-flex items-center gap-2">
+                        {hasTransactions ? expanded ? <ChevronDown className="size-4 text-primary" /> : <ChevronRight className="size-4 text-muted-foreground" /> : <span className="size-4" />}
+                        {period.label}
+                      </span>
+                    </td>
+                    <td className="text-right font-bold text-success">{period.inflows ? formatMoney(period.inflows) : "-"}</td>
+                    <td className="text-right font-bold text-destructive">{period.outflows ? formatMoney(period.outflows) : "-"}</td>
+                    <td className={cn("text-right font-bold", period.netMovement < 0 ? "text-destructive" : period.netMovement > 0 ? "text-success" : "text-muted-foreground")}>{period.netMovement ? formatSignedMoney(period.netMovement) : "-"}</td>
+                    <td className="text-right font-black text-primary">{formatMoney(period.projectedBalance)}</td>
+                  </tr>
+                  {expanded ? (
+                    <tr key={`${period.id}:details`}>
+                      <td colSpan={5} className="bg-[var(--surface-2)] p-0">
+                        <TransactionDetails transactions={period.transactions} />
+                      </td>
+                    </tr>
+                  ) : null}
+                </>
+              );
+            }) : (
+              <tr><td colSpan={5} className="p-0"><EmptyState title="Nenhuma conta pendente encontrada." description="Altere o periodo ou os filtros para visualizar previsoes futuras." /></td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </Card>
   );
 }
 
-function CashFlowMobileList({ rows, isLoading, hasError }: { rows: CashFlowRow[]; isLoading: boolean; hasError: boolean }) {
-  if (isLoading) {
-    return (
-      <div className="space-y-3">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="cashflow-card">
-            <div className="h-3 w-32 animate-pulse rounded-full bg-surface-muted" />
-            <div className="mt-3 space-y-2">
-              <div className="h-4 w-full animate-pulse rounded-full bg-surface-muted" />
-              <div className="h-4 w-full animate-pulse rounded-full bg-surface-muted" />
-              <div className="h-4 w-full animate-pulse rounded-full bg-surface-muted" />
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  if (hasError) {
-    return (
-      <div className="rounded-2xl border border-dashed border-destructive/30 bg-danger-50 p-8 text-center text-sm font-medium text-destructive">
-        Erro ao carregar fluxo de caixa.
-      </div>
-    );
-  }
-
-  if (!rows.length) {
-    return (
-      <EmptyState title="Nenhum fluxo de caixa encontrado." description="Nao ha movimentacoes financeiras no periodo selecionado." />
-    );
-  }
+function TransactionDetails({ transactions }: { transactions: ProjectedCashFlowTransaction[] }) {
+  const inflows = transactions.filter((transaction) => transaction.type === "inflow").length;
+  const outflows = transactions.length - inflows;
 
   return (
-    <div className="space-y-3">
-      {rows.map((row) => {
-        const saldo = toFiniteNumber(row.saldo);
-        return (
-          <article key={row.period} className="cashflow-card">
-            <header>
-              <span>Período</span>
-              <strong>{formatPeriod(row.period)}</strong>
-            </header>
-            <div className="cashflow-values">
-              <div>
-                <span>Entrada</span>
-                <strong className="money money-income">{formatMoney(row.receitas ?? 0)}</strong>
-              </div>
-              <div>
-                <span>Saída</span>
-                <strong className="money money-expense">{formatMoney(row.despesas ?? 0)}</strong>
-              </div>
-              <div>
-                <span>Saldo</span>
-                <strong className={cn("money", saldo < 0 ? "money-expense" : "money-balance")}>{formatMoney(saldo)}</strong>
-              </div>
-            </div>
-          </article>
-        );
-      })}
+    <div className="cashflow-details">
+      <p className="text-xs font-black uppercase tracking-[0.08em] text-muted-foreground">{transactions.length} lancamentos - {inflows} entrada(s) - {outflows} saida(s)</p>
+      <div className="mt-3 overflow-x-auto">
+        <table className="cashflow-detail-table">
+          <thead>
+            <tr>
+              <th>Tipo</th>
+              <th>Descricao</th>
+              <th>Cliente / Fornecedor</th>
+              <th className="text-right">Valor</th>
+              <th>Vencimento</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {transactions.map((transaction) => (
+              <tr key={transaction.id}>
+                <td><Badge variant={transaction.type === "inflow" ? "success" : "destructive"}>{transaction.type === "inflow" ? "Entrada" : "Saida"}</Badge></td>
+                <td>
+                  <div className="flex min-w-0 flex-col gap-1">
+                    <span className="font-semibold text-foreground">{transaction.description}</span>
+                    {transaction.overdue ? <Badge variant="destructive">Em atraso desde {formatShortDate(transaction.dueDate)}</Badge> : null}
+                  </div>
+                </td>
+                <td>{transaction.party ?? "-"}</td>
+                <td className={cn("text-right font-black tabular-nums", transaction.type === "inflow" ? "text-success" : "text-destructive")}>{formatMoney(transaction.amount)}</td>
+                <td>{formatShortDate(transaction.dueDate)}</td>
+                <td><Badge variant="secondary">{transaction.status}</Badge></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
 
-function formatPeriod(period?: string) {
-  if (!period) return "-";
-  const date = new Date(period);
-  if (Number.isNaN(date.getTime())) return period;
-  const label = date.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
-  return label.charAt(0).toUpperCase() + label.slice(1);
+function FilterField({ icon: Icon, label, children }: { icon: typeof CalendarDays; label: string; children: React.ReactNode }) {
+  return (
+    <label className="cashflow-filter-field">
+      <span><Icon className="size-4" />{label}</span>
+      {children}
+    </label>
+  );
 }
 
-function formatMonthFilter(month: string) {
-  const [year, monthIndex] = month.split("-").map(Number);
-  if (!year || !monthIndex) return month;
-  const label = new Date(year, monthIndex - 1, 1).toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
-  return label.charAt(0).toUpperCase() + label.slice(1);
+function CashFlowTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ name?: string; value?: number; color?: string }>; label?: string }) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="max-w-[min(280px,calc(100vw-2rem))] rounded-xl border border-border bg-popover p-3 text-sm shadow-elevated">
+      <p className="mb-2 font-black text-foreground">{label}</p>
+      {payload.filter((item) => item.name !== "Linha do saldo").map((item) => (
+        <p key={item.name} className="flex items-center justify-between gap-6 text-xs font-semibold text-muted-foreground">
+          <span className="inline-flex items-center gap-2"><span className="size-2 rounded-full" style={{ background: item.color }} />{item.name}</span>
+          <strong className="tabular-nums text-foreground">{formatMoney(item.value ?? 0)}</strong>
+        </p>
+      ))}
+    </div>
+  );
+}
+
+function KpiSkeleton() {
+  return (
+    <div className="cashflow-kpi-grid">
+      {Array.from({ length: 5 }).map((_, index) => (
+        <div key={index} className="stat-card">
+          <div className="h-3 w-28 animate-pulse rounded-full bg-surface-muted" />
+          <div className="mt-4 h-8 w-40 animate-pulse rounded-full bg-surface-muted" />
+          <div className="mt-3 h-3 w-32 animate-pulse rounded-full bg-surface-muted" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function parseFilters(params: URLSearchParams): CashFlowFilters {
+  const preset = parsePreset(params.get("periodo"));
+  const range = preset === "custom"
+    ? { from: params.get("inicio") || defaultFilters.dateFrom, to: params.get("fim") || defaultFilters.dateTo }
+    : (() => {
+        const resolved = resolvePresetRange(preset);
+        return { from: toDateKey(resolved.from), to: toDateKey(resolved.to) };
+      })();
+  return {
+    preset,
+    dateFrom: range.from,
+    dateTo: range.to,
+    bank: params.get("banco") || "all",
+    categoryId: params.get("categoria") || "all",
+    granularity: parseGranularity(params.get("granularidade")),
+    view: parseView(params.get("visao")),
+  };
+}
+
+function filtersToSearchParams(filters: CashFlowFilters) {
+  const params = new URLSearchParams();
+  if (filters.preset !== defaultFilters.preset) params.set("periodo", filters.preset);
+  if (filters.preset === "custom") {
+    params.set("inicio", filters.dateFrom);
+    params.set("fim", filters.dateTo);
+  }
+  if (filters.bank !== "all") params.set("banco", filters.bank);
+  if (filters.categoryId !== "all") params.set("categoria", filters.categoryId);
+  if (filters.granularity !== defaultFilters.granularity) params.set("granularidade", filters.granularity);
+  if (filters.view !== defaultFilters.view) params.set("visao", filters.view);
+  return params;
+}
+
+function buildActiveFilterLabels(filters: CashFlowFilters, categoryName?: string) {
+  return [
+    periodOptions.find((option) => option.value === filters.preset)?.label ?? "Proximos 15 dias",
+    filters.bank === "all" ? "Todos os bancos" : filters.bank,
+    categoryName ?? "Todas as categorias",
+    filters.granularity === "day" ? "Diaria" : filters.granularity === "week" ? "Semanal" : "Mensal",
+    filters.view === "both" ? "Ambas" : filters.view === "inflows" ? "Apenas entradas" : "Apenas saidas",
+  ];
+}
+
+function toChartData(periods: ProjectedCashFlowPeriod[]) {
+  return periods.map((period) => ({
+    label: period.label,
+    dateFrom: period.dateFrom,
+    dateTo: period.dateTo,
+    inflows: period.inflows,
+    outflows: period.outflows,
+    projectedBalance: period.projectedBalance,
+    netMovement: period.netMovement,
+  }));
+}
+
+function emptyCashFlow(filters: CashFlowFilters): ProjectedCashFlowResult {
+  return {
+    filters: {
+      dateFrom: filters.dateFrom,
+      dateTo: filters.dateTo,
+      granularity: filters.granularity,
+      view: filters.view,
+      categoryId: filters.categoryId === "all" ? null : filters.categoryId,
+      bank: filters.bank,
+    },
+    summary: {
+      currentBalance: 0,
+      predictedInflows: 0,
+      predictedOutflows: 0,
+      finalProjectedBalance: 0,
+      lowestProjectedBalance: 0,
+      lowestProjectedBalanceDate: filters.dateFrom,
+      inflowCount: 0,
+      outflowCount: 0,
+    },
+    periods: [],
+  };
+}
+
+function parsePreset(value: string | null): PeriodPreset {
+  return value === "7d" || value === "15d" || value === "30d" || value === "60d" || value === "90d" || value === "custom" ? value : "15d";
+}
+
+function parseGranularity(value: string | null): CashFlowGranularity {
+  return value === "week" || value === "month" ? value : "day";
+}
+
+function parseView(value: string | null): CashFlowView {
+  return value === "inflows" || value === "outflows" ? value : "both";
+}
+
+function formatShortDate(value: string) {
+  const parts = value.slice(0, 10).split("-").map(Number);
+  const year = parts[0] ?? Number.NaN;
+  const month = parts[1] ?? Number.NaN;
+  const day = parts[2] ?? Number.NaN;
+  const date = new Date(year, month - 1, day);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
+function formatCompactMoney(value: number) {
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000) return `R$ ${(value / 1_000_000).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} mi`;
+  if (abs >= 1_000) return `R$ ${(value / 1_000).toLocaleString("pt-BR", { maximumFractionDigits: 0 })} mil`;
+  return formatMoney(value);
+}
+
+function formatSignedMoney(value: number) {
+  return `${value > 0 ? "+" : ""}${formatMoney(value)}`;
+}
+
+function formatDelta(value: number) {
+  if (value === 0) return "Sem variacao em relacao a hoje";
+  return `${value < 0 ? "Queda" : "Alta"} de ${formatMoney(Math.abs(value))} em relacao a hoje`;
+}
+
+function styleHeader(sheet: { getRow: (row: number) => { font?: { bold?: boolean } } }) {
+  sheet.getRow(1).font = { bold: true };
+}
+
+function styleMoneyColumn(sheet: { getColumn: (column: string) => { numFmt?: string } }, columns: string[]) {
+  columns.forEach((column) => {
+    sheet.getColumn(column).numFmt = '"R$" #,##0.00';
+  });
+}
+
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
+
+function timestampToken() {
+  const now = new Date();
+  return `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}-${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}`;
 }

@@ -1,4 +1,11 @@
 import { prisma } from "../../lib/prisma/client.js";
+import {
+  buildProjectedCashFlow,
+  type CashFlowGranularity,
+  type CashFlowView,
+  type ProjectedCashFlowResult,
+  type ProjectedCashFlowTransaction,
+} from "../../domain/financeiro/cash-flow.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -39,7 +46,14 @@ export interface DashboardKpis {
   contasRecebidasMes: number;
 }
 
-type CashFlowGranularity = "day" | "week" | "month";
+interface ProjectedCashFlowInput {
+  granularity: CashFlowGranularity;
+  view?: CashFlowView;
+  dateFrom: Date;
+  dateTo: Date;
+  categoryId?: string | null;
+  bank?: string;
+}
 
 // ---------------------------------------------------------------------------
 // DRE – aggregation by type and month
@@ -125,6 +139,78 @@ export async function getCashFlow(
     despesas: Number.parseFloat(r.despesas),
     saldo: Number.parseFloat(r.saldo),
   }));
+}
+
+export async function getProjectedCashFlow(input: ProjectedCashFlowInput): Promise<ProjectedCashFlowResult> {
+  const [receitaAgg, despesaAgg, receivables, payables] = await Promise.all([
+    prisma.financialEntry.aggregate({
+      where: { deletedAt: null, type: "receita", status: "confirmed" },
+      _sum: { amount: true },
+    }),
+    prisma.financialEntry.aggregate({
+      where: { deletedAt: null, type: "despesa", status: "confirmed" },
+      _sum: { amount: true },
+    }),
+    prisma.accountReceivable.findMany({
+      where: {
+        deletedAt: null,
+        status: { in: ["pending", "overdue"] },
+        dueDate: { gte: input.dateFrom, lte: input.dateTo },
+        ...(input.categoryId ? { categoryId: input.categoryId } : {}),
+      },
+      include: { category: true },
+      orderBy: { dueDate: "asc" },
+    }),
+    prisma.accountPayable.findMany({
+      where: {
+        deletedAt: null,
+        status: { in: ["pending", "overdue"] },
+        dueDate: { gte: input.dateFrom, lte: input.dateTo },
+        ...(input.categoryId ? { categoryId: input.categoryId } : {}),
+      },
+      include: { category: true },
+      orderBy: { dueDate: "asc" },
+    }),
+  ]);
+
+  const today = new Date();
+  const transactions: ProjectedCashFlowTransaction[] = [
+    ...receivables.map((entry) => ({
+      id: entry.id,
+      type: "inflow" as const,
+      description: entry.description,
+      party: entry.client,
+      amount: Number(entry.amount),
+      dueDate: entry.dueDate.toISOString().slice(0, 10),
+      status: "Previsto",
+      categoryId: entry.categoryId,
+      categoryName: entry.category?.name ?? null,
+      overdue: entry.dueDate < today,
+    })),
+    ...payables.map((entry) => ({
+      id: entry.id,
+      type: "outflow" as const,
+      description: entry.description,
+      party: entry.beneficiaryName ?? entry.supplier,
+      amount: Number(entry.amount),
+      dueDate: entry.dueDate.toISOString().slice(0, 10),
+      status: "Previsto",
+      categoryId: entry.categoryId,
+      categoryName: entry.category?.name ?? null,
+      overdue: entry.dueDate < today,
+    })),
+  ];
+
+  return buildProjectedCashFlow({
+    initialBalance: Number(receitaAgg._sum.amount ?? 0) - Number(despesaAgg._sum.amount ?? 0),
+    dateFrom: input.dateFrom,
+    dateTo: input.dateTo,
+    granularity: input.granularity,
+    view: input.view,
+    categoryId: input.categoryId,
+    bank: input.bank,
+    transactions,
+  });
 }
 
 // ---------------------------------------------------------------------------

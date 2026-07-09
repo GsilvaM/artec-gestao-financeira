@@ -70,6 +70,18 @@ async function handleBlobResponse(r: Response): Promise<Blob> {
   return blob;
 }
 
+async function handleDownloadResponse(r: Response): Promise<Blob> {
+  if (!r.ok) {
+    const body = await r.json().catch(() => null);
+    throw new Error(body?.error || body?.message || `HTTP ${r.status}`);
+  }
+  const blob = await r.blob();
+  if (blob.size < 64) {
+    throw new Error("O arquivo gerado esta vazio. Tente novamente ou altere o periodo.");
+  }
+  return blob;
+}
+
 export const clientApi = {
   financialEntries: {
     findAll: (filters?: Record<string, unknown>) =>
@@ -433,6 +445,22 @@ export const clientApi = {
           )
         )
         .then(handleResponse),
+    getProjected: (params: Record<string, unknown>) =>
+      getAuthHeaders()
+        .then((headers) =>
+          apiFetch(`${BASE_URL}/cash-flow?${toSearchParams({ ...params, mode: "projected" })}`, {
+            headers,
+          })
+        )
+        .then(handleResponse),
+    exportPdf: (params: Record<string, unknown>) =>
+      getAuthHeaders()
+        .then((headers) =>
+          apiFetch(`${BASE_URL}/cash-flow/export/pdf?${toSearchParams(params)}`, {
+            headers,
+          })
+        )
+        .then(handleDownloadResponse),
   },
 
   dashboard: {
