@@ -10,8 +10,8 @@ import type {
 export const financialEntryKeys = {
   all: ['financial-entries'] as const,
   byId: (id: string) => [...financialEntryKeys.all, id] as const,
-  list: (filters?: FinancialEntryFilters) =>
-    [...financialEntryKeys.all, 'list', ...(filters ? [filters] : [])] as const,
+  list: (filters?: FinancialEntryFilters, pagination?: { page: number; pageSize: number }) =>
+    [...financialEntryKeys.all, 'list', ...(filters ? [filters] : []), ...(pagination ? [pagination] : [])] as const,
 };
 
 export const accountPayableKeys = {

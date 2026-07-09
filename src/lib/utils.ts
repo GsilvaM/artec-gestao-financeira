@@ -21,6 +21,13 @@ export function formatMoney(value: unknown): string {
   return brlFormatter.format(toFiniteNumber(value));
 }
 
+export function getMoneyToneClass(value: number | string | null | undefined, options?: { positiveClass?: string; negativeClass?: string; neutralClass?: string }) {
+  const numeric = toFiniteNumber(value);
+  if (numeric > 0) return options?.positiveClass ?? "text-success";
+  if (numeric < 0) return options?.negativeClass ?? "text-danger";
+  return options?.neutralClass ?? "text-foreground";
+}
+
 export function parseMoneyInput(value: string): number {
   const input = value.trim();
   const normalized = input.includes(",") ? input.replace(/\./g, "").replace(",", ".") : input;

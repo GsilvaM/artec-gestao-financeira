@@ -4,7 +4,6 @@ import {
   Bar,
   CartesianGrid,
   ComposedChart,
-  Legend,
   Line,
   ResponsiveContainer,
   Tooltip,
@@ -98,7 +97,7 @@ export function Component() {
   const activeFilters = useMemo(
     () => [
       ...(search ? [{ key: "search", label: `Busca: ${search}`, onRemove: () => setSearch("") }] : []),
-      ...(filterMonth ? [{ key: "month", label: `Periodo: ${formatMonthLabel(filterMonth)}`, onRemove: () => setFilterMonth("") }] : []),
+      ...(filterMonth ? [{ key: "month", label: `Período: ${formatMonthLabel(filterMonth)}`, onRemove: () => setFilterMonth("") }] : []),
       ...(groupFilter !== "todos" ? [{ key: "group", label: `Grupo: ${groupFilter}`, onRemove: () => setGroupFilter("todos") }] : []),
       ...(categoryFilter !== "todos" ? [{ key: "category", label: `Categoria: ${categoryFilter}`, onRemove: () => setCategoryFilter("todos") }] : []),
     ],
@@ -107,23 +106,23 @@ export function Component() {
   const periodLabel = formatMonthLabel(activeMonth.value);
 
   return (
-    <PageShell icon={BarChart3} title="DRE" subtitle="Acompanhe receitas, despesas, resultado liquido e categorias que mais impactam a operacao.">
+    <PageShell icon={BarChart3} title="DRE" subtitle="Acompanhe receitas, despesas, resultado líquido e categorias que mais impactam a operação.">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="badge badge-primary">Periodo: {periodLabel}</span>
+        <span className="badge badge-primary">Período: {periodLabel}</span>
         <span className="badge border-border bg-[var(--surface-2)] text-muted-foreground">Regime: caixa</span>
       </div>
 
       <Card className="dre-filter-panel p-4 sm:p-5">
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
           <FilterBar
-            searchPlaceholder="Buscar categoria ou descricao..."
+            searchPlaceholder="Buscar categoria ou descrição..."
             search={search}
             onSearchChange={setSearch}
             activeFilters={activeFilters}
             filters={[
               {
                 key: "month",
-                label: "Periodo",
+                label: "Período",
                 primary: true,
                 control: <MonthSelect value={filterMonth} onValueChange={setFilterMonth} />,
               },
@@ -151,7 +150,7 @@ export function Component() {
               },
               {
                 key: "sort",
-                label: "Ordenacao",
+                label: "Ordenação",
                 control: (
                   <select className="select-input" aria-label="Ordenar DRE" value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
                     <option value="estrutura">Ordem gerencial</option>
@@ -182,11 +181,11 @@ export function Component() {
       </Card>
 
       <div className="dre-kpi-grid">
-        <MetricCard title="Receita total" value={formatMoney(dre.totalReceitas)} icon={ArrowUpCircle} tone="green" helper="Entradas reconhecidas no periodo" />
-        <MetricCard title="Despesa total" value={formatMoney(dre.totalDespesas)} icon={ArrowDownCircle} tone="red" helper="Saidas reconhecidas no periodo" />
-        <MetricCard title="Resultado liquido" value={formatMoney(dre.resultado)} icon={Scale} tone={dre.resultado < 0 ? "red" : "blue"} helper={dre.resultado < 0 ? "Resultado negativo no periodo" : "Resultado positivo no periodo"} />
-        <MetricCard title="Margem liquida" value={formatOptionalPercent(dre.margemLiquida)} icon={Percent} tone={dre.resultado < 0 ? "red" : "green"} helper="Resultado liquido sobre receita" />
-        <MetricCard title="Cobertura despesas" value={formatOptionalPercent(dre.coberturaDespesas)} icon={Activity} tone={dre.coberturaDespesas !== null && dre.coberturaDespesas < 100 ? "amber" : "green"} helper={dre.coberturaDespesas === null ? "Sem despesas no periodo" : "Receita / despesas"} />
+        <MetricCard title="Receita total" value={formatMoney(dre.totalReceitas)} icon={ArrowUpCircle} tone="green" helper="Entradas reconhecidas no período" />
+        <MetricCard title="Despesa total" value={formatMoney(dre.totalDespesas)} icon={ArrowDownCircle} tone="red" helper="Saídas reconhecidas no período" />
+        <MetricCard title="Resultado líquido" value={formatMoney(dre.resultado)} icon={Scale} tone={dre.resultado < 0 ? "red" : "blue"} helper={dre.resultado < 0 ? "Resultado negativo no período" : "Resultado positivo no período"} />
+        <MetricCard title="Margem líquida" value={formatOptionalPercent(dre.margemLiquida)} icon={Percent} tone={dre.resultado < 0 ? "red" : "green"} helper="Resultado líquido sobre receita" />
+        <MetricCard title="Cobertura despesas" value={formatOptionalPercent(dre.coberturaDespesas)} icon={Activity} tone={dre.coberturaDespesas !== null && dre.coberturaDespesas < 100 ? "amber" : "green"} helper={dre.coberturaDespesas === null ? "Sem despesas no período" : "Receita / despesas"} />
       </div>
 
       <BreakEvenIndicator state={breakEven} receita={dre.totalReceitas} despesa={dre.totalDespesas} />
@@ -223,8 +222,8 @@ function ManagerialInsights({ insights }: { insights: DreInsight[] }) {
   return (
     <Card className="p-5 sm:p-6">
       <div className="mb-4">
-        <p className="card-label">Leitura rapida</p>
-        <h2 className="mt-2 text-lg font-bold leading-tight text-foreground">Resumo gerencial do periodo</h2>
+        <p className="card-label">Leitura rápida</p>
+        <h2 className="mt-2 text-lg font-bold leading-tight text-foreground">Resumo gerencial do período</h2>
       </div>
       <div className="grid gap-3 lg:grid-cols-2">
         {insights.map((insight) => (
@@ -296,18 +295,18 @@ function DrePdfExportDialog({
         <DialogHeader>
           <DialogTitle>Exportar DRE em PDF</DialogTitle>
           <DialogDescription>
-            Sera gerado um PDF com resumo, comparativo mensal, composicao de despesas e tabela detalhada do periodo selecionado.
+            Será gerado um PDF com resumo, comparativo mensal, composição de despesas e tabela detalhada do período selecionado.
           </DialogDescription>
         </DialogHeader>
 
         <div className="dre-export-form grid gap-4">
           <div className="rounded-xl border border-primary/15 bg-primary-light p-3 text-sm font-semibold leading-relaxed text-primary">
-            A exportacao usa um layout proprio de PDF e nao depende do tamanho da tela atual.
+            A exportação usa um layout próprio de PDF e não depende do tamanho da tela atual.
           </div>
 
-          <Field label="Periodo">
+            <Field label="Período">
             <select className="select-input" value={period} onChange={(event) => setPeriod(event.target.value as ExportPeriod)}>
-              <option value="mensal">Mes atual</option>
+              <option value="mensal">Mês atual</option>
               <option value="trimestre">Trimestre</option>
               <option value="anual">Ano inteiro</option>
               <option value="customizado">Intervalo customizado</option>
@@ -315,7 +314,7 @@ function DrePdfExportDialog({
           </Field>
 
           {period === "mensal" && (
-            <Field label="Mes especifico">
+            <Field label="Mês específico">
               <input className="search-input px-4" type="month" value={month || activeMonth} onChange={(event) => setMonth(event.target.value)} />
             </Field>
           )}
@@ -410,14 +409,14 @@ function downloadBlob(blob: Blob, filename: string) {
 
 function BreakEvenIndicator({ state, receita, despesa }: { state: BreakEvenState; receita: number; despesa: number }) {
   const toneClass = state.tone === "negative" ? "text-destructive" : state.tone === "positive" ? "text-success" : "text-muted-foreground";
-  const markerClass = state.tone === "negative" ? "bg-destructive" : state.tone === "positive" ? "bg-success" : "bg-primary";
+  const fillPct = clampPercent(state.coberturaPct);
   const gapLabel = state.gap > 0 ? `Gap ${formatMoney(state.gap)}` : state.gap < 0 ? `Sobra ${formatMoney(Math.abs(state.gap))}` : "Sem gap";
 
   return (
     <Card className="overflow-hidden p-5 sm:p-6">
       <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0 flex-1">
-          <p className="card-label">Ponto de equilibrio</p>
+          <p className="card-label">Ponto de equilíbrio</p>
           <h2 className={cn("mt-2 text-lg font-bold leading-tight", toneClass)}>{state.text}</h2>
           <p className="mt-2 text-sm text-muted-foreground">
             A receita cobre {formatPercent(state.coberturaPct)} das despesas.
@@ -429,13 +428,18 @@ function BreakEvenIndicator({ state, receita, despesa }: { state: BreakEvenState
           </div>
         </div>
         <div className="min-w-0 flex-1 lg:max-w-xl">
-          <div className="relative h-4 rounded-full bg-surface-muted">
-            <span className="absolute inset-y-0 left-0 rounded-full bg-success" style={{ width: `${clampPercent(state.receitaPct)}%` }} />
-            <span className={cn("absolute top-1/2 size-5 -translate-y-1/2 rounded-full border-2 border-surface shadow-sm", markerClass)} style={{ left: `calc(${clampPercent(state.despesaPct)}% - 10px)` }} />
+          <div
+            className="dre-break-even-bar"
+            role="img"
+            aria-label={`Cobertura das despesas: ${formatPercent(state.coberturaPct)}`}
+          >
+            <span className="dre-break-even-fill" style={{ width: `${fillPct}%` }} />
+            {fillPct < 100 ? <span className="dre-break-even-gap" style={{ left: `${fillPct}%` }} /> : null}
+            <strong className="dre-break-even-value">{formatPercent(state.coberturaPct)}</strong>
           </div>
           <div className="mt-3 flex items-center justify-between gap-4 text-xs font-bold text-muted-foreground">
             <span>Receita atual</span>
-            <span>Meta de equilibrio</span>
+            <span>Meta de equilíbrio</span>
           </div>
         </div>
       </div>
@@ -460,7 +464,7 @@ function DreEvolutionChart({
     <Card className="p-5 sm:p-6">
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="card-label">Evolucao mensal</p>
+          <p className="card-label">Evolução mensal</p>
           <h2 className="mt-2 text-lg font-bold leading-tight text-foreground">Receita, despesa e resultado</h2>
         </div>
         <div className="dre-period-toggle inline-flex rounded-xl border border-border bg-[var(--surface-2)] p-1">
@@ -480,20 +484,26 @@ function DreEvolutionChart({
       </div>
       <div className="dre-chart-scroll min-h-[260px] overflow-x-auto">
         {isLoading ? (
-          <div className="flex h-[300px] items-center justify-center text-sm font-semibold text-muted-foreground">Carregando grafico...</div>
+          <div className="flex h-[300px] items-center justify-center text-sm font-semibold text-muted-foreground">Carregando gráfico...</div>
         ) : !hasEnoughData ? (
           <div className="flex h-[300px] items-center justify-center rounded-xl border border-dashed border-border p-6 text-center text-sm font-semibold text-muted-foreground">
-            Ainda nao ha dados suficientes para evolucao mensal.
+            Ainda não há dados suficientes para evolução mensal.
           </div>
         ) : (
           <div className={cn("dre-chart-frame h-[300px] lg:h-[340px]", months === 12 && "dre-chart-frame-wide")}>
+            <DreChartLegend />
             <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={data} margin={{ top: 8, right: 12, bottom: 8, left: 0 }}>
+              <ComposedChart data={data} margin={{ top: 16, right: 12, bottom: 8, left: 0 }}>
                 <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="mes" tickFormatter={formatMonthLabel} tickLine={false} axisLine={false} fontSize={12} />
                 <YAxis tickFormatter={(value: number) => compactMoney(value)} tickLine={false} axisLine={false} fontSize={12} width={64} />
-                <Tooltip content={<DreChartTooltip />} />
-                <Legend verticalAlign="top" align="right" iconType="circle" wrapperStyle={{ fontSize: 12, paddingBottom: 12 }} />
+                <Tooltip
+                  content={<DreChartTooltip />}
+                  cursor={{ fill: "transparent" }}
+                  position={{ x: 8, y: -78 }}
+                  allowEscapeViewBox={{ x: false, y: true }}
+                  wrapperStyle={{ zIndex: 4, pointerEvents: "none" }}
+                />
                 <Bar dataKey="receita" name="Receita" fill="var(--chart-revenue)" radius={[8, 8, 0, 0]} maxBarSize={32} />
                 <Bar dataKey="despesa" name="Despesa" fill="var(--chart-expense)" radius={[8, 8, 0, 0]} maxBarSize={32} />
                 <Line type="monotone" dataKey="resultado" name="Resultado" stroke="var(--chart-balance)" strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 5 }} />
@@ -543,11 +553,30 @@ function DreChartTooltip({
   );
 }
 
+function DreChartLegend() {
+  const items = [
+    { label: "Receita", color: "var(--chart-revenue)" },
+    { label: "Despesa", color: "var(--chart-expense)" },
+    { label: "Resultado", color: "var(--chart-balance)" },
+  ];
+
+  return (
+    <div className="dre-chart-legend" aria-label="Legenda do gráfico">
+      {items.map((item) => (
+        <span key={item.label}>
+          <i style={{ background: item.color }} />
+          {item.label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function ExpenseComposition({ composition }: { composition: FatiaComposicao[] }) {
   return (
     <Card className="p-5 sm:p-6">
       <div className="mb-5">
-        <p className="card-label">Composicao de despesas</p>
+        <p className="card-label">Composição de despesas</p>
         <h2 className="mt-2 text-lg font-bold leading-tight text-foreground">Categorias que mais pressionam a receita</h2>
       </div>
       {composition.length ? (
@@ -588,7 +617,7 @@ function ExpenseComposition({ composition }: { composition: FatiaComposicao[] })
         </div>
       ) : (
         <div className="rounded-xl border border-dashed border-border p-6 text-center text-sm font-semibold text-muted-foreground">
-          Nenhuma despesa no periodo.
+          Nenhuma despesa no período.
         </div>
       )}
     </Card>
@@ -640,8 +669,8 @@ function DreTable({ rows, isLoading, hasError, hasFilters }: { rows: DreLine[]; 
             <TableRow>
               <TableCell colSpan={4} className="p-0">
                 <EmptyState
-                  title={hasFilters ? "Nenhuma categoria encontrada." : "Nenhum lancamento encontrado."}
-                  description={hasFilters ? "Limpe os filtros ou altere o periodo para visualizar mais linhas da DRE." : "Cadastre receitas e despesas para visualizar a DRE."}
+                  title={hasFilters ? "Nenhuma categoria encontrada." : "Nenhum lançamento encontrado."}
+                  description={hasFilters ? "Limpe os filtros ou altere o período para visualizar mais linhas da DRE." : "Cadastre receitas e despesas para visualizar a DRE."}
                 />
               </TableCell>
             </TableRow>
@@ -681,8 +710,8 @@ function DreMobileList({ rows, isLoading, hasError, hasFilters }: { rows: DreLin
   if (!rows.length) {
     return (
       <EmptyState
-        title={hasFilters ? "Nenhuma categoria encontrada." : "Nenhum lancamento encontrado."}
-        description={hasFilters ? "Limpe os filtros ou altere o periodo para visualizar mais linhas da DRE." : "Cadastre receitas e despesas para visualizar a DRE."}
+        title={hasFilters ? "Nenhuma categoria encontrada." : "Nenhum lançamento encontrado."}
+        description={hasFilters ? "Limpe os filtros ou altere o período para visualizar mais linhas da DRE." : "Cadastre receitas e despesas para visualizar a DRE."}
       />
     );
   }

@@ -30,6 +30,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Select } from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -52,6 +53,7 @@ import { formatCompactMoney } from "./dashboard-utils.js";
 import { EmptyState, pageHeaderStyles } from "@/components/layout/page-shell";
 
 type ChartSeries = "receitas" | "despesas" | "saldo";
+type DashboardPeriod = "3m" | "6m" | "12m";
 
 type FinancialChartPoint = {
   mes: string;
@@ -80,10 +82,10 @@ function useDataTimeout(isLoading: boolean, timeoutMs = 5_000) {
   return timedOut;
 }
 
-function getDashboardCashFlowRange(referenceDate = new Date()) {
+function getDashboardCashFlowRange(referenceDate = new Date(), months = 6) {
   const start = new Date(
     referenceDate.getFullYear(),
-    referenceDate.getMonth() - 5,
+    referenceDate.getMonth() - (months - 1),
     1
   );
   const end = new Date(
@@ -96,6 +98,27 @@ function getDashboardCashFlowRange(referenceDate = new Date()) {
     999
   );
   return { start, end };
+}
+
+const dashboardPeriodOptions: Array<{ value: DashboardPeriod; label: string }> = [
+  { value: "3m", label: "Ultimos 3 meses" },
+  { value: "6m", label: "Ultimos 6 meses" },
+  { value: "12m", label: "Ultimos 12 meses" },
+];
+
+const dashboardSeriesOptions: Array<{ value: ChartSeries | "all"; label: string }> = [
+  { value: "all", label: "Todas as series" },
+  { value: "receitas", label: "Receitas" },
+  { value: "despesas", label: "Despesas" },
+  { value: "saldo", label: "Saldo" },
+];
+
+function getDashboardPeriodMonths(period: DashboardPeriod) {
+  return period === "3m" ? 3 : period === "12m" ? 12 : 6;
+}
+
+function getDashboardPeriodLabel(period: DashboardPeriod) {
+  return dashboardPeriodOptions.find((option) => option.value === period)?.label ?? "Ultimos 6 meses";
 }
 
 function monthKey(date: Date) {
@@ -161,14 +184,6 @@ function formatDate(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleDateString("pt-BR");
-}
-
-function formatLongDate(date = new Date()) {
-  return date.toLocaleDateString("pt-BR", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  });
 }
 
 function DeltaBadge({ value }: { value?: number }) {
@@ -713,7 +728,13 @@ export function Component() {
   const { data: kpis, isLoading, isError, refetch } = useDashboardKpis();
   const { data: entries = [] } = useFinancialEntries();
   const { data: payables = [] } = useAccountsPayable();
-  const cashFlowRange = useMemo(() => getDashboardCashFlowRange(), []);
+  const [dashboardPeriod, setDashboardPeriod] = useState<DashboardPeriod>("6m");
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const cashFlowMonths = getDashboardPeriodMonths(dashboardPeriod);
+  const cashFlowRange = useMemo(
+    () => getDashboardCashFlowRange(new Date(), cashFlowMonths),
+    [cashFlowMonths]
+  );
   const { data: cashFlowRows } = useCashFlow(
     "month",
     cashFlowRange.start,
@@ -746,9 +767,10 @@ export function Component() {
     () =>
       buildFinancialChartData(
         cashFlowRows as CashFlowApiRow[] | undefined,
-        cashFlowRange.start
+        cashFlowRange.start,
+        cashFlowMonths
       ),
-    [cashFlowRange.start, cashFlowRows]
+    [cashFlowMonths, cashFlowRange.start, cashFlowRows]
   );
   const hasChartData = chartData.some(
     (item) => item.receitas !== 0 || item.despesas !== 0 || item.saldo !== 0
@@ -768,6 +790,21 @@ export function Component() {
     setHiddenSeries((current) => ({ ...current, [series]: !current[series] }));
   }
 
+  function setFocusedSeries(series: ChartSeries | "all") {
+    setHiddenSeries({
+      receitas: series !== "all" && series !== "receitas",
+      despesas: series !== "all" && series !== "despesas",
+      saldo: series !== "all" && series !== "saldo",
+    });
+  }
+
+  const focusedSeries = ((): ChartSeries | "all" => {
+    const visible = (Object.entries(hiddenSeries) as Array<[ChartSeries, boolean]>)
+      .filter(([, hidden]) => !hidden)
+      .map(([series]) => series);
+    return visible.length === 1 ? (visible[0] ?? "all") : "all";
+  })();
+
   return (
     <>
       <style>{pageHeaderStyles}</style>
@@ -782,16 +819,55 @@ export function Component() {
             </p>
           </div>
           <div className="page-header-actions">
-            <Button variant="outline">
-              {formatLongDate()}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setFiltersOpen((current) => !current)}
+              aria-expanded={filtersOpen}
+              aria-controls="dashboard-filters"
+            >
+              {getDashboardPeriodLabel(dashboardPeriod)}
               <CalendarDays className="size-4" />
             </Button>
-            <Button variant="outline">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setFiltersOpen((current) => !current)}
+              aria-expanded={filtersOpen}
+              aria-controls="dashboard-filters"
+            >
               <Filter className="size-4" />
               Filtros
             </Button>
           </div>
         </header>
+
+        {filtersOpen ? (
+          <section id="dashboard-filters" className="dashboard-filter-panel">
+            <label>
+              <span>Periodo do grafico</span>
+              <Select
+                value={dashboardPeriod}
+                onChange={(event) =>
+                  setDashboardPeriod(event.target.value as DashboardPeriod)
+                }
+                options={dashboardPeriodOptions}
+                aria-label="Selecionar periodo do dashboard"
+              />
+            </label>
+            <label>
+              <span>Serie em destaque</span>
+              <Select
+                value={focusedSeries}
+                onChange={(event) =>
+                  setFocusedSeries(event.target.value as ChartSeries | "all")
+                }
+                options={dashboardSeriesOptions}
+                aria-label="Selecionar serie do grafico"
+              />
+            </label>
+          </section>
+        ) : null}
 
         {isLoading && !timedOut ? (
           <div className="dashboard-top-grid">
@@ -1059,6 +1135,31 @@ const dashboardStyles = `
   min-width: 0;
 }
 
+.dashboard-filter-panel {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+  box-shadow: var(--shadow-xs);
+}
+
+.dashboard-filter-panel label {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.dashboard-filter-panel span {
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
 @media (max-width: 1279px) {
   .dashboard-top-grid { grid-template-columns: 1fr; }
   .dashboard-metrics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1068,6 +1169,7 @@ const dashboardStyles = `
 
 @media (max-width: 639px) {
   .dashboard-metrics-grid { grid-template-columns: 1fr; }
+  .dashboard-filter-panel { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 480px) {

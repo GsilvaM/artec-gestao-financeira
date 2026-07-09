@@ -9,6 +9,7 @@ import {
   Moon,
   Sun,
   X,
+  type LucideIcon,
 } from "lucide-react";
 import { AppLogo } from "@/components/brand/AppLogo";
 import { Button, IconButton } from "@/components/ui/button";
@@ -123,6 +124,7 @@ export function AppLayout() {
         onClose={() => setMobileOpen(false)}
         onSignOut={handleSignOut}
       />
+      <MobileBottomNav pathname={location.pathname} onOpenMenu={() => setMobileOpen(true)} />
     </div>
   );
 }
@@ -587,6 +589,47 @@ function MobileNavDrawer({
   );
 }
 
+function MobileBottomNav({ pathname, onOpenMenu }: { pathname: string; onOpenMenu: () => void }) {
+  const items: Array<{ title: string; href: string; icon: LucideIcon }> = [
+    { title: "Início", href: "/app", icon: navigationIconMap.Dashboard! },
+    { title: "Financeiro", href: "/app/financeiro/lancamentos", icon: navigationIconMap.Financeiro! },
+    { title: "Fluxo", href: "/app/financeiro/fluxo-caixa", icon: navigationIconMap["Fluxo de Caixa"]! },
+    { title: "Relatórios", href: "/app/relatorios", icon: navigationIconMap.Relatórios! },
+  ];
+
+  return (
+    <nav className="mobile-bottom-nav" aria-label="Navegação principal mobile">
+      {items.map((item) => {
+        const active = isNavigationActive(pathname, item.href);
+        const Icon = item.icon;
+        return (
+          <NavLink
+            key={item.href}
+            to={item.href}
+            onFocus={() => preloadRoute(item.href)}
+            onMouseEnter={() => preloadRoute(item.href)}
+            onPointerDown={() => preloadRoute(item.href)}
+            className={cn("mobile-bottom-link", active && "mobile-bottom-link-active")}
+            aria-current={active ? "page" : undefined}
+          >
+            <Icon size={18} />
+            <span>{item.title}</span>
+          </NavLink>
+        );
+      })}
+      <button
+        type="button"
+        className="mobile-bottom-link"
+        aria-label="Abrir menu completo"
+        onClick={onOpenMenu}
+      >
+        <Menu size={18} />
+        <span>Mais</span>
+      </button>
+    </nav>
+  );
+}
+
 const sidebarStyles = `
 .app-shell {
   min-height: 100vh;
@@ -605,10 +648,10 @@ const sidebarStyles = `
 
 #conteudo-principal {
   width: 100%;
-  max-width: 1440px;
+  max-width: min(1680px, calc(100vw - 2rem));
   min-width: 0;
   margin-inline: auto;
-  padding: clamp(16px, 3vw, 40px);
+  padding: clamp(18px, 2.6vw, 40px);
   flex: 1;
 }
 
@@ -627,7 +670,7 @@ const sidebarStyles = `
 
 @media (max-width: 767px) {
   #conteudo-principal {
-    padding: 16px;
+    padding: 16px 16px calc(104px + env(safe-area-inset-bottom));
   }
 }
 
@@ -1048,6 +1091,74 @@ const sidebarStyles = `
   border-right: 0;
   border-bottom: 0;
   border-left: 0;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+}
+
+.mobile-bottom-nav {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .mobile-bottom-nav {
+    position: fixed;
+    right: 10px;
+    bottom: calc(10px + env(safe-area-inset-bottom));
+    left: 10px;
+    z-index: 45;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 4px;
+    min-height: 64px;
+    border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+    border-radius: 22px;
+    background: color-mix(in srgb, var(--surface) 88%, transparent);
+    box-shadow: var(--shadow-elevated);
+    backdrop-filter: blur(18px);
+    padding: 6px;
+  }
+
+  .mobile-bottom-link {
+    min-width: 0;
+    min-height: 52px;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    border-radius: 16px;
+    color: var(--text-muted);
+    background: transparent;
+    border: 0;
+    padding: 0;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1;
+    text-decoration: none;
+    transition: background-color 150ms ease, color 150ms ease, transform 150ms ease;
+  }
+
+  .mobile-bottom-link svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+
+  .mobile-bottom-link span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobile-bottom-link-active {
+    background: var(--primary);
+    color: var(--primary-foreground);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .mobile-bottom-link:active {
+    transform: translateY(1px);
+  }
 }
 
 @keyframes slideIn {

@@ -14,6 +14,7 @@ import * as beneficiaries from "@/routes/api/financeiro/beneficiaries";
 vi.mock("@/server/financeiro/repositories.js", () => ({
   financialEntryRepo: {
     findAll: vi.fn(),
+    findPage: vi.fn(),
     findById: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
@@ -282,6 +283,25 @@ describe("entries route module", () => {
     const body = await response.json();
     expect(body).toHaveLength(1);
     expect(body[0].description).toBe("Receita teste");
+  });
+
+  it("retorna payload paginado quando page e pageSize sao informados", async () => {
+    vi.mocked(financialEntryRepo.findPage).mockResolvedValue({
+      items: [MOCK_ENTRY],
+      pagination: { page: 2, pageSize: 10, total: 1, totalPages: 1 },
+      summary: { receitas: 1000, despesas: 0, saldo: 1000, count: 1 },
+    } as never);
+
+    const request = new Request(
+      "http://localhost/api/financeiro/entries?page=2&pageSize=10"
+    );
+    const response = await entries.loader({ request, params: {} });
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.pagination).toMatchObject({ page: 2, pageSize: 10, total: 1 });
+    expect(body.items).toHaveLength(1);
+    expect(body.summary.count).toBe(1);
   });
 
   it("retorna 404 para id inexistente via loader", async () => {

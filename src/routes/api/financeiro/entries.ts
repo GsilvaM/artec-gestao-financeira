@@ -22,8 +22,20 @@ const createSchema = financialEntryCreateSchema.extend({
   userId: uuidField,
 });
 
+const PAGE_SIZE_OPTIONS = [10, 20, 50, 100, 200] as const;
+
 function businessError(message: string, status = 400) {
   return Object.assign(new Error(message), { name: "ValidationError", status });
+}
+
+function normalizePage(value: number) {
+  return Number.isFinite(value) && value > 0 ? value : 1;
+}
+
+function normalizePageSize(value: number) {
+  return PAGE_SIZE_OPTIONS.includes(value as (typeof PAGE_SIZE_OPTIONS)[number])
+    ? value
+    : 20;
 }
 
 export async function loader({ request }: RouteArgs) {
@@ -32,6 +44,33 @@ export async function loader({ request }: RouteArgs) {
 
   try {
     if (id) return json(await financialEntryRepo.findById(id));
+
+    const rawPage = Number.parseInt(url.searchParams.get("page") ?? "1", 10);
+    const rawPageSize = Number.parseInt(url.searchParams.get("pageSize") ?? "20", 10);
+    const page = normalizePage(rawPage);
+    const pageSize = normalizePageSize(rawPageSize);
+
+    if (url.searchParams.has("page") || url.searchParams.has("pageSize")) {
+      return json(
+        await financialEntryRepo.findPage(
+          {
+            type: url.searchParams.get("type") ?? undefined,
+            status: url.searchParams.get("status") ?? undefined,
+            categoryId: url.searchParams.get("categoryId") ?? undefined,
+            costCenterId: url.searchParams.get("costCenterId") ?? undefined,
+            collaboratorId: url.searchParams.get("collaboratorId") ?? undefined,
+            paymentMethod: url.searchParams.get("paymentMethod") ?? undefined,
+            bankAccount: url.searchParams.get("bankAccount") ?? undefined,
+            origin: url.searchParams.get("origin") ?? undefined,
+            dateFrom: parseDate(url.searchParams.get("dateFrom")),
+            dateTo: parseDate(url.searchParams.get("dateTo")),
+            search: url.searchParams.get("search") ?? undefined,
+          },
+          page,
+          pageSize
+        )
+      );
+    }
 
     return json(
       await financialEntryRepo.findAll({

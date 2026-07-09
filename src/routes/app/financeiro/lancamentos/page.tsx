@@ -76,6 +76,16 @@ const initialForm: LancamentoFormState = {
   observacoes: "",
 };
 
+const PAGE_SIZE_OPTIONS = [10, 20, 50, 100, 200] as const;
+const PAGE_SIZE_STORAGE_KEY = "artec:lancamentos:page-size";
+
+function normalizePageSize(value: string | null) {
+  const parsed = Number.parseInt(value ?? "", 10);
+  return PAGE_SIZE_OPTIONS.includes(parsed as (typeof PAGE_SIZE_OPTIONS)[number])
+    ? parsed
+    : 20;
+}
+
 const STATUS_MAP: Record<string, string> = {
   aberto: "pending",
   pago: "confirmed",
@@ -178,7 +188,12 @@ export function Component() {
 
   const pageParam = Number.parseInt(searchParams.get("page") ?? "1", 10);
   const currentPage = Number.isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
-  const pageSize = 20;
+  const pageSize = normalizePageSize(
+    searchParams.get("pageSize") ??
+      (typeof window === "undefined"
+        ? null
+        : window.localStorage.getItem(PAGE_SIZE_STORAGE_KEY)),
+  );
 
   const filters = useMemo<FinancialEntryFilters | undefined>(() => {
     const f: FinancialEntryFilters = {};
@@ -255,6 +270,21 @@ export function Component() {
       next.delete("page");
     } else {
       next.set("page", String(nextPage));
+    }
+    setSearchParams(next, { replace: false });
+  }
+
+  function setPageSize(nextPageSize: number) {
+    const normalized = normalizePageSize(String(nextPageSize));
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(PAGE_SIZE_STORAGE_KEY, String(normalized));
+    }
+    const next = new URLSearchParams(searchParams);
+    next.delete("page");
+    if (normalized === 20) {
+      next.delete("pageSize");
+    } else {
+      next.set("pageSize", String(normalized));
     }
     setSearchParams(next, { replace: false });
   }
@@ -549,6 +579,7 @@ export function Component() {
           label="lançamentos"
           isLoading={isLoading}
           onPageChange={setPage}
+          onPageSizeChange={setPageSize}
         />
       )}
 

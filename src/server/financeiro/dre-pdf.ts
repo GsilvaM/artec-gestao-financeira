@@ -200,7 +200,7 @@ function createDrePdfDocument(payload: DreExportPayload): ReactElement<DocumentP
     {
       title: `DRE ${payload.companyName} ${payload.period.filenameToken}`,
       author: payload.companyName,
-      subject: "Demonstracao de Resultado",
+      subject: "Demonstração de Resultado",
     },
     h(
       Page,
@@ -228,9 +228,9 @@ function createDrePdfDocument(payload: DreExportPayload): ReactElement<DocumentP
       h(
         View,
         { style: styles.summary },
-        summaryCard("Margem liquida", formatOptionalPercent(payload.summary.margemLiquida), payload.summary.resultado < 0 ? "expense" : "revenue"),
+        summaryCard("Margem líquida", formatOptionalPercent(payload.summary.margemLiquida), payload.summary.resultado < 0 ? "expense" : "revenue"),
         summaryCard("Cobertura despesas", formatOptionalPercent(payload.summary.coberturaDespesas), payload.summary.coberturaDespesas !== null && payload.summary.coberturaDespesas < 100 ? "expense" : "revenue"),
-        summaryCard("Gap equilibrio", formatMoney(payload.summary.gapEquilibrio), payload.summary.gapEquilibrio > 0 ? "expense" : "revenue"),
+        summaryCard("Gap equilíbrio", formatMoney(payload.summary.gapEquilibrio), payload.summary.gapEquilibrio > 0 ? "expense" : "revenue"),
       ),
       breakEvenSection(payload),
       insightsSection(payload),
@@ -238,7 +238,7 @@ function createDrePdfDocument(payload: DreExportPayload): ReactElement<DocumentP
       payload.period.includesMultipleMonths ? monthlyComparison(payload) : null,
       h(Text, { style: styles.sectionTitle }, "Detalhamento por categoria"),
       payload.empty
-        ? h(Text, { style: styles.empty }, "Nenhuma movimentacao neste periodo.")
+        ? h(Text, { style: styles.empty }, "Nenhuma movimentação neste período.")
         : h(
             View,
             { style: styles.table },
@@ -249,7 +249,7 @@ function createDrePdfDocument(payload: DreExportPayload): ReactElement<DocumentP
               h(Text, { style: [styles.cell, styles.headCell, styles.colCategory] }, "Categoria"),
               h(Text, { style: [styles.cell, styles.headCell, styles.colMoney] }, "Realizado"),
               h(Text, { style: [styles.cell, styles.headCell, styles.colPercent] }, "% Receita"),
-              h(Text, { style: [styles.cell, styles.headCell, styles.colVariation] }, "Variacao"),
+              h(Text, { style: [styles.cell, styles.headCell, styles.colVariation] }, "Variação"),
             ),
             ...rows.map((row, index) => {
               const amountStyle = row.type === "receita" ? styles.revenue : row.type === "despesa" ? styles.expense : resultStyle;
@@ -272,7 +272,7 @@ function createDrePdfDocument(payload: DreExportPayload): ReactElement<DocumentP
         View,
         { style: styles.footer, fixed: true },
         h(Text, null, `Gerado em ${formatGeneratedAt(payload.generatedAt)}`),
-        h(Text, { render: ({ pageNumber, totalPages }: { pageNumber: number; totalPages: number }) => `Pagina ${pageNumber} de ${totalPages}` }),
+        h(Text, { render: ({ pageNumber, totalPages }: { pageNumber: number; totalPages: number }) => `Página ${pageNumber} de ${totalPages}` }),
       ),
     ),
   ) as ReactElement<DocumentProps>;
@@ -296,7 +296,7 @@ function monthlyComparison(payload: DreExportPayload) {
       h(
         View,
         { style: [styles.row, styles.headerRow], fixed: true },
-        h(Text, { style: [styles.cell, styles.headCell, styles.colCategory] }, "Mes"),
+        h(Text, { style: [styles.cell, styles.headCell, styles.colCategory] }, "Mês"),
         h(Text, { style: [styles.cell, styles.headCell, styles.colMoney] }, "Receita"),
         h(Text, { style: [styles.cell, styles.headCell, styles.colMoney] }, "Despesa"),
         h(Text, { style: [styles.cell, styles.headCell, styles.colMoney] }, "Resultado"),
@@ -317,7 +317,7 @@ function monthlyComparison(payload: DreExportPayload) {
 
 function breakEvenSection(payload: DreExportPayload) {
   return [
-    h(Text, { key: "breakeven-title", style: styles.sectionTitle }, "Ponto de equilibrio"),
+    h(Text, { key: "breakeven-title", style: styles.sectionTitle }, "Ponto de equilíbrio"),
     h(
       View,
       { key: "breakeven-card", style: styles.noteBox },
@@ -334,7 +334,7 @@ function breakEvenSection(payload: DreExportPayload) {
 
 function insightsSection(payload: DreExportPayload) {
   return [
-    h(Text, { key: "insights-title", style: styles.sectionTitle }, "Leitura rapida"),
+    h(Text, { key: "insights-title", style: styles.sectionTitle }, "Leitura rápida"),
     h(
       View,
       { key: "insights-grid", style: styles.noteGrid },
@@ -348,7 +348,7 @@ function insightsSection(payload: DreExportPayload) {
 function expenseCompositionSection(payload: DreExportPayload) {
   if (!payload.expenseComposition.length) return null;
   return [
-    h(Text, { key: "composition-title", style: styles.sectionTitle }, "Composicao de despesas"),
+    h(Text, { key: "composition-title", style: styles.sectionTitle }, "Composição de despesas"),
     h(
       View,
       { key: "composition-table", style: styles.table },

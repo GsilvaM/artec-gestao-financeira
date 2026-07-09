@@ -709,7 +709,7 @@ const filterStyles = `
 .filter-sheet {
   width: 100%;
   max-width: none;
-  max-height: 85dvh;
+  max-height: min(88dvh, calc(100dvh - 12px));
   margin: auto auto 0;
   border: 0;
   background: transparent;
@@ -724,7 +724,7 @@ const filterStyles = `
 
 .filter-sheet-panel {
   display: grid;
-  max-height: 85dvh;
+  max-height: min(88dvh, calc(100dvh - 12px));
   grid-template-rows: auto auto minmax(0, 1fr) auto;
   overflow: hidden;
   border-radius: 24px 24px 0 0;
@@ -771,7 +771,7 @@ const filterStyles = `
   gap: 8px;
   border-top: 1px solid var(--border-subtle);
   background: var(--surface);
-  padding: 12px 16px 16px;
+  padding: 12px 16px calc(16px + env(safe-area-inset-bottom));
 }
 
 @media (max-width: 768px) {
@@ -784,6 +784,9 @@ const filterStyles = `
   .filter-card {
     gap: 8px;
     padding: 6px;
+    position: sticky;
+    top: 64px;
+    z-index: 20;
   }
 
   .filter-row {
@@ -946,21 +949,30 @@ export function PageShell({
   onAction,
   children,
 }: PageShellProps) {
+  const primaryAction =
+    actionLabel && onAction ? (
+      <Button type="button" size="lg" onClick={onAction} className="page-primary-action">
+        <Plus className="size-4" />
+        {actionLabel}
+      </Button>
+    ) : undefined;
+
   return (
     <div className="page-stack">
       <PageHeader
         title={title}
         description={subtitle}
-        actions={
-          actionLabel && onAction ? (
-            <Button type="button" size="lg" onClick={onAction}>
-              <Plus className="size-4" />
-              {actionLabel}
-            </Button>
-          ) : undefined
-        }
+        actions={primaryAction}
       />
       {children}
+      {actionLabel && onAction ? (
+        <div className="page-mobile-action">
+          <Button type="button" size="lg" onClick={onAction}>
+            <Plus className="size-4" />
+            {actionLabel}
+          </Button>
+        </div>
+      ) : null}
       <style>{pageHeaderStyles}</style>
       <style>{`${pageShellStyles}`}</style>
     </div>
@@ -974,9 +986,34 @@ const pageShellStyles = `
   gap: 24px;
 }
 
+.page-mobile-action {
+  display: none;
+}
+
 @media (max-width: 768px) {
   .page-stack {
     gap: 16px;
+  }
+
+  .page-primary-action {
+    display: none;
+  }
+
+  .page-mobile-action {
+    position: fixed;
+    right: 16px;
+    bottom: calc(88px + env(safe-area-inset-bottom));
+    left: 16px;
+    z-index: 44;
+    display: block;
+    pointer-events: none;
+  }
+
+  .page-mobile-action > button {
+    width: 100%;
+    min-height: 48px;
+    box-shadow: var(--shadow-elevated);
+    pointer-events: auto;
   }
 }
 `;

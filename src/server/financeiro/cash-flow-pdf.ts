@@ -108,19 +108,19 @@ function createCashFlowPdfDocument(payload: CashFlowExportPayload): ReactElement
         { style: styles.summary },
         summaryCard("Saldo final projetado", formatMoney(payload.summary.finalProjectedBalance), payload.summary.finalProjectedBalance < 0 ? "expense" : "balance"),
         summaryCard("Menor saldo projetado", formatMoney(payload.summary.lowestProjectedBalance), payload.summary.lowestProjectedBalance < 0 ? "expense" : "balance"),
-        summaryCard("Lancamentos", String(payload.summary.inflowCount + payload.summary.outflowCount), "balance"),
+        summaryCard("Lançamentos", String(payload.summary.inflowCount + payload.summary.outflowCount), "balance"),
       ),
-      h(Text, { style: styles.sectionTitle }, "Projecao detalhada"),
+      h(Text, { style: styles.sectionTitle }, "Projeção detalhada"),
       h(
         View,
         { style: styles.table },
         h(
           View,
           { style: [styles.row, styles.headerRow], fixed: true },
-          h(Text, { style: [styles.cell, styles.headCell, styles.colPeriod] }, "Periodo"),
+          h(Text, { style: [styles.cell, styles.headCell, styles.colPeriod] }, "Período"),
           h(Text, { style: [styles.cell, styles.headCell, styles.colMoney] }, "Entradas"),
           h(Text, { style: [styles.cell, styles.headCell, styles.colMoney] }, "Saidas"),
-          h(Text, { style: [styles.cell, styles.headCell, styles.colMoney] }, "Mov. liquido"),
+          h(Text, { style: [styles.cell, styles.headCell, styles.colMoney] }, "Mov. líquido"),
           h(Text, { style: [styles.cell, styles.headCell, styles.colMoney] }, "Saldo"),
         ),
         ...projectionRows.map((row) =>

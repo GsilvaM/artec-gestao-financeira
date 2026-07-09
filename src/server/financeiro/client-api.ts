@@ -92,6 +92,15 @@ export const clientApi = {
           })
         )
         .then(handleResponse),
+    findPage: (filters?: Record<string, unknown>, page = 1, pageSize = 20) =>
+      getAuthHeaders()
+        .then((headers) =>
+          apiFetch(
+            `${BASE_URL}/entries?${toSearchParams({ ...filters, page, pageSize })}`,
+            { headers }
+          )
+        )
+        .then(handleResponse),
     findById: (id: string) =>
       getAuthHeaders()
         .then((headers) => apiFetch(`${BASE_URL}/entries/${id}`, { headers }))

@@ -87,7 +87,7 @@ describe("dre visual helpers", () => {
 
     expect(getBreakEvenState(20769, 29163.53, format).text).toContain("R$ 8394.53");
     expect(getBreakEvenState(30000, 20000, format).tone).toBe("positive");
-    expect(getBreakEvenState(1000, 1000, format).text).toBe("Ponto de equilibrio atingido");
+    expect(getBreakEvenState(1000, 1000, format).text).toBe("Ponto de equilíbrio atingido");
   });
 
   it("dispara alerta no limiar exato e nao dispara abaixo", () => {

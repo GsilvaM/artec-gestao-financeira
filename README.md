@@ -1,6 +1,6 @@
 # Artec Gestao
 
-Sistema web administrativo para gestao financeira e operacional da Artec Ambientes Climatizados. A aplicacao combina dashboard, financeiro, operacional, cadastros, relatorios e administracao de usuarios com aprovacao de acesso.
+Sistema web administrativo para gestao financeira e operacional da Artec Ambientes Climatizados. A aplicacao combina dashboard, financeiro, operacional, cadastros, relatorios, DRE, fluxo de caixa e administracao de usuarios com aprovacao de acesso.
 
 ## Tecnologias
 
@@ -15,6 +15,8 @@ Sistema web administrativo para gestao financeira e operacional da Artec Ambient
 - Lucide React
 - Recharts
 - Sonner
+- ExcelJS
+- React PDF
 - Vitest + Testing Library
 - Playwright
 
@@ -23,14 +25,25 @@ Sistema web administrativo para gestao financeira e operacional da Artec Ambient
 - Login com Supabase Auth.
 - Solicitacao publica de acesso sem liberacao imediata.
 - Aprovacao, rejeicao, desativacao e reativacao de usuarios por administradores.
-- Layout administrativo com sidebar responsiva.
+- Layout administrativo com sidebar responsiva e navegacao inferior mobile para rotas principais.
 - Tema claro e escuro com preferencia persistida.
-- Dashboard financeiro e operacional.
-- Financeiro: lancamentos, contas a pagar, contas a receber, categorias, centros de custo, DRE e fluxo de caixa.
+- Dashboard financeiro com filtros funcionais, resumo, graficos e listas de movimentacoes.
+- Financeiro: lancamentos paginados, contas a pagar, contas a receber, categorias, centros de custo, DRE e fluxo de caixa.
+- DRE com KPIs, ponto de equilibrio proporcional, evolucao mensal, composicao de despesas, insights gerenciais e exportacao em PDF.
+- Fluxo de caixa projetado com filtros por periodo, banco, categoria, granularidade, exportacao Excel e PDF.
 - Operacional: visao geral, servicos, cadastro de servicos, tecnicos, colaboradores, produtividade e rentabilidade.
 - Cadastros: clientes e fornecedores.
 - Relatorios financeiros, operacionais e por centro de custo.
 - Configuracoes e area administrativa.
+
+## Interface e UX
+
+- Design system baseado em tokens CSS para receita, despesa, saldo, alerta e marca.
+- Componentes base em `src/components/ui`, com `Button` e `Badge` usando `cva`.
+- Tabelas e paginacao responsivas, com seletor de quantidade por pagina.
+- Formularios e filtros adaptados para mobile, com controles de 44px quando aplicavel.
+- Graficos Recharts com cores por variaveis CSS e legendas responsivas.
+- Tema claro/escuro centralizado em `src/stores/theme.ts` e persistido em `localStorage`.
 
 ## Estrutura
 
@@ -54,8 +67,10 @@ public/             # Assets publicos, favicon
 ## Instalar
 
 ```bash
-bun install
+npm install
 ```
+
+Tambem e possivel usar `bun install` no ambiente local, mas os scripts de validacao documentados abaixo usam `npm run`.
 
 ## Variaveis de Ambiente
 
@@ -72,8 +87,8 @@ PRIMARY_ADMIN_EMAIL=admin@artec.com
 PRIMARY_ADMIN_PASSWORD=change-this-strong-password1
 PRIMARY_ADMIN_NAME=Administrador Principal
 
-E2E_TEST_EMAIL=e2e@artec.com
-E2E_TEST_PASSWORD=artec26
+E2E_TEST_EMAIL=e2e@example.com
+E2E_TEST_PASSWORD=change-this-e2e-password
 ```
 
 Variaveis sem `VITE_` sao server-only. Nunca exponha `DATABASE_URL`, `DIRECT_URL` ou `SUPABASE_SERVICE_ROLE_KEY` no frontend.
@@ -81,7 +96,7 @@ Variaveis sem `VITE_` sao server-only. Nunca exponha `DATABASE_URL`, `DIRECT_URL
 ## Desenvolvimento
 
 ```bash
-bun run dev
+npm run dev
 ```
 
 O Vite roda em `http://localhost:3000`.
@@ -91,25 +106,25 @@ O Vite roda em `http://localhost:3000`.
 Gerar Prisma Client:
 
 ```bash
-bun run db:generate
+npm run db:generate
 ```
 
 Aplicar migrations em desenvolvimento:
 
 ```bash
-bun run db:migrate
+npm run db:migrate
 ```
 
 Aplicar migrations em ambiente publicado:
 
 ```bash
-bun run db:deploy
+npm run db:deploy
 ```
 
 Rodar seed:
 
 ```bash
-bun run db:seed
+npm run db:seed
 ```
 
 O seed cria roles, categorias, centros de custo e, se `PRIMARY_ADMIN_EMAIL` e `PRIMARY_ADMIN_PASSWORD` estiverem definidos, cria/atualiza o primeiro `primary_admin` via Supabase Auth.
@@ -127,7 +142,7 @@ PRIMARY_ADMIN_NAME=Administrador Principal
 Depois rode:
 
 ```bash
-bun run db:seed
+npm run db:seed
 ```
 
 Esse usuario fica com `role=primary_admin` e `status=approved`.
@@ -167,17 +182,17 @@ A interface possui modo claro e escuro com preferencia persistida em `localStora
 ## Scripts
 
 ```bash
-bun run typecheck
-bun run lint
-bun run test
-bun run test:coverage
-bun run build
-bun run e2e
-bun run db:generate
-bun run db:migrate
-bun run db:deploy
-bun run db:seed
-bun run db:studio
+npm run typecheck
+npm run lint
+npm run test
+npm run test:coverage
+npm run build
+npm run e2e
+npm run db:generate
+npm run db:migrate
+npm run db:deploy
+npm run db:seed
+npm run db:studio
 ```
 
 ## Testes
@@ -185,28 +200,42 @@ bun run db:studio
 Unitarios/componentes:
 
 ```bash
-bun run test
+npm run test
 ```
 
 Cobertura:
 
 ```bash
-bun run test:coverage
+npm run test:coverage
 ```
 
 Build:
 
 ```bash
-bun run build
+npm run build
 ```
 
 E2E:
 
 ```bash
-bun run e2e
+npm run e2e
 ```
 
 Para E2E, configure `E2E_TEST_EMAIL`, `E2E_TEST_PASSWORD`, `VITE_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` e `DATABASE_URL`.
+
+## Validacao Antes de Publicar
+
+Execute a sequencia abaixo antes de abrir PR, fazer merge ou publicar:
+
+```bash
+npm run typecheck
+npm run lint
+npm run test
+npm run build
+npm run e2e
+```
+
+Artefatos como `dist/`, `playwright-report/`, `test-results/`, `*.log`, `.auth/` e `*.tsbuildinfo` sao gerados localmente e permanecem ignorados pelo Git.
 
 ## Seguranca
 

@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { cashFlowKeys, financialEntryKeys } from '../query-keys.js';
 import { clientApi } from '@/server/financeiro/client-api';
 import { toFiniteNumber } from '@/lib/utils';
@@ -56,6 +56,13 @@ function toRow(e: EntryApiResponse): FinancialEntryRow {
   };
 }
 
+export function useFinancialEntries(
+  filters?: FinancialEntryFilters,
+): UseQueryResult<FinancialEntryRow[]>;
+export function useFinancialEntries(
+  filters: FinancialEntryFilters | undefined,
+  pagination: { page: number; pageSize: number },
+): UseQueryResult<FinancialEntryPageResult>;
 export function useFinancialEntries(
   filters?: FinancialEntryFilters,
   pagination?: { page: number; pageSize: number }

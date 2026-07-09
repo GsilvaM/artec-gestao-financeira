@@ -64,13 +64,17 @@
   --color-primary: var(--primary-600);
   --color-primary-hover: var(--primary-700);
   --color-primary-soft: var(--primary-100);
-  --color-success: var(--success-600);
+  --color-income: #16A34A;
+  --color-expense: #DC2626;
+  --color-balance-neg: #991B1B;
+  --color-warning: #F59E0B;
+  --color-neutral-brand: var(--primary-600);
+  --color-success: var(--color-income);
   --color-success-soft: var(--success-50);
   --color-success-strong: var(--success-600);
-  --color-danger: var(--danger-600);
+  --color-danger: var(--color-expense);
   --color-danger-soft: var(--danger-50);
   --color-danger-strong: var(--danger-600);
-  --color-warning: var(--warning-600);
   --color-warning-soft: var(--warning-50);
   --color-warning-strong: var(--warning-600);
   --color-purple: var(--purple-600);
@@ -117,8 +121,8 @@
   --red-soft: var(--color-danger-soft);
   --purple-600: var(--color-purple);
   --purple-soft: var(--color-purple-soft);
-  --color-revenue: var(--color-success);
-  --color-expense: var(--color-warning);
+  --color-revenue: var(--color-income);
+  --color-expense: #DC2626;
   --color-balance: var(--color-primary);
   --color-pending: #ba7517;
   --color-surface-bg: var(--app-bg);
@@ -198,17 +202,22 @@
   --color-primary-hover: #2563eb;
   --color-primary-soft: rgba(59, 130, 246, 0.16);
 
-  --color-success: #22c55e;
+  --color-income: #22C55E;
+  --color-expense: #F87171;
+  --color-balance-neg: #EF4444;
+  --color-warning: #FBBF24;
+  --color-neutral-brand: var(--color-primary);
+  --color-success: var(--color-income);
   --color-success-soft: rgba(34, 197, 94, 0.16);
   --color-success-strong: #4ade80;
 
-  --color-danger: #fb7185;
+  --color-danger: var(--color-expense);
   --color-danger-soft: rgba(251, 113, 133, 0.16);
   --color-danger-strong: #fda4af;
 
-  --color-warning: #fb923c;
-  --color-warning-soft: rgba(251, 146, 60, 0.16);
-  --color-warning-strong: #fdba74;
+  --color-warning: #FBBF24;
+  --color-warning-soft: rgba(251, 191, 36, 0.16);
+  --color-warning-strong: #FBBF24;
 
   --color-purple: #a78bfa;
   --color-purple-soft: rgba(167, 139, 250, 0.16);
@@ -221,8 +230,8 @@
   --surface: var(--color-surface);
   --surface-soft: var(--color-surface-soft);
   --border-soft: var(--color-border);
-  --color-revenue: #22c55e;
-  --color-expense: #fb7185;
+  --color-revenue: var(--color-income);
+  --color-expense: #F87171;
   --color-balance: #3b82f6;
   --color-pending: #fbbf24;
   --color-surface-bg: var(--app-bg);
@@ -354,13 +363,18 @@
     --sidebar-active: #2563eb;
     --sidebar-active-foreground: #ffffff;
     --sidebar-hover: rgba(255,255,255,.08);
-    --success: #059669;
+    --color-income: #16A34A;
+    --color-expense: #DC2626;
+    --color-balance-neg: #991B1B;
+    --color-warning: #F59E0B;
+    --color-neutral-brand: var(--primary);
+    --success: var(--color-income);
     --success-soft: #d1fae5;
     --success-foreground: #065f46;
-    --danger: #dc2626;
+    --danger: var(--color-expense);
     --danger-soft: #fee2e2;
     --danger-foreground: #991b1b;
-    --warning: #d97706;
+    --warning: var(--color-warning);
     --warning-soft: #fef3c7;
     --warning-foreground: #92400e;
     --info: #0284c7;
@@ -443,8 +457,8 @@
     --bg-danger: var(--danger-soft);
     --bg-accent: var(--primary-soft);
     --bg-warning: var(--warning-soft);
-    --chart-revenue: var(--success);
-    --chart-expense: var(--danger);
+    --chart-revenue: var(--color-income);
+    --chart-expense: var(--color-expense);
     --chart-balance: var(--primary);
     --color-bg-modal: var(--surface);
     --color-bg-field: var(--surface-2);
@@ -483,13 +497,18 @@
     --sidebar-active: #3b82f6;
     --sidebar-active-foreground: #ffffff;
     --sidebar-hover: rgba(255,255,255,.08);
-    --success: #34d399;
+    --color-income: #22C55E;
+    --color-expense: #F87171;
+    --color-balance-neg: #EF4444;
+    --color-warning: #FBBF24;
+    --color-neutral-brand: var(--primary);
+    --success: var(--color-income);
     --success-soft: rgba(52,211,153,.16);
     --success-foreground: #a7f3d0;
-    --danger: #fb7185;
+    --danger: var(--color-expense);
     --danger-soft: rgba(251,113,133,.16);
     --danger-foreground: #fecdd3;
-    --warning: #fbbf24;
+    --warning: var(--color-warning);
     --warning-soft: rgba(251,191,36,.16);
     --warning-foreground: #fde68a;
     --info: #38bdf8;
@@ -940,6 +959,48 @@
     min-width: 0;
   }
 
+  .dre-break-even-bar {
+    position: relative;
+    display: flex;
+    min-height: 32px;
+    width: 100%;
+    overflow: hidden;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-expense) 18%, var(--surface-2));
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border) 70%, transparent);
+  }
+
+  .dre-break-even-fill {
+    position: absolute;
+    inset-block: 0;
+    left: 0;
+    min-width: 0;
+    max-width: 100%;
+    border-radius: inherit;
+    background: var(--color-income);
+  }
+
+  .dre-break-even-gap {
+    position: absolute;
+    inset-block: 0;
+    width: 2px;
+    background: color-mix(in srgb, var(--surface) 72%, transparent);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-expense) 32%, transparent);
+  }
+
+  .dre-break-even-value {
+    position: relative;
+    z-index: 1;
+    margin: auto;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface) 86%, transparent);
+    padding: 4px 10px;
+    color: var(--foreground);
+    font-size: 0.75rem;
+    line-height: 1;
+    box-shadow: var(--shadow-xs);
+  }
+
   @media (max-width: 768px) {
     .dre-filter-actions {
       grid-template-columns: 1fr;
@@ -1260,6 +1321,34 @@
     min-width: min(560px, calc(100vw - 32px));
   }
 
+  .dre-chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px 14px;
+    margin-bottom: 8px;
+    color: var(--muted-foreground);
+    font-size: 0.75rem;
+    font-weight: 800;
+    line-height: 1.1;
+  }
+
+  .dre-chart-legend span {
+    display: inline-flex;
+    min-width: 0;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+
+  .dre-chart-legend i {
+    width: 8px;
+    height: 8px;
+    flex: 0 0 auto;
+    border-radius: 999px;
+  }
+
   .dre-chart-frame-wide {
     min-width: 720px;
   }
@@ -1306,6 +1395,12 @@
     .dre-period-toggle > button {
       width: 100%;
       padding-inline: 8px;
+    }
+
+    .dre-chart-legend {
+      justify-content: flex-start;
+      font-size: 0.6875rem;
+      gap: 7px 10px;
     }
 
     .dre-composition-item-head {
@@ -1376,17 +1471,39 @@
     font-size: 0.75rem;
   }
 
+  .cashflow-filter-shell {
+    display: grid;
+    gap: 16px;
+    padding: 16px;
+    border-radius: 18px;
+    border: 1px solid var(--color-border);
+    background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+    box-shadow: var(--shadow-xs);
+  }
+
   .cashflow-filter-grid {
     display: grid;
-    grid-template-columns: repeat(5, minmax(160px, 1fr)) auto;
-    gap: 12px;
+    grid-template-columns: repeat(5, minmax(170px, 1fr)) minmax(220px, auto);
+    gap: 14px;
     align-items: end;
+  }
+
+  .cashflow-custom-range-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    padding-top: 4px;
   }
 
   .cashflow-filter-field {
     display: grid;
-    gap: 6px;
+    gap: 8px;
     min-width: 0;
+  }
+
+  .cashflow-filter-field select,
+  .cashflow-filter-field input {
+    min-height: 44px;
   }
 
   .cashflow-filter-field > span {
@@ -1394,9 +1511,11 @@
     align-items: center;
     gap: 8px;
     color: var(--text-secondary);
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 800;
     line-height: 1;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
   }
 
   .cashflow-filter-field svg {
@@ -1407,9 +1526,13 @@
 
   .cashflow-filter-actions {
     display: inline-flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: flex-end;
-    gap: 8px;
+    gap: 10px;
+    padding-left: 14px;
+    border-left: 1px solid var(--border-subtle);
+    margin-left: 4px;
+    min-height: 44px;
   }
 
   .cashflow-filter-actions > button {
@@ -1442,13 +1565,14 @@
   }
 
   .cashflow-chart-frame {
-    min-width: 720px;
+    width: 100%;
+    min-width: 0;
     height: 340px;
   }
 
   .cashflow-table {
     width: 100%;
-    min-width: 900px;
+    min-width: 760px;
     border-collapse: separate;
     border-spacing: 0;
     font-size: 0.875rem;
@@ -1491,7 +1615,7 @@
 
   .cashflow-detail-table {
     width: 100%;
-    min-width: 860px;
+    min-width: 720px;
     border-collapse: separate;
     border-spacing: 0;
     border: 1px solid var(--border-subtle);
@@ -1509,6 +1633,9 @@
     .cashflow-filter-actions {
       grid-column: 1 / -1;
       justify-content: flex-end;
+      padding-left: 0;
+      border-left: 0;
+      margin-left: 0;
     }
 
     .cashflow-kpi-grid {
@@ -1535,6 +1662,7 @@
     .cashflow-filter-actions {
       display: grid;
       grid-template-columns: 1fr 1fr;
+      gap: 10px;
     }
 
     .cashflow-filter-actions > button {

@@ -1,4 +1,5 @@
 import { Button } from "./button";
+import { Select } from "./select";
 
 interface DataTablePaginationProps {
   currentPage: number;
@@ -8,7 +9,13 @@ interface DataTablePaginationProps {
   label?: string;
   isLoading?: boolean;
   onPageChange: (page: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
 }
+
+const pageSizeOptions = [10, 20, 50, 100, 200].map((value) => ({
+  value: String(value),
+  label: `${value} por pagina`,
+}));
 
 export function DataTablePagination({
   currentPage,
@@ -18,60 +25,98 @@ export function DataTablePagination({
   label = "registros",
   isLoading,
   onPageChange,
+  onPageSizeChange,
 }: DataTablePaginationProps) {
-  if (totalPages <= 1) return null;
-
-  const start = Math.min((currentPage - 1) * pageSize + 1, total);
-  const end = Math.min(currentPage * pageSize, total);
+  const safeTotalPages = Math.max(1, totalPages);
+  const safeCurrentPage = Math.min(currentPage, safeTotalPages);
+  const start = total === 0 ? 0 : Math.min((safeCurrentPage - 1) * pageSize + 1, total);
+  const end = Math.min(safeCurrentPage * pageSize, total);
+  const hasPages = safeTotalPages > 1;
 
   function buildPageNumbers() {
     const maxVisible = 5;
     const pages: number[] = [];
 
-    if (totalPages <= maxVisible) {
-      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    if (safeTotalPages <= maxVisible) {
+      for (let i = 1; i <= safeTotalPages; i++) pages.push(i);
       return pages;
     }
 
-    const s = Math.max(1, currentPage - 2);
-    const e = Math.min(totalPages, s + maxVisible - 1);
-    for (let i = s; i <= e; i++) pages.push(i);
+    const startPage = Math.min(
+      Math.max(1, safeCurrentPage - 2),
+      safeTotalPages - maxVisible + 1,
+    );
+    const endPage = Math.min(safeTotalPages, startPage + maxVisible - 1);
+    for (let i = startPage; i <= endPage; i++) pages.push(i);
     return pages;
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-border/80 bg-card/70 p-4 shadow-[var(--shadow-xs)] sm:flex-row sm:items-center sm:justify-between">
-      <p className="text-sm text-muted-foreground">
-        Mostrando {start}–{end} de {total} {label}
-      </p>
-      <div className="flex flex-wrap items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage <= 1 || isLoading}
-        >
-          Anterior
-        </Button>
-        {buildPageNumbers().map((page) => (
+    <div className="flex flex-col gap-3 rounded-2xl border border-border/80 bg-card/70 p-4 shadow-[var(--shadow-xs)] lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex min-w-0 flex-col gap-1">
+        <p className="text-sm font-semibold text-foreground">
+          Mostrando {start}-{end} de {total} {label}
+        </p>
+        <p className="text-xs font-semibold text-muted-foreground">
+          Pagina {safeCurrentPage} de {safeTotalPages}
+        </p>
+      </div>
+
+      <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+        {onPageSizeChange ? (
+          <div className="flex items-center gap-2">
+            <span className="shrink-0 text-xs font-bold uppercase text-muted-foreground">
+              Exibir
+            </span>
+            <Select
+              aria-label={`Quantidade de ${label} por pagina`}
+              className="h-9 min-h-9 w-[156px] rounded-xl px-3 pr-9 text-xs"
+              value={String(pageSize)}
+              onChange={(event) => onPageSizeChange(Number(event.target.value))}
+              options={pageSizeOptions}
+              disabled={isLoading}
+            />
+          </div>
+        ) : null}
+
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:flex sm:flex-wrap sm:justify-end">
           <Button
-            key={page}
-            variant={page === currentPage ? "default" : "outline"}
+            variant="outline"
             size="sm"
-            onClick={() => onPageChange(page)}
-            disabled={isLoading}
+            onClick={() => onPageChange(safeCurrentPage - 1)}
+            disabled={!hasPages || safeCurrentPage <= 1 || isLoading}
           >
-            {page}
+            Anterior
           </Button>
-        ))}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onPageChange(currentPage + 1)}
-          disabled={currentPage >= totalPages || isLoading}
-        >
-          Próxima
-        </Button>
+
+          <div className="hidden items-center gap-2 sm:flex">
+            {buildPageNumbers().map((page) => (
+              <Button
+                key={page}
+                variant={page === safeCurrentPage ? "default" : "outline"}
+                size="sm"
+                onClick={() => onPageChange(page)}
+                disabled={isLoading}
+                aria-current={page === safeCurrentPage ? "page" : undefined}
+              >
+                {page}
+              </Button>
+            ))}
+          </div>
+
+          <span className="inline-flex h-9 min-w-24 items-center justify-center rounded-xl border border-border bg-surface px-3 text-xs font-bold text-muted-foreground sm:hidden">
+            {safeCurrentPage} / {safeTotalPages}
+          </span>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(safeCurrentPage + 1)}
+            disabled={!hasPages || safeCurrentPage >= safeTotalPages || isLoading}
+          >
+            Proxima
+          </Button>
+        </div>
       </div>
     </div>
   );

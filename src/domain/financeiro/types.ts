@@ -67,6 +67,22 @@ export interface BeneficiarySearchResult {
 
 // ── Row / query result types ─────────────────────────────────────────
 
+export interface FinancialEntryPageResult {
+  items: FinancialEntryRow[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+  };
+  summary: {
+    receitas: number;
+    despesas: number;
+    saldo: number;
+    count: number;
+  };
+}
+
 export interface FinancialEntryRow {
   id: string;
   description: string;

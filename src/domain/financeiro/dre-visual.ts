@@ -221,7 +221,7 @@ export function buildDre(entries: FinancialEntryRow[], previousEntries: Financia
     rows.push({
       id: "resultado-liquido",
       group: "Resultado",
-      category: "Resultado liquido",
+      category: "Resultado líquido",
       type: "resultado",
       amount: resultado,
       revenueShare: totalReceitas ? (resultado / totalReceitas) * 100 : 0,
@@ -335,7 +335,7 @@ export function buildDreInsights({
   coberturaDespesas,
 }: ReturnType<typeof buildDre>, composition: FatiaComposicao[]): DreInsight[] {
   if (totalReceitas <= 0 && totalDespesas <= 0) {
-    return [{ id: "empty", tone: "neutral", text: "Ainda nao ha dados suficientes para gerar uma leitura gerencial do periodo." }];
+    return [{ id: "empty", tone: "neutral", text: "Ainda não há dados suficientes para gerar uma leitura gerencial do período." }];
   }
 
   const insights: DreInsight[] = [];
@@ -344,16 +344,16 @@ export function buildDreInsights({
     insights.push({
       id: "resultado-negativo",
       tone: "negative",
-      text: `As despesas superaram as receitas em ${formatCurrencyText(Math.abs(resultado))} no periodo.`,
+      text: `As despesas superaram as receitas em ${formatCurrencyText(Math.abs(resultado))} no período.`,
     });
   } else if (resultado > 0) {
     insights.push({
       id: "resultado-positivo",
       tone: "positive",
-      text: `A receita supera as despesas em ${formatCurrencyText(resultado)} no periodo.`,
+      text: `A receita supera as despesas em ${formatCurrencyText(resultado)} no período.`,
     });
   } else {
-    insights.push({ id: "equilibrio", tone: "neutral", text: "Receitas e despesas estao empatadas no periodo." });
+    insights.push({ id: "equilibrio", tone: "neutral", text: "Receitas e despesas estão empatadas no período." });
   }
 
   const topExpense = composition[0];
@@ -366,7 +366,7 @@ export function buildDreInsights({
   }
 
   const coberturaText = coberturaDespesas === null
-    ? "Nao ha despesas no periodo para medir cobertura."
+    ? "Não há despesas no período para medir cobertura."
     : `A receita cobre ${formatPercent(coberturaDespesas)} das despesas.`;
   insights.push({
     id: "cobertura",
@@ -378,7 +378,7 @@ export function buildDreInsights({
     insights.push({
       id: "margem",
       tone: margemLiquida < 0 ? "negative" : margemLiquida === 0 ? "neutral" : "positive",
-      text: `Margem liquida do periodo: ${formatPercent(margemLiquida)}.`,
+      text: `Margem líquida do período: ${formatPercent(margemLiquida)}.`,
     });
   }
 
@@ -401,7 +401,7 @@ export function getBreakEvenState(receita: number, despesa: number, formatter: (
       despesaPct,
       coberturaPct,
       gap,
-      text: `Falta ${formatter(Math.abs(difference))} para cobrir as despesas do periodo`,
+      text: `Falta ${formatter(Math.abs(difference))} para cobrir as despesas do período`,
     };
   }
 
@@ -413,7 +413,7 @@ export function getBreakEvenState(receita: number, despesa: number, formatter: (
       despesaPct,
       coberturaPct,
       gap,
-      text: `Margem de ${formatter(difference)} acima do ponto de equilibrio`,
+      text: `Margem de ${formatter(difference)} acima do ponto de equilíbrio`,
     };
   }
 
@@ -424,7 +424,7 @@ export function getBreakEvenState(receita: number, despesa: number, formatter: (
     despesaPct,
     coberturaPct,
     gap,
-    text: "Ponto de equilibrio atingido",
+    text: "Ponto de equilíbrio atingido",
   };
 }
 

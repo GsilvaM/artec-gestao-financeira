@@ -65,6 +65,39 @@ export interface ProjectedCashFlowResult {
   periods: ProjectedCashFlowPeriod[];
 }
 
+export interface CashFlowInsight {
+  tone: "positive" | "warning" | "neutral";
+  title: string;
+  message: string;
+}
+
+export function buildCashFlowInsight(result: ProjectedCashFlowResult, minimumBalance = 0): CashFlowInsight {
+  const riskPoint = result.periods.find((period) => period.projectedBalance < minimumBalance || period.projectedBalance < 0);
+  if (riskPoint) {
+    const deficit = minimumBalance > 0 ? Math.max(0, minimumBalance - riskPoint.projectedBalance) : Math.abs(riskPoint.projectedBalance);
+    const thresholdLabel = minimumBalance > 0 ? `abaixo do saldo mínimo de ${formatCurrencyText(minimumBalance)}` : "negativo";
+    return {
+      tone: "warning",
+      title: "Atenção ao saldo projetado",
+      message: `Seu saldo ficará ${thresholdLabel} a partir de ${formatDateLabel(riskPoint.dateFrom)}. Considere antecipar recebíveis ou captar ${formatCurrencyText(deficit)} até essa data.`,
+    };
+  }
+
+  if (result.summary.finalProjectedBalance < 0) {
+    return {
+      tone: "warning",
+      title: "Caixa sob pressão",
+      message: `Seu saldo final projetado permanece negativo em ${formatCurrencyText(Math.abs(result.summary.finalProjectedBalance))}.`,
+    };
+  }
+
+  return {
+    tone: "positive",
+    title: "Caixa saudável",
+    message: "Seu caixa se mantém positivo em todo o período projetado.",
+  };
+}
+
 export function buildProjectedCashFlow(input: {
   initialBalance: number;
   dateFrom: Date;
@@ -224,4 +257,27 @@ function endOfDay(date: Date) {
 
 function roundCurrency(value: number) {
   return Math.round((Number.isFinite(value) ? value : 0) * 100) / 100;
+}
+
+function formatCurrencyText(value: number) {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+function formatDateLabel(value: string) {
+  const [yearText, monthText, dayText] = value.split("-");
+  const year = Number.parseInt(yearText ?? "", 10);
+  const month = Number.parseInt(monthText ?? "", 10);
+  const day = Number.parseInt(dayText ?? "", 10);
+
+  if ([year, month, day].some((part) => Number.isNaN(part))) {
+    return value;
+  }
+
+  const date = new Date(year, month - 1, day);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
 }

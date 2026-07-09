@@ -107,6 +107,91 @@ export interface FinancialEntryFilters {
 }
 
 export const financialEntryRepo = {
+  async findPage(filters?: FinancialEntryFilters, page = 1, pageSize = 20) {
+    const andFilters: Prisma.FinancialEntryWhereInput[] = [];
+    if (filters?.paymentMethod) {
+      andFilters.push({
+        notes: { contains: filters.paymentMethod, mode: "insensitive" },
+      });
+    }
+    if (filters?.bankAccount) {
+      andFilters.push({
+        notes: { contains: filters.bankAccount, mode: "insensitive" },
+      });
+    }
+    if (filters?.origin && filters.origin !== "manual") {
+      andFilters.push({ notes: { contains: `[originType=${filters.origin};` } });
+    }
+    if (filters?.origin === "manual") {
+      andFilters.push({ notes: { contains: `[originType=${FINANCIAL_ORIGINS.MANUAL};` } });
+    }
+
+    const where: Prisma.FinancialEntryWhereInput = {
+      ...whereNotDeleted(),
+      ...(filters?.type ? { type: filters.type } : {}),
+      ...(filters?.status ? { status: filters.status } : {}),
+      ...(filters?.categoryId ? { categoryId: filters.categoryId } : {}),
+      ...(filters?.costCenterId ? { costCenterId: filters.costCenterId } : {}),
+      ...(filters?.collaboratorId ? { collaboratorId: filters.collaboratorId } : {}),
+      ...(filters?.userId ? { userId: filters.userId } : {}),
+      ...(andFilters.length ? { AND: andFilters } : {}),
+      ...(filters?.dateFrom || filters?.dateTo
+        ? {
+            date: {
+              ...(filters?.dateFrom ? { gte: filters.dateFrom } : {}),
+              ...(filters?.dateTo ? { lte: filters.dateTo } : {}),
+            },
+          }
+        : {}),
+      ...(filters?.search
+        ? {
+            OR: [
+              { description: { contains: filters.search, mode: "insensitive" } },
+              { notes: { contains: filters.search, mode: "insensitive" } },
+              { clientName: { contains: filters.search, mode: "insensitive" } },
+              { category: { name: { contains: filters.search, mode: "insensitive" } } },
+              { collaborator: { name: { contains: filters.search, mode: "insensitive" } } },
+            ],
+          }
+        : {}),
+    };
+
+    const [items, total, summary] = await Promise.all([
+      prisma.financialEntry.findMany({
+        where,
+        include: { category: true, costCenter: true, collaborator: true },
+        orderBy: { date: "desc" },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      prisma.financialEntry.count({ where }),
+      prisma.financialEntry.groupBy({
+        by: ["type"],
+        where,
+        _sum: { amount: true },
+      }),
+    ]);
+
+    const receitas = summary.find((item) => item.type === "receita")?._sum.amount ?? 0;
+    const despesas = summary.find((item) => item.type === "despesa")?._sum.amount ?? 0;
+
+    return {
+      items,
+      pagination: {
+        page,
+        pageSize,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / pageSize)),
+      },
+      summary: {
+        receitas: Number(receitas ?? 0),
+        despesas: Number(despesas ?? 0),
+        saldo: Number(receitas ?? 0) - Number(despesas ?? 0),
+        count: total,
+      },
+    };
+  },
+
   async findAll(filters?: FinancialEntryFilters) {
     const andFilters: Prisma.FinancialEntryWhereInput[] = [];
     if (filters?.paymentMethod) {

@@ -15,6 +15,7 @@ import {
   YAxis,
 } from "recharts";
 import {
+  AlertTriangle,
   ArrowDownCircle,
   ArrowUpCircle,
   Banknote,
@@ -38,11 +39,14 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { EmptyState, MetricCard, PageShell } from "@/components/layout/page-shell";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { EmptyState, PageShell } from "@/components/layout/page-shell";
 import { useCategories } from "@/domain/financeiro/hooks/use-categories";
 import { useProjectedCashFlow } from "@/domain/financeiro/hooks/use-cash-flow";
 import { clientApi } from "@/server/financeiro/client-api";
 import {
+  buildCashFlowInsight,
   resolvePresetRange,
   toDateKey,
   type CashFlowGranularity,
@@ -51,7 +55,7 @@ import {
   type ProjectedCashFlowResult,
   type ProjectedCashFlowTransaction,
 } from "@/domain/financeiro/cash-flow";
-import { cn, formatMoney } from "@/lib/utils";
+import { cn, formatMoney, getMoneyToneClass } from "@/lib/utils";
 
 type PeriodPreset = "7d" | "15d" | "30d" | "60d" | "90d" | "custom";
 type ChartMode = "full" | "balance";
@@ -78,11 +82,11 @@ const defaultFilters: CashFlowFilters = {
 };
 
 const periodOptions: Array<{ value: PeriodPreset; label: string }> = [
-  { value: "7d", label: "Proximos 7 dias" },
-  { value: "15d", label: "Proximos 15 dias" },
-  { value: "30d", label: "Proximos 30 dias" },
-  { value: "60d", label: "Proximos 60 dias" },
-  { value: "90d", label: "Proximos 90 dias" },
+  { value: "7d", label: "Próximos 7 dias" },
+  { value: "15d", label: "Próximos 15 dias" },
+  { value: "30d", label: "Próximos 30 dias" },
+  { value: "60d", label: "Próximos 60 dias" },
+  { value: "90d", label: "Próximos 90 dias" },
   { value: "custom", label: "Personalizado" },
 ];
 
@@ -112,6 +116,8 @@ export function Component() {
   const result = data ?? emptyCashFlow(appliedFilters);
   const visiblePeriods = useMemo(() => result.periods, [result.periods]);
   const chartData = useMemo(() => toChartData(visiblePeriods), [visiblePeriods]);
+  const sparklineData = useMemo(() => visiblePeriods.map((period) => period.projectedBalance), [visiblePeriods]);
+  const insight = useMemo(() => buildCashFlowInsight(result, minimumBalance), [minimumBalance, result]);
   const todayKey = toDateKey(new Date());
   const todayPoint = chartData.find((point) => point.dateFrom <= todayKey && point.dateTo >= todayKey);
   const activeCategory = categories.find((category) => category.id === appliedFilters.categoryId);
@@ -170,13 +176,13 @@ export function Component() {
       summarySheet.addRows([
         { label: "Saldo atual", value: result.summary.currentBalance },
         { label: "Entradas previstas", value: result.summary.predictedInflows },
-        { label: "Saidas previstas", value: result.summary.predictedOutflows },
+        { label: "Saídas previstas", value: result.summary.predictedOutflows },
         { label: "Saldo final projetado", value: result.summary.finalProjectedBalance },
         { label: "Menor saldo projetado", value: result.summary.lowestProjectedBalance },
       ]);
       styleMoneyColumn(summarySheet, ["B"]);
 
-      const projectionSheet = workbook.addWorksheet("Projecao");
+      const projectionSheet = workbook.addWorksheet("Projeção");
       projectionSheet.columns = [
         { header: "Periodo", key: "period", width: 22 },
         { header: "Entradas", key: "inflows", width: 16 },
@@ -211,7 +217,7 @@ export function Component() {
         amount: transaction.amount,
         dueDate: transaction.dueDate,
         status: transaction.status,
-        overdue: transaction.overdue ? "Sim" : "Nao",
+        overdue: transaction.overdue ? "Sim" : "Não",
       }));
       styleMoneyColumn(transactionSheet, ["D"]);
       styleHeader(summarySheet);
@@ -222,7 +228,7 @@ export function Component() {
       downloadBlob(new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), `fluxo-de-caixa_${appliedFilters.dateFrom}_${appliedFilters.dateTo}_${timestampToken()}.xlsx`);
       toast.success("Excel do Fluxo de Caixa gerado com sucesso.");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Nao foi possivel gerar o Excel.");
+      toast.error(error instanceof Error ? error.message : "Não foi possível gerar o Excel.");
     } finally {
       setExporting(null);
     }
@@ -242,14 +248,14 @@ export function Component() {
       downloadBlob(blob, `fluxo-de-caixa_${appliedFilters.dateFrom}_${appliedFilters.dateTo}_${timestampToken()}.pdf`);
       toast.success("PDF do Fluxo de Caixa gerado com sucesso.");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Nao foi possivel gerar o PDF.");
+      toast.error(error instanceof Error ? error.message : "Não foi possível gerar o PDF.");
     } finally {
       setExporting(null);
     }
   }
 
   return (
-    <PageShell icon={CalendarDays} title="Fluxo de Caixa" subtitle="Entradas, saidas e saldo projetado por periodo">
+    <PageShell icon={CalendarDays} title="Fluxo de Caixa" subtitle="Entradas, saídas e saldo projetado por período">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
         <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={() => void handleExportExcel()} disabled={Boolean(exporting)}>
           {exporting === "excel" ? <Loader2 className="size-4 animate-spin" /> : <FileSpreadsheet className="size-4" />}
@@ -261,68 +267,66 @@ export function Component() {
         </Button>
       </div>
 
-      <Card className="p-4">
-        <div className="cashflow-filter-grid">
-          <FilterField icon={CalendarDays} label="Periodo">
-            <select className="select-input" value={draftFilters.preset} onChange={(event) => updateDraft({ preset: event.target.value as PeriodPreset })}>
-              {periodOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-            </select>
-          </FilterField>
-          <FilterField icon={Landmark} label="Banco">
-            <select className="select-input" value={draftFilters.bank} onChange={(event) => updateDraft({ bank: event.target.value })}>
-              <option value="all">Todos (Consolidado)</option>
-            </select>
-          </FilterField>
-          <FilterField icon={Layers3} label="Categoria">
-            <select className="select-input" value={draftFilters.categoryId} onChange={(event) => updateDraft({ categoryId: event.target.value })}>
-              <option value="all">Todas</option>
-              {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
-            </select>
-          </FilterField>
-          <FilterField icon={CalendarDays} label="Granularidade">
-            <select className="select-input" value={draftFilters.granularity} onChange={(event) => updateDraft({ granularity: event.target.value as CashFlowGranularity })}>
-              <option value="day">Diaria</option>
-              <option value="week">Semanal</option>
-              <option value="month">Mensal</option>
-            </select>
-          </FilterField>
-          <FilterField icon={Search} label="Visao">
-            <select className="select-input" value={draftFilters.view} onChange={(event) => updateDraft({ view: event.target.value as CashFlowView })}>
-              <option value="both">Ambas</option>
-              <option value="inflows">Apenas entradas</option>
-              <option value="outflows">Apenas saidas</option>
-            </select>
-          </FilterField>
-          <div className="cashflow-filter-actions">
-            <Button type="button" variant="outline" onClick={clearFilters}>Limpar</Button>
-            <Button type="button" onClick={applyFilters}>Aplicar</Button>
+      <Card className="overflow-hidden border border-border/70 bg-[var(--surface)] shadow-[var(--shadow-xs)]">
+        <div className="cashflow-filter-shell">
+          <div className="cashflow-filter-grid">
+            <FilterField icon={CalendarDays} label="Período">
+              <Select value={draftFilters.preset} onChange={(event) => updateDraft({ preset: event.target.value as PeriodPreset })} options={periodOptions} />
+            </FilterField>
+            <FilterField icon={Landmark} label="Banco">
+              <Select value={draftFilters.bank} onChange={(event) => updateDraft({ bank: event.target.value })} options={[{ value: "all", label: "Todos (Consolidado)" }]} />
+            </FilterField>
+            <FilterField icon={Layers3} label="Categoria">
+              <Select value={draftFilters.categoryId} onChange={(event) => updateDraft({ categoryId: event.target.value })} options={[{ value: "all", label: "Todas" }, ...categories.map((category) => ({ value: category.id, label: category.name }))]} />
+            </FilterField>
+            <FilterField icon={CalendarDays} label="Granularidade">
+              <Select value={draftFilters.granularity} onChange={(event) => updateDraft({ granularity: event.target.value as CashFlowGranularity })} options={[{ value: "day", label: "Diária" }, { value: "week", label: "Semanal" }, { value: "month", label: "Mensal" }]} />
+            </FilterField>
+            <FilterField icon={Search} label="Visão">
+              <Select value={draftFilters.view} onChange={(event) => updateDraft({ view: event.target.value as CashFlowView })} options={[{ value: "both", label: "Ambas" }, { value: "inflows", label: "Apenas entradas" }, { value: "outflows", label: "Apenas saídas" }]} />
+            </FilterField>
+            <div className="cashflow-filter-actions">
+              <Button type="button" variant="outline" className="h-11 min-w-[96px]" onClick={clearFilters}>Limpar</Button>
+              <Button type="button" className="h-11 min-w-[96px]" onClick={applyFilters}>Aplicar</Button>
+            </div>
           </div>
+          {draftFilters.preset === "custom" ? (
+            <div className="cashflow-custom-range-grid">
+              <FilterField icon={CalendarDays} label="Data inicial">
+                <Input type="date" value={draftFilters.dateFrom} onChange={(event) => updateDraft({ dateFrom: event.target.value })} />
+              </FilterField>
+              <FilterField icon={CalendarDays} label="Data final">
+                <Input type="date" value={draftFilters.dateTo} onChange={(event) => updateDraft({ dateTo: event.target.value })} />
+              </FilterField>
+            </div>
+          ) : null}
         </div>
-        {draftFilters.preset === "custom" ? (
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <FilterField icon={CalendarDays} label="Data inicial">
-              <input className="select-input" type="date" value={draftFilters.dateFrom} onChange={(event) => updateDraft({ dateFrom: event.target.value })} />
-            </FilterField>
-            <FilterField icon={CalendarDays} label="Data final">
-              <input className="select-input" type="date" value={draftFilters.dateTo} onChange={(event) => updateDraft({ dateTo: event.target.value })} />
-            </FilterField>
-          </div>
-        ) : null}
       </Card>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm font-bold text-muted-foreground">Totais do periodo</p>
+        <p className="text-sm font-bold text-muted-foreground">Totais do período</p>
         <p className="text-xs font-semibold text-muted-foreground">{activeFilters.join(" - ")}</p>
       </div>
 
       {isLoading ? <KpiSkeleton /> : (
-        <div className="cashflow-kpi-grid">
-          <MetricCard title="Saldo atual" value={formatMoney(result.summary.currentBalance)} icon={Wallet} tone="blue" helper="Conciliado pelos lancamentos confirmados" />
-          <MetricCard title="Entradas previstas" value={formatMoney(result.summary.predictedInflows)} icon={ArrowUpCircle} tone="green" helper={`${result.summary.inflowCount} lancamentos`} />
-          <MetricCard title="Saidas previstas" value={formatMoney(result.summary.predictedOutflows)} icon={ArrowDownCircle} tone="red" helper={`${result.summary.outflowCount} lancamentos`} />
-          <MetricCard title="Saldo final projetado" value={formatMoney(result.summary.finalProjectedBalance)} icon={Banknote} tone={result.summary.finalProjectedBalance < result.summary.currentBalance ? "amber" : "green"} helper={formatDelta(result.summary.finalProjectedBalance - result.summary.currentBalance)} />
-          <MetricCard title="Menor saldo projetado" value={formatMoney(result.summary.lowestProjectedBalance)} icon={TrendingDown} tone={result.summary.lowestProjectedBalance < minimumBalance ? "red" : "green"} helper={`em ${formatShortDate(result.summary.lowestProjectedBalanceDate)}`} />
-        </div>
+        <>
+          <div className="cashflow-kpi-grid">
+            <KpiCard title="Saldo atual" value={formatMoney(result.summary.currentBalance)} icon={Wallet} tone="blue" helper="Conciliado pelos lançamentos confirmados" valueClassName={getMoneyToneClass(result.summary.currentBalance)} sparklineData={sparklineData} />
+            <KpiCard title="Entradas previstas" value={formatMoney(result.summary.predictedInflows)} icon={ArrowUpCircle} tone="green" helper={`${result.summary.inflowCount} lançamentos`} valueClassName={getMoneyToneClass(result.summary.predictedInflows)} sparklineData={sparklineData} />
+            <KpiCard title="Saídas previstas" value={formatMoney(result.summary.predictedOutflows)} icon={ArrowDownCircle} tone="orange" helper={`${result.summary.outflowCount} lançamentos`} valueClassName={getMoneyToneClass(-result.summary.predictedOutflows)} sparklineData={sparklineData} />
+            <KpiCard title="Saldo final projetado" value={formatMoney(result.summary.finalProjectedBalance)} icon={Banknote} tone={result.summary.finalProjectedBalance < result.summary.currentBalance ? "orange" : "blue"} helper={formatDelta(result.summary.finalProjectedBalance - result.summary.currentBalance)} valueClassName={getMoneyToneClass(result.summary.finalProjectedBalance)} sparklineData={sparklineData} />
+            <KpiCard title="Menor saldo projetado" value={formatMoney(result.summary.lowestProjectedBalance)} icon={TrendingDown} tone={result.summary.lowestProjectedBalance < minimumBalance || result.summary.lowestProjectedBalance < 0 ? "orange" : "blue"} helper={`em ${formatShortDate(result.summary.lowestProjectedBalanceDate)}`} valueClassName={getMoneyToneClass(result.summary.lowestProjectedBalance)} sparklineData={sparklineData} alert={result.summary.lowestProjectedBalance < minimumBalance || result.summary.lowestProjectedBalance < 0} />
+          </div>
+          <div className={cn("rounded-2xl border px-4 py-3 text-sm font-semibold leading-relaxed", insight.tone === "positive" ? "border-success/20 bg-success-light text-success" : "border-warning/20 bg-warning-light text-warning") }>
+            <div className="flex items-start gap-2">
+              {insight.tone === "positive" ? <CheckCircle2 className="mt-0.5 size-4 shrink-0" /> : <AlertTriangle className="mt-0.5 size-4 shrink-0" />}
+              <div>
+                <p className="font-black">{insight.title}</p>
+                <p className="mt-1 text-sm font-medium">{insight.message}</p>
+              </div>
+            </div>
+          </div>
+        </>
       )}
 
       <Card className="overflow-hidden">
@@ -331,18 +335,18 @@ export function Component() {
             <div>
               <CardTitle className="inline-flex items-center gap-2 text-base">
                 <TrendingUp className="size-4 text-primary" />
-                Evolucao do Saldo Projetado
+                Evolução do Saldo Projetado
                 <Info className="size-4 text-muted-foreground" />
               </CardTitle>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <label className="flex items-center gap-2 text-xs font-bold text-muted-foreground">
-                Saldo minimo (R$)
+                Saldo mínimo (R$)
                 <input className="cashflow-minimum-input" inputMode="decimal" value={minimumBalanceInput} onChange={(event) => setMinimumBalanceInput(event.target.value)} />
                 <Pencil className="size-4 text-primary" />
               </label>
               <div className="inline-flex rounded-xl border border-border bg-[var(--surface-2)] p-1">
-                <Button type="button" size="sm" variant={chartMode === "full" ? "default" : "ghost"} className="h-9 px-3" onClick={() => setChartMode("full")}>Entradas e Saidas</Button>
+                <Button type="button" size="sm" variant={chartMode === "full" ? "default" : "ghost"} className="h-9 px-3" onClick={() => setChartMode("full")}>Entradas e Saídas</Button>
                 <Button type="button" size="sm" variant={chartMode === "balance" ? "default" : "ghost"} className="h-9 px-3" onClick={() => setChartMode("balance")}>Apenas Saldo</Button>
               </div>
             </div>
@@ -359,20 +363,20 @@ export function Component() {
                 <ComposedChart data={chartData} margin={{ top: 18, right: 18, bottom: 8, left: 0 }}>
                   <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="label" tick={{ fontSize: 12, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
-                  <YAxis tickFormatter={formatCompactMoney} tick={{ fontSize: 12, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} width={70} />
+                  <YAxis tickFormatter={formatCompactMoney} tick={{ fontSize: 12, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} width={78} />
                   <Tooltip content={<CashFlowTooltip />} />
                   <Legend verticalAlign="top" align="right" iconType="circle" wrapperStyle={{ fontSize: 12, paddingBottom: 12 }} />
                   <ReferenceLine y={minimumBalance} stroke="var(--warning)" strokeDasharray="4 4" />
                   {chartMode === "full" && appliedFilters.view !== "outflows" ? <Bar dataKey="inflows" name="Entradas" fill="var(--chart-revenue)" radius={[6, 6, 0, 0]} maxBarSize={28} /> : null}
-                  {chartMode === "full" && appliedFilters.view !== "inflows" ? <Bar dataKey="outflows" name="Saidas" fill="var(--chart-expense)" radius={[6, 6, 0, 0]} maxBarSize={28} /> : null}
+                  {chartMode === "full" && appliedFilters.view !== "inflows" ? <Bar dataKey="outflows" name="Saídas" fill="var(--chart-expense)" radius={[6, 6, 0, 0]} maxBarSize={28} /> : null}
                   <Area type="monotone" dataKey="projectedBalance" name="Saldo projetado" fill="var(--chart-balance)" fillOpacity={0.12} stroke="var(--chart-balance)" strokeWidth={2} />
-                  <Line type="monotone" dataKey="projectedBalance" name="Linha do saldo" stroke="var(--chart-balance)" strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 5 }} legendType="none" />
+                  <Line type="monotone" dataKey="projectedBalance" stroke="var(--chart-balance)" strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 5 }} legendType="none" />
                   {todayPoint ? <ReferenceDot x={todayPoint.label} y={todayPoint.projectedBalance} r={6} fill="var(--warning)" stroke="var(--surface)" strokeWidth={2} /> : null}
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
           ) : (
-            <EmptyState title="Nenhuma projecao encontrada." description="Nao ha contas pendentes no periodo selecionado." />
+            <EmptyState title="Nenhuma projeção encontrada." description="Não há contas pendentes no período selecionado." />
           )}
         </CardContent>
       </Card>
@@ -407,7 +411,7 @@ function ProjectionTable({ periods, initialBalance, isLoading, isError, expanded
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle className="inline-flex items-center gap-2 text-base">
             <CalendarDays className="size-4 text-primary" />
-            Projecao Detalhada
+            Projeção Detalhada
             <Info className="size-4 text-muted-foreground" />
           </CardTitle>
           <div className="flex gap-2">
@@ -422,7 +426,7 @@ function ProjectionTable({ periods, initialBalance, isLoading, isError, expanded
             <tr>
               <th>Periodo</th>
               <th className="text-right">Entradas</th>
-              <th className="text-right">Saidas</th>
+              <th className="text-right">Saídas</th>
               <th className="text-right">Movimento liquido</th>
               <th className="text-right">Saldo projetado</th>
             </tr>
@@ -436,7 +440,7 @@ function ProjectionTable({ periods, initialBalance, isLoading, isError, expanded
               <td className="text-right font-black text-primary">{formatMoney(initialBalance)}</td>
             </tr>
             {isLoading ? (
-              <tr><td colSpan={5} className="h-56 text-center text-sm font-semibold text-muted-foreground">Carregando projecao...</td></tr>
+              <tr><td colSpan={5} className="h-56 text-center text-sm font-semibold text-muted-foreground">Carregando projeção...</td></tr>
             ) : isError ? (
               <tr><td colSpan={5} className="h-56 text-center text-sm font-semibold text-destructive">Erro ao carregar fluxo de caixa.</td></tr>
             ) : periods.length ? periods.map((period) => {
@@ -466,7 +470,7 @@ function ProjectionTable({ periods, initialBalance, isLoading, isError, expanded
                 </>
               );
             }) : (
-              <tr><td colSpan={5} className="p-0"><EmptyState title="Nenhuma conta pendente encontrada." description="Altere o periodo ou os filtros para visualizar previsoes futuras." /></td></tr>
+              <tr><td colSpan={5} className="p-0"><EmptyState title="Nenhuma conta pendente encontrada." description="Altere o período ou os filtros para visualizar previsões futuras." /></td></tr>
             )}
           </tbody>
         </table>
@@ -481,7 +485,7 @@ function TransactionDetails({ transactions }: { transactions: ProjectedCashFlowT
 
   return (
     <div className="cashflow-details">
-      <p className="text-xs font-black uppercase tracking-[0.08em] text-muted-foreground">{transactions.length} lancamentos - {inflows} entrada(s) - {outflows} saida(s)</p>
+      <p className="text-xs font-black uppercase tracking-[0.08em] text-muted-foreground">{transactions.length} lançamentos - {inflows} entrada(s) - {outflows} saída(s)</p>
       <div className="mt-3 overflow-x-auto">
         <table className="cashflow-detail-table">
           <thead>
@@ -497,7 +501,7 @@ function TransactionDetails({ transactions }: { transactions: ProjectedCashFlowT
           <tbody>
             {transactions.map((transaction) => (
               <tr key={transaction.id}>
-                <td><Badge variant={transaction.type === "inflow" ? "success" : "destructive"}>{transaction.type === "inflow" ? "Entrada" : "Saida"}</Badge></td>
+                <td><Badge variant={transaction.type === "inflow" ? "success" : "destructive"}>{transaction.type === "inflow" ? "Entrada" : "Saída"}</Badge></td>
                 <td>
                   <div className="flex min-w-0 flex-col gap-1">
                     <span className="font-semibold text-foreground">{transaction.description}</span>
@@ -539,6 +543,43 @@ function CashFlowTooltip({ active, payload, label }: { active?: boolean; payload
       ))}
     </div>
   );
+}
+
+function KpiCard({ title, value, icon: Icon, tone, helper, valueClassName, sparklineData, alert }: { title: string; value: string; icon: typeof Wallet; tone: "blue" | "green" | "orange"; helper?: string; valueClassName?: string; sparklineData: number[]; alert?: boolean }) {
+  const iconClassName = tone === "green" ? "bg-success-soft text-success" : tone === "orange" ? "bg-warning-soft text-warning" : "bg-primary-soft text-primary";
+  return (
+    <div className={cn("stat-card", alert && "border-warning/40 bg-warning-light/40") }>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className={cn("flex size-10 items-center justify-center rounded-2xl", iconClassName)}>
+            <Icon className="size-5" />
+          </div>
+          <p className="mt-3 text-sm font-semibold text-muted-foreground">{title}</p>
+          <p className={cn("mt-2 text-xl font-black tracking-tight", valueClassName)}>{value}</p>
+        </div>
+        {alert ? <AlertTriangle className="size-4 shrink-0 text-warning" /> : null}
+      </div>
+      {helper ? <p className="mt-3 text-sm text-muted-foreground">{helper}</p> : null}
+      <div className="mt-4 h-8">
+        <svg viewBox="0 0 100 24" className="h-full w-full" aria-hidden="true">
+          <path d={buildSparklinePath(sparklineData)} fill="none" stroke={tone === "green" ? "var(--success)" : tone === "orange" ? "var(--warning)" : "var(--primary)"} strokeWidth="2.5" strokeLinecap="round" />
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+function buildSparklinePath(values: number[]) {
+  if (!values.length) return "M0 12";
+  const width = 100;
+  const height = 24;
+  const max = Math.max(...values.map((value) => Math.abs(value))) || 1;
+  return values.map((value, index) => {
+    const x = values.length === 1 ? width / 2 : (index / (values.length - 1)) * width;
+    const normalized = max === 0 ? 0.5 : 1 - value / max;
+    const y = normalized * height;
+    return `${index === 0 ? "M" : "L"}${x.toFixed(2)} ${y.toFixed(2)}`;
+  }).join(" ");
 }
 
 function KpiSkeleton() {
@@ -590,11 +631,11 @@ function filtersToSearchParams(filters: CashFlowFilters) {
 
 function buildActiveFilterLabels(filters: CashFlowFilters, categoryName?: string) {
   return [
-    periodOptions.find((option) => option.value === filters.preset)?.label ?? "Proximos 15 dias",
+    periodOptions.find((option) => option.value === filters.preset)?.label ?? "Próximos 15 dias",
     filters.bank === "all" ? "Todos os bancos" : filters.bank,
     categoryName ?? "Todas as categorias",
-    filters.granularity === "day" ? "Diaria" : filters.granularity === "week" ? "Semanal" : "Mensal",
-    filters.view === "both" ? "Ambas" : filters.view === "inflows" ? "Apenas entradas" : "Apenas saidas",
+    filters.granularity === "day" ? "Diária" : filters.granularity === "week" ? "Semanal" : "Mensal",
+    filters.view === "both" ? "Ambas" : filters.view === "inflows" ? "Apenas entradas" : "Apenas saídas",
   ];
 }
 
@@ -667,8 +708,8 @@ function formatSignedMoney(value: number) {
 }
 
 function formatDelta(value: number) {
-  if (value === 0) return "Sem variacao em relacao a hoje";
-  return `${value < 0 ? "Queda" : "Alta"} de ${formatMoney(Math.abs(value))} em relacao a hoje`;
+  if (value === 0) return "Sem variação em relação a hoje";
+  return `${value < 0 ? "Queda" : "Alta"} de ${formatMoney(Math.abs(value))} em relação a hoje`;
 }
 
 function styleHeader(sheet: { getRow: (row: number) => { font?: { bold?: boolean } } }) {

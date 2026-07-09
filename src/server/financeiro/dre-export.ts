@@ -167,7 +167,7 @@ export function buildDreExportPayload(
   const expenseComposition = buildExpenseComposition(dre.rows);
   return {
     companyName,
-    title: "Demonstracao de Resultado",
+    title: "Demonstração de Resultado",
     period,
     generatedAt,
     summary: {
@@ -279,7 +279,7 @@ function parseYearMonth(value: string): [number, number] {
   const year = typeof yearValue === "number" && Number.isFinite(yearValue) ? yearValue : Number.NaN;
   const month = typeof monthValue === "number" && Number.isFinite(monthValue) ? monthValue : Number.NaN;
   if (!Number.isFinite(year) || !Number.isFinite(month) || month < 1 || month > 12) {
-    throw Object.assign(new Error("Mes invalido para exportacao."), { name: "ValidationError" });
+    throw Object.assign(new Error("Mês inválido para exportação."), { name: "ValidationError" });
   }
   return [year, month];
 }

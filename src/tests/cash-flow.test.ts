@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildProjectedCashFlow, type ProjectedCashFlowTransaction } from "@/domain/financeiro/cash-flow";
+import { buildCashFlowInsight, buildProjectedCashFlow, type ProjectedCashFlowTransaction } from "@/domain/financeiro/cash-flow";
 
 function transaction(partial: Partial<ProjectedCashFlowTransaction> & Pick<ProjectedCashFlowTransaction, "id" | "type" | "amount" | "dueDate">): ProjectedCashFlowTransaction {
   return {
@@ -82,6 +82,24 @@ describe("buildProjectedCashFlow", () => {
     expect(result.periods[0]?.outflows).toBe(40);
     expect(result.periods[1]?.outflows).toBe(70);
     expect(result.summary.finalProjectedBalance).toBe(990);
+  });
+
+  it("builds an actionable insight when the projected balance falls below the configured minimum", () => {
+    const result = buildProjectedCashFlow({
+      initialBalance: 100,
+      dateFrom: new Date(2026, 6, 9),
+      dateTo: new Date(2026, 6, 11),
+      granularity: "day",
+      transactions: [
+        transaction({ id: "p1", type: "outflow", amount: 250, dueDate: "2026-07-10" }),
+      ],
+    });
+
+    const insight = buildCashFlowInsight(result, 50);
+
+    expect(insight.tone).toBe("warning");
+    expect(insight.title).toContain("saldo");
+    expect(insight.message).toContain("mínimo");
   });
 
   it("filters projected transactions by view", () => {
