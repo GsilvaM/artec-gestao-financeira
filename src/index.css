@@ -956,6 +956,13 @@
     min-width: 0;
   }
 
+  .dre-filter-panel .filter-bar,
+  .dre-filter-panel .filter-controls,
+  .dre-filter-panel .select-input,
+  .dre-filter-panel .search-input {
+    min-width: 0;
+  }
+
   .dre-filter-actions {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1055,6 +1062,7 @@
 
   /* === Mobile Record Card === */
   .mobile-record-card {
+    min-width: 0;
     border: 1px solid var(--border-soft);
     border-radius: 18px;
     background: color-mix(in srgb, var(--color-surface) 92%, transparent);
@@ -1062,7 +1070,22 @@
     padding: 14px;
   }
 
+  .cadastro-mobile-card {
+    display: grid;
+    gap: 12px;
+  }
+
+  .cadastro-mobile-detail {
+    margin: 4px 0 0;
+    min-width: 0;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+
   .mobile-record-top {
+    min-width: 0;
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
@@ -1082,6 +1105,7 @@
     font-size: 0.875rem;
     font-weight: 700;
     line-height: 1.25;
+    overflow-wrap: anywhere;
   }
 
   .mobile-record-main p {
@@ -1098,6 +1122,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
   }
 
   .money {
@@ -1122,6 +1148,15 @@
   /* === Desktop Table === */
   .desktop-table {
     display: block;
+  }
+
+  .dre-table-card .table-scroll {
+    max-width: 100%;
+    margin: 0;
+  }
+
+  .dre-table-card table {
+    width: 100%;
   }
 
   .mobile-list {
@@ -1209,6 +1244,10 @@
     background: color-mix(in srgb, var(--color-surface) 92%, transparent);
     padding: 14px;
     box-shadow: var(--shadow-xs);
+    min-width: 0;
+  }
+
+  .dre-mobile-list {
     min-width: 0;
   }
 
@@ -1320,6 +1359,16 @@
     overflow-wrap: anywhere;
   }
 
+  .dre-chart-tooltip {
+    overflow-wrap: anywhere;
+  }
+
+  .dre-chart-tooltip strong {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    text-align: right;
+  }
+
   .dre-chart-scroll {
     overscroll-behavior-x: contain;
     scrollbar-gutter: stable;
@@ -1389,7 +1438,116 @@
     min-width: 0;
   }
 
+  .dre-export-form input,
+  .dre-export-form select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .dre-export-dialog .dialog-footer > button {
+    min-width: 0;
+  }
+
   @media (max-width: 640px) {
+    .accounts-summary-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 10px !important;
+    }
+
+    .accounts-summary-grid .stat-card {
+      min-height: 98px;
+      padding: 12px;
+      border-radius: 16px;
+    }
+
+    .accounts-summary-grid .stat-label {
+      font-size: 0.625rem;
+    }
+
+    .accounts-summary-grid .stat-value {
+      font-size: clamp(1rem, 6vw, 1.25rem);
+      overflow-wrap: anywhere;
+    }
+
+    .accounts-summary-grid .stat-description {
+      display: none;
+    }
+
+    .accounts-mobile-list {
+      gap: 10px;
+    }
+
+    .accounts-mobile-card {
+      padding: 12px;
+      border-radius: 16px;
+    }
+
+    .accounts-mobile-card .mobile-record-top {
+      gap: 10px;
+    }
+
+    .accounts-mobile-card .mobile-record-top > div:first-child {
+      min-width: 0;
+    }
+
+    .accounts-mobile-card .mobile-record-top h3,
+    .accounts-mobile-card .mobile-record-top p {
+      overflow-wrap: anywhere;
+    }
+
+    .accounts-mobile-amount {
+      max-width: 44%;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      text-align: right;
+      white-space: normal;
+    }
+
+    .accounts-mobile-actions > button {
+      min-width: 0;
+    }
+
+    .lancamentos-summary-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 10px !important;
+    }
+
+    .lancamentos-summary-grid > .stat-card:last-child {
+      grid-column: 1 / -1;
+    }
+
+    .lancamentos-summary-grid .stat-card {
+      min-height: 96px;
+      padding: 12px;
+      border-radius: 16px;
+    }
+
+    .lancamentos-summary-grid .stat-label {
+      font-size: 0.625rem;
+    }
+
+    .lancamentos-summary-grid .stat-value {
+      font-size: clamp(1rem, 6vw, 1.25rem);
+      overflow-wrap: anywhere;
+    }
+
+    .transaction-mobile-card {
+      border-radius: 16px;
+    }
+
+    .transaction-mobile-value {
+      max-width: 44%;
+      min-width: 0;
+    }
+
+    .transaction-mobile-value p {
+      overflow-wrap: anywhere;
+    }
+
+    .lancamentos-pagination {
+      margin-bottom: calc(var(--mobile-bottom-nav-offset, 88px) + 8px);
+    }
+
     .mobile-summary-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
       gap: 10px !important;
@@ -1424,6 +1582,14 @@
       display: none;
     }
 
+    .dre-filter-panel {
+      padding: 12px !important;
+    }
+
+    .dre-filter-actions > button {
+      min-height: 40px;
+    }
+
     .dre-period-toggle {
       display: grid !important;
       width: 100%;
@@ -1443,6 +1609,15 @@
 
     .dre-chart-frame {
       padding-right: 12px;
+    }
+
+    .dre-chart-tooltip {
+      font-size: 0.75rem;
+    }
+
+    .dre-mobile-card {
+      padding: 12px;
+      border-radius: 16px;
     }
 
     .dre-composition-item-head {
@@ -1465,12 +1640,78 @@
     }
   }
 
+  @media (max-width: 380px) {
+    .accounts-summary-grid {
+      grid-template-columns: 1fr !important;
+    }
+
+    .accounts-mobile-card .mobile-record-top {
+      flex-direction: column;
+    }
+
+    .accounts-mobile-amount {
+      max-width: 100%;
+      text-align: left;
+    }
+
+    .accounts-mobile-card .mobile-record-bottom {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .accounts-mobile-actions {
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .accounts-mobile-actions > button:first-child {
+      flex: 1 1 auto;
+    }
+
+    .lancamentos-summary-grid {
+      grid-template-columns: 1fr !important;
+    }
+
+    .transaction-mobile-value {
+      max-width: 52%;
+    }
+
+    .dre-kpi-grid {
+      grid-template-columns: 1fr !important;
+    }
+
+    .dre-kpi-grid > :last-child {
+      grid-column: auto;
+    }
+
+    .dre-break-even-value {
+      padding-inline: 8px;
+      font-size: 0.6875rem;
+    }
+  }
+
   /* === CashFlow Mobile Card === */
+  .cashflow-mobile-toolbar,
+  .cashflow-active-filter-summary,
+  .cashflow-projection-mobile {
+    display: none;
+  }
+
+  .cashflow-export-desktop {
+    min-width: 0;
+  }
+
+  .cashflow-projection-desktop {
+    display: block;
+  }
+
   .cashflow-card {
     border: 1px solid var(--border-soft);
     border-radius: 18px;
     background: color-mix(in srgb, var(--color-surface) 92%, transparent);
     padding: 14px;
+    min-width: 0;
   }
 
   .cashflow-card header {
@@ -1511,6 +1752,80 @@
   .cashflow-values div span {
     color: var(--text-muted);
     font-size: 0.75rem;
+  }
+
+  .cashflow-values strong {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cashflow-period-button {
+    display: inline-flex;
+    min-height: 44px;
+    width: 100%;
+    min-width: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border: 0;
+    border-radius: 14px;
+    background: transparent;
+    color: var(--foreground);
+    padding: 0;
+    text-align: left;
+    line-height: 1;
+  }
+
+  .cashflow-period-button:disabled {
+    cursor: default;
+    opacity: 1;
+  }
+
+  .cashflow-period-button > span {
+    display: inline-flex;
+    min-width: 0;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-strong);
+    font-size: 0.875rem;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+
+  .cashflow-period-button > strong {
+    min-width: 0;
+    max-width: 54%;
+    overflow-wrap: anywhere;
+    text-align: right;
+    font-size: 0.9375rem;
+    line-height: 1.15;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cashflow-transaction-list {
+    display: grid;
+    gap: 10px;
+    margin-top: 12px;
+    border-top: 1px solid var(--border-subtle);
+    padding-top: 12px;
+  }
+
+  .cashflow-transaction-card {
+    display: flex;
+    min-width: 0;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    border-radius: 14px;
+    background: var(--surface-2);
+    padding: 12px;
+  }
+
+  .cashflow-transaction-card p {
+    overflow-wrap: anywhere;
+    line-height: 1.3;
   }
 
   .cashflow-filter-shell {
@@ -1703,6 +2018,63 @@
   }
 
   @media (max-width: 640px) {
+    .cashflow-export-desktop {
+      display: none !important;
+    }
+
+    .cashflow-mobile-toolbar {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .cashflow-mobile-toolbar > button,
+    .cashflow-mobile-toolbar [data-slot="dropdown-trigger"] {
+      position: relative;
+      width: 100%;
+    }
+
+    .cashflow-active-filter-summary {
+      display: flex;
+      min-width: 0;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+      scrollbar-width: thin;
+    }
+
+    .cashflow-active-filter-summary span {
+      flex: 0 0 auto;
+      max-width: 78vw;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      border: 1px solid var(--border-subtle);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--text-secondary);
+      padding: 7px 10px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .cashflow-filter-card {
+      display: none;
+    }
+
+    .cashflow-filter-card-open {
+      display: block;
+    }
+
+    .cashflow-projection-desktop {
+      display: none;
+    }
+
+    .cashflow-projection-mobile {
+      display: block;
+    }
+
     .table-scroll-hint {
       position: sticky;
       left: 0;
@@ -1749,8 +2121,30 @@
     }
   }
 
+  @media (max-width: 380px) {
+    .cashflow-kpi-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .cashflow-mobile-toolbar {
+      grid-template-columns: 1fr;
+    }
+
+    .cashflow-period-button {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .cashflow-period-button > strong {
+      max-width: 100%;
+      text-align: left;
+    }
+  }
+
   /* === Category Card === */
   .category-card {
+    min-width: 0;
     border: 1px solid var(--border-soft);
     border-radius: 18px;
     background: color-mix(in srgb, var(--color-surface) 92%, transparent);
@@ -1773,12 +2167,15 @@
     color: var(--text-strong);
     font-size: 0.875rem;
     font-weight: 700;
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
 
   .category-main p {
     margin: 3px 0 0;
     color: var(--text-muted);
     font-size: 0.75rem;
+    overflow-wrap: anywhere;
   }
 
   .category-dot {

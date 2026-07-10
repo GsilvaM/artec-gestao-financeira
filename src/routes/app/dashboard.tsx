@@ -1184,13 +1184,16 @@ const dashboardStyles = `
   .dashboard-filter-panel { grid-template-columns: 1fr; }
 
   .metric-card {
-    min-height: 124px;
-    padding: 14px;
-    gap: 10px;
+    min-height: 112px;
+    padding: 12px;
+    gap: 8px;
   }
 
-  .metric-icon { width: 36px; height: 36px; border-radius: 12px; }
+  .metric-icon { width: 34px; height: 34px; border-radius: 12px; }
+  .metric-icon svg { width: 18px; height: 18px; }
+  .metric-title { font-size: 0.625rem; }
   .metric-value { font-size: 1rem; white-space: normal; overflow-wrap: anywhere; }
+  .metric-trend { font-size: 12px; }
   .metric-sparkline { display: none; }
 }
 
@@ -1330,8 +1333,8 @@ const dashboardStyles = `
 
 @media (max-width: 768px) {
   .financial-hero-card {
-    border-radius: 24px;
-    padding: 22px;
+    border-radius: 20px;
+    padding: 18px;
   }
 
   .financial-balance {
@@ -1348,6 +1351,53 @@ const dashboardStyles = `
     border-left: none;
     padding-top: 10px;
     border-top: 1px solid rgba(255, 255, 255, 0.16);
+  }
+}
+
+@media (max-width: 480px) {
+  .financial-hero-header {
+    align-items: center;
+  }
+
+  .financial-hero-header h2 {
+    font-size: 15px;
+  }
+
+  .financial-hero-header p,
+  .financial-label {
+    display: none;
+  }
+
+  .financial-hero-status {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .financial-hero-body {
+    margin-top: 18px;
+  }
+
+  .financial-company {
+    font-size: 16px;
+  }
+
+  .financial-balance-label {
+    margin-top: 14px;
+    font-size: 12px;
+  }
+
+  .financial-balance {
+    overflow-wrap: anywhere;
+  }
+
+  .financial-hero-footer {
+    margin-top: 18px;
+    padding: 12px;
+  }
+
+  .financial-hero-footer strong {
+    overflow-wrap: anywhere;
+    font-size: 14px;
   }
 }
 
@@ -1556,6 +1606,37 @@ const dashboardStyles = `
   cursor: pointer;
 }
 
+@media (max-width: 768px) {
+  .quick-action-card {
+    min-height: 64px;
+    padding: 12px;
+  }
+
+  .quick-action-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 13px;
+  }
+
+  .quick-action-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .quick-action-left {
+    gap: 10px;
+  }
+
+  .quick-action-left strong {
+    font-size: 13px;
+  }
+
+  .quick-action-left p {
+    font-size: 11px;
+    line-height: 1.3;
+  }
+}
+
 .quick-action-card:hover {
   background: var(--color-surface-muted);
   border-color: var(--color-border-strong);
@@ -1749,6 +1830,33 @@ const dashboardStyles = `
   .dashboard-mobile-list {
     display: grid;
     gap: 10px;
+  }
+
+  .dashboard-mobile-record-top strong {
+    max-width: 52%;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 380px) {
+  .dashboard-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-legend button {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .dashboard-mobile-record-top {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .dashboard-mobile-record-top strong {
+    max-width: 100%;
+    text-align: left;
   }
 }
 

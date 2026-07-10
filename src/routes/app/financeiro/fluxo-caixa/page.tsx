@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
 import {
   Area,
@@ -29,8 +29,10 @@ import {
   Landmark,
   Layers3,
   Loader2,
+  MoreHorizontal,
   Pencil,
   Search,
+  SlidersHorizontal,
   TrendingDown,
   TrendingUp,
   Wallet,
@@ -39,6 +41,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { EmptyState, PageShell } from "@/components/layout/page-shell";
@@ -98,6 +101,7 @@ export function Component() {
   const [minimumBalanceInput, setMinimumBalanceInput] = useState("0");
   const [expandedRows, setExpandedRows] = useState<Set<string>>(() => new Set());
   const [exporting, setExporting] = useState<"excel" | "pdf" | null>(null);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   useEffect(() => {
     setDraftFilters(appliedFilters);
@@ -138,12 +142,14 @@ export function Component() {
   function applyFilters() {
     setSearchParams(filtersToSearchParams(draftFilters), { replace: false });
     setExpandedRows(new Set());
+    setMobileFiltersOpen(false);
   }
 
   function clearFilters() {
     setDraftFilters(defaultFilters);
     setSearchParams(new URLSearchParams(), { replace: false });
     setExpandedRows(new Set());
+    setMobileFiltersOpen(false);
   }
 
   function toggleRow(id: string) {
@@ -256,7 +262,7 @@ export function Component() {
 
   return (
     <PageShell icon={CalendarDays} title="Fluxo de Caixa" subtitle="Entradas, saídas e saldo projetado por período">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+      <div className="cashflow-export-desktop flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
         <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={() => void handleExportExcel()} disabled={Boolean(exporting)}>
           {exporting === "excel" ? <Loader2 className="size-4 animate-spin" /> : <FileSpreadsheet className="size-4" />}
           Exportar Excel
@@ -266,8 +272,44 @@ export function Component() {
           Exportar PDF
         </Button>
       </div>
+      <div className="cashflow-mobile-toolbar">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setMobileFiltersOpen((open) => !open)}
+          aria-expanded={mobileFiltersOpen}
+          aria-controls="cashflow-filter-panel"
+        >
+          <SlidersHorizontal className="size-4" />
+          Filtros
+          {activeFilters.length ? <span className="filter-count-badge">{activeFilters.length}</span> : null}
+        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button type="button" variant="outline" aria-label="Acoes de exportacao do fluxo de caixa">
+              <MoreHorizontal className="size-4" />
+              Acoes
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={() => void handleExportExcel()} disabled={Boolean(exporting)}>
+              {exporting === "excel" ? <Loader2 className="size-4 animate-spin" /> : <FileSpreadsheet className="size-4" />}
+              Exportar Excel
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => void handleExportPdf()} disabled={Boolean(exporting)}>
+              {exporting === "pdf" ? <Loader2 className="size-4 animate-spin" /> : <FileDown className="size-4" />}
+              Exportar PDF
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      <div className="cashflow-active-filter-summary" aria-label="Filtros aplicados">
+        {activeFilters.map((filter) => (
+          <span key={filter}>{filter}</span>
+        ))}
+      </div>
 
-      <Card className="overflow-hidden border border-border/70 bg-[var(--surface)] shadow-[var(--shadow-xs)]">
+      <Card id="cashflow-filter-panel" className={cn("cashflow-filter-card overflow-hidden border border-border/70 bg-[var(--surface)] shadow-[var(--shadow-xs)]", mobileFiltersOpen && "cashflow-filter-card-open")}>
         <div className="cashflow-filter-shell">
           <div className="cashflow-filter-grid">
             <FilterField icon={CalendarDays} label="Período">
@@ -305,7 +347,7 @@ export function Component() {
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm font-bold text-muted-foreground">Totais do período</p>
-        <p className="text-xs font-semibold text-muted-foreground">{activeFilters.join(" - ")}</p>
+        <p className="hidden text-xs font-semibold text-muted-foreground sm:block">{activeFilters.join(" - ")}</p>
       </div>
 
       {isLoading ? <KpiSkeleton /> : (
@@ -420,7 +462,17 @@ function ProjectionTable({ periods, initialBalance, isLoading, isError, expanded
           </div>
         </div>
       </CardHeader>
-      <div className="table-scroll" role="region" aria-label="Projeção detalhada, deslize horizontalmente para ver todas as colunas" tabIndex={0}>
+      <div className="cashflow-projection-mobile">
+        <CashFlowPeriodList
+          periods={periods}
+          initialBalance={initialBalance}
+          isLoading={isLoading}
+          isError={isError}
+          expandedRows={expandedRows}
+          onToggleRow={onToggleRow}
+        />
+      </div>
+      <div className="cashflow-projection-desktop table-scroll" role="region" aria-label="Projeção detalhada, deslize horizontalmente para ver todas as colunas" tabIndex={0}>
         <p className="table-scroll-hint">Deslize para ver todas as colunas</p>
         <table className="cashflow-table">
           <thead>
@@ -448,8 +500,8 @@ function ProjectionTable({ periods, initialBalance, isLoading, isError, expanded
               const hasTransactions = period.transactions.length > 0;
               const expanded = expandedRows.has(period.id);
               return (
-                <>
-                  <tr key={period.id} className={cn(hasTransactions ? "cursor-pointer hover:bg-surface-2" : "cashflow-row-empty")} onClick={() => hasTransactions && onToggleRow(period.id)}>
+                <Fragment key={period.id}>
+                  <tr className={cn(hasTransactions ? "cursor-pointer hover:bg-surface-2" : "cashflow-row-empty")} onClick={() => hasTransactions && onToggleRow(period.id)}>
                     <td>
                       <span className="inline-flex items-center gap-2">
                         {hasTransactions ? expanded ? <ChevronDown className="size-4 text-primary" /> : <ChevronRight className="size-4 text-muted-foreground" /> : <span className="size-4" />}
@@ -468,7 +520,7 @@ function ProjectionTable({ periods, initialBalance, isLoading, isError, expanded
                       </td>
                     </tr>
                   ) : null}
-                </>
+                </Fragment>
               );
             }) : (
               <tr><td colSpan={5} className="p-0"><EmptyState title="Nenhuma conta pendente encontrada." description="Altere o período ou os filtros para visualizar previsões futuras." /></td></tr>
@@ -477,6 +529,120 @@ function ProjectionTable({ periods, initialBalance, isLoading, isError, expanded
         </table>
       </div>
     </Card>
+  );
+}
+
+function CashFlowPeriodList({ periods, initialBalance, isLoading, isError, expandedRows, onToggleRow }: {
+  periods: ProjectedCashFlowPeriod[];
+  initialBalance: number;
+  isLoading: boolean;
+  isError: boolean;
+  expandedRows: Set<string>;
+  onToggleRow: (id: string) => void;
+}) {
+  if (isLoading) {
+    return (
+      <div className="grid gap-3 p-4">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <div key={index} className="cashflow-card">
+            <div className="h-3 w-28 animate-pulse rounded-full bg-surface-muted" />
+            <div className="mt-3 h-5 w-40 animate-pulse rounded-full bg-surface-muted" />
+            <div className="mt-4 h-4 w-full animate-pulse rounded-full bg-surface-muted" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="p-4">
+        <div className="rounded-2xl border border-dashed border-destructive/30 bg-danger-50 p-6 text-center text-sm font-semibold text-destructive">
+          Erro ao carregar fluxo de caixa.
+        </div>
+      </div>
+    );
+  }
+
+  if (!periods.length) {
+    return (
+      <div className="p-4">
+        <EmptyState title="Nenhuma conta pendente encontrada." description="Altere o periodo ou os filtros para visualizar previsoes futuras." />
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-3 p-4">
+      <article className="cashflow-card cashflow-initial-card">
+        <header>
+          <span>Saldo inicial</span>
+          <strong>{formatMoney(initialBalance)}</strong>
+        </header>
+      </article>
+      {periods.map((period) => {
+        const expanded = expandedRows.has(period.id);
+        const hasTransactions = period.transactions.length > 0;
+        return (
+          <article key={period.id} className={cn("cashflow-card", !hasTransactions && "opacity-70")}>
+            <button
+              type="button"
+              className="cashflow-period-button"
+              onClick={() => hasTransactions && onToggleRow(period.id)}
+              disabled={!hasTransactions}
+              aria-expanded={hasTransactions ? expanded : undefined}
+            >
+              <span>
+                {hasTransactions ? expanded ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" /> : null}
+                {period.label}
+              </span>
+              <strong className={getMoneyToneClass(period.projectedBalance)}>{formatMoney(period.projectedBalance)}</strong>
+            </button>
+            <div className="cashflow-values">
+              <div>
+                <span>Entradas</span>
+                <strong className="text-success">{period.inflows ? formatMoney(period.inflows) : "-"}</strong>
+              </div>
+              <div>
+                <span>Saidas</span>
+                <strong className="text-destructive">{period.outflows ? formatMoney(period.outflows) : "-"}</strong>
+              </div>
+              <div>
+                <span>Movimento</span>
+                <strong className={cn(period.netMovement < 0 ? "text-destructive" : period.netMovement > 0 ? "text-success" : "text-muted-foreground")}>
+                  {period.netMovement ? formatSignedMoney(period.netMovement) : "-"}
+                </strong>
+              </div>
+            </div>
+            {expanded ? <TransactionCards transactions={period.transactions} /> : null}
+          </article>
+        );
+      })}
+    </div>
+  );
+}
+
+function TransactionCards({ transactions }: { transactions: ProjectedCashFlowTransaction[] }) {
+  return (
+    <div className="cashflow-transaction-list">
+      {transactions.map((transaction) => (
+        <div key={transaction.id} className="cashflow-transaction-card">
+          <div className="min-w-0">
+            <Badge variant={transaction.type === "inflow" ? "success" : "destructive"}>
+              {transaction.type === "inflow" ? "Entrada" : "Saida"}
+            </Badge>
+            <p className="mt-2 font-bold text-foreground">{transaction.description}</p>
+            <p className="mt-1 text-xs font-semibold text-muted-foreground">
+              {transaction.party ?? "Sem favorecido"} - {formatShortDate(transaction.dueDate)}
+            </p>
+            {transaction.overdue ? <p className="mt-2 text-xs font-bold text-destructive">Em atraso desde {formatShortDate(transaction.dueDate)}</p> : null}
+          </div>
+          <strong className={cn("shrink-0 text-right tabular-nums", transaction.type === "inflow" ? "text-success" : "text-destructive")}>
+            {formatMoney(transaction.amount)}
+          </strong>
+        </div>
+      ))}
+    </div>
   );
 }
 

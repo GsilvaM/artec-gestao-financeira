@@ -638,6 +638,7 @@ function MobileBottomNav({ pathname, onOpenMenu }: { pathname: string; onOpenMen
 
 const sidebarStyles = `
 .app-shell {
+  --mobile-bottom-nav-offset: calc(96px + env(safe-area-inset-bottom));
   min-height: 100vh;
   display: flex;
   background: var(--background);
@@ -676,7 +677,7 @@ const sidebarStyles = `
 
 @media (max-width: 767px) {
   #conteudo-principal {
-    padding: 16px 16px calc(104px + env(safe-area-inset-bottom));
+    padding: 16px 16px var(--mobile-bottom-nav-offset);
   }
 }
 

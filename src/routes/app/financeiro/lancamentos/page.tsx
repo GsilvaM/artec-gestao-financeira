@@ -508,7 +508,7 @@ export function Component() {
         setOpen(true);
       }}
     >
-      <div className="mobile-summary-grid grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="lancamentos-summary-grid mobile-summary-grid grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <SummaryCard
           label="Lançamentos"
           value={String(summary?.count ?? pagedEntries.length)}
@@ -573,6 +573,7 @@ export function Component() {
 
       {pagination && (
         <DataTablePagination
+          className="lancamentos-pagination"
           currentPage={currentPage}
           totalPages={pagination.totalPages}
           total={pagination.total}

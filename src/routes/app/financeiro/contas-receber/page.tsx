@@ -501,7 +501,7 @@ export function Component() {
         setOpen(true);
       }}
     >
-      <div className="mobile-summary-grid grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="accounts-summary-grid mobile-summary-grid grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           title="A receber"
           value={formatMoney(openAmount)}
@@ -1057,7 +1057,7 @@ function AccountReceivableMobileList({
 
   if (isLoading) {
     return (
-      <div className="mobile-list">
+      <div className="accounts-mobile-list mobile-list">
         {Array.from({ length: 3 }).map((_, index) => (
           <div key={index} className="mobile-record-card">
             <div className="bg-surface-muted h-4 w-36 animate-pulse rounded-full" />
@@ -1072,7 +1072,7 @@ function AccountReceivableMobileList({
 
   if (!entries?.length) {
     return (
-      <div className="mobile-list">
+      <div className="accounts-mobile-list mobile-list">
         <EmptyState
           title="Nenhuma conta a receber encontrada."
           description="Cadastre receitas previstas para acompanhar entradas futuras."
@@ -1084,14 +1084,14 @@ function AccountReceivableMobileList({
   }
 
   return (
-    <div className="mobile-list">
+    <div className="accounts-mobile-list mobile-list">
       {entries.map((entry) => {
         const showCommonActions = canEditOrDelete(entry);
         const showMenu =
           showCommonActions || canReceive(entry) || isReceived(entry);
 
         return (
-        <article key={entry.id} className="mobile-record-card">
+        <article key={entry.id} className="accounts-mobile-card mobile-record-card">
           <div className="mobile-record-top">
             <div className="min-w-0">
               <h3 className="text-text-primary truncate text-sm font-bold">
@@ -1113,13 +1113,13 @@ function AccountReceivableMobileList({
                 </p>
               ) : null}
             </div>
-            <strong className="money money-income">
+            <strong className="accounts-mobile-amount money money-income">
               {formatMoney(entry.amount)}
             </strong>
           </div>
           <div className="mobile-record-bottom">
             <StatusBadge status={getDisplayStatus(entry, todayKey)} />
-            <div className="flex items-center gap-2">
+            <div className="accounts-mobile-actions flex items-center gap-2">
               {canReceive(entry) ? (
                 <Button size="sm" onClick={() => onReceive(entry)}>
                   <Banknote className="size-4" />

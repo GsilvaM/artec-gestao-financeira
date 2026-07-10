@@ -673,7 +673,7 @@ export function Component() {
         setOpen(true);
       }}
     >
-      <div className="mobile-summary-grid grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="accounts-summary-grid mobile-summary-grid grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           title="Em aberto"
           value={formatMoney(openAmount)}
@@ -1379,7 +1379,7 @@ function AccountPayableMobileList({
 
   if (isLoading) {
     return (
-      <div className="mobile-list">
+      <div className="accounts-mobile-list mobile-list">
         {Array.from({ length: 3 }).map((_, index) => (
           <div key={index} className="mobile-record-card">
             <div className="bg-surface-muted h-4 w-36 animate-pulse rounded-full" />
@@ -1394,7 +1394,7 @@ function AccountPayableMobileList({
 
   if (!entries?.length) {
     return (
-      <div className="mobile-list">
+      <div className="accounts-mobile-list mobile-list">
         <EmptyState
           title="Nenhuma conta a pagar encontrada."
           description="Cadastre suas obrigações para controlar o fluxo de saída."
@@ -1406,9 +1406,9 @@ function AccountPayableMobileList({
   }
 
   return (
-    <div className="mobile-list">
+    <div className="accounts-mobile-list mobile-list">
       {entries.map((entry) => (
-        <article key={entry.id} className="mobile-record-card">
+        <article key={entry.id} className="accounts-mobile-card mobile-record-card">
           <div className="mobile-record-top">
             <div className="min-w-0">
               <h3 className="text-text-primary truncate text-sm font-bold">
@@ -1435,13 +1435,13 @@ function AccountPayableMobileList({
                 </p>
               ) : null}
             </div>
-            <strong className="money money-expense">
+            <strong className="accounts-mobile-amount money money-expense">
               {formatMoney(entry.amount)}
             </strong>
           </div>
           <div className="mobile-record-bottom">
             <StatusBadge status={getDisplayStatus(entry, todayKey)} />
-            <div className="flex items-center gap-2">
+            <div className="accounts-mobile-actions flex items-center gap-2">
               {canPay(entry) ? (
                 <Button size="sm" onClick={() => onPay(entry)}>
                   <Banknote className="size-4" />

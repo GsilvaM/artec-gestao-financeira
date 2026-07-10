@@ -493,7 +493,7 @@ function DreEvolutionChart({
           <div className={cn("dre-chart-frame h-[300px] lg:h-[340px]", months === 12 && "dre-chart-frame-wide")}>
             <DreChartLegend />
             <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={data} margin={{ top: 16, right: 32, bottom: 8, left: 0 }}>
+              <ComposedChart data={data} margin={{ top: 16, right: 24, bottom: 8, left: 0 }}>
                 <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="mes" tickFormatter={formatMonthLabel} tickLine={false} axisLine={false} fontSize={12} />
                 <YAxis tickFormatter={(value: number) => compactMoney(value)} tickLine={false} axisLine={false} fontSize={12} width={64} />
@@ -533,7 +533,7 @@ function DreChartTooltip({
   const margem = receita > 0 ? (resultado / receita) * 100 : null;
 
   return (
-    <div className="max-w-[min(280px,calc(100vw-2rem))] rounded-xl border border-border bg-popover p-3 text-sm shadow-elevated">
+    <div className="dre-chart-tooltip max-w-[min(280px,calc(100vw-2rem))] rounded-xl border border-border bg-popover p-3 text-sm shadow-elevated">
       <p className="mb-2 font-bold text-foreground">{formatMonthLabel(label ?? "")}</p>
       <div className="space-y-1.5">
         {payload.map((item) => (
@@ -630,17 +630,18 @@ function ExpenseComposition({ composition }: { composition: FatiaComposicao[] })
 
 function DreTable({ rows, isLoading, hasError, hasFilters }: { rows: DreLine[]; isLoading: boolean; hasError: boolean; hasFilters: boolean }) {
   return (
-    <Card className="overflow-hidden">
-      <Table className="min-w-[680px]">
-        <TableHeader>
-          <TableRow>
-            <TableHead>Grupo</TableHead>
-            <TableHead>Categoria</TableHead>
-            <TableHead className="text-right">Realizado</TableHead>
-            <TableHead className="text-right">% Receita</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
+    <Card className="dre-table-card overflow-hidden">
+      <div className="table-scroll">
+        <Table className="min-w-[680px]">
+          <TableHeader>
+            <TableRow>
+              <TableHead>Grupo</TableHead>
+              <TableHead>Categoria</TableHead>
+              <TableHead className="text-right">Realizado</TableHead>
+              <TableHead className="text-right">% Receita</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
           {isLoading ? (
             <TableRow>
               <TableCell colSpan={4} className="h-56 text-center text-muted-foreground">
@@ -658,9 +659,9 @@ function DreTable({ rows, isLoading, hasError, hasFilters }: { rows: DreLine[]; 
               <TableRow key={row.id} className={cn(row.emphasis && "bg-muted/45 font-semibold", row.alert && "bg-danger-50/70 hover:bg-danger-50")}>
                 <TableCell className="text-muted-foreground">{row.group}</TableCell>
                 <TableCell className="font-medium">
-                  <span className="inline-flex items-center gap-2">
-                    {row.alert && <AlertTriangle className="size-4 text-destructive" aria-label="Categoria em alerta" />}
-                    {row.category}
+                  <span className="inline-flex min-w-0 items-center gap-2">
+                    {row.alert && <AlertTriangle className="size-4 shrink-0 text-destructive" aria-label="Categoria em alerta" />}
+                    <span className="min-w-0 break-words">{row.category}</span>
                   </span>
                 </TableCell>
                 <TableCell className={cn("text-right tabular-nums", row.type === "receita" ? "text-success" : row.type === "despesa" ? "text-destructive" : row.amount < 0 ? "text-destructive" : "text-primary")}>
@@ -679,8 +680,9 @@ function DreTable({ rows, isLoading, hasError, hasFilters }: { rows: DreLine[]; 
               </TableCell>
             </TableRow>
           )}
-        </TableBody>
-      </Table>
+          </TableBody>
+        </Table>
+      </div>
     </Card>
   );
 }
@@ -688,7 +690,7 @@ function DreTable({ rows, isLoading, hasError, hasFilters }: { rows: DreLine[]; 
 function DreMobileList({ rows, isLoading, hasError, hasFilters }: { rows: DreLine[]; isLoading: boolean; hasError: boolean; hasFilters: boolean }) {
   if (isLoading) {
     return (
-      <div className="space-y-3">
+      <div className="dre-mobile-list space-y-3">
         {Array.from({ length: 3 }).map((_, i) => (
           <div key={i} className="dre-mobile-card">
             <div className="h-3 w-20 animate-pulse rounded-full bg-surface-muted" />
@@ -721,7 +723,7 @@ function DreMobileList({ rows, isLoading, hasError, hasFilters }: { rows: DreLin
   }
 
   return (
-    <div className="space-y-3">
+    <div className="dre-mobile-list space-y-3">
       {rows.map((row) => (
         <article key={row.id} className={cn("dre-mobile-card", row.emphasis && "border-primary-100 bg-primary-50/30", row.alert && "border-destructive/30 bg-danger-50")}>
           <div>

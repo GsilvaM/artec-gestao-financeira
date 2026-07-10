@@ -1,5 +1,6 @@
 import { Button } from "./button";
 import { Select } from "./select";
+import { cn } from "@/lib/utils";
 
 interface DataTablePaginationProps {
   currentPage: number;
@@ -7,6 +8,7 @@ interface DataTablePaginationProps {
   total: number;
   pageSize: number;
   label?: string;
+  className?: string;
   isLoading?: boolean;
   onPageChange: (page: number) => void;
   onPageSizeChange?: (pageSize: number) => void;
@@ -23,6 +25,7 @@ export function DataTablePagination({
   total,
   pageSize,
   label = "registros",
+  className,
   isLoading,
   onPageChange,
   onPageSizeChange,
@@ -52,7 +55,7 @@ export function DataTablePagination({
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-border/80 bg-card/70 p-4 shadow-[var(--shadow-xs)] lg:flex-row lg:items-center lg:justify-between">
+    <div className={cn("flex flex-col gap-3 rounded-2xl border border-border/80 bg-card/70 p-4 shadow-[var(--shadow-xs)] lg:flex-row lg:items-center lg:justify-between", className)}>
       <div className="flex min-w-0 flex-col gap-1">
         <p className="text-sm font-semibold text-foreground">
           Mostrando {start}-{end} de {total} {label}

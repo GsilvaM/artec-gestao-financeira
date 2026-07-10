@@ -18,7 +18,7 @@ const statusStyles: Record<string, { label: string; className: string }> = {
 function TransactionStatusBadge({ status }: { status: string }) {
   const meta = statusStyles[status] ?? { label: status, className: "bg-muted text-muted-foreground" };
   return (
-    <span className={cn("inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium leading-4", meta.className)}>
+    <span className={cn("inline-flex h-5 items-center justify-center rounded-full px-2 text-[10px] font-bold leading-none", meta.className)}>
       {meta.label}
     </span>
   );
@@ -38,8 +38,8 @@ export function TransactionCard({
   const isReceita = transaction.type === "receita";
 
   return (
-    <Card className="overflow-hidden rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--surface)] transition duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[var(--shadow-md)]">
-      <CardContent className="px-4 py-3.5">
+    <Card className="transaction-mobile-card overflow-hidden rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--surface)] transition duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[var(--shadow-md)]">
+      <CardContent className="p-3.5">
         <div className="flex items-start gap-2.5">
           <span className={cn("mt-px flex size-8 shrink-0 items-center justify-center rounded-full", isReceita ? "bg-[var(--success-soft)] text-[var(--success)]" : "bg-[var(--danger-soft)] text-[var(--danger)]")}>
             {isReceita ? <ArrowUp className="size-[13px]" /> : <ArrowDown className="size-[13px]" />}
@@ -60,8 +60,8 @@ export function TransactionCard({
               </p>
             ) : null}
           </div>
-          <div className="shrink-0 text-right">
-            <p className={cn("text-sm font-medium leading-5 tabular-nums", isReceita ? "text-[var(--text-success)]" : "text-[var(--text-danger)]")}>
+          <div className="transaction-mobile-value shrink-0 text-right">
+            <p className={cn("text-sm font-extrabold leading-5 tabular-nums", isReceita ? "text-[var(--text-success)]" : "text-[var(--text-danger)]")}>
               {formatMoney(transaction.amount)}
             </p>
             <div className="mt-1 flex justify-end">
@@ -70,8 +70,8 @@ export function TransactionCard({
           </div>
         </div>
 
-        <div className="mt-3 flex items-center justify-between border-t border-[var(--border-subtle)] pt-2">
-          <span className={cn("inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium leading-4 capitalize", isReceita ? "bg-[var(--bg-success)] text-[var(--text-success)]" : "bg-[var(--bg-danger)] text-[var(--text-danger)]")}>{transaction.type}</span>
+        <div className="mt-2.5 flex items-center justify-between border-t border-[var(--border-subtle)] pt-2">
+          <span className={cn("inline-flex h-5 items-center justify-center rounded-full px-2 text-[10px] font-bold leading-none capitalize", isReceita ? "bg-[var(--bg-success)] text-[var(--text-success)]" : "bg-[var(--bg-danger)] text-[var(--text-danger)]")}>{transaction.type}</span>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="size-9 text-muted-foreground hover:text-foreground" aria-label="Mais opções">
