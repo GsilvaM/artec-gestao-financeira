@@ -136,6 +136,13 @@ function getDueHelper(entry: AccountReceivableRow, todayKey: string) {
   return "A vencer";
 }
 
+function getDisplayStatus(entry: AccountReceivableRow, todayKey: string) {
+  if ((entry.status === "pending" || entry.status === "overdue") && entry.dueDate.slice(0, 10) < todayKey) {
+    return "overdue";
+  }
+  return entry.status;
+}
+
 export function Component() {
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -444,8 +451,8 @@ export function Component() {
     (sum, e) => sum + toFiniteNumber(e.amount),
     0
   );
-  const receivedTotalAmount = receivableEntries
-    .filter((e) => e.status === "received")
+  const overdueAmount = receivableEntries
+    .filter((e) => getDisplayStatus(e, todayKey) === "overdue")
     .reduce((sum, e) => sum + toFiniteNumber(e.amount), 0);
   const dueTodayCount = receivableEntries.filter(
     (e) =>
@@ -494,7 +501,7 @@ export function Component() {
         setOpen(true);
       }}
     >
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mobile-summary-grid grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           title="A receber"
           value={formatMoney(openAmount)}
@@ -503,10 +510,10 @@ export function Component() {
           helper={`${openEntries.length} conta(s)`}
         />
         <MetricCard
-          title="Recebidas"
-          value={formatMoney(receivedTotalAmount)}
+          title="Vencidas"
+          value={formatMoney(overdueAmount)}
           icon={CalendarCheck}
-          tone="blue"
+          tone="red"
         />
         <MetricCard
           title="Vence hoje"
@@ -522,7 +529,7 @@ export function Component() {
         />
       </div>
       <FilterBar
-        searchPlaceholder="Buscar conta a receber..."
+        searchPlaceholder="Buscar conta..."
         search={search}
         onSearchChange={setSearch}
         activeFilters={
@@ -605,11 +612,19 @@ export function Component() {
                     <TableCell>{entry.client ?? "-"}</TableCell>
                     <TableCell className="font-medium">
                       {entry.description}
+                      {entry.costCenterName ? (
+                        <span className="text-text-muted block text-xs font-normal">{entry.costCenterName}</span>
+                      ) : null}
+                      {entry.notes ? (
+                        <span className="text-muted-foreground block truncate text-xs font-normal" title={entry.notes}>
+                          {entry.notes.length > 60 ? `${entry.notes.slice(0, 60)}...` : entry.notes}
+                        </span>
+                      ) : null}
                     </TableCell>
                     <TableCell>{entry.categoryName}</TableCell>
                     <TableCell>{formatMoney(entry.amount)}</TableCell>
                     <TableCell>
-                      <StatusBadge status={entry.status} />
+                      <StatusBadge status={getDisplayStatus(entry, todayKey)} />
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-end gap-2">
@@ -846,7 +861,7 @@ export function Component() {
                     {receivingEntry.description}
                   </p>
                   <p className="text-muted-foreground mt-1 text-xs">
-                    {receivingEntry.client ?? "Cliente nao informado"} -{" "}
+                    {receivingEntry.client ?? "Cliente não informado"} -{" "}
                     {receivingEntry.categoryName}
                   </p>
                 </div>
@@ -1086,19 +1101,24 @@ function AccountReceivableMobileList({
                 {entry.categoryName} - {formatDate(entry.dueDate)}
               </p>
               <p className="text-text-secondary mt-1 text-xs">
-                {entry.client ?? "Cliente nao informado"}
+                {entry.client ?? "Cliente não informado"}
               </p>
               <p className="text-muted-foreground mt-1 text-xs">
                 {getDueHelper(entry, todayKey)}
                 {entry.costCenterName ? ` - ${entry.costCenterName}` : ""}
               </p>
+              {entry.notes ? (
+                <p className="text-muted-foreground mt-1 truncate text-xs" title={entry.notes}>
+                  {entry.notes.length > 60 ? `${entry.notes.slice(0, 60)}...` : entry.notes}
+                </p>
+              ) : null}
             </div>
             <strong className="money money-income">
               {formatMoney(entry.amount)}
             </strong>
           </div>
           <div className="mobile-record-bottom">
-            <StatusBadge status={entry.status} />
+            <StatusBadge status={getDisplayStatus(entry, todayKey)} />
             <div className="flex items-center gap-2">
               {canReceive(entry) ? (
                 <Button size="sm" onClick={() => onReceive(entry)}>

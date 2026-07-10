@@ -705,8 +705,12 @@
   }
 
   .table-scroll {
+    position: relative;
+    max-width: 100%;
+    overflow-x: auto;
     overscroll-behavior-x: contain;
     scrollbar-gutter: stable;
+    -webkit-overflow-scrolling: touch;
   }
 
   .table-scroll::after {
@@ -721,6 +725,10 @@
     height: 1px;
     margin-left: -24px;
     background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--surface) 92%, transparent));
+  }
+
+  .table-scroll-hint {
+    display: none;
   }
 
   .table-card {
@@ -1205,6 +1213,7 @@
   }
 
   .dre-group-label {
+    display: block;
     color: var(--text-muted);
     font-size: 0.6875rem;
     font-weight: 700;
@@ -1381,9 +1390,38 @@
   }
 
   @media (max-width: 640px) {
+    .mobile-summary-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 10px !important;
+    }
+
+    .mobile-summary-grid .stat-card {
+      min-height: 104px;
+      padding: 12px;
+      border-radius: 16px;
+    }
+
+    .mobile-summary-grid .stat-description {
+      display: none;
+    }
+
     .dre-kpi-grid {
-      grid-template-columns: 1fr;
-      gap: 12px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .dre-kpi-grid > :last-child {
+      grid-column: 1 / -1;
+    }
+
+    .dre-kpi-grid .stat-card {
+      min-height: 104px;
+      padding: 12px;
+      border-radius: 16px;
+    }
+
+    .dre-kpi-grid .stat-description {
+      display: none;
     }
 
     .dre-period-toggle {
@@ -1401,6 +1439,10 @@
       justify-content: flex-start;
       font-size: 0.6875rem;
       gap: 7px 10px;
+    }
+
+    .dre-chart-frame {
+      padding-right: 12px;
     }
 
     .dre-composition-item-head {
@@ -1609,6 +1651,12 @@
     background: color-mix(in srgb, var(--primary) 5%, transparent);
   }
 
+  .cashflow-row-empty {
+    opacity: 0.62;
+    cursor: default;
+    color: var(--color-text-muted, var(--muted-foreground));
+  }
+
   .cashflow-details {
     padding: 14px 18px 18px;
   }
@@ -1655,6 +1703,16 @@
   }
 
   @media (max-width: 640px) {
+    .table-scroll-hint {
+      position: sticky;
+      left: 0;
+      display: block;
+      width: max-content;
+      padding: 8px 14px 0;
+      color: var(--text-muted);
+      font-size: 0.6875rem;
+      font-weight: 700;
+    }
     .cashflow-filter-grid {
       grid-template-columns: 1fr;
     }
@@ -1671,7 +1729,18 @@
     }
 
     .cashflow-kpi-grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .cashflow-kpi-grid .stat-card {
+      min-height: 112px;
+      padding: 12px;
+    }
+
+    .cashflow-kpi-grid .stat-card > .mt-4.h-8,
+    .cashflow-kpi-grid .stat-card > div:last-child.h-8 {
+      display: none;
     }
 
     .cashflow-chart-frame {

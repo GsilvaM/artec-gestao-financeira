@@ -102,6 +102,25 @@ describe("buildProjectedCashFlow", () => {
     expect(insight.message).toContain("mínimo");
   });
 
+  it("states that the balance is already negative instead of announcing a future drop", () => {
+    const result = buildProjectedCashFlow({
+      initialBalance: -500,
+      dateFrom: new Date(2026, 6, 9),
+      dateTo: new Date(2026, 6, 11),
+      granularity: "day",
+      transactions: [
+        transaction({ id: "p1", type: "outflow", amount: 250, dueDate: "2026-07-10" }),
+      ],
+    });
+
+    const insight = buildCashFlowInsight(result);
+
+    expect(insight.tone).toBe("warning");
+    expect(insight.title).toContain("atual");
+    expect(insight.message).toContain("já está negativo");
+    expect(insight.message).not.toContain("ficará negativo");
+  });
+
   it("filters projected transactions by view", () => {
     const transactions = [
       transaction({ id: "r1", type: "inflow", amount: 300, dueDate: "2026-07-09" }),

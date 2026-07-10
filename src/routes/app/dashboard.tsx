@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 import {
   ArrowDownCircle,
   ArrowUpCircle,
@@ -48,7 +48,7 @@ import type {
   AccountPayableRow,
   FinancialEntryRow,
 } from "@/domain/financeiro/types";
-import { cn, formatMoney, toFiniteNumber } from "@/lib/utils";
+import { cn, formatMoney, getMoneyToneClass, toFiniteNumber } from "@/lib/utils";
 import { formatCompactMoney } from "./dashboard-utils.js";
 import { EmptyState, pageHeaderStyles } from "@/components/layout/page-shell";
 
@@ -59,7 +59,7 @@ type FinancialChartPoint = {
   mes: string;
   receitas: number;
   despesas: number;
-  saldo: number;
+  saldo: number | null;
 };
 
 type CashFlowApiRow = {
@@ -101,9 +101,9 @@ function getDashboardCashFlowRange(referenceDate = new Date(), months = 6) {
 }
 
 const dashboardPeriodOptions: Array<{ value: DashboardPeriod; label: string }> = [
-  { value: "3m", label: "Ultimos 3 meses" },
-  { value: "6m", label: "Ultimos 6 meses" },
-  { value: "12m", label: "Ultimos 12 meses" },
+  { value: "3m", label: "Últimos 3 meses" },
+  { value: "6m", label: "Últimos 6 meses" },
+  { value: "12m", label: "Últimos 12 meses" },
 ];
 
 const dashboardSeriesOptions: Array<{ value: ChartSeries | "all"; label: string }> = [
@@ -118,7 +118,7 @@ function getDashboardPeriodMonths(period: DashboardPeriod) {
 }
 
 function getDashboardPeriodLabel(period: DashboardPeriod) {
-  return dashboardPeriodOptions.find((option) => option.value === period)?.label ?? "Ultimos 6 meses";
+  return dashboardPeriodOptions.find((option) => option.value === period)?.label ?? "Últimos 6 meses";
 }
 
 function monthKey(date: Date) {
@@ -150,34 +150,18 @@ function buildFinancialChartData(
   }
   const monthlyData = Array.from({ length: months }, (_, index) => {
     const date = new Date(start.getFullYear(), start.getMonth() + index, 1);
-    const current = totalsByMonth.get(monthKey(date)) ?? {
-      receitas: 0,
-      despesas: 0,
-      saldo: 0,
-    };
+    const current = totalsByMonth.get(monthKey(date));
+    if (!current || (current.receitas === 0 && current.despesas === 0 && current.saldo === 0)) {
+      return { mes: monthLabel(date), receitas: 0, despesas: 0, saldo: null };
+    }
     return { mes: monthLabel(date), ...current };
   });
   let accumulatedBalance = 0;
   return monthlyData.map((item) => {
+    if (item.saldo === null) return item;
     accumulatedBalance += item.saldo;
     return { ...item, saldo: accumulatedBalance };
   });
-}
-
-function getSeriesDelta(values: number[]) {
-  const trimmed = [...values];
-  while (trimmed.length > 0 && trimmed.at(-1) === 0) {
-    trimmed.pop();
-  }
-  const current = trimmed.at(-1);
-  const previous = trimmed.at(-2);
-  if (
-    typeof current !== "number" ||
-    typeof previous !== "number" ||
-    previous === 0
-  )
-    return undefined;
-  return Number((((current - previous) / Math.abs(previous)) * 100).toFixed(1));
 }
 
 function formatDate(value: string) {
@@ -186,15 +170,22 @@ function formatDate(value: string) {
   return date.toLocaleDateString("pt-BR");
 }
 
-function DeltaBadge({ value }: { value?: number }) {
-  if (typeof value !== "number") {
+function getPayableDisplayStatus(entry: AccountPayableRow) {
+  if (entry.status !== "pending" && entry.status !== "overdue") return entry.status;
+  const today = new Date();
+  const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  return entry.dueDate.slice(0, 10) < todayKey ? "overdue" : entry.status;
+}
+
+function DeltaBadge({ value, qualifier }: { value?: number; qualifier?: string }) {
+  if (typeof value !== "number" || value === 0) {
     return (
       <span className="text-text-muted text-xs font-medium">
         Sem dados do mês anterior
       </span>
     );
   }
-  const positive = value >= 0;
+  const positive = value > 0;
   return (
     <span
       className={cn(
@@ -207,8 +198,8 @@ function DeltaBadge({ value }: { value?: number }) {
       ) : (
         <ArrowDownCircle className="size-3.5" />
       )}
-      {positive ? "+" : ""}
-      {value.toLocaleString("pt-BR", {
+      {qualifier ? `${qualifier} ` : positive ? "+" : ""}
+      {Math.abs(value).toLocaleString("pt-BR", {
         minimumFractionDigits: 1,
         maximumFractionDigits: 1,
       })}
@@ -224,6 +215,8 @@ function KpiCard({
   tone,
   delta,
   sparklineData,
+  deltaQualifier,
+  valueClassName,
 }: {
   title: string;
   value: string | number;
@@ -231,6 +224,8 @@ function KpiCard({
   tone: "green" | "blue" | "orange";
   delta?: number;
   sparklineData: number[];
+  deltaQualifier?: string;
+  valueClassName?: string;
 }) {
   const iconColors: Record<string, string> = {
     green: "bg-success-soft text-success",
@@ -247,17 +242,15 @@ function KpiCard({
         </div>
         <div className="min-w-0">
           <p className="metric-title">{title}</p>
-          <strong className="metric-value">{value}</strong>
+          <strong className={cn("metric-value", valueClassName)}>{value}</strong>
         </div>
       </div>
       <div>
-        {delta !== undefined && (
-          <div className="metric-trend">
-            <DeltaBadge value={delta} />
-            <small>vs. mês anterior</small>
-          </div>
-        )}
-        <div className={cn(delta !== undefined ? "mt-2 h-10" : "h-10")}>
+        <div className="metric-trend">
+          <DeltaBadge value={delta} qualifier={deltaQualifier} />
+          {delta !== undefined ? <small>vs. mês anterior</small> : null}
+        </div>
+        <div className="metric-sparkline mt-2 h-10">
           <SparklineChart
             data={sparklineData.length ? sparklineData : [0, 0, 0, 0, 0, 0]}
             color={sparklineColor}
@@ -308,7 +301,7 @@ function PendingKpiCard({
 }
 
 type ChartPayload = {
-  payload?: { receitas: number; despesas: number; saldo: number; mes: string };
+  payload?: { receitas: number; despesas: number; saldo: number | null; mes: string };
 };
 
 function FinancialTooltip({
@@ -334,7 +327,7 @@ function FinancialTooltip({
         </p>
         <p className="flex items-center justify-between gap-8">
           <span className="text-text-secondary">Saldo</span>
-          <strong className="text-primary">{formatMoney(item.saldo)}</strong>
+          <strong className="text-primary">{formatMoney(item.saldo ?? 0)}</strong>
         </p>
       </div>
     </div>
@@ -570,7 +563,7 @@ function RecentMovementsTable({
                 <article key={entry.id} className="dashboard-mobile-record">
                   <div className="dashboard-mobile-record-top">
                     <div className="min-w-0">
-                      <h3>{entry.description}</h3>
+                      <h3 className="truncate" title={entry.description}>{entry.description}</h3>
                       <p>{formatDate(entry.date)}</p>
                     </div>
                     <strong
@@ -600,15 +593,6 @@ function RecentMovementsTable({
           description="Os lançamentos recentes aparecem aqui assim que forem cadastrados."
         />
       )}
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        className="text-primary mt-4 font-bold"
-        onClick={onViewAll}
-      >
-        Ver todas as movimentações <ChevronRight className="size-4" />
-      </Button>
     </section>
   );
 }
@@ -619,7 +603,19 @@ function AccountsPayableTable({
   entries: AccountPayableRow[];
   onViewAll: () => void;
 }) {
-  const rows = entries.slice(0, 4);
+  const sorted = [...entries]
+    .sort((a, b) => {
+      const priority = (status: string) => status === "overdue" ? 0 : status === "pending" ? 1 : status === "paid" ? 2 : 3;
+      return priority(getPayableDisplayStatus(a)) - priority(getPayableDisplayStatus(b)) || a.dueDate.localeCompare(b.dueDate);
+    });
+  const pendingRows = sorted.filter((e) => {
+    const s = getPayableDisplayStatus(e);
+    return s === "overdue" || s === "pending";
+  }).slice(0, 4);
+  const paidRows = pendingRows.length < 4
+    ? sorted.filter((e) => getPayableDisplayStatus(e) === "paid").slice(0, 4 - pendingRows.length)
+    : [];
+  const rows = [...pendingRows, ...paidRows];
   const badgeMap: Record<
     string,
     "warning" | "success" | "destructive" | "default"
@@ -628,12 +624,14 @@ function AccountsPayableTable({
     overdue: "destructive",
     cancelled: "default",
     pending: "warning",
+    reversed: "default",
   };
   const labelMap: Record<string, string> = {
     paid: "Pago",
     overdue: "Vencido",
     cancelled: "Cancelado",
     pending: "Pendente",
+    reversed: "Estornado",
   };
   return (
     <section className="table-card">
@@ -661,48 +659,70 @@ function AccountsPayableTable({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rows.map((entry) => (
-                  <TableRow key={entry.id}>
-                    <TableCell
-                      className="max-w-[320px] truncate font-medium"
-                      title={entry.description}
-                    >
-                      {entry.description}
-                    </TableCell>
-                    <TableCell className="text-text-secondary">
-                      {formatDate(entry.dueDate)}
-                    </TableCell>
-                    <TableCell className="font-bold">
-                      {formatMoney(entry.amount)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={badgeMap[entry.status] ?? "default"}>
-                        {labelMap[entry.status] ?? entry.status}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {rows.map((entry, idx) => {
+                  const isPaidStart = idx === pendingRows.length && paidRows.length > 0;
+                  return (
+                    <React.Fragment key={entry.id}>
+                      {isPaidStart && (
+                        <TableRow>
+                          <TableCell colSpan={4} className="py-1 text-center text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                            Recém pagas
+                          </TableCell>
+                        </TableRow>
+                      )}
+                      <TableRow className={paidRows.length > 0 && idx >= pendingRows.length ? "opacity-60" : ""}>
+                        <TableCell
+                          className="max-w-[320px] truncate font-medium"
+                          title={entry.description}
+                        >
+                          {entry.description}
+                        </TableCell>
+                        <TableCell className="text-text-secondary">
+                          {formatDate(entry.dueDate)}
+                        </TableCell>
+                        <TableCell className="font-bold">
+                          {formatMoney(entry.amount)}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={badgeMap[getPayableDisplayStatus(entry)] ?? "default"}>
+                            {labelMap[getPayableDisplayStatus(entry)] ?? getPayableDisplayStatus(entry)}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    </React.Fragment>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
           <div className="dashboard-mobile-list">
-            {rows.map((entry) => (
-              <article key={entry.id} className="dashboard-mobile-record">
-                <div className="dashboard-mobile-record-top">
-                  <div className="min-w-0">
-                    <h3>{entry.description}</h3>
-                    <p>Vence em {formatDate(entry.dueDate)}</p>
-                  </div>
-                  <strong>{formatMoney(entry.amount)}</strong>
-                </div>
-                <div className="dashboard-mobile-record-bottom">
-                  <span>Status</span>
-                  <Badge variant={badgeMap[entry.status] ?? "default"}>
-                    {labelMap[entry.status] ?? entry.status}
-                  </Badge>
-                </div>
-              </article>
-            ))}
+            {rows.map((entry, idx) => {
+              const isPaidStart = idx === pendingRows.length && paidRows.length > 0;
+              return (
+                <React.Fragment key={entry.id}>
+                  {isPaidStart && (
+                    <p className="px-1 pt-2 pb-0.5 text-center text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                      Recém pagas
+                    </p>
+                  )}
+                  <article className={cn("dashboard-mobile-record", paidRows.length > 0 && idx >= pendingRows.length ? "opacity-60" : "")}>
+                    <div className="dashboard-mobile-record-top">
+                      <div className="min-w-0">
+                        <h3 className="truncate" title={entry.description}>{entry.description}</h3>
+                        <p>Vence em {formatDate(entry.dueDate)}</p>
+                      </div>
+                      <strong>{formatMoney(entry.amount)}</strong>
+                    </div>
+                    <div className="dashboard-mobile-record-bottom">
+                      <span>Status</span>
+                      <Badge variant={badgeMap[getPayableDisplayStatus(entry)] ?? "default"}>
+                        {labelMap[getPayableDisplayStatus(entry)] ?? getPayableDisplayStatus(entry)}
+                      </Badge>
+                    </div>
+                  </article>
+                </React.Fragment>
+              );
+            })}
           </div>
         </>
       ) : (
@@ -711,15 +731,6 @@ function AccountsPayableTable({
           description="As próximas obrigações aparecem aqui para acompanhamento rápido."
         />
       )}
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        className="text-primary mt-4 font-bold"
-        onClick={onViewAll}
-      >
-        Ver todas as contas a pagar <ChevronRight className="size-4" />
-      </Button>
     </section>
   );
 }
@@ -773,12 +784,12 @@ export function Component() {
     [cashFlowMonths, cashFlowRange.start, cashFlowRows]
   );
   const hasChartData = chartData.some(
-    (item) => item.receitas !== 0 || item.despesas !== 0 || item.saldo !== 0
+    (item) => item.receitas !== 0 || item.despesas !== 0 || item.saldo !== null
   );
   const kpiSeries = useMemo(
     () => ({
       faturamento: chartData.map((item) => item.receitas),
-      lucro: chartData.map((item) => item.saldo),
+      lucro: chartData.map((item) => item.saldo).filter((value): value is number => value !== null),
       contasPagas: chartData.map((_item, index) =>
         index === chartData.length - 1 ? (contasPagas ?? 0) : 0
       ),
@@ -845,7 +856,7 @@ export function Component() {
         {filtersOpen ? (
           <section id="dashboard-filters" className="dashboard-filter-panel">
             <label>
-              <span>Periodo do grafico</span>
+              <span>Período do gráfico</span>
               <Select
                 value={dashboardPeriod}
                 onChange={(event) =>
@@ -856,14 +867,14 @@ export function Component() {
               />
             </label>
             <label>
-              <span>Serie em destaque</span>
+              <span>Série em destaque</span>
               <Select
                 value={focusedSeries}
                 onChange={(event) =>
                   setFocusedSeries(event.target.value as ChartSeries | "all")
                 }
                 options={dashboardSeriesOptions}
-                aria-label="Selecionar serie do grafico"
+                aria-label="Selecionar série do gráfico"
               />
             </label>
           </section>
@@ -911,7 +922,6 @@ export function Component() {
                     value={formatMoney(totalReceitas)}
                     icon={Banknote}
                     tone="green"
-                    delta={getSeriesDelta(kpiSeries.faturamento)}
                     sparklineData={kpiSeries.faturamento}
                   />
                   <KpiCard
@@ -919,8 +929,8 @@ export function Component() {
                     value={formatMoney(saldo)}
                     icon={TrendingUp}
                     tone="blue"
-                    delta={getSeriesDelta(kpiSeries.lucro)}
                     sparklineData={kpiSeries.lucro}
+                    valueClassName={getMoneyToneClass(saldo)}
                   />
                   <KpiCard
                     title="Contas pagas"
@@ -1007,6 +1017,7 @@ export function Component() {
                             dataKey="saldo"
                             fill="url(#saldoAreaGradient)"
                             stroke="none"
+                            connectNulls={false}
                           />
                         ) : null}
                         {!hiddenSeries.receitas ? (
@@ -1036,6 +1047,7 @@ export function Component() {
                             name="Saldo"
                             stroke="var(--chart-balance)"
                             strokeWidth={3.2}
+                            connectNulls={false}
                             dot={{
                               r: 4,
                               strokeWidth: 2,
@@ -1168,8 +1180,18 @@ const dashboardStyles = `
 }
 
 @media (max-width: 639px) {
-  .dashboard-metrics-grid { grid-template-columns: 1fr; }
+  .dashboard-metrics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .dashboard-filter-panel { grid-template-columns: 1fr; }
+
+  .metric-card {
+    min-height: 124px;
+    padding: 14px;
+    gap: 10px;
+  }
+
+  .metric-icon { width: 36px; height: 36px; border-radius: 12px; }
+  .metric-value { font-size: 1rem; white-space: normal; overflow-wrap: anywhere; }
+  .metric-sparkline { display: none; }
 }
 
 @media (max-width: 480px) {

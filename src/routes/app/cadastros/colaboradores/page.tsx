@@ -501,7 +501,7 @@ function CollaboratorMobileList({
               <p className="text-text-secondary mt-1 truncate text-xs">
                 {collaborator.phone ||
                   collaborator.email ||
-                  "Contato nao informado"}
+                  "Contato não informado"}
               </p>
             </div>
             <StatusBadge status={collaborator.active ? "ativo" : "disabled"} />

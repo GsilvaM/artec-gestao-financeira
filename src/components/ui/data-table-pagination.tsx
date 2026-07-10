@@ -14,7 +14,7 @@ interface DataTablePaginationProps {
 
 const pageSizeOptions = [10, 20, 50, 100, 200].map((value) => ({
   value: String(value),
-  label: `${value} por pagina`,
+  label: `${value} por página`,
 }));
 
 export function DataTablePagination({
@@ -58,7 +58,7 @@ export function DataTablePagination({
           Mostrando {start}-{end} de {total} {label}
         </p>
         <p className="text-xs font-semibold text-muted-foreground">
-          Pagina {safeCurrentPage} de {safeTotalPages}
+          Página {safeCurrentPage} de {safeTotalPages}
         </p>
       </div>
 
@@ -69,7 +69,7 @@ export function DataTablePagination({
               Exibir
             </span>
             <Select
-              aria-label={`Quantidade de ${label} por pagina`}
+              aria-label={`Quantidade de ${label} por página`}
               className="h-9 min-h-9 w-[156px] rounded-xl px-3 pr-9 text-xs"
               value={String(pageSize)}
               onChange={(event) => onPageSizeChange(Number(event.target.value))}
@@ -114,7 +114,7 @@ export function DataTablePagination({
             onClick={() => onPageChange(safeCurrentPage + 1)}
             disabled={!hasPages || safeCurrentPage >= safeTotalPages || isLoading}
           >
-            Proxima
+            Próxima
           </Button>
         </div>
       </div>

@@ -138,8 +138,15 @@ function getDueHelper(entry: AccountPayableRow, todayKey: string) {
   return "A vencer";
 }
 
+function getDisplayStatus(entry: AccountPayableRow, todayKey: string) {
+  if ((entry.status === "pending" || entry.status === "overdue") && entry.dueDate.slice(0, 10) < todayKey) {
+    return "overdue";
+  }
+  return entry.status;
+}
+
 function getBeneficiaryLabel(entry: AccountPayableRow) {
-  return entry.beneficiaryName ?? entry.supplier ?? "Favorecido nao informado";
+  return entry.beneficiaryName ?? entry.supplier ?? "Favorecido não informado";
 }
 
 function getBeneficiaryTypeLabel(type: AccountPayableBeneficiaryType) {
@@ -594,7 +601,7 @@ export function Component() {
     0
   );
   const overdueAmount = payableEntries
-    .filter((e) => e.status === "overdue")
+    .filter((e) => getDisplayStatus(e, todayKey) === "overdue")
     .reduce((sum, e) => sum + toFiniteNumber(e.amount), 0);
   const dueTodayCount = payableEntries.filter(
     (e) =>
@@ -666,7 +673,7 @@ export function Component() {
         setOpen(true);
       }}
     >
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mobile-summary-grid grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           title="Em aberto"
           value={formatMoney(openAmount)}
@@ -694,7 +701,7 @@ export function Component() {
         />
       </div>
       <FilterBar
-        searchPlaceholder="Buscar conta a pagar..."
+        searchPlaceholder="Buscar conta..."
         search={search}
         onSearchChange={setSearch}
         activeFilters={activeFilters}
@@ -787,11 +794,19 @@ export function Component() {
                     </TableCell>
                     <TableCell className="font-medium">
                       {entry.description}
+                      {entry.costCenterName ? (
+                        <span className="text-text-muted block text-xs font-normal">{entry.costCenterName}</span>
+                      ) : null}
+                      {entry.notes ? (
+                        <span className="text-muted-foreground block truncate text-xs font-normal" title={entry.notes}>
+                          {entry.notes.length > 60 ? `${entry.notes.slice(0, 60)}...` : entry.notes}
+                        </span>
+                      ) : null}
                     </TableCell>
                     <TableCell>{entry.categoryName}</TableCell>
                     <TableCell>{formatMoney(entry.amount)}</TableCell>
                     <TableCell>
-                      <StatusBadge status={entry.status} />
+                      <StatusBadge status={getDisplayStatus(entry, todayKey)} />
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-end gap-2">
@@ -1414,13 +1429,18 @@ function AccountPayableMobileList({
                 {getDueHelper(entry, todayKey)}
                 {entry.costCenterName ? ` - ${entry.costCenterName}` : ""}
               </p>
+              {entry.notes ? (
+                <p className="text-muted-foreground mt-1 truncate text-xs" title={entry.notes}>
+                  {entry.notes.length > 60 ? `${entry.notes.slice(0, 60)}...` : entry.notes}
+                </p>
+              ) : null}
             </div>
             <strong className="money money-expense">
               {formatMoney(entry.amount)}
             </strong>
           </div>
           <div className="mobile-record-bottom">
-            <StatusBadge status={entry.status} />
+            <StatusBadge status={getDisplayStatus(entry, todayKey)} />
             <div className="flex items-center gap-2">
               {canPay(entry) ? (
                 <Button size="sm" onClick={() => onPay(entry)}>

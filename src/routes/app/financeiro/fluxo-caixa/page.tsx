@@ -184,10 +184,10 @@ export function Component() {
 
       const projectionSheet = workbook.addWorksheet("Projeção");
       projectionSheet.columns = [
-        { header: "Periodo", key: "period", width: 22 },
+        { header: "Período", key: "period", width: 22 },
         { header: "Entradas", key: "inflows", width: 16 },
         { header: "Saidas", key: "outflows", width: 16 },
-        { header: "Movimento liquido", key: "netMovement", width: 20 },
+        { header: "Movimento líquido", key: "netMovement", width: 20 },
         { header: "Saldo projetado", key: "projectedBalance", width: 20 },
       ];
       projectionSheet.addRow({ period: "Saldo inicial", projectedBalance: result.summary.currentBalance });
@@ -370,7 +370,7 @@ export function Component() {
                   {chartMode === "full" && appliedFilters.view !== "outflows" ? <Bar dataKey="inflows" name="Entradas" fill="var(--chart-revenue)" radius={[6, 6, 0, 0]} maxBarSize={28} /> : null}
                   {chartMode === "full" && appliedFilters.view !== "inflows" ? <Bar dataKey="outflows" name="Saídas" fill="var(--chart-expense)" radius={[6, 6, 0, 0]} maxBarSize={28} /> : null}
                   <Area type="monotone" dataKey="projectedBalance" name="Saldo projetado" fill="var(--chart-balance)" fillOpacity={0.12} stroke="var(--chart-balance)" strokeWidth={2} />
-                  <Line type="monotone" dataKey="projectedBalance" stroke="var(--chart-balance)" strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 5 }} legendType="none" />
+                  <Line type="monotone" dataKey="projectedBalance" name="Linha do saldo" stroke="var(--chart-balance)" strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 5 }} legendType="none" />
                   {todayPoint ? <ReferenceDot x={todayPoint.label} y={todayPoint.projectedBalance} r={6} fill="var(--warning)" stroke="var(--surface)" strokeWidth={2} /> : null}
                 </ComposedChart>
               </ResponsiveContainer>
@@ -414,20 +414,21 @@ function ProjectionTable({ periods, initialBalance, isLoading, isError, expanded
             Projeção Detalhada
             <Info className="size-4 text-muted-foreground" />
           </CardTitle>
-          <div className="flex gap-2">
-            <Button type="button" size="sm" variant="outline" onClick={onExpandAll}><ChevronDown className="size-4" />Expandir todos</Button>
-            <Button type="button" size="sm" variant="outline" onClick={onCollapseAll}><ChevronRight className="size-4" />Recolher todos</Button>
+          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
+            <Button type="button" size="sm" variant="outline" className="min-w-0 px-2 text-xs sm:px-4 sm:text-sm" onClick={onExpandAll}><ChevronDown className="size-4" />Expandir todos</Button>
+            <Button type="button" size="sm" variant="outline" className="min-w-0 px-2 text-xs sm:px-4 sm:text-sm" onClick={onCollapseAll}><ChevronRight className="size-4" />Recolher todos</Button>
           </div>
         </div>
       </CardHeader>
-      <div className="table-scroll">
+      <div className="table-scroll" role="region" aria-label="Projeção detalhada, deslize horizontalmente para ver todas as colunas" tabIndex={0}>
+        <p className="table-scroll-hint">Deslize para ver todas as colunas</p>
         <table className="cashflow-table">
           <thead>
             <tr>
-              <th>Periodo</th>
+              <th>Período</th>
               <th className="text-right">Entradas</th>
               <th className="text-right">Saídas</th>
-              <th className="text-right">Movimento liquido</th>
+              <th className="text-right">Movimento líquido</th>
               <th className="text-right">Saldo projetado</th>
             </tr>
           </thead>
@@ -448,7 +449,7 @@ function ProjectionTable({ periods, initialBalance, isLoading, isError, expanded
               const expanded = expandedRows.has(period.id);
               return (
                 <>
-                  <tr key={period.id} className={cn(hasTransactions && "cursor-pointer hover:bg-surface-2")} onClick={() => hasTransactions && onToggleRow(period.id)}>
+                  <tr key={period.id} className={cn(hasTransactions ? "cursor-pointer hover:bg-surface-2" : "cashflow-row-empty")} onClick={() => hasTransactions && onToggleRow(period.id)}>
                     <td>
                       <span className="inline-flex items-center gap-2">
                         {hasTransactions ? expanded ? <ChevronDown className="size-4 text-primary" /> : <ChevronRight className="size-4 text-muted-foreground" /> : <span className="size-4" />}
@@ -511,7 +512,7 @@ function TransactionDetails({ transactions }: { transactions: ProjectedCashFlowT
                 <td>{transaction.party ?? "-"}</td>
                 <td className={cn("text-right font-black tabular-nums", transaction.type === "inflow" ? "text-success" : "text-destructive")}>{formatMoney(transaction.amount)}</td>
                 <td>{formatShortDate(transaction.dueDate)}</td>
-                <td><Badge variant="secondary">{transaction.status}</Badge></td>
+                <td><Badge variant="secondary">{cashFlowStatusLabel(transaction.status)}</Badge></td>
               </tr>
             ))}
           </tbody>
@@ -528,6 +529,19 @@ function FilterField({ icon: Icon, label, children }: { icon: typeof CalendarDay
       {children}
     </label>
   );
+}
+
+function cashFlowStatusLabel(status: string) {
+  const labels: Record<string, string> = {
+    pending: "Pendente",
+    overdue: "Vencido",
+    confirmed: "Confirmado",
+    paid: "Pago",
+    received: "Recebido",
+    reversed: "Estornado",
+    cancelled: "Cancelado",
+  };
+  return labels[status] ?? status;
 }
 
 function CashFlowTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ name?: string; value?: number; color?: string }>; label?: string }) {

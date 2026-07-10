@@ -508,7 +508,7 @@ export function Component() {
         setOpen(true);
       }}
     >
-      <div className="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mobile-summary-grid grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <SummaryCard
           label="Lançamentos"
           value={String(summary?.count ?? pagedEntries.length)}
@@ -535,6 +535,7 @@ export function Component() {
           value={formatMoney(saldo)}
           icon={Banknote}
           iconColor={saldo < 0 ? "red" : "blue"}
+          valueTone={saldo < 0 ? "negative" : saldo > 0 ? "positive" : "neutral"}
           footer="Receitas menos despesas"
         />
       </div>

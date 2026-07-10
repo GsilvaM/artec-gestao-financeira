@@ -611,6 +611,9 @@ function MobileBottomNav({ pathname, onOpenMenu }: { pathname: string; onOpenMen
             onPointerDown={() => preloadRoute(item.href)}
             className={cn("mobile-bottom-link", active && "mobile-bottom-link-active")}
             aria-current={active ? "page" : undefined}
+            onPointerUp={(event) => {
+              if (event.pointerType !== "mouse") event.currentTarget.blur();
+            }}
           >
             <Icon size={18} />
             <span>{item.title}</span>
@@ -622,6 +625,9 @@ function MobileBottomNav({ pathname, onOpenMenu }: { pathname: string; onOpenMen
         className="mobile-bottom-link"
         aria-label="Abrir menu completo"
         onClick={onOpenMenu}
+        onPointerUp={(event) => {
+          if (event.pointerType !== "mouse") event.currentTarget.blur();
+        }}
       >
         <Menu size={18} />
         <span>Mais</span>
@@ -1134,7 +1140,25 @@ const sidebarStyles = `
     font-weight: 800;
     line-height: 1;
     text-decoration: none;
-    transition: background-color 150ms ease, color 150ms ease, transform 150ms ease;
+    transition: background-color 150ms ease, color 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  .mobile-bottom-link:focus:not(:focus-visible) {
+    outline: none;
+    box-shadow: none;
+  }
+
+  .mobile-bottom-link:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  @media (hover: none) and (pointer: coarse) {
+    .mobile-bottom-link:focus-visible {
+      outline: none;
+    }
   }
 
   .mobile-bottom-link svg {

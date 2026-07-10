@@ -60,6 +60,7 @@ interface MetricCardProps {
   tone?: "blue" | "green" | "red" | "amber" | "slate";
   helper?: string;
   className?: string;
+  valueClassName?: string;
 }
 
 const toneStyles: Record<string, string> = {
@@ -77,6 +78,7 @@ export function MetricCard({
   tone = "blue",
   helper,
   className,
+  valueClassName,
 }: MetricCardProps) {
   return (
     <div className={cn("stat-card", className)}>
@@ -86,7 +88,7 @@ export function MetricCard({
           <Icon size={18} />
         </span>
       </div>
-      <strong className="stat-value">{value}</strong>
+      <strong className={cn("stat-value", valueClassName)}>{value}</strong>
       {helper && <span className="stat-description">{helper}</span>}
     </div>
   );
@@ -291,7 +293,7 @@ export function FilterBar({
     <>
       <div className="filter-card">
         <div className="filter-row">
-          <div className="relative min-w-0 flex-1">
+          <div className="relative min-w-[180px] flex-1">
             <Search className="text-text-muted absolute top-1/2 left-3 size-4 -translate-y-1/2" />
             <input
               className="search-input"
@@ -1000,20 +1002,14 @@ const pageShellStyles = `
   }
 
   .page-mobile-action {
-    position: fixed;
-    right: 16px;
-    bottom: calc(88px + env(safe-area-inset-bottom));
-    left: 16px;
-    z-index: 44;
+    position: static;
     display: block;
-    pointer-events: none;
   }
 
   .page-mobile-action > button {
     width: 100%;
     min-height: 48px;
     box-shadow: var(--shadow-elevated);
-    pointer-events: auto;
   }
 }
 `;

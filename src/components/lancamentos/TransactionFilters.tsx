@@ -18,7 +18,7 @@ const typeLabels: Record<string, string> = {
 const periodLabels: Record<string, string> = {
   today: "Hoje",
   week: "Semana",
-  month: "Mes",
+  month: "Mês",
   year: "Ano",
   custom: "Personalizado",
 };
@@ -27,16 +27,16 @@ const originLabels: Record<string, string> = {
   manual: "Manual",
   accounts_payable: "Contas a pagar",
   accounts_receivable: "Contas a receber",
-  import: "Importacao",
+  import: "Importação",
   system: "Sistema",
 };
 
 const paymentMethodOptions = [
   { value: "pix", label: "PIX" },
   { value: "dinheiro", label: "Dinheiro" },
-  { value: "cartao", label: "Cartao" },
+  { value: "cartao", label: "Cartão" },
   { value: "boleto", label: "Boleto" },
-  { value: "transferencia", label: "Transferencia" },
+  { value: "transferencia", label: "Transferência" },
   { value: "outros", label: "Outros" },
 ];
 
@@ -106,7 +106,7 @@ export function TransactionFilters({
     period
       ? {
           key: "period",
-          label: `Periodo: ${periodLabels[period] ?? period}`,
+          label: `Período: ${periodLabels[period] ?? period}`,
           onRemove: () => onPeriodChange(""),
         }
       : null,
@@ -120,7 +120,7 @@ export function TransactionFilters({
     period === "custom" && dateTo
       ? {
           key: "to",
-          label: `Ate ${formatDateFilter(dateTo)}`,
+          label: `Até ${formatDateFilter(dateTo)}`,
           onRemove: () => onDateToChange(""),
         }
       : null,
@@ -179,7 +179,7 @@ export function TransactionFilters({
     },
     {
       key: "period",
-      label: "Periodo",
+      label: "Período",
       control: (
         <Select
           aria-label="Filtrar por periodo"
@@ -188,11 +188,11 @@ export function TransactionFilters({
           options={[
             { value: "today", label: "Hoje" },
             { value: "week", label: "Semana" },
-            { value: "month", label: "Mes" },
+            { value: "month", label: "Mês" },
             { value: "year", label: "Ano" },
             { value: "custom", label: "Personalizado" },
           ]}
-          placeholder="Periodo"
+          placeholder="Período"
         />
       ),
     },
@@ -252,7 +252,7 @@ export function TransactionFilters({
             { value: "manual", label: "Manual" },
             { value: "accounts_payable", label: "Contas a pagar" },
             { value: "accounts_receivable", label: "Contas a receber" },
-            { value: "import", label: "Importacao" },
+            { value: "import", label: "Importação" },
             { value: "system", label: "Sistema" },
           ]}
           placeholder="Origem"
@@ -276,7 +276,7 @@ export function TransactionFilters({
 
   return (
     <FilterBar
-      searchPlaceholder="Buscar descricao, fornecedor, cliente ou observacoes..."
+      searchPlaceholder="Buscar lançamento..."
       search={search}
       onSearchChange={onSearchChange}
       activeFilters={activeFilters}

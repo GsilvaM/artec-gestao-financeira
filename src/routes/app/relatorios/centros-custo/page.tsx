@@ -15,7 +15,7 @@ export function Component() {
         filters={[
           {
             key: "month",
-            label: "Mes",
+            label: "Mês",
             control: <MonthSelect />,
           },
         ]}

@@ -35,7 +35,7 @@ import {
 } from "@/domain/financeiro/dre-visual";
 import { useFinancialEntries } from "@/domain/financeiro/hooks/use-financial-entries";
 import { clientApi } from "@/server/financeiro/client-api";
-import { cn, formatMoney } from "@/lib/utils";
+import { cn, formatMoney, getMoneyToneClass } from "@/lib/utils";
 import type { FinancialEntryFilters } from "@/domain/financeiro/types";
 import { toast } from "sonner";
 
@@ -115,7 +115,7 @@ export function Component() {
       <Card className="dre-filter-panel p-4 sm:p-5">
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
           <FilterBar
-            searchPlaceholder="Buscar categoria ou descrição..."
+            searchPlaceholder="Buscar na DRE..."
             search={search}
             onSearchChange={setSearch}
             activeFilters={activeFilters}
@@ -183,7 +183,7 @@ export function Component() {
       <div className="dre-kpi-grid">
         <MetricCard title="Receita total" value={formatMoney(dre.totalReceitas)} icon={ArrowUpCircle} tone="green" helper="Entradas reconhecidas no período" />
         <MetricCard title="Despesa total" value={formatMoney(dre.totalDespesas)} icon={ArrowDownCircle} tone="red" helper="Saídas reconhecidas no período" />
-        <MetricCard title="Resultado líquido" value={formatMoney(dre.resultado)} icon={Scale} tone={dre.resultado < 0 ? "red" : "blue"} helper={dre.resultado < 0 ? "Resultado negativo no período" : "Resultado positivo no período"} />
+        <MetricCard title="Resultado líquido" value={formatMoney(dre.resultado)} icon={Scale} tone={dre.resultado < 0 ? "red" : "blue"} valueClassName={getMoneyToneClass(dre.resultado)} helper={dre.resultado < 0 ? "Resultado negativo no período" : "Resultado positivo no período"} />
         <MetricCard title="Margem líquida" value={formatOptionalPercent(dre.margemLiquida)} icon={Percent} tone={dre.resultado < 0 ? "red" : "green"} helper="Resultado líquido sobre receita" />
         <MetricCard title="Cobertura despesas" value={formatOptionalPercent(dre.coberturaDespesas)} icon={Activity} tone={dre.coberturaDespesas !== null && dre.coberturaDespesas < 100 ? "amber" : "green"} helper={dre.coberturaDespesas === null ? "Sem despesas no período" : "Receita / despesas"} />
       </div>
@@ -282,7 +282,7 @@ function DrePdfExportDialog({
       toast.success("PDF do DRE gerado com sucesso.");
       onOpenChange(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Nao foi possivel gerar o PDF.");
+      toast.error(error instanceof Error ? error.message : "Não foi possível gerar o PDF.");
     } finally {
       setIsGenerating(false);
     }
@@ -493,7 +493,7 @@ function DreEvolutionChart({
           <div className={cn("dre-chart-frame h-[300px] lg:h-[340px]", months === 12 && "dre-chart-frame-wide")}>
             <DreChartLegend />
             <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={data} margin={{ top: 16, right: 12, bottom: 8, left: 0 }}>
+              <ComposedChart data={data} margin={{ top: 16, right: 32, bottom: 8, left: 0 }}>
                 <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="mes" tickFormatter={formatMonthLabel} tickLine={false} axisLine={false} fontSize={12} />
                 <YAxis tickFormatter={(value: number) => compactMoney(value)} tickLine={false} axisLine={false} fontSize={12} width={64} />
@@ -598,7 +598,11 @@ function ExpenseComposition({ composition }: { composition: FatiaComposicao[] })
                   <span className="flex min-w-0 items-center gap-2 text-sm font-semibold text-foreground">
                     <span className="size-2.5 shrink-0 rounded-full" style={{ background: item.color }} />
                     <span className="break-words">{item.categoria}</span>
-                    {item.alerta && <AlertTriangle className="size-4 shrink-0 text-destructive" aria-label="Categoria em alerta" />}
+                    {item.alerta ? (
+                      <span title="Pressão relevante sobre a margem" aria-label="Categoria com pressão relevante sobre a margem">
+                        <AlertTriangle className="size-4 shrink-0 text-destructive" aria-hidden="true" />
+                      </span>
+                    ) : null}
                   </span>
                   <strong className="shrink-0 text-sm tabular-nums text-foreground">{formatMoney(item.valor)}</strong>
                 </div>

@@ -4,7 +4,9 @@ const viewports = [
   { name: "desktop", width: 1440, height: 900 },
   { name: "notebook", width: 1280, height: 800 },
   { name: "tablet", width: 768, height: 1024 },
-  { name: "mobile", width: 390, height: 844 },
+  { name: "mobile compacto", width: 360, height: 640 },
+  { name: "mobile médio", width: 390, height: 800 },
+  { name: "mobile amplo", width: 412, height: 915 },
 ];
 
 async function expectNoGlobalHorizontalOverflow(page: Page) {
@@ -15,7 +17,7 @@ async function expectNoGlobalHorizontalOverflow(page: Page) {
       let parent = element.parentElement;
       while (parent && parent !== document.body) {
         const overflowX = getComputedStyle(parent).overflowX;
-        if (overflowX === "auto" || overflowX === "scroll") return true;
+        if (overflowX === "auto" || overflowX === "scroll" || overflowX === "hidden" || overflowX === "clip") return true;
         parent = parent.parentElement;
       }
       return false;
@@ -39,6 +41,25 @@ async function expectNoGlobalHorizontalOverflow(page: Page) {
   expect(overflow.documentScrollWidth).toBeLessThanOrEqual(overflow.clientWidth + 1);
   expect(overflow.bodyScrollWidth).toBeLessThanOrEqual(overflow.clientWidth + 1);
   expect(overflow.maxElementRight).toBeLessThanOrEqual(overflow.clientWidth + 1);
+}
+
+async function expectNoFixedActionOverlap(page: Page) {
+  const overlaps = await page.evaluate(() => {
+    const action = document.querySelector<HTMLElement>(".page-mobile-action");
+    if (!action || getComputedStyle(action).display === "none") return [];
+    const actionRect = action.getBoundingClientRect();
+    return Array.from(document.querySelectorAll<HTMLElement>("button, a, [role='button']"))
+      .filter((element) => !action.contains(element) && !element.closest(".mobile-bottom-nav") && !element.closest("dialog"))
+      .filter((element) => {
+        const style = getComputedStyle(element);
+        const rect = element.getBoundingClientRect();
+        if (style.display === "none" || style.visibility === "hidden" || rect.width === 0 || rect.height === 0) return false;
+        return rect.left < actionRect.right && rect.right > actionRect.left && rect.top < actionRect.bottom && rect.bottom > actionRect.top;
+      })
+      .map((element) => element.getAttribute("aria-label") || element.textContent?.trim().slice(0, 80) || element.tagName);
+  });
+
+  expect(overlaps).toEqual([]);
 }
 
 for (const viewport of viewports) {
@@ -91,5 +112,39 @@ for (const viewport of viewports) {
     expect(box!.width).toBeLessThanOrEqual(viewport.width);
     expect(box!.height).toBeLessThanOrEqual(viewport.height);
     await expectNoGlobalHorizontalOverflow(page);
+  });
+}
+
+for (const viewport of viewports.filter(({ width }) => width < 768)) {
+  test(`telas principais sem overflow ou sobreposição de CTA em ${viewport.name}`, async ({ page }, testInfo) => {
+    test.setTimeout(120_000);
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    const routes = [
+      ["inicio", "/app"],
+      ["lancamentos", "/app/financeiro/lancamentos"],
+      ["contas-pagar", "/app/financeiro/contas-pagar"],
+      ["contas-receber", "/app/financeiro/contas-receber"],
+      ["fluxo-caixa", "/app/financeiro/fluxo-caixa"],
+      ["dre", "/app/financeiro/dre"],
+    ] as const;
+
+    for (const [name, route] of routes) {
+      await page.goto(route);
+      await expect(page.locator("h1")).toBeVisible();
+      await expectNoGlobalHorizontalOverflow(page);
+      await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+      await expectNoFixedActionOverlap(page);
+      await page.screenshot({ path: testInfo.outputPath(`${name}-${viewport.width}x${viewport.height}.png`), fullPage: true });
+    }
+
+    await page.goto("/app/financeiro/fluxo-caixa");
+    await expect(page.getByRole("heading", { name: "Fluxo de Caixa" })).toBeVisible();
+    await expect(page.locator(".table-scroll")).toHaveCSS("overflow-x", "auto");
+    await expect(page.getByText("projectedBalance", { exact: true })).toHaveCount(0);
+
+    await page.goto("/app/financeiro/dre");
+    await expect(page.getByRole("heading", { name: "DRE" })).toBeVisible();
+    const groupLabel = page.locator(".dre-group-label").first();
+    if (await groupLabel.count()) await expect(groupLabel).toHaveCSS("display", "block");
   });
 }

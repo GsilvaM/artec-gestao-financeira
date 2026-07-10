@@ -27,6 +27,7 @@ export function MetricCard({
   icon: Icon,
   iconColor,
   className,
+  valueTone = "neutral",
 }: {
   label: string;
   value: string | number;
@@ -37,6 +38,7 @@ export function MetricCard({
   icon: LucideIcon;
   iconColor: IconColor;
   className?: string;
+  valueTone?: "neutral" | "positive" | "negative";
 }) {
   const isPositive = (delta ?? 0) >= 0;
   const DeltaIcon = isPositive ? ArrowUpRight : ArrowDownRight;
@@ -64,7 +66,10 @@ export function MetricCard({
         <div className={cn("flex size-9 shrink-0 items-center justify-center rounded-xl", iconStyles[iconColor])}>
           <Icon className="size-4" />
         </div>
-        <p className="min-w-0 flex-1 text-xl font-bold leading-[1.1] text-[var(--foreground)] tabular-nums sm:text-2xl">{value}</p>
+        <p className={cn(
+          "min-w-0 flex-1 text-xl font-bold leading-[1.1] tabular-nums sm:text-2xl",
+          valueTone === "positive" ? "text-success" : valueTone === "negative" ? "text-destructive" : "text-[var(--foreground)]",
+        )}>{value}</p>
         {deltaContent}
       </div>
       <div className="h-8">

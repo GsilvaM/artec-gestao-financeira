@@ -72,6 +72,14 @@ export interface CashFlowInsight {
 }
 
 export function buildCashFlowInsight(result: ProjectedCashFlowResult, minimumBalance = 0): CashFlowInsight {
+  if (result.summary.currentBalance < 0) {
+    return {
+      tone: "warning",
+      title: "Saldo atual negativo",
+      message: `Seu saldo já está negativo em ${formatCurrencyText(Math.abs(result.summary.currentBalance))} e pode chegar a ${formatCurrencyText(Math.abs(result.summary.lowestProjectedBalance))} em ${formatDateLabel(result.summary.lowestProjectedBalanceDate)}.`,
+    };
+  }
+
   const riskPoint = result.periods.find((period) => period.projectedBalance < minimumBalance || period.projectedBalance < 0);
   if (riskPoint) {
     const deficit = minimumBalance > 0 ? Math.max(0, minimumBalance - riskPoint.projectedBalance) : Math.abs(riskPoint.projectedBalance);

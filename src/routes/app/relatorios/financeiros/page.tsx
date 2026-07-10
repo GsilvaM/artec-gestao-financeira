@@ -4,7 +4,7 @@ import { EmptyState, FilterBar, MetricCard, MonthSelect, PageShell, StatusSelect
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useFinancialEntries } from "@/domain/financeiro/hooks/use-financial-entries";
-import { formatMoney } from "@/lib/utils";
+import { formatMoney, getMoneyToneClass } from "@/lib/utils";
 import type { FinancialEntryFilters, FinancialEntryRow } from "@/domain/financeiro/types";
 
 const STATUS_MAP: Record<string, FinancialEntryFilters["status"]> = {
@@ -45,7 +45,7 @@ export function Component() {
   const activeFilters = useMemo(
     () => [
       ...(search ? [{ key: "search", label: `Busca: ${search}`, onRemove: () => setSearch("") }] : []),
-      ...(filterMonth ? [{ key: "month", label: `Mes: ${formatPeriod(filterMonth)}`, onRemove: () => setFilterMonth("") }] : []),
+      ...(filterMonth ? [{ key: "month", label: `Mês: ${formatPeriod(filterMonth)}`, onRemove: () => setFilterMonth("") }] : []),
       ...(filterStatus ? [{ key: "status", label: `Status: ${filterStatus}`, onRemove: () => setFilterStatus("") }] : []),
     ],
     [filterMonth, filterStatus, search],
@@ -56,7 +56,7 @@ export function Component() {
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard title="Receitas" value={formatMoney(receitas)} icon={ArrowUpCircle} tone="green" />
         <MetricCard title="Despesas" value={formatMoney(despesas)} icon={ArrowDownCircle} tone="red" />
-        <MetricCard title="Saldo" value={formatMoney(saldo)} icon={Banknote} tone={saldo < 0 ? "red" : "blue"} />
+        <MetricCard title="Saldo" value={formatMoney(saldo)} icon={Banknote} tone={saldo < 0 ? "red" : "blue"} valueClassName={getMoneyToneClass(saldo)} />
         <MetricCard title="Indicadores" value={String(rows.length)} icon={AreaChart} tone="slate" />
       </div>
 
@@ -68,7 +68,7 @@ export function Component() {
         filters={[
           {
             key: "month",
-            label: "Mes",
+            label: "Mês",
             control: <MonthSelect value={filterMonth} onValueChange={setFilterMonth} />,
           },
           {

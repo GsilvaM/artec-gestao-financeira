@@ -8,6 +8,7 @@ export function SummaryCard({
   iconColor,
   footer,
   className,
+  valueTone,
 }: {
   label: string;
   value: string | number;
@@ -15,6 +16,7 @@ export function SummaryCard({
   iconColor: "green" | "blue" | "red";
   footer?: string;
   className?: string;
+  valueTone?: "neutral" | "positive" | "negative";
 }) {
-  return <MetricCard label={label} value={value} icon={icon} iconColor={iconColor} footer={footer} className={className} />;
+  return <MetricCard label={label} value={value} icon={icon} iconColor={iconColor} footer={footer} className={className} valueTone={valueTone} />;
 }

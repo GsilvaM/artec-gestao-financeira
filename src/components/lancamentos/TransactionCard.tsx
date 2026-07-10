@@ -9,6 +9,7 @@ const statusStyles: Record<string, { label: string; className: string }> = {
   confirmed: { label: "Confirmado", className: "bg-[var(--bg-success)] text-[var(--text-success)]" },
   pending: { label: "Pendente", className: "bg-[var(--bg-warning)] text-[var(--text-warning)]" },
   cancelled: { label: "Cancelado", className: "bg-[var(--bg-danger)] text-[var(--text-danger)]" },
+  reversed: { label: "Estornado", className: "bg-[var(--bg-danger)] text-[var(--text-danger)]" },
   pago: { label: "Pago", className: "bg-[var(--bg-success)] text-[var(--text-success)]" },
   aberto: { label: "Aberto", className: "bg-[var(--bg-warning)] text-[var(--text-warning)]" },
   vencido: { label: "Vencido", className: "bg-[var(--bg-danger)] text-[var(--text-danger)]" },
@@ -44,7 +45,12 @@ export function TransactionCard({
             {isReceita ? <ArrowUp className="size-[13px]" /> : <ArrowDown className="size-[13px]" />}
           </span>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium leading-5 text-[var(--text-primary)]">{transaction.description}</p>
+            <details className="group">
+              <summary className="cursor-pointer list-none text-sm font-medium leading-5 text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary [&::-webkit-details-marker]:hidden">
+                <span className="block truncate group-open:whitespace-normal group-open:break-words">{transaction.description}</span>
+                <span className="sr-only">Toque para alternar a descrição completa</span>
+              </summary>
+            </details>
             <p className="mt-px truncate text-[11px] leading-4 text-[var(--text-muted)]">
               {[transaction.categoryName, formatDate(transaction.date)].filter(Boolean).join(" · ")}
             </p>
