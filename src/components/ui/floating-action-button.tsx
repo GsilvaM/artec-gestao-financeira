@@ -1,7 +1,5 @@
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { cn } from "@/lib/utils";
 
 interface FloatingActionButtonProps
@@ -21,32 +19,6 @@ export function FloatingActionButton({
   disabled,
   ...props
 }: FloatingActionButtonProps) {
-  const [scrolled, setScrolled] = useState(false);
-  const prefersReducedMotion = usePrefersReducedMotion();
-
-  useEffect(() => {
-    if (prefersReducedMotion) return;
-
-    let timeout = 0;
-    const scrollTarget =
-      typeof document !== "undefined"
-        ? document.querySelector<HTMLElement>("#conteudo-principal")
-        : null;
-    const target: HTMLElement | Window = scrollTarget ?? window;
-
-    function handleScroll() {
-      setScrolled(true);
-      window.clearTimeout(timeout);
-      timeout = window.setTimeout(() => setScrolled(false), 180);
-    }
-
-    target.addEventListener("scroll", handleScroll, { passive: true });
-    return () => {
-      window.clearTimeout(timeout);
-      target.removeEventListener("scroll", handleScroll);
-    };
-  }, [prefersReducedMotion]);
-
   return (
     <Button
       {...props}
@@ -55,7 +27,7 @@ export function FloatingActionButton({
       disabled={disabled}
       leftIcon={icon}
       aria-label={label}
-      className={cn("mobile-fab", scrolled && "mobile-fab-scrolled", className)}
+      className={cn("mobile-fab", className)}
     >
       <span>{compactLabel ?? label}</span>
     </Button>

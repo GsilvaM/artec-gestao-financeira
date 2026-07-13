@@ -319,6 +319,83 @@ Protecoes mantidas:
 - Nenhuma regra financeira foi alterada.
 - Nenhuma API, schema, migration, auth, permissao, service, repository, package ou lockfile foi alterado.
 
+## Rodada FAB, filtros e paleta
+
+Atualizado em: 2026-07-13
+
+Objetivo:
+
+- Corrigir comportamento visual do botao mobile `Novo lancamento` durante scroll.
+- Corrigir comportamento baguncado dos filtros no topo do Fluxo de Caixa.
+- Melhorar a paleta global light/dark para desktop e mobile.
+- Alinhar o topo dos cards mobile de Lancamentos.
+
+Arquivos alterados nesta rodada:
+
+- `src/components/ui/floating-action-button.tsx`
+- `src/components/lancamentos/TransactionCard.tsx`
+- `src/index.css`
+- `src/stores/theme.ts`
+- `docs/ui-refactor/mobile/IMPLEMENTATION_STATUS.md`
+
+Melhorias aplicadas:
+
+- `FloatingActionButton` deixou de escutar scroll e de aplicar escala/opacidade temporaria, removendo o comportamento de botao flutuante instavel durante a rolagem.
+- Cards mobile de Lancamentos receberam grid de topo com colunas previsiveis para icone, descricao e valor; em telas pequenas o valor desce para linha propria alinhada.
+- Filtros do Fluxo de Caixa receberam painel com superficie mais limpa, grid menos apertado, acoes `Limpar`/`Aplicar` com largura estavel e comportamento mobile sem sticky indevido.
+- Paleta global foi refinada com background light mais limpo, dark mode mais profundo e menos saturado, primary azul financeiro mais calmo, verdes/vermelhos/amarelos com contraste profissional e tokens duplicados alinhados.
+- `theme-color` do navegador foi atualizado para acompanhar os novos fundos light/dark.
+
+Validacao desta rodada:
+
+- `npm run typecheck`: passou.
+- `npm run lint`: passou.
+- `npm run test`: passou, 16 arquivos e 136 testes.
+- `npm run build`: passou; manteve aviso conhecido de chunks acima de 500 kB em `index` e `exceljs`.
+- `npx playwright test e2e/responsividade.spec.ts --config=e2e/playwright.config.ts --workers=1`: passou, 37/37.
+- `npm run e2e`: passou, 58/58.
+
+Protecoes mantidas:
+
+- Nenhuma regra financeira foi alterada.
+- Nenhuma API, schema, migration, auth, permissao, service, repository, package ou lockfile foi alterado.
+
+## Rodada sidebar e navegacao inferior
+
+Atualizado em: 2026-07-13
+
+Objetivo:
+
+- Remover o botao `Menu` da navegacao inferior mobile e redistribuir os atalhos restantes.
+- Reformular visualmente a sidebar desktop e o drawer mobile sem alterar fluxos financeiros.
+
+Arquivos alterados nesta rodada:
+
+- `src/components/layout/app-layout.tsx`
+- `docs/ui-refactor/mobile/IMPLEMENTATION_STATUS.md`
+
+Melhorias aplicadas:
+
+- `MobileBottomNav` passou de cinco a quatro itens, removendo o botao `Menu` e redistribuindo `Inicio`, `Financeiro`, `Fluxo` e `Relatorios` em quatro colunas iguais.
+- O acesso ao menu completo no mobile permanece pelo botao da topbar, preservando o drawer e a navegacao completa.
+- Sidebar desktop recebeu header em superficie propria, grupos com paineis sutis, estado ativo com destaque mais forte, hover refinado e rodape de usuario mais premium.
+- Drawer mobile recebeu header dedicado, superficies por grupo, largura ligeiramente mais confortavel e acabamento coerente com a sidebar desktop.
+- Botoes de sidebar, topbar, drawer e bottom navigation continuam com `inline-flex`, altura fixa, icones centralizados e `aria-label` em icon-only.
+
+Validacao desta rodada:
+
+- `npm run typecheck`: passou.
+- `npm run lint`: passou.
+- `npm run test`: passou, 16 arquivos e 136 testes.
+- `npm run build`: passou; manteve aviso conhecido de chunks acima de 500 kB em `index` e `exceljs`.
+- `npx playwright test e2e/responsividade.spec.ts --config=e2e/playwright.config.ts --workers=1`: passou, 37/37.
+- `npm run e2e`: passou, 58/58.
+
+Protecoes mantidas:
+
+- Nenhuma regra financeira foi alterada.
+- Nenhuma API, schema, migration, auth, permissao, service, repository, package ou lockfile foi alterado.
+
 ## Rodada sidebar, paleta e Lancamentos mobile
 
 Atualizado em: 2026-07-13

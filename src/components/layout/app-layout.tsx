@@ -116,7 +116,7 @@ export function AppLayout() {
         <main id="conteudo-principal" tabIndex={-1} className="outline-none">
           <Outlet />
         </main>
-        <MobileBottomNav pathname={location.pathname} onOpenMenu={() => setMobileOpen(true)} />
+        <MobileBottomNav pathname={location.pathname} />
       </div>
       <MobileNavDrawer
         open={mobileOpen}
@@ -509,14 +509,14 @@ function MobileNavDrawer({
         tabIndex={-1}
         aria-modal="true"
       >
-        <div className="flex items-center justify-between px-4 py-5">
+        <div className="mobile-drawer-header">
           <NavLink
             to="/app"
             onClick={closeAfterNavigation}
             onFocus={() => preloadRoute("/app")}
             onMouseEnter={() => preloadRoute("/app")}
             onPointerDown={() => preloadRoute("/app")}
-            className="flex items-center gap-3"
+            className="mobile-drawer-logo"
           >
             <AppLogo
               compact
@@ -606,7 +606,7 @@ function MobileNavDrawer({
   );
 }
 
-function MobileBottomNav({ pathname, onOpenMenu }: { pathname: string; onOpenMenu: () => void }) {
+function MobileBottomNav({ pathname }: { pathname: string }) {
   const items: Array<{ title: string; href: string; icon: LucideIcon }> = [
     { title: "Início", href: "/app", icon: navigationIconMap.Dashboard! },
     { title: "Financeiro", href: "/app/financeiro/lancamentos", icon: navigationIconMap.Financeiro! },
@@ -637,18 +637,6 @@ function MobileBottomNav({ pathname, onOpenMenu }: { pathname: string; onOpenMen
           </NavLink>
         );
       })}
-      <button
-        type="button"
-        className="mobile-bottom-link"
-        aria-label="Abrir menu completo"
-        onClick={onOpenMenu}
-        onPointerUp={(event) => {
-          if (event.pointerType !== "mouse") event.currentTarget.blur();
-        }}
-      >
-        <Menu size={18} />
-        <span>Menu</span>
-      </button>
     </nav>
   );
 }
@@ -716,11 +704,12 @@ const sidebarStyles = `
   width: 272px;
   height: 100dvh;
   min-height: 0;
-  padding: 18px 14px;
+  padding: 18px 12px;
   display: flex;
   flex-direction: column;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--sidebar-foreground) 5%, transparent), transparent 160px),
+    radial-gradient(circle at 24px 24px, color-mix(in srgb, var(--sidebar-active) 18%, transparent), transparent 150px),
+    linear-gradient(180deg, color-mix(in srgb, var(--sidebar-foreground) 5%, transparent), transparent 180px),
     linear-gradient(180deg, var(--sidebar) 0%, var(--sidebar-2) 58%, var(--sidebar-3) 100%);
   color: var(--sidebar-foreground);
   box-shadow: none;
@@ -743,7 +732,11 @@ const sidebarStyles = `
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 4px 4px 20px;
+  margin-bottom: 14px;
+  padding: 8px;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--sidebar-foreground) 5%, transparent);
+  border: 1px solid color-mix(in srgb, var(--sidebar-foreground) 10%, transparent);
 }
 
 .app-logo {
@@ -786,20 +779,24 @@ const sidebarStyles = `
 .sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 12px;
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  padding-right: 1px;
+  padding: 2px 2px 2px 0;
 }
 
 .sidebar-nav > div {
   min-width: 0;
+  padding: 6px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--sidebar-foreground) 3%, transparent);
+  border: 1px solid color-mix(in srgb, var(--sidebar-foreground) 6%, transparent);
 }
 
 .sidebar-group-label {
-  margin: 0 0 8px 10px;
+  margin: 2px 0 8px 8px;
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
@@ -812,7 +809,7 @@ const sidebarStyles = `
   width: 100%;
   min-width: 0;
   min-height: 42px;
-  padding: 0 11px;
+  padding: 0 10px;
   border-radius: 12px;
   border: 1px solid transparent;
   display: inline-flex;
@@ -825,7 +822,7 @@ const sidebarStyles = `
   font-weight: 700;
   line-height: 1;
   white-space: nowrap;
-  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
 }
 
 .sidebar-link span {
@@ -835,21 +832,26 @@ const sidebarStyles = `
 }
 
 .sidebar-link:hover {
-  background: color-mix(in srgb, var(--sidebar-foreground) 7%, transparent);
+  background: color-mix(in srgb, var(--sidebar-foreground) 8%, transparent);
   color: var(--sidebar-active-foreground);
+  transform: translateX(1px);
 }
 
 .sidebar-link-active {
-  background: color-mix(in srgb, var(--sidebar-active) 18%, transparent);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--sidebar-active) 38%, transparent), color-mix(in srgb, var(--sidebar-active) 20%, transparent)),
+    color-mix(in srgb, var(--sidebar-foreground) 5%, transparent);
   color: var(--sidebar-active-foreground);
-  border-color: color-mix(in srgb, var(--sidebar-active) 34%, transparent);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--sidebar-foreground) 7%, transparent);
+  border-color: color-mix(in srgb, var(--sidebar-active) 46%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--sidebar-foreground) 16%, transparent),
+    0 10px 24px color-mix(in srgb, var(--sidebar-active) 16%, transparent);
 }
 
 .sidebar-link-active::before {
   content: "";
   position: absolute;
-  left: 5px;
+  left: 4px;
   top: 50%;
   width: 3px;
   height: 18px;
@@ -868,9 +870,10 @@ const sidebarStyles = `
   flex: 0 0 auto;
   margin-top: 12px;
   padding: 10px;
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--sidebar-foreground) 6%, transparent);
-  border: 1px solid var(--sidebar-border);
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--sidebar-foreground) 8%, transparent), color-mix(in srgb, var(--sidebar-active) 8%, transparent));
+  border: 1px solid color-mix(in srgb, var(--sidebar-foreground) 12%, transparent);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -879,10 +882,10 @@ const sidebarStyles = `
 .sidebar-user-avatar {
   width: 38px;
   height: 38px;
-  border-radius: 12px;
+  border-radius: 13px;
   display: grid;
   place-items: center;
-  background: var(--primary);
+  background: linear-gradient(135deg, var(--sidebar-active), color-mix(in srgb, var(--primary) 72%, var(--sidebar-foreground)));
   color: var(--primary-foreground);
   font-weight: 800;
   font-size: 15px;
@@ -1090,7 +1093,7 @@ const sidebarStyles = `
 
 .sidebar-mobile-drawer {
   position: relative;
-  width: min(360px, calc(100vw - 24px));
+  width: min(372px, calc(100vw - 24px));
   max-width: calc(100vw - 24px);
   height: calc(100dvh - 16px);
   margin: 8px 0 8px 8px;
@@ -1098,6 +1101,7 @@ const sidebarStyles = `
   display: flex;
   flex-direction: column;
   background:
+    radial-gradient(circle at 36px 40px, color-mix(in srgb, var(--sidebar-active) 20%, transparent), transparent 160px),
     linear-gradient(180deg, color-mix(in srgb, var(--sidebar-foreground) 5%, transparent), transparent 150px),
     linear-gradient(180deg, var(--sidebar) 0%, var(--sidebar-2) 54%, var(--sidebar-3) 100%);
   color: var(--sidebar-foreground);
@@ -1109,6 +1113,28 @@ const sidebarStyles = `
   outline: none;
 }
 
+.mobile-drawer-header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 8px 8px 4px;
+  padding: 10px;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--sidebar-foreground) 5%, transparent);
+  border: 1px solid color-mix(in srgb, var(--sidebar-foreground) 10%, transparent);
+}
+
+.mobile-drawer-logo {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--sidebar-foreground);
+  text-decoration: none;
+}
+
 .sidebar-mobile-drawer nav {
   min-height: 0;
   overflow-x: hidden;
@@ -1117,7 +1143,14 @@ const sidebarStyles = `
 .mobile-drawer-nav {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
+}
+
+.mobile-drawer-nav > div {
+  padding: 8px;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--sidebar-foreground) 4%, transparent);
+  border: 1px solid color-mix(in srgb, var(--sidebar-foreground) 7%, transparent);
 }
 
 .mobile-drawer-nav .sidebar-group-label {
@@ -1127,12 +1160,12 @@ const sidebarStyles = `
 .mobile-drawer-nav .sidebar-link {
   min-height: 46px;
   margin-top: 4px;
+  padding-inline: 12px;
 }
 
 .sidebar-mobile-drawer .sidebar-user {
   margin: 8px;
   border-radius: 16px;
-  border-right: 0;
   padding-bottom: calc(12px + env(safe-area-inset-bottom));
 }
 
@@ -1148,15 +1181,15 @@ const sidebarStyles = `
     left: auto;
     z-index: 45;
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 2px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
     min-height: 60px;
     border-top: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
     background: color-mix(in srgb, var(--surface) 94%, transparent);
     box-shadow: 0 -8px 22px rgba(3, 10, 24, 0.06);
     backdrop-filter: blur(14px) saturate(1.08);
     margin: 0;
-    padding: 4px 8px calc(4px + env(safe-area-inset-bottom));
+    padding: 4px 10px calc(4px + env(safe-area-inset-bottom));
   }
 
   .mobile-bottom-link {
@@ -1172,7 +1205,7 @@ const sidebarStyles = `
     background: transparent;
     border: 0;
     padding: 0;
-    font-size: 11px;
+    font-size: 11.5px;
     font-weight: 750;
     line-height: 1;
     text-decoration: none;
@@ -1252,14 +1285,15 @@ const sidebarStyles = `
 /* Collapsed sidebar */
 .sidebar-collapsed .sidebar {
   width: 80px;
-  padding: 20px 8px;
+  padding: 18px 8px;
   transition: padding 180ms ease;
 }
 
 .sidebar-collapsed .sidebar-logo {
   flex-direction: column;
   gap: 12px;
-  padding: 4px 4px 18px;
+  padding: 8px 4px;
+  margin-bottom: 12px;
   justify-content: center;
 }
 
@@ -1295,6 +1329,7 @@ const sidebarStyles = `
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding: 6px;
 }
 
 .sidebar-collapse-btn {

@@ -3,8 +3,8 @@ import { create } from "zustand";
 type Theme = "light" | "dark";
 const THEME_STORAGE_KEY = "artec.theme";
 const THEME_COLORS: Record<Theme, string> = {
-  light: "#f7f9fc",
-  dark: "#0a0f1d",
+  light: "#f4f7fb",
+  dark: "#07111f",
 };
 
 interface ThemeStore {

@@ -39,7 +39,7 @@ export function TransactionCard({
   return (
     <Card className="transaction-mobile-card overflow-hidden rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--surface)] transition duration-200 hover:border-primary/25 hover:shadow-[var(--shadow-xs)]">
       <CardContent className="p-3.5">
-        <div className="flex items-start gap-2.5">
+        <div className="transaction-mobile-head">
           <span className={cn("mt-px flex size-8 shrink-0 items-center justify-center rounded-full", isReceita ? "bg-[var(--success-soft)] text-[var(--success)]" : "bg-[var(--danger-soft)] text-[var(--danger)]")}>
             {isReceita ? <ArrowUp className="size-[13px]" /> : <ArrowDown className="size-[13px]" />}
           </span>
