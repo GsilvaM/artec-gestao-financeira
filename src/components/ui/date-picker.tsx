@@ -108,20 +108,20 @@ export function DatePicker({ id, value, onChange, ariaLabel = "Data", invalid }:
         aria-expanded={open}
         aria-invalid={invalid || undefined}
         className={cn(
-          "flex min-h-[var(--field-height)] w-full rounded-[var(--radius-field)] border border-[var(--color-border-field)] bg-[var(--color-bg-field)] px-4 pr-10 text-sm font-semibold leading-none text-foreground shadow-[var(--shadow-xs)] transition-all duration-150 ease-out hover:border-primary/45 focus-visible:border-[var(--color-border-focus)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 disabled:cursor-not-allowed disabled:opacity-55",
+          "box-border flex min-h-[var(--field-height)] w-full min-w-0 rounded-[var(--radius-field)] border border-[var(--color-border-field)] bg-[var(--color-bg-field)] px-4 pr-10 text-base font-semibold leading-none text-foreground shadow-[var(--shadow-xs)] transition-all duration-150 ease-out hover:border-primary/45 focus-visible:border-[var(--color-border-focus)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 disabled:cursor-not-allowed disabled:opacity-55 sm:text-sm",
           invalid && "border-danger ring-2 ring-danger/20",
         )}
       />
       <button
         type="button"
-        aria-label={formatDisplayDate(value)}
+        aria-label={`Abrir calendario: ${formatDisplayDate(value)}`}
         onClick={() => setOpen((current) => !current)}
-        className="absolute right-3 top-1/2 inline-flex size-7 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-surface hover:text-foreground"
+        className="absolute right-3 top-1/2 inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-surface hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25"
       >
         <CalendarDays className="size-4 shrink-0 text-muted-foreground" />
       </button>
       {open ? (
-        <div className="absolute left-0 top-[calc(100%+8px)] z-50 w-[min(20rem,calc(100vw-2rem))] animate-in fade-in-0 zoom-in-95 rounded-2xl border border-border bg-popover p-3 text-popover-foreground shadow-elevated">
+        <div role="dialog" aria-label="Selecionar data" className="absolute left-0 top-[calc(100%+8px)] z-50 max-h-[min(28rem,calc(100dvh-2rem))] w-[min(20rem,calc(100vw-2rem))] overflow-y-auto animate-in fade-in-0 zoom-in-95 rounded-2xl border border-border bg-popover p-3 text-popover-foreground shadow-elevated">
           <div className="mb-3 flex flex-wrap gap-1.5">
             {QUICK_ACTIONS.map((action) => (
               <button

@@ -215,7 +215,7 @@ export function Component() {
 
   return (
     <PageShell icon={Shield} title="Admin" subtitle="Aprovação de acessos, perfis e controles administrativos" actionLabel="Novo usuário" onAction={() => setOpen(true)}>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mobile-summary-grid grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard title="Usuários" value={String(users.length)} icon={Users} tone="blue" />
         <MetricCard title="Pendentes" value={String(pendingUsers)} icon={Activity} tone="amber" />
         <MetricCard title="Aprovados" value={String(approvedUsers)} icon={CheckCircle2} tone="green" />
@@ -340,8 +340,8 @@ export function Component() {
             filteredUsers.map((user) => (
               <article key={user.id} className="mobile-record-card">
                 <div className="mobile-record-top">
-                  <div className="min-w-0">
-                    <h3 className="text-text-primary truncate text-sm font-bold">
+                  <div className="admin-mobile-copy min-w-0">
+                    <h3 className="text-text-primary text-sm font-bold">
                       {user.name || "Sem nome"}
                     </h3>
                     <p className="text-text-muted mt-1 text-xs">{user.email}</p>
@@ -357,7 +357,7 @@ export function Component() {
                     {user.lastSignInAt ? `Último acesso: ${formatDateTime(user.lastSignInAt)}` : "Nunca acessou"}
                   </span>
                 </div>
-                <div className="mt-3 flex flex-wrap gap-2">
+                <div className="admin-mobile-actions mt-3 flex flex-wrap gap-2">
                   {user.status !== "approved" ? (
                     <Button size="sm" onClick={() => handleAction(user, "approve")} disabled={updateMutation.isPending}>Aprovar</Button>
                   ) : null}

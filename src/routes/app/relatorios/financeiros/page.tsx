@@ -4,7 +4,7 @@ import { EmptyState, FilterBar, MetricCard, MonthSelect, PageShell, StatusSelect
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useFinancialEntries } from "@/domain/financeiro/hooks/use-financial-entries";
-import { formatMoney, getMoneyToneClass } from "@/lib/utils";
+import { cn, formatMoney, getMoneyToneClass } from "@/lib/utils";
 import type { FinancialEntryFilters, FinancialEntryRow } from "@/domain/financeiro/types";
 
 const STATUS_MAP: Record<string, FinancialEntryFilters["status"]> = {
@@ -53,7 +53,7 @@ export function Component() {
 
   return (
     <PageShell icon={FileBarChart} title="Relatório financeiro" subtitle="Análise consolidada de receitas, despesas e saldo.">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mobile-summary-grid grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard title="Receitas" value={formatMoney(receitas)} icon={ArrowUpCircle} tone="green" />
         <MetricCard title="Despesas" value={formatMoney(despesas)} icon={ArrowDownCircle} tone="red" />
         <MetricCard title="Saldo" value={formatMoney(saldo)} icon={Banknote} tone={saldo < 0 ? "red" : "blue"} valueClassName={getMoneyToneClass(saldo)} />
@@ -133,7 +133,7 @@ function FinancialReportMobileList({ rows, isLoading, hasError, periodLabel }: {
                 <span className="mobile-record-label">{row.period}</span>
                 <h3 className="mobile-record-title">{row.indicator}</h3>
               </div>
-              <span className={toneClass}>
+              <span className={cn("shrink-0 text-xs font-black leading-none", toneClass)}>
                 {row.type === "receita" ? "Receita" : row.type === "despesa" ? "Despesa" : "Saldo"}
               </span>
             </div>

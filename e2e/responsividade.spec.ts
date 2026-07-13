@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 const viewports = [
   { name: "desktop", width: 1440, height: 900 },
@@ -7,6 +7,8 @@ const viewports = [
   { name: "mobile compacto", width: 360, height: 640 },
   { name: "mobile médio", width: 390, height: 800 },
   { name: "mobile amplo", width: 412, height: 915 },
+  { name: "mobile grande", width: 430, height: 932 },
+  { name: "mobile largo", width: 480, height: 960 },
 ];
 
 async function expectNoGlobalHorizontalOverflow(page: Page) {
@@ -43,6 +45,29 @@ async function expectNoGlobalHorizontalOverflow(page: Page) {
   expect(overflow.maxElementRight).toBeLessThanOrEqual(overflow.clientWidth + 1);
 }
 
+test("rotas-chave em dark mode sem overflow em mobile medio", async ({ page }, testInfo) => {
+  test.setTimeout(120_000);
+  await page.setViewportSize({ width: 390, height: 800 });
+  await page.addInitScript(() => {
+    window.localStorage.setItem("artec.theme", "dark");
+  });
+
+  const routes = [
+    ["dashboard", "/app"],
+    ["lancamentos", "/app/financeiro/lancamentos"],
+    ["fluxo-caixa", "/app/financeiro/fluxo-caixa"],
+    ["dre", "/app/financeiro/dre"],
+  ] as const;
+
+  for (const [name, route] of routes) {
+    await page.goto(route);
+    await expect(page.locator("html")).toHaveClass(/dark/);
+    await expect(page.locator("h1")).toBeVisible();
+    await expectNoGlobalHorizontalOverflow(page);
+    await page.screenshot({ path: testInfo.outputPath(`${name}-dark-390x800.png`), fullPage: true });
+  }
+});
+
 async function expectNoFixedActionOverlap(page: Page) {
   const overlaps = await page.evaluate(() => {
     const action = document.querySelector<HTMLElement>(".page-mobile-action");
@@ -61,6 +86,107 @@ async function expectNoFixedActionOverlap(page: Page) {
 
   expect(overlaps).toEqual([]);
 }
+
+async function expectButtonAligned(page: Page, selector: string) {
+  const metrics = await page.locator(selector).evaluateAll((elements) => {
+    const visible = elements.find((element) => {
+      const style = getComputedStyle(element);
+      const rect = element.getBoundingClientRect();
+      return style.display !== "none" && style.visibility !== "hidden" && rect.width > 0 && rect.height > 0;
+    });
+    if (!visible) return null;
+    const style = getComputedStyle(visible);
+    const rect = visible.getBoundingClientRect();
+    const svg = visible.querySelector("svg");
+    const svgRect = svg?.getBoundingClientRect();
+    return {
+      display: style.display,
+      alignItems: style.alignItems,
+      justifyContent: style.justifyContent,
+      lineHeight: style.lineHeight,
+      height: Math.round(rect.height),
+      svgHeight: svgRect ? Math.round(svgRect.height) : null,
+      svgCenterDelta: svgRect ? Math.abs((svgRect.top + svgRect.height / 2) - (rect.top + rect.height / 2)) : 0,
+    };
+  });
+
+  expect(metrics).not.toBeNull();
+  if (!metrics) return;
+  expect(["inline-flex", "flex"]).toContain(metrics.display);
+  expect(metrics.alignItems).toBe("center");
+  expect(metrics.justifyContent).toBe("center");
+  expect(metrics.height).toBeGreaterThanOrEqual(36);
+  if (metrics.svgHeight !== null) {
+    expect(metrics.svgHeight).toBeGreaterThanOrEqual(14);
+    expect(metrics.svgCenterDelta).toBeLessThanOrEqual(1);
+  }
+}
+
+async function expectButtonLocatorAligned(locator: Locator) {
+  await expect(locator).toBeVisible();
+  const metrics = await locator.evaluate((element) => {
+    const style = getComputedStyle(element);
+    const rect = element.getBoundingClientRect();
+    const svg = element.querySelector("svg");
+    const svgRect = svg?.getBoundingClientRect();
+    return {
+      display: style.display,
+      alignItems: style.alignItems,
+      justifyContent: style.justifyContent,
+      height: Math.round(rect.height),
+      svgHeight: svgRect ? Math.round(svgRect.height) : null,
+      svgCenterDelta: svgRect ? Math.abs((svgRect.top + svgRect.height / 2) - (rect.top + rect.height / 2)) : 0,
+    };
+  });
+
+  expect(["inline-flex", "flex"]).toContain(metrics.display);
+  expect(metrics.alignItems).toBe("center");
+  expect(metrics.justifyContent).toBe("center");
+  expect(metrics.height).toBeGreaterThanOrEqual(36);
+  if (metrics.svgHeight !== null) {
+    expect(metrics.svgHeight).toBeGreaterThanOrEqual(14);
+    expect(metrics.svgCenterDelta).toBeLessThanOrEqual(1);
+  }
+}
+
+test("drawer mobile gerencia foco e fecha ao navegar", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 800 });
+  await page.goto("/app");
+
+  await page.getByRole("button", { name: "Abrir menu", exact: true }).click();
+  const drawer = page.locator("#menu-mobile");
+  await expect(drawer).toBeVisible();
+  await expect(drawer).toBeFocused();
+
+  await drawer.locator('a[href="/app/financeiro/lancamentos"]').first().click();
+  await expect(page).toHaveURL(/\/app\/financeiro\/lancamentos/);
+  await expect(drawer).toHaveCount(0);
+  await expectNoGlobalHorizontalOverflow(page);
+});
+
+test("botoes criticos mantem alinhamento computado", async ({ page }) => {
+  test.setTimeout(60_000);
+  await page.setViewportSize({ width: 390, height: 800 });
+
+  await page.goto("/app/financeiro/lancamentos");
+  await expectButtonLocatorAligned(page.getByRole("button", { name: /novo/i }).first());
+  await expectButtonAligned(page, "button[aria-label='Abrir menu']");
+
+  await page.goto("/app/financeiro/fluxo-caixa");
+  await expectButtonLocatorAligned(page.getByRole("button", { name: /a(c|ç)(o|õ)es/i }).first());
+});
+
+test.describe("login sem sessao", () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
+
+  test("botao de login mantem alinhamento computado", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 800 });
+    await page.addInitScript(() => window.localStorage.clear());
+    await page.goto("/");
+    await expect(page.getByRole("button", { name: /entrar/i })).toBeVisible();
+    await expectButtonAligned(page, "button:has-text('Entrar')");
+  });
+});
 
 for (const viewport of viewports) {
   test(`lançamentos sem overflow horizontal em ${viewport.name}`, async ({ page }) => {
@@ -117,7 +243,7 @@ for (const viewport of viewports) {
 
 for (const viewport of viewports.filter(({ width }) => width < 768)) {
   test(`telas principais sem overflow ou sobreposição de CTA em ${viewport.name}`, async ({ page }, testInfo) => {
-    test.setTimeout(120_000);
+    test.setTimeout(180_000);
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
     const routes = [
       ["inicio", "/app"],
@@ -126,6 +252,16 @@ for (const viewport of viewports.filter(({ width }) => width < 768)) {
       ["contas-receber", "/app/financeiro/contas-receber"],
       ["fluxo-caixa", "/app/financeiro/fluxo-caixa"],
       ["dre", "/app/financeiro/dre"],
+      ["categorias", "/app/financeiro/categorias"],
+      ["centros-custo", "/app/financeiro/centros-custo"],
+      ["clientes", "/app/cadastros/clientes"],
+      ["fornecedores", "/app/cadastros/fornecedores"],
+      ["colaboradores", "/app/cadastros/colaboradores"],
+      ["relatorios", "/app/relatorios"],
+      ["relatorios-financeiros", "/app/relatorios/financeiros"],
+      ["relatorios-centros-custo", "/app/relatorios/centros-custo"],
+      ["configuracoes", "/app/configuracoes"],
+      ["admin", "/app/admin"],
     ] as const;
 
     for (const [name, route] of routes) {

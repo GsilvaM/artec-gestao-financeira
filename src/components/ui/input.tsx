@@ -9,7 +9,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input({ c
       ref={ref}
       type={type}
       className={cn(
-        "flex min-h-[var(--field-height)] w-full rounded-[var(--radius-field)] border border-[var(--color-border-field)] bg-[var(--color-bg-field)] px-4 py-2 text-sm font-semibold text-foreground shadow-[var(--shadow-xs)] transition-all duration-200 ease-out placeholder:text-muted-foreground hover:border-primary/45 hover:bg-[var(--surface)] focus-visible:border-[var(--color-border-focus)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-border-focus)_24%,transparent)] disabled:cursor-not-allowed disabled:opacity-55 aria-[invalid=true]:border-danger aria-[invalid=true]:ring-danger/30",
+        "box-border flex min-h-[var(--field-height)] w-full min-w-0 rounded-[var(--radius-field)] border border-[var(--color-border-field)] bg-[var(--color-bg-field)] px-4 py-2 text-base font-semibold leading-normal text-foreground shadow-[var(--shadow-xs)] transition-all duration-200 ease-out placeholder:text-muted-foreground hover:border-primary/45 hover:bg-[var(--surface)] focus-visible:border-[var(--color-border-focus)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-border-focus)_24%,transparent)] disabled:cursor-not-allowed disabled:opacity-55 aria-[invalid=true]:border-danger aria-[invalid=true]:ring-danger/30 sm:text-sm",
         className
       )}
       {...props}

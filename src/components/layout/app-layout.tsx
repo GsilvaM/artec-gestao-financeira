@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
 import {
   ChevronDown,
@@ -460,6 +460,11 @@ function MobileNavDrawer({
   onClose: () => void;
   onSignOut: () => void;
 }) {
+  const drawerRef = useRef<HTMLElement>(null);
+  const closeAfterNavigation = useCallback(() => {
+    window.setTimeout(onClose, 0);
+  }, [onClose]);
+
   useEffect(() => {
     if (!open) return;
     function handleKeyDown(e: KeyboardEvent) {
@@ -468,6 +473,11 @@ function MobileNavDrawer({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [open, onClose]);
+
+  useEffect(() => {
+    if (!open) return;
+    window.setTimeout(() => drawerRef.current?.focus(), 0);
+  }, [open]);
 
   if (!open) return null;
 
@@ -491,11 +501,18 @@ function MobileNavDrawer({
         onClick={onClose}
         style={{ pointerEvents: "auto" }}
       />
-      <aside id="menu-mobile" className="sidebar-mobile-drawer" style={{ pointerEvents: "auto" }}>
+      <aside
+        ref={drawerRef}
+        id="menu-mobile"
+        className="sidebar-mobile-drawer"
+        style={{ pointerEvents: "auto" }}
+        tabIndex={-1}
+        aria-modal="true"
+      >
         <div className="flex items-center justify-between px-4 py-5">
           <NavLink
             to="/app"
-            onClick={onClose}
+            onClick={closeAfterNavigation}
             onFocus={() => preloadRoute("/app")}
             onMouseEnter={() => preloadRoute("/app")}
             onPointerDown={() => preloadRoute("/app")}
@@ -524,7 +541,7 @@ function MobileNavDrawer({
                   key={href}
                   to={href}
                   end
-                  onClick={onClose}
+                  onClick={closeAfterNavigation}
                   onFocus={() => preloadRoute(href)}
                   onMouseEnter={() => preloadRoute(href)}
                   onPointerDown={() => preloadRoute(href)}
@@ -548,7 +565,7 @@ function MobileNavDrawer({
                     <NavLink
                       key={subitem.href}
                       to={subitem.href}
-                      onClick={onClose}
+                      onClick={closeAfterNavigation}
                       onFocus={() => preloadRoute(subitem.href)}
                       onMouseEnter={() => preloadRoute(subitem.href)}
                       onPointerDown={() => preloadRoute(subitem.href)}
@@ -638,8 +655,9 @@ function MobileBottomNav({ pathname, onOpenMenu }: { pathname: string; onOpenMen
 
 const sidebarStyles = `
 .app-shell {
-  --mobile-bottom-nav-offset: calc(96px + env(safe-area-inset-bottom));
+  --mobile-bottom-nav-offset: calc(92px + env(safe-area-inset-bottom));
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   background: var(--background);
   overflow-x: hidden;
@@ -649,6 +667,7 @@ const sidebarStyles = `
   flex: 1;
   min-width: 0;
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
 }
@@ -677,7 +696,8 @@ const sidebarStyles = `
 
 @media (max-width: 767px) {
   #conteudo-principal {
-    padding: 16px 16px var(--mobile-bottom-nav-offset);
+    padding: 16px 16px calc(var(--mobile-bottom-nav-offset) + 8px);
+    scroll-margin-top: 64px;
   }
 }
 
@@ -1070,6 +1090,7 @@ const sidebarStyles = `
   color: var(--sidebar-foreground);
   z-index: 60;
   animation: slideIn 180ms ease;
+  outline: none;
 }
 
 .sidebar-mobile-drawer nav {
@@ -1183,6 +1204,32 @@ const sidebarStyles = `
 
   .mobile-bottom-link:active {
     transform: translateY(1px);
+  }
+}
+
+@media (max-width: 380px) {
+  .app-shell {
+    --mobile-bottom-nav-offset: calc(88px + env(safe-area-inset-bottom));
+  }
+
+  .mobile-bottom-nav {
+    right: 8px;
+    left: 8px;
+    min-height: 60px;
+    border-radius: 18px;
+    padding: 5px;
+  }
+
+  .mobile-bottom-link {
+    min-height: 50px;
+    gap: 4px;
+    border-radius: 14px;
+    font-size: 10px;
+  }
+
+  .mobile-bottom-link svg {
+    width: 17px;
+    height: 17px;
   }
 }
 

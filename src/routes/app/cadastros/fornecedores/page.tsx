@@ -127,7 +127,7 @@ export function Component() {
                         {supplier.telefone && <p className="text-text-muted mt-1 text-xs">{supplier.telefone}</p>}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="category-actions flex items-center gap-2">
                       <StatusBadge status={supplier.status} />
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>

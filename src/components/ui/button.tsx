@@ -3,7 +3,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { forwardRef } from "react";
 
 const buttonVariants = cva(
-  "motion-control inline-flex box-border items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold leading-none align-middle transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-55 active:scale-[0.98] [&_span]:leading-none [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "motion-control inline-flex box-border items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold leading-none align-middle transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-55 active:scale-[0.98] [&_span]:inline-flex [&_span]:items-center [&_span]:leading-none [&_svg]:pointer-events-none [&_svg]:block [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -20,10 +20,10 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
-        default: "h-10 px-4",
-        sm: "h-9 px-4 text-sm",
-        lg: "h-11 px-5",
-        icon: "size-10 p-0",
+        default: "h-10 min-h-10 px-4",
+        sm: "h-9 min-h-9 px-4 text-sm",
+        lg: "h-11 min-h-11 px-5",
+        icon: "size-10 min-h-10 min-w-10 p-0",
       },
     },
     defaultVariants: {
@@ -72,7 +72,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     >
       {loading ? (
         <span
-          className="size-4 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent"
+          className="inline-block size-4 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent leading-none"
           aria-hidden="true"
         />
       ) : (

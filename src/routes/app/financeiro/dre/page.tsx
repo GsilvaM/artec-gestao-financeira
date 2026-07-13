@@ -181,9 +181,9 @@ export function Component() {
       </Card>
 
       <div className="dre-kpi-grid">
+        <MetricCard title="Resultado líquido" value={formatMoney(dre.resultado)} icon={Scale} tone={dre.resultado < 0 ? "red" : "blue"} valueClassName={getMoneyToneClass(dre.resultado)} helper={dre.resultado < 0 ? "Resultado negativo no período" : "Resultado positivo no período"} />
         <MetricCard title="Receita total" value={formatMoney(dre.totalReceitas)} icon={ArrowUpCircle} tone="green" helper="Entradas reconhecidas no período" />
         <MetricCard title="Despesa total" value={formatMoney(dre.totalDespesas)} icon={ArrowDownCircle} tone="red" helper="Saídas reconhecidas no período" />
-        <MetricCard title="Resultado líquido" value={formatMoney(dre.resultado)} icon={Scale} tone={dre.resultado < 0 ? "red" : "blue"} valueClassName={getMoneyToneClass(dre.resultado)} helper={dre.resultado < 0 ? "Resultado negativo no período" : "Resultado positivo no período"} />
         <MetricCard title="Margem líquida" value={formatOptionalPercent(dre.margemLiquida)} icon={Percent} tone={dre.resultado < 0 ? "red" : "green"} helper="Resultado líquido sobre receita" />
         <MetricCard title="Cobertura despesas" value={formatOptionalPercent(dre.coberturaDespesas)} icon={Activity} tone={dre.coberturaDespesas !== null && dre.coberturaDespesas < 100 ? "amber" : "green"} helper={dre.coberturaDespesas === null ? "Sem despesas no período" : "Receita / despesas"} />
       </div>

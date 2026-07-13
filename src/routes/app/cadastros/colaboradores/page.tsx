@@ -491,14 +491,14 @@ function CollaboratorMobileList({
       {collaborators.map((collaborator) => (
         <article key={collaborator.id} className="mobile-record-card">
           <div className="mobile-record-top">
-            <div className="min-w-0">
-              <h3 className="text-text-primary truncate text-sm font-bold">
+            <div className="cadastro-mobile-copy min-w-0">
+              <h3 className="text-text-primary text-sm font-bold">
                 {collaborator.name}
               </h3>
               <p className="text-text-muted mt-1 text-xs">
                 {collaborator.role || "Funcao nao informada"}
               </p>
-              <p className="text-text-secondary mt-1 truncate text-xs">
+              <p className="text-text-secondary mt-1 text-xs">
                 {collaborator.phone ||
                   collaborator.email ||
                   "Contato não informado"}

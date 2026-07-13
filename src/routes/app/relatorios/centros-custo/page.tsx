@@ -5,7 +5,7 @@ import { formatMoney } from "@/lib/utils";
 export function Component() {
   return (
     <PageShell icon={Network} title="Relatório por centro de custo" subtitle="Rentabilidade e comparação de desempenho por unidade">
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="mobile-summary-grid grid gap-4 sm:grid-cols-3">
         <MetricCard title="Centros analisados" value="0" icon={Network} tone="blue" />
         <MetricCard title="Margem média" value="0%" icon={Percent} tone="green" />
         <MetricCard title="Resultado" value={formatMoney(0)} icon={WalletCards} tone="slate" />

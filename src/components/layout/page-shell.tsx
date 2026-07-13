@@ -252,14 +252,24 @@ export function FilterBar({
   useEffect(() => {
     const dialog = mobileDialogRef.current;
     if (!dialog) return;
-    if (mobileOpen && !dialog.open) dialog.showModal();
+    if (mobileOpen && !dialog.open) {
+      dialog.showModal();
+      window.setTimeout(() => {
+        dialog
+          .querySelector<HTMLElement>(".filter-sheet-body select, .filter-sheet-body input, .filter-sheet-body button")
+          ?.focus();
+      }, 40);
+    }
     if (!mobileOpen && dialog.open) dialog.close();
   }, [mobileOpen]);
 
   useEffect(() => {
     const dialog = mobileDialogRef.current;
     if (!dialog) return;
-    const close = () => setMobileOpen(false);
+    const close = () => {
+      setMobileOpen(false);
+      window.setTimeout(() => mobileButtonRef.current?.focus(), 0);
+    };
     dialog.addEventListener("close", close);
     return () => dialog.removeEventListener("close", close);
   }, []);
@@ -412,11 +422,12 @@ export function FilterBar({
         <dialog
           ref={mobileDialogRef}
           className="filter-sheet"
+          aria-label="Filtros"
           onClick={(event) => {
             if (event.target === mobileDialogRef.current) setMobileOpen(false);
           }}
         >
-          <div className="filter-sheet-panel">
+          <div className="filter-sheet-panel" tabIndex={-1}>
             <div className="filter-sheet-handle" aria-hidden="true" />
             <div className="filter-sheet-header">
               <h2>Filtros</h2>
@@ -734,6 +745,7 @@ const filterStyles = `
   background: var(--popover);
   box-shadow: var(--shadow-elevated);
   color: var(--popover-foreground);
+  outline: none;
 }
 
 .filter-sheet-handle {

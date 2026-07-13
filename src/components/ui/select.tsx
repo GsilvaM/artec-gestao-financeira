@@ -16,7 +16,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
       <select
         ref={ref}
         className={cn(
-          "flex min-h-[var(--field-height)] w-full appearance-none rounded-[var(--radius-field)] border border-[var(--color-border-field)] bg-[var(--color-bg-field)] px-4 pr-10 text-sm font-semibold leading-none text-foreground shadow-[var(--shadow-xs)] transition-all duration-200 ease-out hover:border-primary/45 hover:bg-[var(--surface)] focus-visible:border-[var(--color-border-focus)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-border-focus)_24%,transparent)] disabled:cursor-not-allowed disabled:opacity-55 aria-[invalid=true]:border-danger aria-[invalid=true]:ring-danger/30",
+          "box-border flex min-h-[var(--field-height)] w-full min-w-0 appearance-none rounded-[var(--radius-field)] border border-[var(--color-border-field)] bg-[var(--color-bg-field)] px-4 pr-10 text-base font-semibold leading-none text-foreground shadow-[var(--shadow-xs)] transition-all duration-200 ease-out hover:border-primary/45 hover:bg-[var(--surface)] focus-visible:border-[var(--color-border-focus)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-border-focus)_24%,transparent)] disabled:cursor-not-allowed disabled:opacity-55 aria-[invalid=true]:border-danger aria-[invalid=true]:ring-danger/30 sm:text-sm",
           props.value === "" ? "text-text-muted" : "text-text-primary",
           className,
         )}

@@ -1775,8 +1775,9 @@ const dashboardStyles = `
 }
 
 .dashboard-mobile-record-top strong {
-  flex: 0 0 auto;
-  max-width: 44%;
+  flex: 1 1 auto;
+  max-width: 52%;
+  min-width: 0;
   color: var(--text-strong);
   font-size: 13px;
   font-weight: 800;
@@ -1833,7 +1834,7 @@ const dashboardStyles = `
   }
 
   .dashboard-mobile-record-top strong {
-    max-width: 52%;
+    max-width: 58%;
     font-size: 12px;
   }
 }

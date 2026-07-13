@@ -55,7 +55,7 @@ export function DataTablePagination({
   }
 
   return (
-    <div className={cn("flex flex-col gap-3 rounded-2xl border border-border/80 bg-card/70 p-4 shadow-[var(--shadow-xs)] lg:flex-row lg:items-center lg:justify-between", className)}>
+    <div className={cn("mb-[calc(var(--mobile-bottom-nav-offset,0px)*0.25)] flex min-w-0 flex-col gap-3 rounded-2xl border border-border/80 bg-card/70 p-4 shadow-[var(--shadow-xs)] lg:mb-0 lg:flex-row lg:items-center lg:justify-between", className)}>
       <div className="flex min-w-0 flex-col gap-1">
         <p className="text-sm font-semibold text-foreground">
           Mostrando {start}-{end} de {total} {label}
@@ -67,13 +67,13 @@ export function DataTablePagination({
 
       <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
         {onPageSizeChange ? (
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
             <span className="shrink-0 text-xs font-bold uppercase text-muted-foreground">
               Exibir
             </span>
             <Select
               aria-label={`Quantidade de ${label} por página`}
-              className="h-9 min-h-9 w-[156px] rounded-xl px-3 pr-9 text-xs"
+              className="h-9 min-h-9 w-[156px] max-w-full rounded-xl px-3 pr-9 text-xs"
               value={String(pageSize)}
               onChange={(event) => onPageSizeChange(Number(event.target.value))}
               options={pageSizeOptions}

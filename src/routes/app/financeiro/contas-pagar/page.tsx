@@ -1410,8 +1410,8 @@ function AccountPayableMobileList({
       {entries.map((entry) => (
         <article key={entry.id} className="accounts-mobile-card mobile-record-card">
           <div className="mobile-record-top">
-            <div className="min-w-0">
-              <h3 className="text-text-primary truncate text-sm font-bold">
+            <div className="accounts-mobile-copy min-w-0">
+              <h3 className="text-text-primary text-sm font-bold">
                 {entry.description}
               </h3>
               <p className="text-text-muted mt-1 text-xs">
@@ -1430,7 +1430,7 @@ function AccountPayableMobileList({
                 {entry.costCenterName ? ` - ${entry.costCenterName}` : ""}
               </p>
               {entry.notes ? (
-                <p className="text-muted-foreground mt-1 truncate text-xs" title={entry.notes}>
+                <p className="text-muted-foreground mt-1 text-xs" title={entry.notes}>
                   {entry.notes.length > 60 ? `${entry.notes.slice(0, 60)}...` : entry.notes}
                 </p>
               ) : null}

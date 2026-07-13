@@ -30,7 +30,10 @@ export function DropdownMenu({ children }: { children: ReactNode }) {
   const contentRef = useRef<HTMLDivElement | null>(null);
 
   const toggle = useCallback(() => setOpen((v) => !v), []);
-  const close = useCallback(() => setOpen(false), []);
+  const close = useCallback(() => {
+    setOpen(false);
+    window.setTimeout(() => triggerRef.current?.focus(), 0);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -45,7 +48,7 @@ export function DropdownMenu({ children }: { children: ReactNode }) {
       }
     }
     function handleEscape(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") close();
     }
     document.addEventListener("mousedown", handleClickOutside);
     document.addEventListener("keydown", handleEscape);
@@ -53,7 +56,7 @@ export function DropdownMenu({ children }: { children: ReactNode }) {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleEscape);
     };
-  }, [open]);
+  }, [close, open]);
 
   return (
     <DropdownContext.Provider value={{ open, toggle, close, triggerId: `dtrig-${id}`, contentId: `dcont-${id}`, triggerRef, contentRef, contentStyle, setContentStyle }}>
@@ -157,7 +160,7 @@ export function DropdownMenuContent({ children, className, ...props }: React.HTM
       top: `${top}px`,
       left: `${left}px`,
       width: `${menuWidth}px`,
-      maxHeight: `calc(100vh - ${viewportPadding * 2}px)`,
+      maxHeight: `calc(100dvh - ${viewportPadding * 2}px)`,
       overflowY: "auto",
       zIndex: 9999,
     });

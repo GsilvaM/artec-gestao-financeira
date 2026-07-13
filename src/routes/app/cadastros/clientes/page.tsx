@@ -192,7 +192,7 @@ function ClientMobileList({
         clients.map((client) => (
           <article key={client.id} className="mobile-record-card cadastro-mobile-card">
             <div className="mobile-record-top">
-              <div className="min-w-0">
+              <div className="cadastro-mobile-copy min-w-0">
                 <h3 className="mobile-record-title">{client.nome}</h3>
                 <span className="mobile-record-label">{client.documento}</span>
                 <p className="cadastro-mobile-detail">{client.telefone || client.email || "Contato nao informado"}</p>
