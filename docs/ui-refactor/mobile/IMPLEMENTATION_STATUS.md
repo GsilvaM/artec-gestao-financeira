@@ -319,6 +319,57 @@ Protecoes mantidas:
 - Nenhuma regra financeira foi alterada.
 - Nenhuma API, schema, migration, auth, permissao, service, repository, package ou lockfile foi alterado.
 
+## Rodada sidebar, paleta e Lancamentos mobile
+
+Atualizado em: 2026-07-13
+
+Objetivo:
+
+- Corrigir atrito do input/filtros de Lancamentos durante scroll, remover o botao `Mais` do card mobile de lancamento, redistribuir acoes e modernizar sidebar/drawer/mobile com paleta profissional light/dark.
+
+Referencias de design usadas:
+
+- Sistema de papeis de cor inspirado em Material Design 3: separar `surface`, `primary`, `success`, `danger`, `warning` e `info`.
+- Padroes fintech/dashboards: fundo neutro frio, acao primaria azul profissional, estados financeiros bem separados e dark mode com contraste sem excesso de azul saturado.
+
+Arquivos alterados nesta rodada:
+
+- `index.html`
+- `src/stores/theme.ts`
+- `src/index.css`
+- `src/components/layout/app-layout.tsx`
+- `src/components/layout/page-shell.tsx`
+- `src/components/lancamentos/TransactionCard.tsx`
+- `docs/ui-refactor/mobile/IMPLEMENTATION_STATUS.md`
+
+Melhorias aplicadas:
+
+- Paleta light atualizada para base `#f7f9fc`, superficies brancas/frias, texto ink e bordas suaves.
+- Paleta dark atualizada para base `#0a0f1d`, superficies slate/ink e primario azul claro legivel.
+- Cores semanticas ajustadas: receita verde, despesa vermelho/rose, alerta ambar e informacao ciano, com soft backgrounds para badges e acoes.
+- `theme-color` da PWA atualizado para acompanhar a nova base light/dark.
+- Sidebar desktop perdeu sombra pesada, recebeu ativo tonal, indicador sutil, nav mais compacto e hover sem deslocamento.
+- Drawer mobile virou painel arredondado com blur de fundo, largura responsiva e navegacao mais limpa.
+- Bottom Navigation manteve acesso ao menu completo, renomeando `Mais` para `Menu` para clareza.
+- `FilterBar` mobile deixou de ser sticky, evitando que o input/filtros fiquem presos ou briguem com o scroll interno da pagina de Lancamentos.
+- Card mobile de Lancamentos removeu o menu `Mais opcoes` e passou a exibir `Editar`, `Duplicar` e exclusao em acoes redistribuidas na base.
+
+Validacao executada:
+
+- `npm run typecheck`: passou.
+- `npm run lint`: passou.
+- `npm run test`: passou, 16 arquivos e 136 testes.
+- `npm run build`: passou; manteve aviso conhecido de chunks acima de 500 kB em `index` e `exceljs`.
+- `npx playwright test e2e/responsividade.spec.ts --config=e2e/playwright.config.ts`: primeira execucao passou 36/37; a falha foi isolada em `botoes criticos mantem alinhamento computado`, sem encontrar heading de Lancamentos em execucao paralela.
+- `npx playwright test e2e/responsividade.spec.ts --config=e2e/playwright.config.ts --grep "botoes criticos"`: passou, 2/2 incluindo setup.
+- `npx playwright test e2e/responsividade.spec.ts --config=e2e/playwright.config.ts --workers=1`: passou, 37/37.
+- `npx playwright test --config=e2e/playwright.config.ts --workers=1`: passou, 58/58.
+
+Protecoes mantidas:
+
+- Nenhuma regra financeira foi alterada.
+- Nenhuma API, schema, migration, auth, permissao, service, repository, package ou lockfile foi alterado.
+
 ## Rodada Artec Quiet Finance - prompt anexado
 
 Atualizado em: 2026-07-13

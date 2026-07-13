@@ -800,9 +800,9 @@ const filterStyles = `
   .filter-card {
     gap: 8px;
     padding: 6px;
-    position: sticky;
-    top: 64px;
-    z-index: 20;
+    position: relative;
+    top: auto;
+    z-index: 1;
   }
 
   .filter-row {
@@ -1021,10 +1021,12 @@ const pageShellStyles = `
     position: static;
     display: flex;
     width: 100%;
+    min-width: 0;
   }
 
   .page-mobile-action > .mobile-fab {
     width: 100%;
+    max-width: 100%;
     min-height: 44px;
     border-radius: 14px;
   }

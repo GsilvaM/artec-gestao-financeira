@@ -28,16 +28,22 @@ export function FloatingActionButton({
     if (prefersReducedMotion) return;
 
     let timeout = 0;
+    const scrollTarget =
+      typeof document !== "undefined"
+        ? document.querySelector<HTMLElement>("#conteudo-principal")
+        : null;
+    const target: HTMLElement | Window = scrollTarget ?? window;
+
     function handleScroll() {
       setScrolled(true);
       window.clearTimeout(timeout);
       timeout = window.setTimeout(() => setScrolled(false), 180);
     }
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
+    target.addEventListener("scroll", handleScroll, { passive: true });
     return () => {
       window.clearTimeout(timeout);
-      window.removeEventListener("scroll", handleScroll);
+      target.removeEventListener("scroll", handleScroll);
     };
   }, [prefersReducedMotion]);
 

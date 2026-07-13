@@ -1,7 +1,6 @@
-import { ArrowDown, ArrowUp, Copy, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Copy, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { FinancialEntryRow } from "@/domain/financeiro/types";
 import { cn, formatDate, formatMoney } from "@/lib/utils";
 
@@ -38,7 +37,7 @@ export function TransactionCard({
   const isReceita = transaction.type === "receita";
 
   return (
-    <Card className="transaction-mobile-card overflow-hidden rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--surface)] transition duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[var(--shadow-md)]">
+    <Card className="transaction-mobile-card overflow-hidden rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--surface)] transition duration-200 hover:border-primary/25 hover:shadow-[var(--shadow-xs)]">
       <CardContent className="p-3.5">
         <div className="flex items-start gap-2.5">
           <span className={cn("mt-px flex size-8 shrink-0 items-center justify-center rounded-full", isReceita ? "bg-[var(--success-soft)] text-[var(--success)]" : "bg-[var(--danger-soft)] text-[var(--danger)]")}>
@@ -48,11 +47,11 @@ export function TransactionCard({
             <details className="group">
               <summary className="cursor-pointer list-none text-sm font-medium leading-5 text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary [&::-webkit-details-marker]:hidden">
                 <span className="transaction-mobile-title block group-open:line-clamp-none group-open:break-words">{transaction.description}</span>
-                <span className="sr-only">Toque para alternar a descrição completa</span>
+                <span className="sr-only">Toque para alternar a descricao completa</span>
               </summary>
             </details>
             <p className="transaction-mobile-meta mt-px text-[11px] leading-4 text-[var(--text-muted)]">
-              {[transaction.categoryName, formatDate(transaction.date)].filter(Boolean).join(" · ")}
+              {[transaction.categoryName, formatDate(transaction.date)].filter(Boolean).join(" - ")}
             </p>
             {transaction.clientName || transaction.collaboratorName ? (
               <p className="transaction-mobile-party mt-px text-[11px] leading-4 text-[var(--text-muted)]">
@@ -70,30 +69,23 @@ export function TransactionCard({
           </div>
         </div>
 
-        <div className="mt-2.5 flex items-center justify-between border-t border-[var(--border-subtle)] pt-2">
-          <span className={cn("inline-flex h-5 items-center justify-center rounded-full px-2 text-[10px] font-bold leading-none capitalize", isReceita ? "bg-[var(--bg-success)] text-[var(--text-success)]" : "bg-[var(--bg-danger)] text-[var(--text-danger)]")}>{transaction.type}</span>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="size-9 text-muted-foreground hover:text-foreground" aria-label="Mais opções">
-                <MoreHorizontal className="size-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => onEdit?.(transaction)}>
-                <Pencil className="size-4" />Editar
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onDuplicate?.(transaction)}>
-                <Copy className="size-4" />Duplicar
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem destructive onClick={() => onDelete?.(transaction)}>
-                <Trash2 className="size-4" />Excluir
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        <div className="transaction-mobile-footer">
+          <span className={cn("transaction-type-pill", isReceita ? "bg-[var(--bg-success)] text-[var(--text-success)]" : "bg-[var(--bg-danger)] text-[var(--text-danger)]")}>{transaction.type}</span>
+          <div className="transaction-mobile-actions" aria-label="Acoes do lancamento">
+            <Button variant="ghost" size="sm" className="transaction-action-btn" onClick={() => onEdit?.(transaction)} aria-label={`Editar ${transaction.description}`}>
+              <Pencil className="size-4" />
+              Editar
+            </Button>
+            <Button variant="ghost" size="sm" className="transaction-action-btn" onClick={() => onDuplicate?.(transaction)} aria-label={`Duplicar ${transaction.description}`}>
+              <Copy className="size-4" />
+              Duplicar
+            </Button>
+            <Button variant="ghost" size="icon" className="transaction-action-danger" onClick={() => onDelete?.(transaction)} aria-label={`Excluir ${transaction.description}`}>
+              <Trash2 className="size-4" />
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
   );
 }
-
