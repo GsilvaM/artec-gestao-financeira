@@ -980,7 +980,6 @@ export function PageShell({
         description={subtitle}
         actions={primaryAction}
       />
-      {children}
       {actionLabel && onAction ? (
         <div className="page-mobile-action">
           <FloatingActionButton
@@ -990,6 +989,7 @@ export function PageShell({
           />
         </div>
       ) : null}
+      {children}
       <style>{pageHeaderStyles}</style>
       <style>{`${pageShellStyles}`}</style>
     </div>
@@ -1010,7 +1010,7 @@ const pageShellStyles = `
 @media (max-width: 768px) {
   .page-stack {
     gap: 16px;
-    padding-bottom: calc(var(--mobile-bottom-nav-offset, 88px) + 156px);
+    padding-bottom: calc(var(--mobile-bottom-nav-offset, 88px) + 56px);
   }
 
   .page-primary-action {
@@ -1018,18 +1018,15 @@ const pageShellStyles = `
   }
 
   .page-mobile-action {
-    pointer-events: none;
-    position: fixed;
-    right: 16px;
-    bottom: calc(var(--mobile-bottom-nav-offset, 88px) + 14px);
-    z-index: 44;
+    position: static;
     display: flex;
-    justify-content: flex-end;
-    max-width: calc(100vw - 32px);
+    width: 100%;
   }
 
   .page-mobile-action > .mobile-fab {
-    pointer-events: auto;
+    width: 100%;
+    min-height: 44px;
+    border-radius: 14px;
   }
 }
 `;

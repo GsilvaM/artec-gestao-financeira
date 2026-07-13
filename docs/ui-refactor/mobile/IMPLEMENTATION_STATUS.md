@@ -318,6 +318,114 @@ Protecoes mantidas:
 
 - Nenhuma regra financeira foi alterada.
 - Nenhuma API, schema, migration, auth, permissao, service, repository, package ou lockfile foi alterado.
+
+## Rodada Artec Quiet Finance - prompt anexado
+
+Atualizado em: 2026-07-13
+
+Objetivo:
+
+- Reduzir peso visual e densidade aparente seguindo o prompt anexado, priorizando beleza minimalista, legibilidade financeira e hierarquia clara em mobile.
+
+Diagnostico confirmado:
+
+- O Dashboard ainda usava um hero financeiro com ornamento, status e metadados desnecessarios para um SaaS financeiro operacional.
+- Cards compartilhados, cards do Dashboard e botoes ainda tinham sombras/hover com movimento acima do necessario.
+- A Bottom Navigation estava funcional, mas visualmente pesada para mobile financeiro.
+- A projecao detalhada do Fluxo de Caixa ainda mostrava muitos dias vazios, criando ruído visual.
+- A PWA possuia `theme-color` fixo, sem acompanhar light/dark mode.
+
+Arquivos alterados nesta rodada:
+
+- `src/components/ui/button.tsx`
+- `src/components/ui/card.tsx`
+- `src/components/layout/app-layout.tsx`
+- `index.html`
+- `src/stores/theme.ts`
+- `src/routes/app/dashboard.tsx`
+- `src/routes/app/financeiro/fluxo-caixa/page.tsx`
+- `src/index.css`
+- `docs/ui-refactor/mobile/IMPLEMENTATION_STATUS.md`
+
+Melhorias aplicadas:
+
+- `Button` manteve alinhamento `inline-flex`, altura fixa, `leading-none`, icones fixos e `type="button"` padrao, mas perdeu hover vertical e sombras fortes.
+- `Card` padrao passou a usar radius menor e sem sombra por padrao; elevacao fica reservada a usos explicitos.
+- Dashboard ganhou hero financeiro simplificado com `Saldo disponivel`, numero dominante, receitas/despesas em linha discreta e CTA `Ver fluxo de caixa`.
+- Cards do Dashboard, quick actions, tabelas e registros mobile receberam radius menor, menos padding e sombras removidas.
+- Bottom Navigation mobile foi suavizada para barra de 60 px, icones de 22 px, selecao tonal e sombra superior leve.
+- Lancamentos mobile passou a priorizar o card de saldo no topo e reduziu respiro excessivo abaixo de listas com CTA no fluxo.
+- Fluxo de Caixa passou a exibir inicialmente apenas periodos com movimentacao e agrupar dias sem movimento em uma linha compacta.
+- `theme-color` da PWA agora acompanha o tema aplicado.
+
+Validacao executada:
+
+- `npm run typecheck`: passou.
+- `npm run lint`: passou.
+- `npm run test`: passou, 16 arquivos e 136 testes.
+- `npm run build`: passou; manteve aviso conhecido de chunks acima de 500 kB em `index` e `exceljs`.
+- `npx playwright test e2e/responsividade.spec.ts --config=e2e/playwright.config.ts`: passou, 37/37.
+- `npm run e2e`: primeira execucao passou 57/58, com falha isolada no CRUD financeiro apos busca; o arquivo afetado passou em seguida com `npx playwright test e2e/financeiro-fluxos.spec.ts --config=e2e/playwright.config.ts`, 3/3.
+- `npm run e2e`: segunda execucao sofreu timeouts de rede `UND_ERR_CONNECT_TIMEOUT`/`ECONNRESET` contra Supabase/Cloudflare durante rotas autenticadas.
+- `npx playwright test --config=e2e/playwright.config.ts --workers=1`: passou, 58/58, usado como validacao completa final para reduzir concorrencia contra o servico externo.
+
+Protecoes mantidas:
+
+- Nenhuma regra financeira foi alterada.
+- Nenhuma API, schema, migration, auth, permissao, service, repository, package ou lockfile foi alterado.
+
+## Rodada de auditoria por screenshots reais - img.zip
+
+Atualizado em: 2026-07-13
+
+Status: implementado; validacao final completa pendente no fechamento da tarefa.
+
+Entrada analisada:
+
+- `img.zip` com capturas mobile light/dark de Dashboard, Lancamentos, Fluxo de Caixa, Relatorios, drawer e PDF.
+- Referencias externas pesquisadas sobre UX/UI fintech 2026 indicaram foco em clareza, confianca, simplicidade, velocidade percebida, feedback de carregamento, navegacao previsivel e reducao de ruido em dashboards financeiros.
+
+Diagnostico visual confirmado nas capturas:
+
+- Lancamentos: valores monetarios dos cards de resumo cortavam em mobile, especialmente receitas/despesas.
+- Lancamentos: FAB fixo cobria a acao "Mais opcoes" nos cards e competia com a Bottom Navigation.
+- Fluxo de Caixa: chips de filtros ativos geravam barra/overflow visual no mobile.
+- Fluxo de Caixa: lista de "Projecao Detalhada" deixava o selo "Sem movimentacao prevista" invadir a data.
+- Fluxo de Caixa: legenda nativa do Recharts ficava poluida no mobile e ocupava area demais do grafico.
+- Bottom Navigation: visual pesado e sobreposto a controles na primeira dobra, especialmente busca em Lancamentos.
+- Dark mode: componentes estavam coerentes, mas a densidade vertical deixava a tela menos operacional.
+
+Mudancas aplicadas:
+
+- `src/components/layout/app-layout.tsx`
+  - Bottom Navigation deixou de ser camada fixa sobre o conteudo no mobile.
+  - App shell mobile passou a usar tres faixas: topbar, conteudo rolavel e Bottom Navigation.
+  - Bottom Navigation foi compactada, com menor altura, radius mais contido e sombra mais leve.
+- `src/components/layout/page-shell.tsx`
+  - CTA mobile deixou de ser flutuante fixo sobre listas.
+  - Acao primaria mobile agora aparece no fluxo da pagina, logo apos o header, em largura total.
+- `src/components/ui/currency-value.tsx`
+  - Escala mobile de valor monetario foi ajustada para reduzir corte sem perder leitura.
+- `src/routes/app/financeiro/fluxo-caixa/page.tsx`
+  - Removida legenda nativa do Recharts no Fluxo de Caixa.
+  - Adicionada legenda propria, compacta e controlada por CSS.
+- `src/index.css`
+  - Cards de resumo de Lancamentos ficaram mais compactos e legiveis no mobile.
+  - Valores monetarios passaram a usar eixo vertical com icone acima, evitando corte lateral.
+  - Chips ativos do Fluxo de Caixa passaram a quebrar linha em vez de gerar barra horizontal visual.
+  - Cards vazios da Projecao Detalhada passaram a separar data, selo e valor sem sobreposicao.
+  - Alturas e folgas mobile foram ajustadas para evitar CTA, paginacao e Bottom Navigation cobrindo controles.
+
+Validacoes parciais desta rodada:
+
+- `npm run typecheck`: passou.
+- `npm run lint`: passou.
+- `npx playwright test e2e/responsividade.spec.ts --config=e2e/playwright.config.ts`: passou, 37/37, apos converter a Bottom Navigation para faixa propria do shell.
+
+Protecoes mantidas:
+
+- Nenhuma regra financeira foi alterada.
+- Nenhuma API, schema, migration, auth, permissao, service, repository, package ou lockfile foi alterado.
 - Fluxo de Caixa preservou calculos, hooks, API, querystring, exportacao PDF e Excel.
 
 Validacao:

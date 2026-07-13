@@ -2,6 +2,10 @@ import { create } from "zustand";
 
 type Theme = "light" | "dark";
 const THEME_STORAGE_KEY = "artec.theme";
+const THEME_COLORS: Record<Theme, string> = {
+  light: "#f6f8fc",
+  dark: "#050b14",
+};
 
 interface ThemeStore {
   theme: Theme;
@@ -20,6 +24,9 @@ function applyTheme(theme: Theme) {
   if (typeof document === "undefined") return;
   document.documentElement.classList.toggle("dark", theme === "dark");
   document.documentElement.dataset.theme = theme;
+  document
+    .querySelector<HTMLMetaElement>('meta[name="theme-color"]')
+    ?.setAttribute("content", THEME_COLORS[theme]);
   window.localStorage.setItem(THEME_STORAGE_KEY, theme);
 }
 

@@ -19,7 +19,7 @@ const toneClass: Record<NonNullable<CurrencyValueProps["tone"]>, string> = {
 const sizeClass: Record<NonNullable<CurrencyValueProps["size"]>, string> = {
   sm: "text-sm",
   md: "text-base",
-  lg: "text-xl sm:text-2xl",
+  lg: "text-[clamp(0.92rem,4.15vw,1.35rem)] sm:text-2xl",
   xl: "text-[clamp(1.15rem,5vw,1.75rem)] sm:text-3xl",
 };
 

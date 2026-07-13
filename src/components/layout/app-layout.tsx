@@ -116,6 +116,7 @@ export function AppLayout() {
         <main id="conteudo-principal" tabIndex={-1} className="outline-none">
           <Outlet />
         </main>
+        <MobileBottomNav pathname={location.pathname} onOpenMenu={() => setMobileOpen(true)} />
       </div>
       <MobileNavDrawer
         open={mobileOpen}
@@ -124,7 +125,6 @@ export function AppLayout() {
         onClose={() => setMobileOpen(false)}
         onSignOut={handleSignOut}
       />
-      <MobileBottomNav pathname={location.pathname} onOpenMenu={() => setMobileOpen(true)} />
     </div>
   );
 }
@@ -655,7 +655,7 @@ function MobileBottomNav({ pathname, onOpenMenu }: { pathname: string; onOpenMen
 
 const sidebarStyles = `
 .app-shell {
-  --mobile-bottom-nav-offset: calc(92px + env(safe-area-inset-bottom));
+  --mobile-bottom-nav-offset: calc(64px + env(safe-area-inset-bottom));
   min-height: 100vh;
   min-height: 100dvh;
   display: flex;
@@ -695,8 +695,19 @@ const sidebarStyles = `
 }
 
 @media (max-width: 767px) {
+  .app-main {
+    height: 100dvh;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    overflow: hidden;
+  }
+
   #conteudo-principal {
-    padding: 16px 16px calc(var(--mobile-bottom-nav-offset) + 8px);
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    padding: 16px;
     scroll-margin-top: 64px;
   }
 }
@@ -1128,21 +1139,21 @@ const sidebarStyles = `
 
 @media (max-width: 767px) {
   .mobile-bottom-nav {
-    position: fixed;
-    right: 10px;
-    bottom: calc(10px + env(safe-area-inset-bottom));
-    left: 10px;
+    position: relative;
+    right: auto;
+    bottom: auto;
+    left: auto;
     z-index: 45;
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 4px;
-    min-height: 64px;
-    border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
-    border-radius: 22px;
-    background: color-mix(in srgb, var(--surface) 88%, transparent);
-    box-shadow: var(--shadow-elevated);
-    backdrop-filter: blur(18px);
-    padding: 6px;
+    gap: 2px;
+    min-height: 60px;
+    border-top: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    box-shadow: 0 -8px 24px rgba(3, 10, 24, 0.08);
+    backdrop-filter: blur(14px) saturate(1.08);
+    margin: 0;
+    padding: 4px 8px calc(4px + env(safe-area-inset-bottom));
   }
 
   .mobile-bottom-link {
@@ -1153,13 +1164,13 @@ const sidebarStyles = `
     align-items: center;
     justify-content: center;
     gap: 5px;
-    border-radius: 16px;
+    border-radius: 12px;
     color: var(--text-muted);
     background: transparent;
     border: 0;
     padding: 0;
     font-size: 11px;
-    font-weight: 800;
+    font-weight: 750;
     line-height: 1;
     text-decoration: none;
     transition: background-color 150ms ease, color 150ms ease, transform 150ms ease, box-shadow 150ms ease;
@@ -1184,8 +1195,8 @@ const sidebarStyles = `
   }
 
   .mobile-bottom-link svg {
-    width: 18px;
-    height: 18px;
+    width: 22px;
+    height: 22px;
     flex-shrink: 0;
   }
 
@@ -1197,9 +1208,9 @@ const sidebarStyles = `
   }
 
   .mobile-bottom-link-active {
-    background: var(--primary);
-    color: var(--primary-foreground);
-    box-shadow: var(--shadow-sm);
+    background: color-mix(in srgb, var(--primary) 12%, transparent);
+    color: var(--primary);
+    box-shadow: inset 0 2px 0 var(--primary);
   }
 
   .mobile-bottom-link:active {
@@ -1209,27 +1220,24 @@ const sidebarStyles = `
 
 @media (max-width: 380px) {
   .app-shell {
-    --mobile-bottom-nav-offset: calc(88px + env(safe-area-inset-bottom));
+    --mobile-bottom-nav-offset: calc(62px + env(safe-area-inset-bottom));
   }
 
   .mobile-bottom-nav {
-    right: 8px;
-    left: 8px;
-    min-height: 60px;
-    border-radius: 18px;
-    padding: 5px;
+    min-height: 58px;
+    padding-inline: 6px;
   }
 
   .mobile-bottom-link {
     min-height: 50px;
     gap: 4px;
-    border-radius: 14px;
-    font-size: 10px;
+    border-radius: 11px;
+    font-size: 9.75px;
   }
 
   .mobile-bottom-link svg {
-    width: 17px;
-    height: 17px;
+    width: 20px;
+    height: 20px;
   }
 }
 

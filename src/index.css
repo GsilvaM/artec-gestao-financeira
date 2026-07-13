@@ -707,9 +707,9 @@
   }
 
   .motion-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-card-hover);
-    border-color: color-mix(in srgb, var(--primary) 20%, var(--color-border));
+    transform: none;
+    box-shadow: var(--shadow-xs);
+    border-color: color-mix(in srgb, var(--primary) 14%, var(--color-border));
   }
 
   .motion-control {
@@ -762,7 +762,7 @@
       var(--color-surface) 86%,
       transparent
     ) !important;
-    box-shadow: var(--shadow-sm) !important;
+    box-shadow: var(--shadow-xs) !important;
     backdrop-filter: blur(14px);
   }
 
@@ -1126,10 +1126,10 @@
   .mobile-record-card {
     min-width: 0;
     border: 1px solid var(--border-soft);
-    border-radius: 18px;
-    background: color-mix(in srgb, var(--color-surface) 92%, transparent);
-    box-shadow: var(--shadow-xs);
-    padding: 14px;
+    border-radius: 14px;
+    background: var(--color-surface);
+    box-shadow: none;
+    padding: 12px;
     overflow: hidden;
   }
 
@@ -1244,7 +1244,7 @@
 
     .page-stack:has(.page-mobile-action) .mobile-list > :last-child,
     .page-stack:has(.page-mobile-action) .transaction-mobile-card:last-child {
-      margin-bottom: 156px;
+      margin-bottom: calc(var(--mobile-bottom-nav-offset, 72px) + 24px);
     }
   }
 
@@ -1634,30 +1634,41 @@
 
     .lancamentos-summary-grid > .summary-card:last-child {
       grid-column: 1 / -1;
+      order: -2;
+    }
+
+    .lancamentos-summary-grid > .summary-card:first-child {
+      order: 2;
     }
 
     .lancamentos-summary-grid .summary-card {
-      min-height: 118px;
+      min-height: 96px;
       padding: 12px;
-      border-radius: 16px;
-      gap: 8px;
+      border-radius: 14px;
+      gap: 7px;
     }
 
     .lancamentos-summary-grid .summary-card > p:first-of-type {
-      font-size: 0.625rem;
+      font-size: 0.6rem;
     }
 
     .lancamentos-summary-grid .summary-card > div {
-      align-items: center;
-      flex-direction: row;
-      gap: 8px;
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .lancamentos-summary-grid .summary-card > div > div:first-child {
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
     }
 
     .lancamentos-summary-grid .summary-card > div > p {
-      width: auto;
-      flex: 1 1 auto;
+      width: 100%;
+      flex: 0 1 auto;
       min-width: 0;
-      font-size: clamp(0.82rem, 4.45vw, 1.05rem);
+      font-size: clamp(0.86rem, 4.35vw, 1.18rem);
       line-height: 1.05;
       overflow-wrap: normal;
       white-space: nowrap;
@@ -1673,7 +1684,7 @@
     }
 
     .transaction-mobile-card {
-      border-radius: 16px;
+      border-radius: 14px;
     }
 
     .transaction-mobile-copy {
@@ -1708,7 +1719,7 @@
     }
 
     .lancamentos-pagination {
-      margin-bottom: calc(var(--mobile-bottom-nav-offset, 88px) + 12px);
+      margin-bottom: calc(var(--mobile-bottom-nav-offset, 72px) + 24px);
     }
 
     .mobile-summary-grid {
@@ -1717,9 +1728,9 @@
     }
 
     .mobile-summary-grid .stat-card {
-      min-height: 104px;
+      min-height: 96px;
       padding: 12px;
-      border-radius: 16px;
+      border-radius: 14px;
     }
 
     .mobile-summary-grid .stat-description {
@@ -1854,6 +1865,7 @@
 
     .lancamentos-summary-grid > .summary-card:last-child {
       grid-column: auto;
+      order: -2;
     }
 
     .transaction-mobile-value {
@@ -2054,9 +2066,9 @@
 
   .cashflow-card {
     border: 1px solid var(--border-soft);
-    border-radius: 18px;
-    background: color-mix(in srgb, var(--color-surface) 92%, transparent);
-    padding: 14px;
+    border-radius: 14px;
+    background: var(--color-surface);
+    padding: 12px;
     min-width: 0;
   }
 
@@ -2101,6 +2113,34 @@
   .cashflow-card-empty {
     border-style: dashed;
     background: color-mix(in srgb, var(--color-surface) 82%, var(--surface-muted));
+  }
+
+  .cashflow-empty-group {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-style: solid;
+  }
+
+  .cashflow-empty-group div {
+    display: grid;
+    min-width: 0;
+    gap: 4px;
+  }
+
+  .cashflow-empty-group span {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1.25;
+  }
+
+  .cashflow-empty-group strong {
+    color: var(--text-strong);
+    font-size: 0.8125rem;
+    font-weight: 750;
+    line-height: 1.2;
   }
 
   .cashflow-card header {
@@ -2162,12 +2202,12 @@
   }
 
   .cashflow-period-button {
-    display: inline-flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     min-height: 44px;
     width: 100%;
     min-width: 0;
     align-items: center;
-    justify-content: space-between;
     gap: 12px;
     border: 0;
     border-radius: 14px;
@@ -2184,9 +2224,10 @@
   }
 
   .cashflow-period-button > span {
-    display: inline-flex;
+    display: flex;
     min-width: 0;
     align-items: center;
+    flex-wrap: wrap;
     gap: 8px;
     color: var(--text-strong);
     font-size: 0.875rem;
@@ -2196,14 +2237,19 @@
 
   .cashflow-period-copy > span {
     min-width: 0;
-    overflow-wrap: anywhere;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
   }
 
   .cashflow-period-copy > small {
     display: inline-flex;
+    flex: 0 1 auto;
+    max-width: 100%;
     min-height: 22px;
     align-items: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
     border-radius: 999px;
     background: color-mix(in srgb, var(--surface-muted) 72%, transparent);
     color: var(--text-muted);
@@ -2253,7 +2299,7 @@
     display: grid;
     gap: 16px;
     padding: 16px;
-    border-radius: 18px;
+    border-radius: 14px;
     border: 1px solid var(--color-border);
     background: color-mix(in srgb, var(--color-surface) 92%, transparent);
     box-shadow: var(--shadow-xs);
@@ -2346,6 +2392,40 @@
     width: 100%;
     min-width: 0;
     height: 340px;
+  }
+
+  .cashflow-chart-shell {
+    display: grid;
+    min-width: 0;
+    gap: 12px;
+  }
+
+  .cashflow-chart-legend {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px 14px;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 800;
+    line-height: 1.1;
+  }
+
+  .cashflow-chart-legend span {
+    display: inline-flex;
+    min-width: 0;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+
+  .cashflow-chart-legend i {
+    width: 9px;
+    height: 9px;
+    flex: 0 0 auto;
+    border-radius: 999px;
   }
 
   .cashflow-table {
@@ -2460,16 +2540,16 @@
     .cashflow-active-filter-summary {
       display: flex;
       min-width: 0;
+      flex-wrap: wrap;
       gap: 8px;
-      overflow-x: auto;
       margin-top: -4px;
-      padding-bottom: 4px;
-      scrollbar-width: thin;
+      overflow: visible;
+      padding-bottom: 0;
     }
 
     .cashflow-active-filter-summary span {
-      flex: 0 0 auto;
-      max-width: 78vw;
+      flex: 1 1 auto;
+      max-width: 100%;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -2545,8 +2625,14 @@
     }
 
     .cashflow-chart-frame {
-      height: 300px;
+      height: 286px;
       min-width: 0;
+    }
+
+    .cashflow-chart-legend {
+      justify-content: flex-start;
+      gap: 7px 10px;
+      font-size: 0.7rem;
     }
 
     .cashflow-card-empty {
@@ -2569,6 +2655,8 @@
     }
 
     .cashflow-card-empty .cashflow-period-copy > small {
+      flex-basis: calc(100% - 22px);
+      margin-left: 22px;
       min-height: 20px;
       padding-inline: 7px;
       font-size: 0.64rem;
@@ -2605,9 +2693,9 @@
   .category-card {
     min-width: 0;
     border: 1px solid var(--border-soft);
-    border-radius: 18px;
-    background: color-mix(in srgb, var(--color-surface) 92%, transparent);
-    padding: 14px;
+    border-radius: 14px;
+    background: var(--color-surface);
+    padding: 12px;
     display: flex;
     align-items: center;
     justify-content: space-between;

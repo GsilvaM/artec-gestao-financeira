@@ -5,7 +5,6 @@ import {
   Bar,
   CartesianGrid,
   ComposedChart,
-  Legend,
   Line,
   ReferenceDot,
   ReferenceLine,
@@ -409,14 +408,19 @@ export function Component() {
               <Skeleton className="h-3 w-48 rounded-full" />
             </div>
           ) : chartData.length ? (
-            <div className="cashflow-chart-frame">
+            <div className="cashflow-chart-shell">
+              <div className="cashflow-chart-legend" aria-hidden="true">
+                {chartMode === "full" && appliedFilters.view !== "outflows" ? <span><i className="bg-[var(--chart-revenue)]" />Entradas</span> : null}
+                {chartMode === "full" && appliedFilters.view !== "inflows" ? <span><i className="bg-[var(--chart-expense)]" />Saidas</span> : null}
+                <span><i className="bg-[var(--chart-balance)]" />Saldo projetado</span>
+              </div>
+              <div className="cashflow-chart-frame">
               <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={chartData} margin={{ top: 18, right: 18, bottom: 8, left: 0 }}>
+                <ComposedChart data={chartData} margin={{ top: 8, right: 12, bottom: 8, left: 0 }}>
                   <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="label" tick={{ fontSize: 12, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
                   <YAxis tickFormatter={formatCompactMoney} tick={{ fontSize: 12, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} width={78} />
                   <Tooltip content={<CashFlowTooltip />} />
-                  <Legend verticalAlign="top" align="right" iconType="circle" wrapperStyle={{ fontSize: 12, paddingBottom: 12 }} />
                   <ReferenceLine y={minimumBalance} stroke="var(--warning)" strokeDasharray="4 4" />
                   {chartMode === "full" && appliedFilters.view !== "outflows" ? <Bar dataKey="inflows" name="Entradas" fill="var(--chart-revenue)" radius={[6, 6, 0, 0]} maxBarSize={28} /> : null}
                   {chartMode === "full" && appliedFilters.view !== "inflows" ? <Bar dataKey="outflows" name="Saídas" fill="var(--chart-expense)" radius={[6, 6, 0, 0]} maxBarSize={28} /> : null}
@@ -425,6 +429,7 @@ export function Component() {
                   {todayPoint ? <ReferenceDot x={todayPoint.label} y={todayPoint.projectedBalance} r={6} fill="var(--warning)" stroke="var(--surface)" strokeWidth={2} /> : null}
                 </ComposedChart>
               </ResponsiveContainer>
+              </div>
             </div>
           ) : (
             <EmptyState title="Nenhuma projeção encontrada." description="Não há contas pendentes no período selecionado." />
@@ -581,6 +586,10 @@ function CashFlowPeriodList({ periods, initialBalance, isLoading, isError, expan
     );
   }
 
+  const periodsWithMovement = periods.filter((period) => period.transactions.length > 0);
+  const hiddenEmptyPeriods = periods.length - periodsWithMovement.length;
+  const visiblePeriods = periodsWithMovement.length ? periodsWithMovement : periods.slice(0, 1);
+
   return (
     <div className="grid gap-3 p-4">
       <article className="cashflow-card cashflow-initial-card">
@@ -589,7 +598,7 @@ function CashFlowPeriodList({ periods, initialBalance, isLoading, isError, expan
           <strong>{formatMoney(initialBalance)}</strong>
         </header>
       </article>
-      {periods.map((period) => {
+      {visiblePeriods.map((period) => {
         const expanded = expandedRows.has(period.id);
         const hasTransactions = period.transactions.length > 0;
         return (
@@ -630,6 +639,14 @@ function CashFlowPeriodList({ periods, initialBalance, isLoading, isError, expan
           </article>
         );
       })}
+      {hiddenEmptyPeriods > 0 ? (
+        <article className="cashflow-card cashflow-card-empty cashflow-empty-group">
+          <div>
+            <span>{hiddenEmptyPeriods} {hiddenEmptyPeriods === 1 ? "dia sem movimentacao prevista" : "dias sem movimentacao prevista"}</span>
+            <strong>Ocultos para leitura rapida</strong>
+          </div>
+        </article>
+      ) : null}
     </div>
   );
 }

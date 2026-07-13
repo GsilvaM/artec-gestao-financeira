@@ -8,15 +8,15 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow-[var(--shadow-sm)] hover:-translate-y-0.5 hover:bg-primary-hover hover:shadow-[var(--shadow-md)]",
+          "bg-primary text-primary-foreground shadow-[var(--shadow-xs)] hover:bg-primary-hover hover:shadow-[var(--shadow-sm)]",
         destructive:
-          "bg-destructive text-destructive-foreground shadow-[var(--shadow-sm)] hover:-translate-y-0.5 hover:bg-destructive/90",
+          "bg-destructive text-destructive-foreground shadow-[var(--shadow-xs)] hover:bg-destructive/90",
         outline:
-          "border border-border bg-surface text-foreground shadow-[var(--shadow-xs)] hover:-translate-y-0.5 hover:border-primary hover:bg-primary-soft",
+          "border border-border bg-surface text-foreground shadow-none hover:border-primary hover:bg-primary-soft",
         secondary:
-          "border border-border bg-[var(--surface-2)] text-foreground shadow-[var(--shadow-xs)] hover:-translate-y-0.5 hover:bg-[var(--surface-3)]",
+          "border border-border bg-[var(--surface-2)] text-foreground shadow-none hover:bg-[var(--surface-3)]",
         ghost:
-          "text-muted-foreground hover:bg-[var(--surface-2)] hover:text-foreground hover:-translate-y-px",
+          "text-muted-foreground hover:bg-[var(--surface-2)] hover:text-foreground",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {

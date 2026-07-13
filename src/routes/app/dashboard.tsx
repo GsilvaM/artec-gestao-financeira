@@ -377,25 +377,22 @@ function FinancialHeroCard({
   balance,
   revenue,
   expenses,
+  onViewCashFlow,
 }: {
   balance: number;
   revenue: number;
   expenses: number;
+  onViewCashFlow: () => void;
 }) {
   return (
     <section className="financial-hero-card">
-      <div className="financial-hero-glow" aria-hidden="true" />
       <div className="financial-hero-header">
         <div>
-          <h2>Cartão financeiro</h2>
-          <p>Resumo do caixa financeiro.</p>
+          <h2>Saldo disponível</h2>
+          <p>Resumo consolidado do caixa.</p>
         </div>
-        <span className="financial-hero-status">Ativo</span>
       </div>
       <div className="financial-hero-body">
-        <p className="financial-company">Artec Gestão</p>
-        <p className="financial-label">CONTA FINANCEIRA</p>
-        <p className="financial-balance-label">Saldo atual</p>
         <strong className="financial-balance">{formatMoney(balance)}</strong>
       </div>
       <div className="financial-hero-footer">
@@ -412,6 +409,15 @@ function FinancialHeroCard({
           <strong>{formatMoney(expenses)}</strong>
         </div>
       </div>
+      <Button
+        type="button"
+        variant="secondary"
+        size="sm"
+        className="financial-hero-action"
+        onClick={onViewCashFlow}
+      >
+        Ver fluxo de caixa
+      </Button>
     </section>
   );
 }
@@ -924,6 +930,7 @@ export function Component() {
                 balance={saldo}
                 revenue={totalReceitas}
                 expenses={totalDespesas}
+                onViewCashFlow={() => navigate("/app/financeiro/fluxo-caixa")}
               />
 
               <div className="dashboard-kpi-panel">
@@ -1289,102 +1296,62 @@ const dashboardStyles = `
 
 /* Financial Hero Card */
 .financial-hero-card {
-  padding: 26px 28px;
-  border-radius: 24px;
+  padding: 22px;
+  border-radius: 18px;
   color: var(--primary-foreground);
   position: relative;
   overflow: hidden;
-  background:
-    radial-gradient(circle at 85% 10%, rgba(96, 165, 250, 0.38), transparent 170px),
-    linear-gradient(135deg, var(--sidebar) 0%, var(--sidebar-2) 48%, var(--sidebar-3) 100%);
-  box-shadow: 0 24px 58px rgba(6, 26, 56, 0.28);
+  background: linear-gradient(135deg, var(--sidebar) 0%, var(--sidebar-2) 62%, var(--sidebar-3) 100%);
+  box-shadow: var(--shadow-sm);
   height: fit-content;
-}
-
-.financial-hero-glow {
-  position: absolute;
-  width: 230px;
-  height: 230px;
-  right: -70px;
-  top: -70px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.12);
 }
 
 .financial-hero-header {
   position: relative;
   z-index: 1;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
 }
 
 .financial-hero-header h2 {
   margin: 0;
-  font-size: 17px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 750;
+  letter-spacing: 0;
 }
 
 .financial-hero-header p {
-  margin: 6px 0 0;
+  margin: 4px 0 0;
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.82);
-}
-
-.financial-hero-status {
-  padding: 7px 14px;
-  border-radius: 999px;
-  background: rgba(34, 197, 94, 0.9);
-  color: var(--primary-foreground);
-  font-size: 12px;
-  font-weight: 700;
+  color: rgba(255, 255, 255, 0.68);
 }
 
 .financial-hero-body {
   position: relative;
   z-index: 1;
-  margin-top: 32px;
-}
-
-.financial-company {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 750;
-}
-
-.financial-label {
-  margin: 4px 0 28px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: rgba(255, 255, 255, 0.78);
-}
-
-.financial-balance-label {
-  margin: 0 0 8px;
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.82);
+  margin-top: 26px;
 }
 
 .financial-balance {
   display: block;
-  font-size: clamp(1.7rem, 4vw, 2.5rem);
+  font-size: clamp(1.85rem, 4vw, 2.75rem);
   line-height: 1.1;
   font-weight: 750;
-  letter-spacing: -0.04em;
+  letter-spacing: 0;
+  overflow-wrap: anywhere;
 }
 
 .financial-hero-footer {
   position: relative;
   z-index: 1;
-  margin-top: 26px;
-  padding: 16px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.11);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
 }
 
 .financial-hero-footer > div {
@@ -1394,8 +1361,8 @@ const dashboardStyles = `
 }
 
 .financial-hero-footer > div + div {
-  padding-left: 18px;
-  border-left: 1px solid rgba(255, 255, 255, 0.16);
+  padding-left: 0;
+  border-left: none;
 }
 
 .financial-mini-label {
@@ -1409,17 +1376,32 @@ const dashboardStyles = `
 }
 
 .financial-expense {
-  color: var(--warning-foreground);
+  color: var(--danger-foreground);
 }
 
 .financial-hero-footer strong {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 750;
+  overflow-wrap: anywhere;
+}
+
+.financial-hero-action {
+  position: relative;
+  z-index: 1;
+  margin-top: 18px;
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--primary-foreground);
+}
+
+.financial-hero-action:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: var(--primary-foreground);
 }
 
 @media (max-width: 768px) {
   .financial-hero-card {
-    border-radius: 20px;
+    border-radius: 16px;
     padding: 18px;
   }
 
@@ -1427,17 +1409,7 @@ const dashboardStyles = `
     font-size: clamp(1.7rem, 8vw, 2.3rem);
   }
 
-  .financial-hero-footer {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-
-  .financial-hero-footer > div + div {
-    padding-left: 0;
-    border-left: none;
-    padding-top: 10px;
-    border-top: 1px solid rgba(255, 255, 255, 0.16);
-  }
+  .financial-hero-footer { gap: 12px; }
 }
 
 @media (max-width: 480px) {
@@ -1449,27 +1421,12 @@ const dashboardStyles = `
     font-size: 15px;
   }
 
-  .financial-hero-header p,
-  .financial-label {
+  .financial-hero-header p {
     display: none;
-  }
-
-  .financial-hero-status {
-    padding: 6px 10px;
-    font-size: 11px;
   }
 
   .financial-hero-body {
     margin-top: 18px;
-  }
-
-  .financial-company {
-    font-size: 16px;
-  }
-
-  .financial-balance-label {
-    margin-top: 14px;
-    font-size: 12px;
   }
 
   .financial-balance {
@@ -1477,8 +1434,7 @@ const dashboardStyles = `
   }
 
   .financial-hero-footer {
-    margin-top: 18px;
-    padding: 12px;
+    margin-top: 16px;
   }
 
   .financial-hero-footer strong {
@@ -1489,15 +1445,14 @@ const dashboardStyles = `
 
 /* Dashboard Metric Cards (replace old .metric-card) */
 .metric-card {
-  padding: 20px;
-  border-radius: 18px;
+  padding: 16px;
+  border-radius: 14px;
   border: 1px solid var(--color-border);
-  background: color-mix(in srgb, var(--color-surface) 90%, transparent);
-  box-shadow: var(--shadow-card);
-  backdrop-filter: blur(14px);
+  background: var(--color-surface);
+  box-shadow: none;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }
 
 .card-hover {
@@ -1505,22 +1460,22 @@ const dashboardStyles = `
 }
 
 .card-hover:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-card-hover);
-  border-color: var(--color-border-strong);
+  transform: none;
+  box-shadow: var(--shadow-xs);
+  border-color: color-mix(in srgb, var(--primary) 14%, var(--color-border));
 }
 
 .metric-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
   display: grid;
   place-items: center;
 }
 
 .metric-icon svg {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
 }
 
 .metric-title {
@@ -1536,10 +1491,10 @@ const dashboardStyles = `
   display: block;
   margin-top: 6px;
   color: var(--text-strong);
-  font-size: clamp(1.1rem, 1.5vw, 1.5rem);
+  font-size: clamp(1rem, 1.35vw, 1.32rem);
   line-height: 1.1;
   font-weight: 750;
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1560,12 +1515,11 @@ const dashboardStyles = `
 .chart-card {
   min-width: 0;
   overflow: hidden;
-  padding: 24px;
-  border-radius: 20px;
+  padding: 20px;
+  border-radius: 16px;
   border: 1px solid var(--color-border);
-  background: color-mix(in srgb, var(--color-surface) 90%, transparent);
-  box-shadow: var(--shadow-card);
-  backdrop-filter: blur(14px);
+  background: var(--color-surface);
+  box-shadow: none;
 }
 
 .chart-card-header {
@@ -1653,12 +1607,11 @@ const dashboardStyles = `
 /* Quick actions */
 .quick-actions-card {
   min-width: 0;
-  padding: 24px;
-  border-radius: 22px;
+  padding: 20px;
+  border-radius: 16px;
   border: 1px solid var(--color-border);
-  background: color-mix(in srgb, var(--color-surface) 90%, transparent);
-  box-shadow: var(--shadow-card);
-  backdrop-filter: blur(14px);
+  background: var(--color-surface);
+  box-shadow: none;
 }
 
 .quick-actions-card h2 {
@@ -1676,11 +1629,11 @@ const dashboardStyles = `
 
 .quick-action-card {
   width: 100%;
-  min-height: 76px;
-  padding: 14px 16px;
-  border-radius: 15px;
+  min-height: 68px;
+  padding: 12px 14px;
+  border-radius: 13px;
   border: 1px solid var(--color-border);
-  background: color-mix(in srgb, var(--color-surface) 84%, transparent);
+  background: color-mix(in srgb, var(--color-surface) 96%, var(--surface-2));
   color: inherit;
   text-decoration: none;
   display: inline-flex;
@@ -1726,7 +1679,7 @@ const dashboardStyles = `
 .quick-action-card:hover {
   background: var(--color-surface-muted);
   border-color: var(--color-border-strong);
-  transform: translateX(2px);
+  transform: none;
 }
 
 .quick-action-left {
@@ -1737,17 +1690,17 @@ const dashboardStyles = `
 }
 
 .quick-action-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 15px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
   display: grid;
   place-items: center;
   flex-shrink: 0;
 }
 
 .quick-action-icon svg {
-  width: 22px;
-  height: 22px;
+  width: 19px;
+  height: 19px;
   flex-shrink: 0;
 }
 
@@ -1790,12 +1743,11 @@ const dashboardStyles = `
 .table-card {
   min-width: 0;
   overflow: hidden;
-  padding: 20px;
-  border-radius: 22px;
+  padding: 18px;
+  border-radius: 16px;
   border: 1px solid var(--color-border);
-  background: color-mix(in srgb, var(--color-surface) 90%, transparent);
-  box-shadow: var(--shadow-card);
-  backdrop-filter: blur(14px);
+  background: var(--color-surface);
+  box-shadow: none;
 }
 
 .table-card-header {
@@ -1825,10 +1777,10 @@ const dashboardStyles = `
 .dashboard-mobile-record {
   min-width: 0;
   border: 1px solid var(--color-border);
-  border-radius: 16px;
-  background: color-mix(in srgb, var(--color-surface) 92%, transparent);
-  padding: 14px;
-  box-shadow: var(--shadow-xs);
+  border-radius: 14px;
+  background: var(--color-surface);
+  padding: 12px;
+  box-shadow: none;
 }
 
 .dashboard-mobile-record-top,
@@ -1885,8 +1837,8 @@ const dashboardStyles = `
   .chart-card,
   .quick-actions-card,
   .table-card {
-    padding: 16px;
-    border-radius: 18px;
+    padding: 14px;
+    border-radius: 14px;
   }
 
   .chart-card-header,

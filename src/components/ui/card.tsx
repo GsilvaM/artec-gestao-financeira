@@ -8,7 +8,7 @@ export function Card({ elevated = false, className, ...props }: CardProps) {
   return (
     <div
       className={cn(
-        "motion-card min-w-0 rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-[var(--surface)] text-[var(--foreground)] shadow-[var(--shadow-sm)]",
+        "motion-card min-w-0 rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--surface)] text-[var(--foreground)] shadow-none",
         elevated && "shadow-elevated",
         className
       )}
