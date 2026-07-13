@@ -44,6 +44,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState, PageShell } from "@/components/layout/page-shell";
 import { useCategories } from "@/domain/financeiro/hooks/use-categories";
 import { useProjectedCashFlow } from "@/domain/financeiro/hooks/use-cash-flow";
@@ -398,7 +399,15 @@ export function Component() {
           {isError ? (
             <div className="flex h-[320px] items-center justify-center rounded-xl border border-dashed border-destructive/30 bg-danger-50 text-sm font-semibold text-destructive">Erro ao carregar fluxo de caixa.</div>
           ) : isLoading ? (
-            <div className="h-[320px] animate-pulse rounded-xl bg-surface-muted" />
+            <div className="cashflow-chart-loading" aria-label="Carregando grafico do fluxo de caixa">
+              <Skeleton className="h-4 w-36 rounded-full" />
+              <div className="cashflow-chart-loading-bars">
+                {Array.from({ length: 8 }).map((_, index) => (
+                  <span key={index} style={{ height: `${34 + (index % 4) * 14}%` }} />
+                ))}
+              </div>
+              <Skeleton className="h-3 w-48 rounded-full" />
+            </div>
           ) : chartData.length ? (
             <div className="cashflow-chart-frame">
               <ResponsiveContainer width="100%" height="100%">
@@ -487,9 +496,9 @@ function ProjectionTable({ periods, initialBalance, isLoading, isError, expanded
           <tbody>
             <tr className="cashflow-initial-row">
               <td><span className="inline-flex items-center gap-2"><CheckCircle2 className="size-4 text-primary" />Saldo inicial</span></td>
-              <td className="text-right">-</td>
-              <td className="text-right">-</td>
-              <td className="text-right">-</td>
+              <td className="text-right text-muted-foreground">Sem previsao</td>
+              <td className="text-right text-muted-foreground">Sem previsao</td>
+              <td className="text-right text-muted-foreground">Sem movimento</td>
               <td className="text-right font-black text-primary">{formatMoney(initialBalance)}</td>
             </tr>
             {isLoading ? (
@@ -508,9 +517,9 @@ function ProjectionTable({ periods, initialBalance, isLoading, isError, expanded
                         {period.label}
                       </span>
                     </td>
-                    <td className="text-right font-bold text-success">{period.inflows ? formatMoney(period.inflows) : "-"}</td>
-                    <td className="text-right font-bold text-destructive">{period.outflows ? formatMoney(period.outflows) : "-"}</td>
-                    <td className={cn("text-right font-bold", period.netMovement < 0 ? "text-destructive" : period.netMovement > 0 ? "text-success" : "text-muted-foreground")}>{period.netMovement ? formatSignedMoney(period.netMovement) : "-"}</td>
+                    <td className="text-right font-bold text-success">{period.inflows ? formatMoney(period.inflows) : <span className="text-muted-foreground">R$ 0,00</span>}</td>
+                    <td className="text-right font-bold text-destructive">{period.outflows ? formatMoney(period.outflows) : <span className="text-muted-foreground">R$ 0,00</span>}</td>
+                    <td className={cn("text-right font-bold", period.netMovement < 0 ? "text-destructive" : period.netMovement > 0 ? "text-success" : "text-muted-foreground")}>{period.netMovement ? formatSignedMoney(period.netMovement) : "Sem movimento"}</td>
                     <td className="text-right font-black text-primary">{formatMoney(period.projectedBalance)}</td>
                   </tr>
                   {expanded ? (
@@ -545,9 +554,9 @@ function CashFlowPeriodList({ periods, initialBalance, isLoading, isError, expan
       <div className="grid gap-3 p-4">
         {Array.from({ length: 3 }).map((_, index) => (
           <div key={index} className="cashflow-card">
-            <div className="h-3 w-28 animate-pulse rounded-full bg-surface-muted" />
-            <div className="mt-3 h-5 w-40 animate-pulse rounded-full bg-surface-muted" />
-            <div className="mt-4 h-4 w-full animate-pulse rounded-full bg-surface-muted" />
+            <Skeleton className="h-3 w-28 rounded-full" />
+            <Skeleton className="mt-3 h-5 w-40 rounded-full" />
+            <Skeleton className="mt-4 h-4 w-full rounded-full" />
           </div>
         ))}
       </div>
@@ -592,9 +601,10 @@ function CashFlowPeriodList({ periods, initialBalance, isLoading, isError, expan
               disabled={!hasTransactions}
               aria-expanded={hasTransactions ? expanded : undefined}
             >
-              <span>
+              <span className="cashflow-period-copy">
                 {hasTransactions ? expanded ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" /> : null}
-                {period.label}
+                <span>{period.label}</span>
+                {!hasTransactions ? <small>Sem movimentacao prevista</small> : null}
               </span>
               <strong className={getMoneyToneClass(period.projectedBalance)}>{formatMoney(period.projectedBalance)}</strong>
             </button>
@@ -615,9 +625,7 @@ function CashFlowPeriodList({ periods, initialBalance, isLoading, isError, expan
                   </strong>
                 </div>
               </div>
-            ) : (
-              <p className="cashflow-empty-period-note">Sem movimentacao prevista</p>
-            )}
+            ) : null}
             {expanded ? <TransactionCards transactions={period.transactions} /> : null}
           </article>
         );
@@ -771,9 +779,9 @@ function KpiSkeleton() {
     <div className="cashflow-kpi-grid">
       {Array.from({ length: 5 }).map((_, index) => (
         <div key={index} className="stat-card">
-          <div className="h-3 w-28 animate-pulse rounded-full bg-surface-muted" />
-          <div className="mt-4 h-8 w-40 animate-pulse rounded-full bg-surface-muted" />
-          <div className="mt-3 h-3 w-32 animate-pulse rounded-full bg-surface-muted" />
+          <Skeleton className="h-3 w-28 rounded-full" />
+          <Skeleton className="mt-4 h-8 w-40 rounded-full" />
+          <Skeleton className="mt-3 h-3 w-32 rounded-full" />
         </div>
       ))}
     </div>

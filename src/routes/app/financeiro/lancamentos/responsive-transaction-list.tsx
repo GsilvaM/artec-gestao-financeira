@@ -1,5 +1,6 @@
 import { EmptyState } from "@/components/layout/page-shell";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { FinancialEntryRow } from "@/domain/financeiro/types";
 import { useEffect, useState } from "react";
 import { TransactionCard } from "./transaction-card.js";
@@ -27,16 +28,16 @@ export function ResponsiveTransactionList({ entries, isLoading, error, onEdit, o
             <div key={i} className="space-y-3 rounded-lg border border-border bg-card p-3 shadow-[var(--shadow-card)]">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex flex-1 items-center gap-2">
-                  <div className="size-7 animate-pulse rounded-md bg-muted" />
+                  <Skeleton className="size-7 rounded-md" />
                   <div className="flex-1 space-y-2">
-                    <div className="h-3.5 w-3/4 animate-pulse rounded-full bg-muted" />
-                    <div className="h-3 w-1/2 animate-pulse rounded-full bg-muted" />
+                    <Skeleton className="h-3.5 w-3/4 rounded-full" />
+                    <Skeleton className="h-3 w-1/2 rounded-full" />
                   </div>
                 </div>
-                <div className="h-5 w-20 animate-pulse rounded-full bg-muted" />
+                <Skeleton className="h-5 w-20 rounded-full" />
               </div>
               <div className="h-px bg-border/70" />
-              <div className="h-3 w-24 animate-pulse rounded-full bg-muted" />
+              <Skeleton className="h-3 w-24 rounded-full" />
             </div>
           ))}
         </div>

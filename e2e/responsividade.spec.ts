@@ -221,6 +221,32 @@ test("lancamentos mobile preserva valores, textos e paginacao compacta", async (
     expect(box).not.toBeNull();
     expect(box!.height).toBeLessThanOrEqual(92);
   }
+
+  const fab = page.locator(".mobile-fab");
+  await expect(fab).toBeVisible();
+  await expectButtonLocatorAligned(fab);
+  const fabMetrics = await page.evaluate(() => {
+    const fabElement = document.querySelector<HTMLElement>(".mobile-fab");
+    const bottomNav = document.querySelector<HTMLElement>(".mobile-bottom-nav");
+    const paginationElement = document.querySelector<HTMLElement>(".lancamentos-pagination");
+    if (!fabElement || !bottomNav) return null;
+    const fabRect = fabElement.getBoundingClientRect();
+    const bottomRect = bottomNav.getBoundingClientRect();
+    const paginationRect = paginationElement?.getBoundingClientRect();
+    return {
+      fabBottom: fabRect.bottom,
+      navTop: bottomRect.top,
+      overlapsPagination: paginationRect
+        ? fabRect.left < paginationRect.right &&
+          fabRect.right > paginationRect.left &&
+          fabRect.top < paginationRect.bottom &&
+          fabRect.bottom > paginationRect.top
+        : false,
+    };
+  });
+  expect(fabMetrics).not.toBeNull();
+  expect(fabMetrics!.fabBottom).toBeLessThanOrEqual(fabMetrics!.navTop - 4);
+  expect(fabMetrics!.overlapsPagination).toBe(false);
 });
 
 test("fluxo de caixa mobile diferencia dias sem movimento", async ({ page }) => {

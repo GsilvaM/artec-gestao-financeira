@@ -1,4 +1,5 @@
 import { ArrowDownRight, ArrowUpRight, type LucideIcon } from "lucide-react";
+import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { SparklineChart } from "./SparklineChart.js";
@@ -30,7 +31,7 @@ export function MetricCard({
   valueTone = "neutral",
 }: {
   label: string;
-  value: string | number;
+  value: ReactNode;
   delta?: number;
   deltaUnavailableLabel?: string;
   sparklineData?: number[];

@@ -16,6 +16,8 @@ import {
   type ReactNode,
 } from "react";
 import { Button } from "@/components/ui/button";
+import { FloatingActionButton } from "@/components/ui/floating-action-button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 interface PageHeaderProps {
@@ -166,9 +168,9 @@ export function LoadingState({ label = "Carregando..." }: { label?: string }) {
       {Array.from({ length: 4 }).map((_, index) => (
         <div key={index} className="stat-card">
           <div className="space-y-4">
-            <div className="bg-surface-muted h-3 w-24 animate-pulse rounded-full" />
-            <div className="bg-surface-muted h-8 w-36 animate-pulse rounded-full" />
-            <div className="bg-surface-muted h-3 w-44 animate-pulse rounded-full" />
+            <Skeleton className="h-3 w-24 rounded-full" />
+            <Skeleton className="h-8 w-36 rounded-full" />
+            <Skeleton className="h-3 w-44 rounded-full" />
             <div className="text-text-muted flex items-center gap-2 text-xs">
               <Loader2 className="size-3 animate-spin" />
               {label}
@@ -981,10 +983,11 @@ export function PageShell({
       {children}
       {actionLabel && onAction ? (
         <div className="page-mobile-action">
-          <Button type="button" size="lg" onClick={onAction}>
-            <Plus className="size-4" />
-            {actionLabel}
-          </Button>
+          <FloatingActionButton
+            icon={<Plus className="size-4" />}
+            label={actionLabel}
+            onClick={onAction}
+          />
         </div>
       ) : null}
       <style>{pageHeaderStyles}</style>
@@ -1007,6 +1010,7 @@ const pageShellStyles = `
 @media (max-width: 768px) {
   .page-stack {
     gap: 16px;
+    padding-bottom: calc(var(--mobile-bottom-nav-offset, 88px) + 156px);
   }
 
   .page-primary-action {
@@ -1014,14 +1018,18 @@ const pageShellStyles = `
   }
 
   .page-mobile-action {
-    position: static;
-    display: block;
+    pointer-events: none;
+    position: fixed;
+    right: 16px;
+    bottom: calc(var(--mobile-bottom-nav-offset, 88px) + 14px);
+    z-index: 44;
+    display: flex;
+    justify-content: flex-end;
+    max-width: calc(100vw - 32px);
   }
 
-  .page-mobile-action > button {
-    width: 100%;
-    min-height: 48px;
-    box-shadow: var(--shadow-elevated);
+  .page-mobile-action > .mobile-fab {
+    pointer-events: auto;
   }
 }
 `;

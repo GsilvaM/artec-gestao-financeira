@@ -333,3 +333,185 @@ Observacoes:
 
 - Vitest exibiu logs esperados de cenarios negativos de API; a suite terminou verde.
 - Playwright exibiu aviso preexistente/de infraestrutura do `pg` no WebServer; a suite terminou verde.
+
+## Rodada complementar - prompt anexado 76dfb380
+
+Atualizado em: 2026-07-13
+
+Objetivo:
+
+- Atender a versao ampliada do prompt de refatoracao mobile, especialmente a secao 10.1 sobre cores semanticas, motion, FAB, valor monetario, skeleton e reduced motion.
+
+Estado inicial:
+
+- Worktree limpo no inicio da rodada.
+- `AGENTS.md` da raiz foi lido e respeitado.
+- `AGENTS.md` encontrados em `node_modules` foram ignorados por nao regerem arquivos editados.
+- Documentos lidos: `UX_CRITERIA.md`, `DESIGN_SYSTEM_SPEC.md`, `BUTTON_ALIGNMENT_SPEC.md`, `UI_REFACTOR_PLAN.md`, `ACCEPTANCE_CHECKLIST.md` e `DRE_UX_PDF_PROMPT.md`.
+- Skills usadas: `artec-ui-orchestration`, `artec-design-system`, `artec-responsive-qa` e `artec-button-alignment-audit`.
+
+Diagnostico confirmado:
+
+- A base mobile existente ja possuia app shell, drawer, Bottom Navigation, filter sheet, cards mobile, dark mode, testes E2E e correcoes dos bugs de screenshots da rodada anterior.
+- Faltavam componentes reutilizaveis explicitos para reduced motion, valor monetario sem corte, FAB e skeleton.
+- Havia `transition-all` e uma transicao de `width` em componentes visuais, divergindo da secao 10.1.
+
+Arquivos criados:
+
+- `src/hooks/use-prefers-reduced-motion.ts`
+- `src/components/ui/currency-value.tsx`
+- `src/components/ui/floating-action-button.tsx`
+- `src/components/ui/skeleton.tsx`
+
+Arquivos alterados:
+
+- `src/index.css`
+- `src/components/layout/page-shell.tsx`
+- `src/components/dashboard/MetricCard.tsx`
+- `src/components/lancamentos/SummaryCard.tsx`
+- `src/routes/app/financeiro/lancamentos/page.tsx`
+- `src/routes/app/financeiro/lancamentos/responsive-transaction-list.tsx`
+- `src/components/ui/button.tsx`
+- `src/components/ui/input.tsx`
+- `src/components/ui/select.tsx`
+- `src/components/ui/textarea.tsx`
+- `src/components/ui/date-picker.tsx`
+- `src/components/layout/app-layout.tsx`
+- `src/components/lancamentos/LancamentoModal.tsx`
+- `src/routes/app/configuracoes/page.tsx`
+- `e2e/responsividade.spec.ts`
+
+Decisoes:
+
+- `CurrencyValue` centraliza formatacao BRL, `whitespace-nowrap`, `tabular-nums`, tone financeiro e animacao curta de contagem respeitando reduced motion.
+- `SummaryCard` usa `CurrencyValue` apenas quando `currency=true`, evitando tratar contadores como moeda.
+- `PageShell` manteve o botao primario no header desktop e substituiu a acao mobile full-width por `FloatingActionButton` acima da Bottom Navigation.
+- `FloatingActionButton` usa safe area via `--mobile-bottom-nav-offset`, recolhe levemente durante scroll e anima somente transform/opacity/sombra.
+- `Skeleton` foi criado e usado em estados compartilhados e na lista mobile de lancamentos.
+- Tokens `--color-positive`, `--color-negative`, `--shadow-fab`, duracoes e easing foram adicionados como aliases/expansoes da paleta existente.
+- Transicoes `transition-all` e `transition: width` foram reduzidas para propriedades explicitas ou removidas quando eram apenas polimento visual.
+
+Protecoes mantidas:
+
+- Nenhuma regra financeira foi alterada.
+- Nenhuma API, schema, migration, auth, permissao, service, repository, package ou lockfile foi alterado.
+- Nenhuma geracao funcional de PDF ou Excel foi alterada.
+
+Validacao parcial da rodada:
+
+- `rg "transition-(all|width|height|top|left)|transition:\\s*(width|height|top|left)|max-width var\\(--duration" src`: passou sem ocorrencias apos os ajustes.
+- `npm run typecheck`: passou.
+- `npm run lint`: passou.
+- `npm run test`: passou, 16 arquivos e 136 testes.
+- `npm run build`: passou; manteve aviso conhecido de chunks acima de 500 kB em `index` e `exceljs`.
+- `npx playwright test e2e/financeiro.spec.ts --config=e2e/playwright.config.ts`: passou, 5/5.
+- `npx playwright test e2e/responsividade.spec.ts --config=e2e/playwright.config.ts`: passou, 37/37.
+- `npm run e2e`: passou, 58/58.
+
+Observacoes finais:
+
+- O E2E identificou sobreposicao real entre FAB e acoes de listas em Contas a Pagar/Receber; a reserva inferior foi ampliada no `PageShell` e nas `.accounts-mobile-list`.
+- O teste `e2e/financeiro.spec.ts` foi reescrito em ASCII para evitar falhas por texto acentuado corrompido no projeto.
+- Vitest exibiu logs esperados de cenarios negativos de API; a suite terminou verde.
+- Playwright exibiu aviso preexistente/de infraestrutura do `pg` no WebServer; a suite terminou verde.
+
+## Auditoria de aderencia exata ao prompt - rodada de melhoria
+
+Atualizado em: 2026-07-13
+
+Objetivo:
+
+- Reavaliar a implementacao contra os criterios explicitos do prompt anexado e melhorar os pontos que ainda estavam apenas parcialmente atendidos.
+
+Lacunas confirmadas nesta auditoria:
+
+- `DataTablePagination` ainda dependia do bloco desktop reorganizado por CSS no mobile; isso podia continuar parecendo empilhado em 360 px.
+- Fluxo de Caixa ja distinguia dias sem movimento no mobile, mas ainda renderizava nota abaixo da linha do periodo e mantinha `-` na tabela desktop.
+- Dashboard ja havia removido KPIs duplicados, mas o grafico ainda usava o titulo "Resumo financeiro", o que podia sugerir nova duplicacao do bloco hero.
+
+Arquivos alterados nesta rodada:
+
+- `src/components/ui/data-table-pagination.tsx`
+- `src/routes/app/financeiro/fluxo-caixa/page.tsx`
+- `src/routes/app/dashboard.tsx`
+- `src/index.css`
+
+Melhorias aplicadas:
+
+- `DataTablePagination` recebeu uma linha mobile propria (`data-table-pagination-mobile-row`) com intervalo, seletor de tamanho e navegacao Anterior/Pagina/Proxima em uma barra compacta.
+- No mobile, o bloco desktop de paginacao agora e ocultado e substituido pela barra compacta, reduzindo altura entre lista, FAB e Bottom Navigation.
+- Fluxo de Caixa passou a mostrar dias sem lancamento como linha compacta com `Sem movimentacao prevista` ao lado do periodo, sem card vazio alto.
+- A tabela desktop do Fluxo de Caixa deixou de usar `-` isolado para valores ausentes e passou a mostrar `R$ 0,00`, `Sem previsao` ou `Sem movimento`, conforme o contexto visual.
+- O grafico do Dashboard foi renomeado para `Evolucao financeira`, deixando o `Cartao financeiro` como fonte visual principal de saldo, receitas e despesas.
+
+Validacao leve desta rodada:
+
+- `npm run typecheck`: passou.
+- `npm run lint`: passou.
+- `rg "transition-(all|width|height|top|left)|transition:\\s*(width|height|top|left)|max-width var\\(--duration" src`: sem ocorrencias.
+
+Protecoes mantidas:
+
+- Nenhuma regra financeira foi alterada.
+- Nenhuma API, schema, migration, auth, permissao, service, repository, package ou lockfile foi alterado.
+
+Fechamento final da auditoria de aderencia:
+
+- O primeiro `npm run e2e` apos a melhoria detectou uma sobreposicao real entre FAB e acoes de item em listas mobile (`Acoes do colaborador` / `Mais opcoes`).
+- `src/components/layout/page-shell.tsx` passou a reservar `calc(var(--mobile-bottom-nav-offset, 88px) + 96px)` no mobile.
+- `src/index.css` passou a aplicar margem inferior ao ultimo item de `.mobile-list` e ao ultimo `.transaction-mobile-card` quando a pagina possui `.page-mobile-action`.
+- `npx playwright test e2e/responsividade.spec.ts --config=e2e/playwright.config.ts`: passou, 37/37.
+- `npm run e2e`: passou, 58/58.
+- `npm run typecheck`: passou.
+- `npm run lint`: passou. Houve uma falha intermediaria por corrida com `test-results` enquanto o Playwright executava em paralelo; o lint rerodado isoladamente passou.
+- `npm run test`: passou, 16 arquivos e 136 testes.
+- `npm run build`: passou; manteve aviso conhecido de chunks acima de 500 kB em `index` e `exceljs`.
+- `git diff --check`: passou; apenas avisos de CRLF no Windows.
+
+## Rodada de acabamento visual fino - prompt anexado
+
+Atualizado em: 2026-07-13
+
+Objetivo:
+
+- Ajustar detalhes visuais que ainda passavam em teste automatizado, mas nao atendiam completamente o acabamento proposto no prompt.
+
+Diagnostico visual confirmado por screenshots Playwright:
+
+- `CurrencyValue` podia ser capturado durante a animacao e exibir valor financeiro transiente/incorreto, violando a regra de que valores monetarios nao podem perder sinal, centavos ou representar outro valor para caber.
+- Cards de resumo de Lancamentos ainda cortavam centavos em 390 px quando icone e valor competiam pela mesma linha.
+- Dashboard e Fluxo de Caixa exibiam loading states muito vazios, com cartoes quase brancos sem estrutura visual suficiente.
+- Em 480 px, o FAB de `Novo lancamento` ainda podia sobrepor o botao `Mais opcoes` no fim da lista.
+- Na lista mobile do Fluxo de Caixa, valores projetados podiam quebrar de forma ruim dentro do card.
+
+Arquivos alterados nesta rodada:
+
+- `src/components/ui/currency-value.tsx`
+- `src/components/ui/skeleton.tsx`
+- `src/routes/app/dashboard.tsx`
+- `src/routes/app/financeiro/fluxo-caixa/page.tsx`
+- `src/components/layout/page-shell.tsx`
+- `src/index.css`
+- `docs/ui-refactor/mobile/IMPLEMENTATION_STATUS.md`
+
+Melhorias aplicadas:
+
+- `CurrencyValue` agora renderiza o valor final por padrao; animacao numerica fica opt-in e e cancelada quando cruza zero, evitando sinal/valor transiente incorreto.
+- Cards de resumo de Lancamentos receberam ajuste de flex e escala tipografica para preservar centavos e sinal em 390/480 px.
+- `Skeleton` global recebeu gradiente por token e borda sutil para ficar visivel em light/dark mode.
+- Dashboard loading recebeu estrutura com linhas, saldo e mini-blocos, reduzindo a sensacao de tela vazia.
+- Fluxo de Caixa recebeu skeleton de grafico com barras e skeletons estruturados nos KPIs e na projecao detalhada.
+- Valores de periodo do Fluxo de Caixa receberam largura minima e `white-space: nowrap` para evitar quebra de moeda.
+- `PageShell` e listas mobile com FAB tiveram respiro inferior ampliado para impedir sobreposicao em 480 px.
+
+Validacao desta rodada:
+
+- `npm run typecheck`: passou.
+- `npm run lint`: passou.
+- `rg "transition-(all|width|height|top|left)|transition:\\s*(width|height|top|left)|max-width var\\(--duration" src`: sem ocorrencias.
+- `npx playwright test e2e/responsividade.spec.ts --config=e2e/playwright.config.ts --grep "mobile largo"`: passou, 5/5.
+
+Protecoes mantidas:
+
+- Nenhuma regra financeira foi alterada.
+- Nenhuma API, schema, migration, auth, permissao, service, repository, package ou lockfile foi alterado.

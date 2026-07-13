@@ -56,6 +56,43 @@ export function DataTablePagination({
 
   return (
     <div className={cn("data-table-pagination mb-[calc(var(--mobile-bottom-nav-offset,0px)*0.25)] flex min-w-0 flex-col gap-3 rounded-2xl border border-border/80 bg-card/70 p-4 shadow-[var(--shadow-xs)] lg:mb-0 lg:flex-row lg:items-center lg:justify-between", className)}>
+      <div className="data-table-pagination-mobile-row" aria-label={`Paginacao: mostrando ${start} a ${end} de ${total} ${label}, pagina ${safeCurrentPage} de ${safeTotalPages}`}>
+        <span className="data-table-pagination-mobile-range">
+          {start}-{end}/{total}
+        </span>
+
+        {onPageSizeChange ? (
+          <Select
+            aria-label={`Quantidade de ${label} por pagina`}
+            className="data-table-pagination-mobile-select"
+            value={String(pageSize)}
+            onChange={(event) => onPageSizeChange(Number(event.target.value))}
+            options={pageSizeOptions}
+            disabled={isLoading}
+          />
+        ) : null}
+
+        <div className="data-table-pagination-mobile-nav">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(safeCurrentPage - 1)}
+            disabled={!hasPages || safeCurrentPage <= 1 || isLoading}
+          >
+            Ant.
+          </Button>
+          <span>{safeCurrentPage}/{safeTotalPages}</span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(safeCurrentPage + 1)}
+            disabled={!hasPages || safeCurrentPage >= safeTotalPages || isLoading}
+          >
+            Prox.
+          </Button>
+        </div>
+      </div>
+
       <div className="data-table-pagination-summary flex min-w-0 flex-col gap-1">
         <p className="data-table-pagination-range text-sm font-semibold text-foreground">
           Mostrando {start}-{end} de {total} {label}

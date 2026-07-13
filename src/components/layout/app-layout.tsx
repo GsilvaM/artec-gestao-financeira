@@ -1242,7 +1242,7 @@ const sidebarStyles = `
 .sidebar-collapsed .sidebar {
   width: 80px;
   padding: 20px 8px;
-  transition: width 180ms ease, padding 180ms ease;
+  transition: padding 180ms ease;
 }
 
 .sidebar-collapsed .sidebar-logo {

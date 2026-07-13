@@ -34,7 +34,7 @@ export function Component() {
     <PageShell icon={Settings} title="Configurações" subtitle="Ajustes gerais e preferências do sistema">
       <div className="settings-grid grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {settings.map((item) => (
-          <Card key={item.title} className="group overflow-hidden border-primary/10 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--primary)_4%,var(--surface))_0%,var(--surface)_42%)] transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[var(--shadow-md)]">
+          <Card key={item.title} className="group overflow-hidden border-primary/10 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--primary)_4%,var(--surface))_0%,var(--surface)_42%)] transition-[background-color,border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[var(--shadow-md)]">
             <CardHeader className="flex-row items-center gap-3 space-y-0">
               <div className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-primary/10 bg-primary/10 text-primary shadow-[inset_0_1px_0_color-mix(in_srgb,var(--primary)_12%,transparent)]">
                 <item.icon className="size-5" />

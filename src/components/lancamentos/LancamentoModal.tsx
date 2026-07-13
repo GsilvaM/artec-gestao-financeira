@@ -215,7 +215,7 @@ function SegmentButton({ active, tone, onClick, children }: { active: boolean; t
       type="button"
       onClick={onClick}
       className={cn(
-        "inline-flex h-10 items-center justify-center gap-2 rounded-xl text-sm font-bold leading-none transition-all [&_svg]:size-4 [&_svg]:shrink-0",
+        "inline-flex h-10 items-center justify-center gap-2 rounded-xl text-sm font-bold leading-none transition-[background-color,border-color,box-shadow,color,opacity,transform] [&_svg]:size-4 [&_svg]:shrink-0",
         active
           ? tone === "success"
             ? "bg-success text-white shadow-[var(--shadow-sm)]"

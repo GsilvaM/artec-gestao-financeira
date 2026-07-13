@@ -29,6 +29,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -880,13 +881,26 @@ export function Component() {
 
         {isLoading && !timedOut ? (
           <div className="dashboard-top-grid">
-            <Card>
-              <CardContent className="bg-surface-muted h-[330px] animate-pulse rounded-[20px]" />
+            <Card className="dashboard-loading-hero">
+              <CardContent>
+                <div className="dashboard-loading-line short" />
+                <div className="dashboard-loading-line tiny" />
+                <div className="dashboard-loading-balance" />
+                <div className="dashboard-loading-mini-grid">
+                  <Skeleton className="h-12 rounded-2xl" />
+                  <Skeleton className="h-12 rounded-2xl" />
+                </div>
+              </CardContent>
             </Card>
             <div className="dashboard-metrics-grid">
               {Array.from({ length: 4 }).map((_, i) => (
-                <Card key={i}>
-                  <CardContent className="bg-surface-muted h-[292px] animate-pulse rounded-[20px]" />
+                <Card key={i} className="dashboard-loading-metric">
+                  <CardContent>
+                    <Skeleton className="size-9 rounded-xl" />
+                    <Skeleton className="h-3 w-24 rounded-full" />
+                    <Skeleton className="h-6 w-28 rounded-full" />
+                    <Skeleton className="h-8 w-full rounded-xl" />
+                  </CardContent>
                 </Card>
               ))}
             </div>
@@ -948,7 +962,7 @@ export function Component() {
             <div className="dashboard-middle-grid">
               <section className="chart-card">
                 <div className="chart-card-header">
-                  <h2>Resumo financeiro</h2>
+                  <h2>Evolucao financeira</h2>
                   <ChartLegend
                     hiddenSeries={hiddenSeries}
                     onToggle={toggleSeries}
@@ -1170,6 +1184,71 @@ const dashboardStyles = `
   text-transform: uppercase;
 }
 
+.dashboard-loading-hero,
+.dashboard-loading-metric {
+  overflow: hidden;
+  border-radius: 20px;
+  border-color: var(--border-subtle);
+  background: color-mix(in srgb, var(--color-surface) 94%, var(--surface-muted));
+}
+
+.dashboard-loading-hero > div,
+.dashboard-loading-metric > div {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+}
+
+.dashboard-loading-hero > div {
+  min-height: 260px;
+  align-content: start;
+}
+
+.dashboard-loading-metric > div {
+  min-height: 142px;
+}
+
+.dashboard-loading-line,
+.dashboard-loading-balance {
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--surface-muted) 76%, transparent),
+    color-mix(in srgb, var(--primary) 12%, var(--surface-muted)),
+    color-mix(in srgb, var(--surface-muted) 76%, transparent)
+  );
+  background-size: 220% 100%;
+  animation: skeleton-shimmer 1.35s ease-in-out infinite;
+}
+
+.dashboard-loading-line.short {
+  width: 46%;
+  height: 14px;
+}
+
+.dashboard-loading-line.tiny {
+  width: 32%;
+  height: 10px;
+}
+
+.dashboard-loading-balance {
+  margin-top: 36px;
+  width: 72%;
+  height: 34px;
+}
+
+.dashboard-loading-mini-grid {
+  margin-top: auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@keyframes skeleton-shimmer {
+  from { background-position: 120% 0; }
+  to { background-position: -120% 0; }
+}
+
 @media (max-width: 1279px) {
   .dashboard-top-grid { grid-template-columns: 1fr; }
   .dashboard-metrics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1180,6 +1259,15 @@ const dashboardStyles = `
 @media (max-width: 639px) {
   .dashboard-metrics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .dashboard-filter-panel { grid-template-columns: 1fr; }
+
+  .dashboard-loading-hero > div {
+    min-height: 190px;
+  }
+
+  .dashboard-loading-metric > div {
+    min-height: 118px;
+    padding: 14px;
+  }
 
   .metric-card {
     min-height: 112px;

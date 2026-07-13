@@ -108,7 +108,7 @@ export function DatePicker({ id, value, onChange, ariaLabel = "Data", invalid }:
         aria-expanded={open}
         aria-invalid={invalid || undefined}
         className={cn(
-          "box-border flex min-h-[var(--field-height)] w-full min-w-0 rounded-[var(--radius-field)] border border-[var(--color-border-field)] bg-[var(--color-bg-field)] px-4 pr-10 text-base font-semibold leading-none text-foreground shadow-[var(--shadow-xs)] transition-all duration-150 ease-out hover:border-primary/45 focus-visible:border-[var(--color-border-focus)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 disabled:cursor-not-allowed disabled:opacity-55 sm:text-sm",
+          "box-border flex min-h-[var(--field-height)] w-full min-w-0 rounded-[var(--radius-field)] border border-[var(--color-border-field)] bg-[var(--color-bg-field)] px-4 pr-10 text-base font-semibold leading-none text-foreground shadow-[var(--shadow-xs)] transition-[background-color,border-color,box-shadow,color,opacity] duration-150 ease-out hover:border-primary/45 focus-visible:border-[var(--color-border-focus)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 disabled:cursor-not-allowed disabled:opacity-55 sm:text-sm",
           invalid && "border-danger ring-2 ring-danger/20",
         )}
       />

@@ -35,7 +35,6 @@ import { useCategories } from "@/domain/financeiro/hooks/use-categories";
 import { useCollaborators } from "@/domain/financeiro/hooks/use-collaborators";
 import { useAuthStore } from "@/lib/supabase/auth-store";
 import { calculateFinancialSummary } from "@/domain/financeiro/calculations";
-import { formatMoney } from "@/lib/utils";
 import { SummaryCard } from "@/components/lancamentos/SummaryCard";
 import { TransactionFilters } from "@/components/lancamentos/TransactionFilters";
 import { ResponsiveTransactionList } from "./responsive-transaction-list.js";
@@ -518,25 +517,30 @@ export function Component() {
         />
         <SummaryCard
           label="Receitas"
-          value={formatMoney(receitas)}
+          value={receitas}
           icon={ArrowUpCircle}
           iconColor="green"
           footer="Entradas confirmadas"
+          currency
+          valueTone="positive"
         />
         <SummaryCard
           label="Despesas"
-          value={formatMoney(despesas)}
+          value={despesas}
           icon={ArrowDownCircle}
           iconColor="red"
+          currency
+          valueTone="negative"
           footer="Saídas registradas"
         />
         <SummaryCard
           label="Saldo"
-          value={formatMoney(saldo)}
+          value={saldo}
           icon={Banknote}
           iconColor={saldo < 0 ? "red" : "blue"}
           valueTone={saldo < 0 ? "negative" : saldo > 0 ? "positive" : "neutral"}
           footer="Receitas menos despesas"
+          currency
         />
       </div>
 

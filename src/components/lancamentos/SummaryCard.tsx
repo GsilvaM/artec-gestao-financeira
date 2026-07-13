@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import { MetricCard } from "@/components/dashboard/MetricCard";
+import { CurrencyValue } from "@/components/ui/currency-value";
 
 export function SummaryCard({
   label,
@@ -9,6 +10,7 @@ export function SummaryCard({
   footer,
   className,
   valueTone,
+  currency = false,
 }: {
   label: string;
   value: string | number;
@@ -17,6 +19,14 @@ export function SummaryCard({
   footer?: string;
   className?: string;
   valueTone?: "neutral" | "positive" | "negative";
+  currency?: boolean;
 }) {
-  return <MetricCard label={label} value={value} icon={icon} iconColor={iconColor} footer={footer} className={["summary-card", className].filter(Boolean).join(" ")} valueTone={valueTone} />;
+  const displayValue =
+    currency && typeof value === "number" ? (
+      <CurrencyValue value={value} tone={valueTone} size="lg" />
+    ) : (
+      value
+    );
+
+  return <MetricCard label={label} value={displayValue} icon={icon} iconColor={iconColor} footer={footer} className={["summary-card", className].filter(Boolean).join(" ")} valueTone={currency ? "neutral" : valueTone} />;
 }
