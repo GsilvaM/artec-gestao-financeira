@@ -55,25 +55,25 @@ export function DataTablePagination({
   }
 
   return (
-    <div className={cn("mb-[calc(var(--mobile-bottom-nav-offset,0px)*0.25)] flex min-w-0 flex-col gap-3 rounded-2xl border border-border/80 bg-card/70 p-4 shadow-[var(--shadow-xs)] lg:mb-0 lg:flex-row lg:items-center lg:justify-between", className)}>
-      <div className="flex min-w-0 flex-col gap-1">
-        <p className="text-sm font-semibold text-foreground">
+    <div className={cn("data-table-pagination mb-[calc(var(--mobile-bottom-nav-offset,0px)*0.25)] flex min-w-0 flex-col gap-3 rounded-2xl border border-border/80 bg-card/70 p-4 shadow-[var(--shadow-xs)] lg:mb-0 lg:flex-row lg:items-center lg:justify-between", className)}>
+      <div className="data-table-pagination-summary flex min-w-0 flex-col gap-1">
+        <p className="data-table-pagination-range text-sm font-semibold text-foreground">
           Mostrando {start}-{end} de {total} {label}
         </p>
-        <p className="text-xs font-semibold text-muted-foreground">
+        <p className="data-table-pagination-page text-xs font-semibold text-muted-foreground">
           Página {safeCurrentPage} de {safeTotalPages}
         </p>
       </div>
 
-      <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+      <div className="data-table-pagination-controls flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
         {onPageSizeChange ? (
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <span className="shrink-0 text-xs font-bold uppercase text-muted-foreground">
+          <div className="data-table-pagination-size flex min-w-0 flex-wrap items-center gap-2">
+            <span className="data-table-pagination-size-label shrink-0 text-xs font-bold uppercase text-muted-foreground">
               Exibir
             </span>
             <Select
               aria-label={`Quantidade de ${label} por página`}
-              className="h-9 min-h-9 w-[156px] max-w-full rounded-xl px-3 pr-9 text-xs"
+              className="data-table-pagination-select h-9 min-h-9 w-[156px] max-w-full rounded-xl px-3 pr-9 text-xs"
               value={String(pageSize)}
               onChange={(event) => onPageSizeChange(Number(event.target.value))}
               options={pageSizeOptions}
@@ -82,7 +82,7 @@ export function DataTablePagination({
           </div>
         ) : null}
 
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:flex sm:flex-wrap sm:justify-end">
+        <div className="data-table-pagination-nav grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:flex sm:flex-wrap sm:justify-end">
           <Button
             variant="outline"
             size="sm"

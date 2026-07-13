@@ -158,8 +158,12 @@ test("drawer mobile gerencia foco e fecha ao navegar", async ({ page }) => {
   await expect(drawer).toBeVisible();
   await expect(drawer).toBeFocused();
 
-  await drawer.locator('a[href="/app/financeiro/lancamentos"]').first().click();
-  await expect(page).toHaveURL(/\/app\/financeiro\/lancamentos/);
+  const lancamentosLink = drawer.locator('a[href="/app/financeiro/lancamentos"]').first();
+  await expect(lancamentosLink).toBeVisible();
+  await Promise.all([
+    page.waitForURL(/\/app\/financeiro\/lancamentos/),
+    lancamentosLink.click(),
+  ]);
   await expect(drawer).toHaveCount(0);
   await expectNoGlobalHorizontalOverflow(page);
 });
@@ -169,11 +173,84 @@ test("botoes criticos mantem alinhamento computado", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 800 });
 
   await page.goto("/app/financeiro/lancamentos");
+  await expect(page).toHaveURL(/\/app\/financeiro\/lancamentos/);
+  await expect(page.getByRole("heading", { name: /Lan/ })).toBeVisible();
   await expectButtonLocatorAligned(page.getByRole("button", { name: /novo/i }).first());
   await expectButtonAligned(page, "button[aria-label='Abrir menu']");
 
   await page.goto("/app/financeiro/fluxo-caixa");
+  await expect(page).toHaveURL(/\/app\/financeiro\/fluxo-caixa/);
+  await expect(page.getByRole("heading", { name: "Fluxo de Caixa" })).toBeVisible();
   await expectButtonLocatorAligned(page.getByRole("button", { name: /a(c|ç)(o|õ)es/i }).first());
+});
+
+test("lancamentos mobile preserva valores, textos e paginacao compacta", async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 640 });
+  await page.goto("/app/financeiro/lancamentos");
+  await expect(page.getByRole("heading", { name: /Lan/ })).toBeVisible();
+  await expectNoGlobalHorizontalOverflow(page);
+
+  const summaryValues = page.locator(".lancamentos-summary-grid .summary-card > div > p");
+  const summaryCount = await summaryValues.count();
+  expect(summaryCount).toBeGreaterThan(0);
+  for (let index = 0; index < summaryCount; index += 1) {
+    const box = await summaryValues.nth(index).boundingBox();
+    const parentBox = await summaryValues.nth(index).locator("..").boundingBox();
+    expect(box).not.toBeNull();
+    expect(parentBox).not.toBeNull();
+    expect(box!.x + box!.width).toBeLessThanOrEqual(parentBox!.x + parentBox!.width + 1);
+  }
+
+  const firstCard = page.locator(".transaction-mobile-card").first();
+  if (await firstCard.count()) {
+    await expect(firstCard.locator(".transaction-mobile-title")).toBeVisible();
+    await expect(firstCard.locator(".transaction-mobile-meta")).toBeVisible();
+    const titleMetrics = await firstCard.locator(".transaction-mobile-title").evaluate((element) => {
+      const style = getComputedStyle(element);
+      return {
+        height: element.getBoundingClientRect().height,
+        lineHeight: Number.parseFloat(style.lineHeight),
+      };
+    });
+    expect(titleMetrics.height).toBeLessThanOrEqual(titleMetrics.lineHeight * 2 + 3);
+  }
+
+  const pagination = page.locator(".lancamentos-pagination");
+  if (await pagination.count()) {
+    const box = await pagination.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.height).toBeLessThanOrEqual(92);
+  }
+});
+
+test("fluxo de caixa mobile diferencia dias sem movimento", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 800 });
+  await page.goto("/app/financeiro/fluxo-caixa");
+  await expect(page.getByRole("heading", { name: "Fluxo de Caixa" })).toBeVisible();
+  await expectNoGlobalHorizontalOverflow(page);
+
+  const emptyNotes = page.locator(".cashflow-empty-period-note");
+  if (await emptyNotes.count()) {
+    await expect(emptyNotes.first()).toContainText(/Sem movimentacao prevista/);
+    await expect(page.locator(".cashflow-card-empty .cashflow-values")).toHaveCount(0);
+  }
+});
+
+test("dashboard e relatorios mobile evitam duplicacao e vazio dominante", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 800 });
+
+  await page.goto("/app");
+  await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
+  await expect(page.getByText("Indicadores complementares")).toBeVisible();
+  await expect(page.getByText("Faturamento", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Lucro", { exact: true })).toHaveCount(0);
+  await expectNoGlobalHorizontalOverflow(page);
+
+  await page.goto("/app/relatorios");
+  await expect(page.getByRole("heading", { name: /Relat/ })).toBeVisible();
+  await expect(page.getByText(/Atalhos/)).toBeVisible();
+  await expect(page.locator(".report-shortcut-card")).toHaveCount(2);
+  await expectNoGlobalHorizontalOverflow(page);
 });
 
 test.describe("login sem sessao", () => {

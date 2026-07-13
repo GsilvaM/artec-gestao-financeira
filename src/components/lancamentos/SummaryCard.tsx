@@ -18,5 +18,5 @@ export function SummaryCard({
   className?: string;
   valueTone?: "neutral" | "positive" | "negative";
 }) {
-  return <MetricCard label={label} value={value} icon={icon} iconColor={iconColor} footer={footer} className={className} valueTone={valueTone} />;
+  return <MetricCard label={label} value={value} icon={icon} iconColor={iconColor} footer={footer} className={["summary-card", className].filter(Boolean).join(" ")} valueTone={valueTone} />;
 }

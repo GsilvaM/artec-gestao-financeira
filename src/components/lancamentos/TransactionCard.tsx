@@ -44,18 +44,18 @@ export function TransactionCard({
           <span className={cn("mt-px flex size-8 shrink-0 items-center justify-center rounded-full", isReceita ? "bg-[var(--success-soft)] text-[var(--success)]" : "bg-[var(--danger-soft)] text-[var(--danger)]")}>
             {isReceita ? <ArrowUp className="size-[13px]" /> : <ArrowDown className="size-[13px]" />}
           </span>
-          <div className="min-w-0 flex-1">
+          <div className="transaction-mobile-copy min-w-0 flex-1">
             <details className="group">
               <summary className="cursor-pointer list-none text-sm font-medium leading-5 text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary [&::-webkit-details-marker]:hidden">
-                <span className="block truncate group-open:whitespace-normal group-open:break-words">{transaction.description}</span>
+                <span className="transaction-mobile-title block group-open:line-clamp-none group-open:break-words">{transaction.description}</span>
                 <span className="sr-only">Toque para alternar a descrição completa</span>
               </summary>
             </details>
-            <p className="mt-px truncate text-[11px] leading-4 text-[var(--text-muted)]">
+            <p className="transaction-mobile-meta mt-px text-[11px] leading-4 text-[var(--text-muted)]">
               {[transaction.categoryName, formatDate(transaction.date)].filter(Boolean).join(" · ")}
             </p>
             {transaction.clientName || transaction.collaboratorName ? (
-              <p className="mt-px truncate text-[11px] leading-4 text-[var(--text-muted)]">
+              <p className="transaction-mobile-party mt-px text-[11px] leading-4 text-[var(--text-muted)]">
                 {[transaction.clientName, transaction.collaboratorName].filter(Boolean).join(" / ")}
               </p>
             ) : null}

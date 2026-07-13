@@ -266,3 +266,70 @@ Observacoes de validacao:
 - Revisao visual humana em aparelho fisico ainda pode complementar a cobertura automatizada.
 - O build segue emitindo aviso de chunks grandes; isso e conhecido e nao foi resolvido para evitar mexer em code splitting/dependencias fora do escopo principal.
 - O worktree ja estava sujo no inicio; alteracoes preexistentes nao foram revertidas.
+
+## Rodada complementar - prompt_codex_ajustado-1
+
+Atualizado em: 2026-07-13
+
+Objetivo:
+
+- Corrigir bugs confirmados por screenshots reais em mobile, priorizando construcao e deixando validacoes completas para o fim.
+
+Estado inicial:
+
+- Worktree limpo no inicio da rodada.
+- `AGENTS.md`, prompt anexado e documentacao visual obrigatoria lidos.
+- Skill `artec-ui-orchestration` aplicada.
+- Skill `artec-pagination-performance` aplicada parcialmente; o arquivo adicional `.agents/10-pagination-performance-agent.md` citado pela skill nao existe mais no repositorio, pois foi removido anteriormente.
+
+Problemas confirmados tratados:
+
+- Lancamentos: titulo/favorecido e categoria/data nao devem ficar ilegíveis por truncamento.
+- Lancamentos: cards de resumo nao devem cortar valores monetarios nem isolar sinal negativo.
+- Lancamentos: paginacao mobile nao deve ocupar uma tela inteira entre lista, CTA e Bottom Navigation.
+- Fluxo de Caixa: dias sem movimentacao nao devem exibir apenas `-` sem contexto.
+- Fluxo de Caixa: dias sem movimentacao devem ser compactos.
+- Dashboard: bloco complementar nao deve repetir saldo/receitas/despesas do cartao financeiro.
+- Relatorios: tela inicial nao deve ficar visualmente vazia com apenas dois cards altos.
+
+Arquivos alterados:
+
+- `src/components/ui/data-table-pagination.tsx`
+- `src/components/lancamentos/TransactionCard.tsx`
+- `src/components/lancamentos/SummaryCard.tsx`
+- `src/routes/app/financeiro/fluxo-caixa/page.tsx`
+- `src/routes/app/dashboard.tsx`
+- `src/routes/app/relatorios/page.tsx`
+- `src/index.css`
+- `e2e/responsividade.spec.ts`
+
+Decisoes:
+
+- Mantida a paginacao real existente, sem alterar API, contrato, hooks ou query keys.
+- `DataTablePagination` recebeu classes semanticas para compactacao responsiva, preservando o componente reutilizavel.
+- `TransactionCard` passou a permitir duas linhas no titulo e quebras seguras em favorecido/categoria/data.
+- `SummaryCard` recebeu classe `summary-card` para estilizar valores sem depender de estrutura generica.
+- Fluxo de Caixa passou a renderizar nota explicita "Sem movimentacao prevista" em dias sem lancamentos, em card mais compacto.
+- Dashboard substituiu os KPIs duplicados "Faturamento" e "Lucro" por indicadores complementares: contas pagas, vencidas, janela do grafico e pendencias.
+- Relatorios recebeu atalhos reais para Fluxo de Caixa e DRE, rotas ja existentes com exportacoes/analises, sem inventar dados.
+- E2E recebeu cenarios especificos para os bugs confirmados desta rodada.
+
+Protecoes mantidas:
+
+- Nenhuma regra financeira foi alterada.
+- Nenhuma API, schema, migration, auth, permissao, service, repository, package ou lockfile foi alterado.
+- Fluxo de Caixa preservou calculos, hooks, API, querystring, exportacao PDF e Excel.
+
+Validacao:
+
+- `npx playwright test e2e/responsividade.spec.ts --config=e2e/playwright.config.ts`: passou, 37/37.
+- `npm run typecheck`: passou.
+- `npm run lint`: passou.
+- `npm run test`: passou, 16 arquivos e 136 testes.
+- `npm run build`: passou; manteve aviso conhecido de chunks acima de 500 kB em `index` e `exceljs`.
+- `npm run e2e`: passou, 58/58.
+
+Observacoes:
+
+- Vitest exibiu logs esperados de cenarios negativos de API; a suite terminou verde.
+- Playwright exibiu aviso preexistente/de infraestrutura do `pg` no WebServer; a suite terminou verde.

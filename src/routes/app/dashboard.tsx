@@ -2,7 +2,6 @@
 import {
   ArrowDownCircle,
   ArrowUpCircle,
-  Banknote,
   Bell,
   CalendarDays,
   CheckCircle2,
@@ -12,7 +11,6 @@ import {
   Filter,
   Plus,
   ReceiptText,
-  TrendingUp,
   type LucideIcon,
 } from "lucide-react";
 import { useNavigate } from "react-router";
@@ -48,7 +46,7 @@ import type {
   AccountPayableRow,
   FinancialEntryRow,
 } from "@/domain/financeiro/types";
-import { cn, formatMoney, getMoneyToneClass, toFiniteNumber } from "@/lib/utils";
+import { cn, formatMoney, toFiniteNumber } from "@/lib/utils";
 import { formatCompactMoney } from "./dashboard-utils.js";
 import { EmptyState, pageHeaderStyles } from "@/components/layout/page-shell";
 
@@ -915,29 +913,29 @@ export function Component() {
               />
 
               <div className="dashboard-kpi-panel">
-                <h2>Resumo financeiro</h2>
+                <h2>Indicadores complementares</h2>
                 <div className="dashboard-metrics-grid">
-                  <KpiCard
-                    title="Faturamento"
-                    value={formatMoney(totalReceitas)}
-                    icon={Banknote}
-                    tone="green"
-                    sparklineData={kpiSeries.faturamento}
-                  />
-                  <KpiCard
-                    title="Lucro"
-                    value={formatMoney(saldo)}
-                    icon={TrendingUp}
-                    tone="blue"
-                    sparklineData={kpiSeries.lucro}
-                    valueClassName={getMoneyToneClass(saldo)}
-                  />
                   <KpiCard
                     title="Contas pagas"
                     value={timedOut && !kpis ? "—" : String(contasPagas ?? 0)}
                     icon={ReceiptText}
                     tone="orange"
                     sparklineData={kpiSeries.contasPagas}
+                  />
+                  <KpiCard
+                    title="Vencidas"
+                    value={String(pendenciaData.overdue)}
+                    icon={Bell}
+                    tone="orange"
+                    sparklineData={kpiSeries.contasPagas}
+                    valueClassName={pendenciaData.overdue > 0 ? "text-warning" : "text-success"}
+                  />
+                  <KpiCard
+                    title="Janela do gráfico"
+                    value={getDashboardPeriodLabel(dashboardPeriod)}
+                    icon={CalendarDays}
+                    tone="blue"
+                    sparklineData={kpiSeries.lucro}
                   />
                   <PendingKpiCard
                     total={pendenciaData.total}

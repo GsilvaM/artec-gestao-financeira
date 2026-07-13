@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router";
-import { BarChart3, ChevronRight, Landmark, Network } from "lucide-react";
+import { BarChart3, CalendarDays, ChevronRight, FileText, Landmark, Network } from "lucide-react";
 import { PageShell } from "@/components/layout/page-shell";
 
 const reports = [
@@ -14,6 +14,21 @@ const reports = [
     title: "Por centro de custo",
     description: "Rentabilidade, desempenho e comparativos",
     to: "/app/relatorios/centros-custo",
+  },
+];
+
+const shortcuts = [
+  {
+    icon: CalendarDays,
+    title: "Fluxo de Caixa",
+    description: "Projecao, PDF e Excel",
+    to: "/app/financeiro/fluxo-caixa",
+  },
+  {
+    icon: FileText,
+    title: "DRE",
+    description: "Resultado gerencial e PDF",
+    to: "/app/financeiro/dre",
   },
 ];
 
@@ -46,6 +61,29 @@ export function Component() {
           </button>
         ))}
       </div>
+      <section className="reports-shortcuts" aria-label="Atalhos de relatórios financeiros">
+        <div className="reports-shortcuts-header">
+          <h2>Atalhos úteis</h2>
+          <p>Rotas com exportações e análises já disponíveis no sistema.</p>
+        </div>
+        <div className="reports-shortcut-grid">
+          {shortcuts.map((shortcut) => (
+            <button
+              key={shortcut.title}
+              type="button"
+              className="report-shortcut-card"
+              onClick={() => navigate(shortcut.to)}
+            >
+              <shortcut.icon className="size-4" />
+              <span>
+                <strong>{shortcut.title}</strong>
+                <small>{shortcut.description}</small>
+              </span>
+              <ChevronRight className="size-4" aria-hidden="true" />
+            </button>
+          ))}
+        </div>
+      </section>
       <style>{reportStyles}</style>
     </PageShell>
   );
@@ -55,6 +93,91 @@ const reportStyles = `
 .reports-list {
   display: grid;
   gap: 12px;
+}
+
+.reports-shortcuts {
+  margin-top: 16px;
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  padding: 14px;
+  box-shadow: var(--shadow-xs);
+}
+
+.reports-shortcuts-header {
+  display: grid;
+  gap: 4px;
+}
+
+.reports-shortcuts-header h2 {
+  margin: 0;
+  color: var(--text-strong);
+  font-size: 0.95rem;
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+.reports-shortcuts-header p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.reports-shortcut-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.report-shortcut-card {
+  display: inline-flex;
+  min-height: 56px;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  background: var(--surface-2);
+  color: var(--foreground);
+  padding: 10px 12px;
+  text-align: left;
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+.report-shortcut-card:hover {
+  border-color: color-mix(in srgb, var(--primary) 28%, var(--border));
+  background: color-mix(in srgb, var(--primary) 5%, var(--surface));
+}
+
+.report-shortcut-card > svg:first-child {
+  flex: 0 0 auto;
+  color: var(--primary);
+}
+
+.report-shortcut-card > span {
+  display: grid;
+  min-width: 0;
+  flex: 1 1 auto;
+  gap: 2px;
+}
+
+.report-shortcut-card strong {
+  color: var(--text-strong);
+  font-size: 0.8125rem;
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+.report-shortcut-card small {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 650;
+  line-height: 1.25;
 }
 
 .report-link-card {
@@ -129,6 +252,10 @@ const reportStyles = `
 
 @media (min-width: 768px) {
   .reports-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .reports-shortcut-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

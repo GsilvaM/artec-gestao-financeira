@@ -584,7 +584,7 @@ function CashFlowPeriodList({ periods, initialBalance, isLoading, isError, expan
         const expanded = expandedRows.has(period.id);
         const hasTransactions = period.transactions.length > 0;
         return (
-          <article key={period.id} className={cn("cashflow-card", !hasTransactions && "opacity-70")}>
+          <article key={period.id} className={cn("cashflow-card", !hasTransactions && "cashflow-card-empty")}>
             <button
               type="button"
               className="cashflow-period-button"
@@ -598,22 +598,26 @@ function CashFlowPeriodList({ periods, initialBalance, isLoading, isError, expan
               </span>
               <strong className={getMoneyToneClass(period.projectedBalance)}>{formatMoney(period.projectedBalance)}</strong>
             </button>
-            <div className="cashflow-values">
-              <div>
-                <span>Entradas</span>
-                <strong className="text-success">{period.inflows ? formatMoney(period.inflows) : "-"}</strong>
+            {hasTransactions ? (
+              <div className="cashflow-values">
+                <div>
+                  <span>Entradas</span>
+                  <strong className="text-success">{formatMoney(period.inflows)}</strong>
+                </div>
+                <div>
+                  <span>Saidas</span>
+                  <strong className="text-destructive">{formatMoney(period.outflows)}</strong>
+                </div>
+                <div>
+                  <span>Movimento</span>
+                  <strong className={cn(period.netMovement < 0 ? "text-destructive" : period.netMovement > 0 ? "text-success" : "text-muted-foreground")}>
+                    {formatSignedMoney(period.netMovement)}
+                  </strong>
+                </div>
               </div>
-              <div>
-                <span>Saidas</span>
-                <strong className="text-destructive">{period.outflows ? formatMoney(period.outflows) : "-"}</strong>
-              </div>
-              <div>
-                <span>Movimento</span>
-                <strong className={cn(period.netMovement < 0 ? "text-destructive" : period.netMovement > 0 ? "text-success" : "text-muted-foreground")}>
-                  {period.netMovement ? formatSignedMoney(period.netMovement) : "-"}
-                </strong>
-              </div>
-            </div>
+            ) : (
+              <p className="cashflow-empty-period-note">Sem movimentacao prevista</p>
+            )}
             {expanded ? <TransactionCards transactions={period.transactions} /> : null}
           </article>
         );
