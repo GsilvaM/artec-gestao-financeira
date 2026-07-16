@@ -8,6 +8,7 @@ import * as beneficiaries from "./beneficiaries.js";
 import * as dre from "./dre.js";
 import * as cashFlow from "./cash-flow.js";
 import * as dashboard from "./dashboard.js";
+import * as auvoCobranca from "./auvo-cobranca.js";
 import { json } from "./_utils.js";
 import { requireApprovedUser } from "../auth-utils.js";
 
@@ -27,6 +28,7 @@ const routes: Record<string, RouteModule> = {
   dre,
   "cash-flow": cashFlow,
   dashboard,
+  "auvo-cobranca": auvoCobranca,
 };
 
 export default async function handler(request: Request): Promise<Response> {

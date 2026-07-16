@@ -278,6 +278,29 @@ export const clientApi = {
         .then(handleResponse),
   },
 
+  auvoCobranca: {
+    importInvoice: (url: string) =>
+      getAuthHeaders(true)
+        .then((headers) =>
+          apiFetch(`${BASE_URL}/auvo-cobranca/import`, {
+            method: "POST",
+            headers,
+            body: JSON.stringify({ url }),
+          })
+        )
+        .then(handleResponse),
+    generateEmail: (data: unknown) =>
+      getAuthHeaders(true)
+        .then((headers) =>
+          apiFetch(`${BASE_URL}/auvo-cobranca/email`, {
+            method: "POST",
+            headers,
+            body: JSON.stringify(data),
+          })
+        )
+        .then(handleResponse),
+  },
+
   categories: {
     findAll: (filters?: Record<string, unknown>) =>
       getAuthHeaders()

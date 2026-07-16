@@ -7,12 +7,18 @@ import {
   CircleDollarSign,
   Clock,
   Clock3,
+  FileInput,
+  Mail,
   MoreHorizontal,
   Pencil,
   ReceiptText,
   RotateCcw,
   Trash2,
 } from "lucide-react";
+import {
+  AuvoCobrancaDialog,
+  type EmailSource,
+} from "@/components/financeiro/auvo-cobranca-dialog";
 import { FormField as Field } from "@/components/forms/form-field";
 import {
   EmptyState,
@@ -173,6 +179,8 @@ export function Component() {
   const [reversalDate, setReversalDate] = useState("");
   const [reversalReason, setReversalReason] = useState("");
   const [reversalNotes, setReversalNotes] = useState("");
+  const [auvoDialogOpen, setAuvoDialogOpen] = useState(false);
+  const [emailSource, setEmailSource] = useState<EmailSource | null>(null);
 
   const filters = useMemo<AccountReceivableFilters | undefined>(() => {
     const f: AccountReceivableFilters = {};
@@ -275,6 +283,15 @@ export function Component() {
     setReversalDate(toDateInputValue(new Date()));
     setReversalReason("");
     setReversalNotes("");
+  }
+
+  function openBillingEmailDialog(entry: AccountReceivableRow) {
+    if (entry.status === "cancelled" || entry.status === "reversed") {
+      toast.info("Conta cancelada ou estornada nao prepara e-mail de cobranca.");
+      return;
+    }
+    setEmailSource({ kind: "account", account: entry });
+    setAuvoDialogOpen(true);
   }
 
   function closeReversalDialog() {
@@ -543,6 +560,12 @@ export function Component() {
         setOpen(true);
       }}
     >
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+        <Button variant="secondary" onClick={() => setAuvoDialogOpen(true)}>
+          <FileInput className="size-4" />
+          Importar do Auvo
+        </Button>
+      </div>
       <div className="accounts-summary-grid mobile-summary-grid grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           title="A receber"
@@ -636,8 +659,9 @@ export function Component() {
               ) : entries?.length ? (
                 entries.map((entry) => {
                   const showCommonActions = canEditOrDelete(entry);
+                  const showBillingEmailAction = canReceive(entry) || isReceived(entry);
                   const showMenu =
-                    showCommonActions || canReceive(entry) || isReceived(entry);
+                    showCommonActions || canReceive(entry) || isReceived(entry) || showBillingEmailAction;
 
                   return (
                   <TableRow key={entry.id}>
@@ -706,6 +730,16 @@ export function Component() {
                                   Marcar como recebida
                                 </DropdownMenuItem>
                               ) : null}
+                              {showBillingEmailAction ? (
+                                <DropdownMenuItem
+                                  onClick={() => openBillingEmailDialog(entry)}
+                                >
+                                  <Mail className="size-4" />
+                                  {isReceived(entry)
+                                    ? "Reenviar documentos"
+                                    : "Preparar e-mail de cobrança"}
+                                </DropdownMenuItem>
+                              ) : null}
                               {isReceived(entry) ? (
                                 <DropdownMenuItem
                                   onClick={() => openReversalDialog(entry)}
@@ -760,10 +794,17 @@ export function Component() {
         onDelete={handleDelete}
         onReceive={openReceiptDialog}
         onReverse={openReversalDialog}
+        onPrepareEmail={openBillingEmailDialog}
         onNew={() => {
           resetForm();
           setOpen(true);
         }}
+      />
+      <AuvoCobrancaDialog
+        open={auvoDialogOpen}
+        onOpenChange={setAuvoDialogOpen}
+        emailSource={emailSource}
+        onEmailSourceChange={setEmailSource}
       />
       <Dialog
         open={open}
@@ -1112,6 +1153,7 @@ function AccountReceivableMobileList({
   onDelete,
   onReceive,
   onReverse,
+  onPrepareEmail,
   onNew,
 }: {
   entries: AccountReceivableRow[] | undefined;
@@ -1120,6 +1162,7 @@ function AccountReceivableMobileList({
   onDelete: (entry: AccountReceivableRow) => void;
   onReceive: (entry: AccountReceivableRow) => void;
   onReverse: (entry: AccountReceivableRow) => void;
+  onPrepareEmail: (entry: AccountReceivableRow) => void;
   onNew: () => void;
 }) {
   const todayKey = toDateInputValue(new Date());
@@ -1156,8 +1199,9 @@ function AccountReceivableMobileList({
     <div className="accounts-mobile-list mobile-list">
       {entries.map((entry) => {
         const showCommonActions = canEditOrDelete(entry);
+        const showBillingEmailAction = canReceive(entry) || isReceived(entry);
         const showMenu =
-          showCommonActions || canReceive(entry) || isReceived(entry);
+          showCommonActions || canReceive(entry) || isReceived(entry) || showBillingEmailAction;
 
         return (
         <article key={entry.id} className="accounts-mobile-card mobile-record-card">
@@ -1217,6 +1261,14 @@ function AccountReceivableMobileList({
                       <DropdownMenuItem onClick={() => onReceive(entry)}>
                         <CheckCircle2 className="size-4" />
                         Marcar como recebida
+                      </DropdownMenuItem>
+                    ) : null}
+                    {showBillingEmailAction ? (
+                      <DropdownMenuItem onClick={() => onPrepareEmail(entry)}>
+                        <Mail className="size-4" />
+                        {isReceived(entry)
+                          ? "Reenviar documentos"
+                          : "Preparar e-mail de cobrança"}
                       </DropdownMenuItem>
                     ) : null}
                     {isReceived(entry) ? (
