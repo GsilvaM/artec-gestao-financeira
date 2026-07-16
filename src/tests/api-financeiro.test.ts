@@ -60,6 +60,7 @@ vi.mock("@/server/financeiro/repositories.js", () => ({
 vi.mock("@/server/financeiro/queries.js", () => ({
   getDre: vi.fn(),
   getCashFlow: vi.fn(),
+  getProjectedCashFlow: vi.fn(),
   getDashboardKpis: vi.fn(),
 }));
 
@@ -360,6 +361,27 @@ describe("entries route module", () => {
     expect(financialEntryRepo.create).not.toHaveBeenCalled();
   });
 
+  it("blocks manual creation of reversed financial entry", async () => {
+    const request = new Request("http://localhost/api/financeiro/entries", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        description: "Estorno manual",
+        amount: 500,
+        type: "receita",
+        date: "2026-07-01",
+        status: "reversed",
+        categoryId: "00000000-0000-0000-0000-000000000001",
+        userId: "00000000-0000-0000-0000-000000000002",
+      }),
+    });
+
+    const response = await entries.action({ request, params: {} });
+
+    expect(response.status).toBe(409);
+    expect(financialEntryRepo.create).not.toHaveBeenCalled();
+  });
+
   it("retorna 405 para método não suportado", async () => {
     const request = new Request("http://localhost/api/financeiro/entries", {
       method: "PATCH",
@@ -386,6 +408,28 @@ describe("entries route module", () => {
     const response = await entries.action({
       request,
       params: { id: "44444444-4444-4444-4444-444444444444" },
+    });
+
+    expect(response.status).toBe(409);
+    expect(financialEntryRepo.update).not.toHaveBeenCalled();
+  });
+
+  it("blocks direct update of manual entry to reversed", async () => {
+    vi.mocked(financialEntryRepo.findById).mockResolvedValue(MOCK_ENTRY as never);
+    const request = new Request(
+      "http://localhost/api/financeiro/entries/11111111-1111-1111-1111-111111111111",
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: "reversed",
+        }),
+      }
+    );
+
+    const response = await entries.action({
+      request,
+      params: { id: "11111111-1111-1111-1111-111111111111" },
     });
 
     expect(response.status).toBe(409);
@@ -1139,7 +1183,10 @@ describe("accounts receivable route module", () => {
     expect(response.status).toBe(200);
     expect(accountReceivableRepo.update).toHaveBeenCalledWith(
       "33333333-3333-3333-3333-333333333333",
-      expect.objectContaining({ description: "Cliente alterado" })
+      expect.objectContaining({
+        description: "Cliente alterado",
+        userId: AUTHENTICATED_USER_ID,
+      })
     );
   });
 

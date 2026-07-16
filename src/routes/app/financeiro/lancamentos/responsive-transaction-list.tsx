@@ -23,7 +23,7 @@ export function ResponsiveTransactionList({ entries, isLoading, error, onEdit, o
       <TransactionTable entries={[]} isLoading error={false} onEdit={onEdit} onDuplicate={onDuplicate} onDelete={onDelete} />
     ) : (
       <div className="block md:hidden">
-        <div className="space-y-2">
+        <div className="mobile-list space-y-2">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="space-y-3 rounded-lg border border-border bg-card p-3 shadow-[var(--shadow-card)]">
               <div className="flex items-start justify-between gap-3">
@@ -77,7 +77,7 @@ export function ResponsiveTransactionList({ entries, isLoading, error, onEdit, o
     <TransactionTable entries={entries} isLoading={false} error={false} onEdit={onEdit} onDuplicate={onDuplicate} onDelete={onDelete} />
   ) : (
     <div className="block md:hidden">
-      <div className="space-y-3">
+      <div className="mobile-list space-y-3">
         {entries.map((entry) => (
           <TransactionCard key={entry.id} transaction={entry} onEdit={onEdit} onDuplicate={onDuplicate} onDelete={onDelete} />
         ))}

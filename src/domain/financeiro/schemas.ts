@@ -21,18 +21,37 @@ const positiveDecimal = z.preprocess(
   z.number().positive().multipleOf(0.01),
 );
 
+const nonNegativeDecimal = z.preprocess(
+  (v) => {
+    if (typeof v !== 'string') return v;
+    const input = v.trim();
+    const normalized = input.includes(',') ? input.replace(/\./g, '').replace(',', '.') : input;
+    return normalized ? Number(normalized) : undefined;
+  },
+  z.number().min(0).multipleOf(0.01),
+);
+
 // ── Financial Entry ──────────────────────────────────────────────────
 
 export const financialEntryCreateSchema = z.object({
   description: z.string().min(1),
   type: z.enum(["receita", "despesa"]),
   amount: positiveDecimal,
+  grossAmount: positiveDecimal.nullable().optional(),
+  discountAmount: nonNegativeDecimal.default(0),
+  interestAmount: nonNegativeDecimal.default(0),
+  penaltyAmount: nonNegativeDecimal.default(0),
   date: z.coerce.date(),
   status: z.enum(["pending", "confirmed", "cancelled", "reversed"]).default("pending"),
   categoryId: uuidField,
   costCenterId: uuidField.optional(),
   collaboratorId: uuidField.nullable().optional(),
   clientName: z.string().nullable().optional(),
+  paymentMethod: z.string().nullable().optional(),
+  bankAccount: z.string().nullable().optional(),
+  originType: z.enum(["manual", "accounts_payable", "accounts_receivable", "import", "system", "reversal"]).nullable().optional(),
+  originId: z.string().nullable().optional(),
+  reversalOfFinancialEntryId: uuidField.nullable().optional(),
   notes: z.string().optional(),
 });
 

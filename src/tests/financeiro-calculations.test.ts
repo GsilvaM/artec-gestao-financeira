@@ -18,6 +18,19 @@ describe("financial calculations", () => {
     ).toEqual({ receitas: 6000, despesas: 750, saldo: 5250, total: 5 });
   });
 
+  it("calculates summary for an explicit status", () => {
+    expect(
+      calculateFinancialSummary(
+        [
+          { type: "receita", amount: 1000, status: "confirmed" },
+          { type: "despesa", amount: 250, status: "pending" },
+          { type: "despesa", amount: 50, status: "confirmed" },
+        ],
+        { status: "pending" },
+      ),
+    ).toEqual({ receitas: 0, despesas: 250, saldo: -250, total: 1 });
+  });
+
   it("handles null, undefined, zero and negative values without NaN", () => {
     expect(
       calculateFinancialSummary([

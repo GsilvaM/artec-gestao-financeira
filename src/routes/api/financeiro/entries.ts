@@ -6,7 +6,10 @@ import {
   financialEntryCreateSchema,
   financialEntryUpdateSchema,
 } from "../../../domain/financeiro/schemas.js";
-import { isAccountOriginatedEntry } from "../../../server/financeiro/financial-origin.js";
+import {
+  isAccountOriginatedEntry,
+  isSystemManagedFinancialOrigin,
+} from "../../../server/financeiro/financial-origin.js";
 import { z } from "zod";
 import {
   json,
@@ -99,9 +102,18 @@ export async function action({ request, params }: RouteArgs) {
     if (request.method === "POST") {
       const body = await request.json();
       const data = createSchema.parse(body) as CreateFinancialEntryData;
-      if (isAccountOriginatedEntry(data.notes)) {
+      if (
+        isSystemManagedFinancialOrigin(data.originType) ||
+        isAccountOriginatedEntry(data.notes)
+      ) {
         throw businessError(
           "Lancamento gerenciado pelo sistema deve ser criado pela rotina de origem.",
+          409
+        );
+      }
+      if (data.status === "reversed") {
+        throw businessError(
+          "Lancamento estornado deve ser criado somente pela rotina de estorno.",
           409
         );
       }
@@ -113,19 +125,24 @@ export async function action({ request, params }: RouteArgs) {
       requireId(id);
       const body = await request.json();
       const currentEntry = await financialEntryRepo.findById(id!);
-      if (isAccountOriginatedEntry(currentEntry.notes)) {
+      if (
+        isSystemManagedFinancialOrigin(currentEntry.originType) ||
+        isAccountOriginatedEntry(currentEntry.notes)
+      ) {
         throw businessError(
           "Lancamento gerenciado pelo sistema nao pode ser editado diretamente. Use a rotina da origem.",
           409
         );
       }
+      const data = financialEntryUpdateSchema.parse(body);
+      if (data.status === "reversed") {
+        throw businessError(
+          "Lancamento estornado deve ser criado somente pela rotina de estorno.",
+          409
+        );
+      }
 
-      return json(
-        await financialEntryRepo.update(
-          id!,
-          financialEntryUpdateSchema.parse(body)
-        )
-      );
+      return json(await financialEntryRepo.update(id!, data));
     }
 
     if (request.method === "DELETE") {

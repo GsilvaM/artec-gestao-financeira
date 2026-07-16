@@ -98,7 +98,8 @@ describe("payAccountPayable", () => {
     const paymentDate = new Date("2026-07-06T00:00:00");
     const result = await payAccountPayable(ACCOUNT_ID, {
       paymentDate,
-      paidAmount: 300,
+      paidAmount: 285,
+      discountAmount: 15,
       paymentMethod: "pix",
       bankAccount: "Banco teste",
       notes: "Pago com desconto",
@@ -114,6 +115,13 @@ describe("payAccountPayable", () => {
       expect.objectContaining({
         data: expect.objectContaining({
           type: "despesa",
+          amount: 285,
+          grossAmount: 300,
+          discountAmount: 15,
+          paymentMethod: "pix",
+          bankAccount: "Banco teste",
+          originType: "accounts_payable",
+          originId: ACCOUNT_ID,
           status: "confirmed",
           notes: expect.stringContaining(
             `[originType=accounts_payable;originId=${ACCOUNT_ID}]`
@@ -122,6 +130,38 @@ describe("payAccountPayable", () => {
       })
     );
     expect(result.financialEntry).toBe(createdFinancialEntry);
+  });
+
+  it("rejects divergent settlement values without explicit adjustments", async () => {
+    const tx = {
+      accountPayable: {
+        findFirst: vi.fn().mockResolvedValue(account),
+        update: vi.fn(),
+      },
+      financialEntry: {
+        findFirst: vi.fn(),
+        create: vi.fn(),
+      },
+      auditLog: {
+        create: vi.fn(),
+      },
+    };
+
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) =>
+      callback(tx as unknown as Parameters<typeof callback>[0])
+    );
+
+    await expect(
+      payAccountPayable(ACCOUNT_ID, {
+        paymentDate: new Date("2026-07-06T00:00:00"),
+        paidAmount: 285,
+        paymentMethod: "pix",
+        userId: USER_ID,
+      })
+    ).rejects.toThrow("Valor pago divergente");
+
+    expect(tx.accountPayable.update).not.toHaveBeenCalled();
+    expect(tx.financialEntry.create).not.toHaveBeenCalled();
   });
 
   it("creates a collaborator expense entry when payable beneficiary is collaborator", async () => {

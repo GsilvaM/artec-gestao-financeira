@@ -26,6 +26,14 @@ export function isAccountOriginatedEntry(notes: string | null | undefined) {
   );
 }
 
+export function isSystemManagedFinancialOrigin(originType: string | null | undefined) {
+  return (
+    originType === FINANCIAL_ORIGINS.ACCOUNTS_PAYABLE ||
+    originType === FINANCIAL_ORIGINS.ACCOUNTS_RECEIVABLE ||
+    originType === FINANCIAL_ORIGINS.REVERSAL
+  );
+}
+
 export function reversalOriginMarker(originType: FinancialOrigin, originId: string) {
   return originMarker(FINANCIAL_ORIGINS.REVERSAL, `${originType}:${originId}`);
 }

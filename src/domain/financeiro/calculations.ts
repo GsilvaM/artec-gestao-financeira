@@ -28,13 +28,21 @@ export type FinancialSummary = {
   total: number;
 };
 
+export type FinancialSummaryOptions = {
+  status?: string;
+};
+
 export function sumAmounts(entries: Array<{ amount: unknown }>): number {
   return roundCurrency(entries.reduce((sum, entry) => sum + toFiniteNumber(entry.amount), 0));
 }
 
-export function calculateFinancialSummary(entries: FinancialEntryLike[]): FinancialSummary {
+export function calculateFinancialSummary(
+  entries: FinancialEntryLike[],
+  options: FinancialSummaryOptions = {},
+): FinancialSummary {
+  const status = options.status ?? "confirmed";
   const realizedEntries = entries.filter(
-    (entry) => entry.status === undefined || entry.status === "confirmed"
+    (entry) => entry.status === undefined || entry.status === status
   );
   const receitas = sumAmounts(realizedEntries.filter((entry) => entry.type === "receita"));
   const despesas = sumAmounts(realizedEntries.filter((entry) => entry.type === "despesa"));

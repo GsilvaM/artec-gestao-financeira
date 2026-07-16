@@ -8,6 +8,10 @@ type EntryApiResponse = {
   id: string;
   description: string;
   amount: number;
+  grossAmount: number | null;
+  discountAmount: number;
+  interestAmount: number;
+  penaltyAmount: number;
   type: string;
   date: string;
   status: string;
@@ -18,6 +22,11 @@ type EntryApiResponse = {
   collaboratorId: string | null;
   collaborator: { name: string } | null;
   clientName: string | null;
+  paymentMethod: string | null;
+  bankAccount: string | null;
+  originType: string | null;
+  originId: string | null;
+  reversalOfFinancialEntryId: string | null;
   userId: string;
   notes: string | null;
   createdAt: string;
@@ -38,6 +47,10 @@ function toRow(e: EntryApiResponse): FinancialEntryRow {
     id: e.id,
     description: e.description,
     amount: toFiniteNumber(e.amount),
+    grossAmount: e.grossAmount === null ? null : toFiniteNumber(e.grossAmount),
+    discountAmount: toFiniteNumber(e.discountAmount),
+    interestAmount: toFiniteNumber(e.interestAmount),
+    penaltyAmount: toFiniteNumber(e.penaltyAmount),
     type: e.type as FinancialEntryRow['type'],
     date: e.date,
     status: e.status as FinancialEntryRow['status'],
@@ -49,6 +62,11 @@ function toRow(e: EntryApiResponse): FinancialEntryRow {
     collaboratorId: e.collaboratorId,
     collaboratorName: e.collaborator?.name ?? null,
     clientName: e.clientName ?? null,
+    paymentMethod: e.paymentMethod ?? null,
+    bankAccount: e.bankAccount ?? null,
+    originType: e.originType ?? null,
+    originId: e.originId ?? null,
+    reversalOfFinancialEntryId: e.reversalOfFinancialEntryId ?? null,
     userId: e.userId,
     notes: e.notes,
     createdAt: e.createdAt,

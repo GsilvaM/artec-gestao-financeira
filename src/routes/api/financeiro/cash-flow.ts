@@ -1,7 +1,8 @@
 import { parseCashFlowExportQuery, getCashFlowExportFilename, getCashFlowExportPayload } from "../../../server/financeiro/cash-flow-export.js";
 import { renderCashFlowPdf } from "../../../server/financeiro/cash-flow-pdf.js";
 import { getCashFlow, getProjectedCashFlow } from "../../../server/financeiro/queries.js";
-import { json, parseDate, handleRepoError, type RouteArgs } from "./_utils.js";
+import { cashFlowQuerySchema } from "../../../domain/financeiro/cash-flow.js";
+import { json, handleRepoError, type RouteArgs } from "./_utils.js";
 
 export async function loader({ request }: RouteArgs) {
   const url = new URL(request.url);
@@ -9,27 +10,19 @@ export async function loader({ request }: RouteArgs) {
     return exportPdf(url);
   }
 
-  const rawFrom = url.searchParams.get("dateFrom");
-  const rawTo = url.searchParams.get("dateTo");
-  if (!rawFrom || !rawTo)
-    return json({ error: "dateFrom and dateTo are required" }, { status: 400 });
-  const dateFrom = parseDate(rawFrom);
-  const dateTo = parseDate(rawTo);
-  if (!dateFrom || !dateTo)
-    return json({ error: "Invalid date range" }, { status: 400 });
-  const granularity = (url.searchParams.get("granularity") ?? "day") as "day" | "week" | "month";
   try {
+    const query = cashFlowQuerySchema.parse(Object.fromEntries(url.searchParams.entries()));
     if (url.searchParams.get("mode") === "projected") {
       return json(await getProjectedCashFlow({
-        granularity,
-        dateFrom,
-        dateTo,
-        view: (url.searchParams.get("view") ?? "both") as "both" | "inflows" | "outflows",
-        categoryId: url.searchParams.get("categoryId"),
-        bank: url.searchParams.get("bank") ?? "all",
+        granularity: query.granularity,
+        dateFrom: query.dateFrom,
+        dateTo: query.dateTo,
+        view: query.view,
+        categoryId: query.categoryId,
+        bank: query.bank,
       }));
     }
-    return json(await getCashFlow(granularity, dateFrom, dateTo));
+    return json(await getCashFlow(query.granularity, query.dateFrom, query.dateTo));
   } catch (err) { return handleRepoError(err); }
 }
 

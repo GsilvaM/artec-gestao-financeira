@@ -11,6 +11,9 @@ import { NotFoundError } from "./repositories.js";
 export interface ReceiveAccountReceivableInput {
   receivedDate: Date;
   receivedAmount: number | Prisma.Decimal;
+  discountAmount?: number | Prisma.Decimal;
+  interestAmount?: number | Prisma.Decimal;
+  penaltyAmount?: number | Prisma.Decimal;
   paymentMethod: string;
   bankAccount?: string | null;
   notes?: string | null;
@@ -67,15 +70,21 @@ function buildFinancialEntryData(
   accountReceivableId: string,
   account: {
     description: string;
+    amount: number | Prisma.Decimal;
     categoryId: string;
     costCenterId: string | null;
     client: string | null;
   },
-  input: ReceiveAccountReceivableInput
+  input: ReceiveAccountReceivableInput,
+  settlement: ReturnType<typeof validateSettlementAmount>
 ): Prisma.FinancialEntryCreateInput {
   return {
     description: account.description,
     amount: input.receivedAmount,
+    grossAmount: account.amount,
+    discountAmount: settlement.discountAmount,
+    interestAmount: settlement.interestAmount,
+    penaltyAmount: settlement.penaltyAmount,
     type: "receita",
     date: input.receivedDate,
     status: "confirmed",
@@ -84,6 +93,10 @@ function buildFinancialEntryData(
       ? { costCenter: { connect: { id: account.costCenterId } } }
       : {}),
     clientName: account.client,
+    paymentMethod: input.paymentMethod,
+    bankAccount: input.bankAccount ?? null,
+    originType: FINANCIAL_ORIGINS.ACCOUNTS_RECEIVABLE,
+    originId: accountReceivableId,
     userId: input.userId,
     notes: buildFinancialEntryNotes(accountReceivableId, input),
   };
@@ -91,6 +104,35 @@ function buildFinancialEntryData(
 
 function businessError(message: string, status = 400) {
   return Object.assign(new Error(message), { name: "ValidationError", status });
+}
+
+function toMoneyNumber(value: number | Prisma.Decimal | null | undefined) {
+  return Math.round(Number(value ?? 0) * 100) / 100;
+}
+
+function validateSettlementAmount(
+  accountAmount: number | Prisma.Decimal,
+  receivedAmount: number | Prisma.Decimal,
+  input: Pick<ReceiveAccountReceivableInput, "discountAmount" | "interestAmount" | "penaltyAmount">
+) {
+  const discountAmount = toMoneyNumber(input.discountAmount);
+  const interestAmount = toMoneyNumber(input.interestAmount);
+  const penaltyAmount = toMoneyNumber(input.penaltyAmount);
+
+  if (discountAmount < 0 || interestAmount < 0 || penaltyAmount < 0) {
+    throw businessError("Desconto, juros e multa nao podem ser negativos.");
+  }
+
+  const expectedAmount = toMoneyNumber(
+    toMoneyNumber(accountAmount) - discountAmount + interestAmount + penaltyAmount
+  );
+  if (Math.abs(toMoneyNumber(receivedAmount) - expectedAmount) >= 0.01) {
+    throw businessError(
+      "Valor recebido divergente. Informe desconto, juros e multa para que o valor liquido feche com a conta."
+    );
+  }
+
+  return { discountAmount, interestAmount, penaltyAmount, expectedAmount };
 }
 
 function getLegacyReceiptDate(account: {
@@ -133,7 +175,13 @@ export async function receiveAccountReceivable(
       where: {
         deletedAt: null,
         status: { not: "reversed" },
-        notes: { contains: accountReceivableOriginMarker(accountReceivableId) },
+        OR: [
+          {
+            originType: FINANCIAL_ORIGINS.ACCOUNTS_RECEIVABLE,
+            originId: accountReceivableId,
+          },
+          { notes: { contains: accountReceivableOriginMarker(accountReceivableId) } },
+        ],
       },
     });
 
@@ -155,6 +203,12 @@ export async function receiveAccountReceivable(
       );
     }
 
+    const settlement = validateSettlementAmount(
+      account.amount,
+      input.receivedAmount,
+      input
+    );
+
     const receivedAccount = await tx.accountReceivable.update({
       where: { id: accountReceivableId },
       data: {
@@ -168,7 +222,8 @@ export async function receiveAccountReceivable(
     const financialEntryData = buildFinancialEntryData(
       accountReceivableId,
       account,
-      input
+      input,
+      settlement
     );
 
     const financialEntry = await tx.financialEntry.create({
@@ -184,6 +239,10 @@ export async function receiveAccountReceivable(
         entityId: accountReceivableId,
         metadata: {
           receivedAmount: Number(input.receivedAmount),
+          grossAmount: Number(account.amount),
+          discountAmount: settlement.discountAmount,
+          interestAmount: settlement.interestAmount,
+          penaltyAmount: settlement.penaltyAmount,
           receivedDate: input.receivedDate.toISOString(),
           paymentMethod: input.paymentMethod,
           bankAccount: input.bankAccount ?? null,
@@ -261,7 +320,13 @@ export async function reverseAccountReceivableReceipt(
       where: {
         deletedAt: null,
         status: { not: "reversed" },
-        notes: { contains: originMarker },
+        OR: [
+          {
+            originType: FINANCIAL_ORIGINS.ACCOUNTS_RECEIVABLE,
+            originId: accountReceivableId,
+          },
+          { notes: { contains: originMarker } },
+        ],
       },
       include: { category: true, costCenter: true, collaborator: true },
     });
@@ -271,7 +336,13 @@ export async function reverseAccountReceivableReceipt(
         where: {
           deletedAt: null,
           status: "reversed",
-          notes: { contains: originMarker },
+          OR: [
+            {
+              originType: FINANCIAL_ORIGINS.ACCOUNTS_RECEIVABLE,
+              originId: accountReceivableId,
+            },
+            { notes: { contains: originMarker } },
+          ],
         },
         include: { category: true, costCenter: true, collaborator: true },
       });
@@ -312,12 +383,15 @@ export async function reverseAccountReceivableReceipt(
         data: {
           description: account.description,
           amount: account.amount,
+          grossAmount: account.amount,
           type: "receita",
           date: getLegacyReceiptDate(account),
           status: "confirmed",
           categoryId: account.categoryId,
           costCenterId: account.costCenterId,
           clientName: account.client,
+          originType: FINANCIAL_ORIGINS.ACCOUNTS_RECEIVABLE,
+          originId: accountReceivableId,
           userId: account.userId,
           notes: [
             originMarker,
@@ -353,7 +427,13 @@ export async function reverseAccountReceivableReceipt(
     const existingReversalEntry = await tx.financialEntry.findFirst({
       where: {
         deletedAt: null,
-        notes: { contains: reversalMarker },
+        OR: [
+          {
+            originType: FINANCIAL_ORIGINS.REVERSAL,
+            originId: `${FINANCIAL_ORIGINS.ACCOUNTS_RECEIVABLE}:${accountReceivableId}`,
+          },
+          { notes: { contains: reversalMarker } },
+        ],
       },
       include: { category: true, costCenter: true, collaborator: true },
     });
@@ -414,6 +494,10 @@ export async function reverseAccountReceivableReceipt(
       data: {
         description: `Estorno: ${financialEntry.description}`,
         amount: financialEntry.amount,
+        grossAmount: financialEntry.grossAmount,
+        discountAmount: financialEntry.discountAmount,
+        interestAmount: financialEntry.interestAmount,
+        penaltyAmount: financialEntry.penaltyAmount,
         type: "despesa",
         date: input.reversalDate,
         status: "confirmed",
@@ -421,6 +505,11 @@ export async function reverseAccountReceivableReceipt(
         costCenterId: financialEntry.costCenterId,
         collaboratorId: financialEntry.collaboratorId,
         clientName: financialEntry.clientName,
+        paymentMethod: financialEntry.paymentMethod,
+        bankAccount: financialEntry.bankAccount,
+        originType: FINANCIAL_ORIGINS.REVERSAL,
+        originId: `${FINANCIAL_ORIGINS.ACCOUNTS_RECEIVABLE}:${accountReceivableId}`,
+        reversalOfFinancialEntryId: financialEntry.id,
         userId: input.userId,
         notes: buildReversalEntryNotes(accountReceivableId, financialEntry.id, input),
       },

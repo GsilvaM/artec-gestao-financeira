@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma/client.js";
 import {
   buildProjectedCashFlow,
@@ -53,6 +54,28 @@ interface ProjectedCashFlowInput {
   dateTo: Date;
   categoryId?: string | null;
   bank?: string;
+}
+
+function buildProjectedBalanceWhere(
+  input: ProjectedCashFlowInput,
+  type: "receita" | "despesa"
+): Prisma.FinancialEntryWhereInput {
+  const bank = input.bank?.trim();
+
+  return {
+    deletedAt: null,
+    type,
+    status: "confirmed",
+    ...(input.categoryId ? { categoryId: input.categoryId } : {}),
+    ...(bank && bank !== "all"
+      ? {
+          OR: [
+            { bankAccount: { contains: bank, mode: "insensitive" } },
+            { notes: { contains: bank, mode: "insensitive" } },
+          ],
+        }
+      : {}),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -144,11 +167,11 @@ export async function getCashFlow(
 export async function getProjectedCashFlow(input: ProjectedCashFlowInput): Promise<ProjectedCashFlowResult> {
   const [receitaAgg, despesaAgg, receivables, payables] = await Promise.all([
     prisma.financialEntry.aggregate({
-      where: { deletedAt: null, type: "receita", status: "confirmed" },
+      where: buildProjectedBalanceWhere(input, "receita"),
       _sum: { amount: true },
     }),
     prisma.financialEntry.aggregate({
-      where: { deletedAt: null, type: "despesa", status: "confirmed" },
+      where: buildProjectedBalanceWhere(input, "despesa"),
       _sum: { amount: true },
     }),
     prisma.accountReceivable.findMany({

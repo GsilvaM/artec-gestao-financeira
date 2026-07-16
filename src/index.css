@@ -1684,24 +1684,15 @@
     }
 
     .lancamentos-summary-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-      gap: 10px !important;
-    }
-
-    .lancamentos-summary-grid > .summary-card:last-child {
-      grid-column: 1 / -1;
-      order: -2;
-    }
-
-    .lancamentos-summary-grid > .summary-card:first-child {
-      order: 2;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)) !important;
+      gap: 12px !important;
     }
 
     .lancamentos-summary-grid .summary-card {
-      min-height: 96px;
+      min-height: 112px;
       padding: 12px;
-      border-radius: 14px;
-      gap: 7px;
+      border-radius: 16px;
+      gap: 8px;
     }
 
     .lancamentos-summary-grid .summary-card > p:first-of-type {
@@ -1709,9 +1700,8 @@
     }
 
     .lancamentos-summary-grid .summary-card > div {
-      align-items: flex-start;
-      flex-direction: column;
-      gap: 7px;
+      align-items: center;
+      gap: 10px;
     }
 
     .lancamentos-summary-grid .summary-card > div > div:first-child {
@@ -1724,10 +1714,18 @@
       width: 100%;
       flex: 0 1 auto;
       min-width: 0;
-      font-size: clamp(0.86rem, 4.35vw, 1.18rem);
+      font-size: clamp(1rem, 4.65vw, 1.28rem);
       line-height: 1.05;
       overflow-wrap: normal;
       white-space: nowrap;
+    }
+
+    .lancamentos-summary-grid .summary-card > div > p > span {
+      display: block;
+      min-width: 0;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .lancamentos-summary-grid .summary-card > .h-8 {
@@ -1955,11 +1953,6 @@
 
     .lancamentos-summary-grid {
       grid-template-columns: 1fr !important;
-    }
-
-    .lancamentos-summary-grid > .summary-card:last-child {
-      grid-column: auto;
-      order: -2;
     }
 
     .transaction-mobile-value {

@@ -67,6 +67,10 @@ function collaboratorWhereNotDeleted(): Prisma.CollaboratorWhereInput {
 export interface CreateFinancialEntryData {
   description: string;
   amount: Prisma.Decimal | number;
+  grossAmount?: Prisma.Decimal | number | null;
+  discountAmount?: Prisma.Decimal | number;
+  interestAmount?: Prisma.Decimal | number;
+  penaltyAmount?: Prisma.Decimal | number;
   type: string;
   date: Date;
   status?: string;
@@ -74,6 +78,11 @@ export interface CreateFinancialEntryData {
   costCenterId?: string | null;
   collaboratorId?: string | null;
   clientName?: string | null;
+  paymentMethod?: string | null;
+  bankAccount?: string | null;
+  originType?: (typeof FINANCIAL_ORIGINS)[keyof typeof FINANCIAL_ORIGINS] | null;
+  originId?: string | null;
+  reversalOfFinancialEntryId?: string | null;
   userId: string;
   notes?: string | null;
 }
@@ -81,6 +90,10 @@ export interface CreateFinancialEntryData {
 export interface UpdateFinancialEntryData {
   description?: string;
   amount?: Prisma.Decimal | number;
+  grossAmount?: Prisma.Decimal | number | null;
+  discountAmount?: Prisma.Decimal | number;
+  interestAmount?: Prisma.Decimal | number;
+  penaltyAmount?: Prisma.Decimal | number;
   type?: string;
   date?: Date;
   status?: string;
@@ -88,6 +101,11 @@ export interface UpdateFinancialEntryData {
   costCenterId?: string | null;
   collaboratorId?: string | null;
   clientName?: string | null;
+  paymentMethod?: string | null;
+  bankAccount?: string | null;
+  originType?: string | null;
+  originId?: string | null;
+  reversalOfFinancialEntryId?: string | null;
   notes?: string | null;
 }
 
@@ -111,19 +129,35 @@ export const financialEntryRepo = {
     const andFilters: Prisma.FinancialEntryWhereInput[] = [];
     if (filters?.paymentMethod) {
       andFilters.push({
-        notes: { contains: filters.paymentMethod, mode: "insensitive" },
+        OR: [
+          { paymentMethod: { contains: filters.paymentMethod, mode: "insensitive" } },
+          { notes: { contains: filters.paymentMethod, mode: "insensitive" } },
+        ],
       });
     }
     if (filters?.bankAccount) {
       andFilters.push({
-        notes: { contains: filters.bankAccount, mode: "insensitive" },
+        OR: [
+          { bankAccount: { contains: filters.bankAccount, mode: "insensitive" } },
+          { notes: { contains: filters.bankAccount, mode: "insensitive" } },
+        ],
       });
     }
     if (filters?.origin && filters.origin !== "manual") {
-      andFilters.push({ notes: { contains: `[originType=${filters.origin};` } });
+      andFilters.push({
+        OR: [
+          { originType: filters.origin },
+          { notes: { contains: `[originType=${filters.origin};` } },
+        ],
+      });
     }
     if (filters?.origin === "manual") {
-      andFilters.push({ notes: { contains: `[originType=${FINANCIAL_ORIGINS.MANUAL};` } });
+      andFilters.push({
+        OR: [
+          { originType: FINANCIAL_ORIGINS.MANUAL },
+          { notes: { contains: `[originType=${FINANCIAL_ORIGINS.MANUAL};` } },
+        ],
+      });
     }
 
     const where: Prisma.FinancialEntryWhereInput = {
@@ -155,6 +189,9 @@ export const financialEntryRepo = {
           }
         : {}),
     };
+    const summaryWhere: Prisma.FinancialEntryWhereInput = filters?.status
+      ? where
+      : { ...where, status: "confirmed" };
 
     const [items, total, summary] = await Promise.all([
       prisma.financialEntry.findMany({
@@ -167,7 +204,7 @@ export const financialEntryRepo = {
       prisma.financialEntry.count({ where }),
       prisma.financialEntry.groupBy({
         by: ["type"],
-        where,
+        where: summaryWhere,
         _sum: { amount: true },
       }),
     ]);
@@ -196,19 +233,35 @@ export const financialEntryRepo = {
     const andFilters: Prisma.FinancialEntryWhereInput[] = [];
     if (filters?.paymentMethod) {
       andFilters.push({
-        notes: { contains: filters.paymentMethod, mode: "insensitive" },
+        OR: [
+          { paymentMethod: { contains: filters.paymentMethod, mode: "insensitive" } },
+          { notes: { contains: filters.paymentMethod, mode: "insensitive" } },
+        ],
       });
     }
     if (filters?.bankAccount) {
       andFilters.push({
-        notes: { contains: filters.bankAccount, mode: "insensitive" },
+        OR: [
+          { bankAccount: { contains: filters.bankAccount, mode: "insensitive" } },
+          { notes: { contains: filters.bankAccount, mode: "insensitive" } },
+        ],
       });
     }
     if (filters?.origin && filters.origin !== "manual") {
-      andFilters.push({ notes: { contains: `[originType=${filters.origin};` } });
+      andFilters.push({
+        OR: [
+          { originType: filters.origin },
+          { notes: { contains: `[originType=${filters.origin};` } },
+        ],
+      });
     }
     if (filters?.origin === "manual") {
-      andFilters.push({ notes: { contains: `[originType=${FINANCIAL_ORIGINS.MANUAL};` } });
+      andFilters.push({
+        OR: [
+          { originType: FINANCIAL_ORIGINS.MANUAL },
+          { notes: { contains: `[originType=${FINANCIAL_ORIGINS.MANUAL};` } },
+        ],
+      });
     }
 
     const where: Prisma.FinancialEntryWhereInput = {
@@ -258,10 +311,16 @@ export const financialEntryRepo = {
   },
 
   async create(data: CreateFinancialEntryData) {
+    const originType = data.originType ?? FINANCIAL_ORIGINS.MANUAL;
+    const originId = data.originId ?? "manual";
     return prisma.financialEntry.create({
       data: {
         description: data.description,
         amount: data.amount,
+        grossAmount: data.grossAmount ?? null,
+        discountAmount: data.discountAmount ?? 0,
+        interestAmount: data.interestAmount ?? 0,
+        penaltyAmount: data.penaltyAmount ?? 0,
         type: data.type,
         date: data.date,
         status: data.status ?? "pending",
@@ -269,11 +328,16 @@ export const financialEntryRepo = {
         costCenterId: data.costCenterId ?? null,
         collaboratorId: data.collaboratorId ?? null,
         clientName: data.clientName ?? null,
+        paymentMethod: data.paymentMethod ?? null,
+        bankAccount: data.bankAccount ?? null,
+        originType,
+        originId,
+        reversalOfFinancialEntryId: data.reversalOfFinancialEntryId ?? null,
         userId: data.userId,
         notes: hasOriginMarker(data.notes)
           ? (data.notes ?? null)
           : appendMetadata(data.notes, [
-              originMarker(FINANCIAL_ORIGINS.MANUAL, "manual"),
+              originMarker(originType, originId),
             ]),
       },
       include: { category: true, costCenter: true, collaborator: true },
@@ -865,6 +929,8 @@ export interface UpdateAccountReceivableData {
   costCenterId?: string | null;
   client?: string | null;
   notes?: string | null;
+  /** Audit-only; not persisted to the model. */
+  userId?: string;
 }
 
 export interface AccountReceivableFilters {
@@ -924,32 +990,98 @@ export const accountReceivableRepo = {
   },
 
   async create(data: CreateAccountReceivableData) {
-    return prisma.accountReceivable.create({
-      data: {
-        description: data.description,
-        amount: data.amount,
-        dueDate: data.dueDate,
-        status: data.status ?? "pending",
-        categoryId: data.categoryId,
-        costCenterId: data.costCenterId ?? null,
-        client: data.client ?? null,
-        userId: data.userId,
-        notes: data.notes ?? null,
-      },
-      include: { category: true, costCenter: true },
+    return prisma.$transaction(async (tx) => {
+      const account = await tx.accountReceivable.create({
+        data: {
+          description: data.description,
+          amount: data.amount,
+          dueDate: data.dueDate,
+          status: data.status ?? "pending",
+          categoryId: data.categoryId,
+          costCenterId: data.costCenterId ?? null,
+          client: data.client ?? null,
+          userId: data.userId,
+          notes: data.notes ?? null,
+        },
+        include: { category: true, costCenter: true },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          userId: data.userId,
+          action: "CREATED",
+          entity: "AccountReceivable",
+          entityId: account.id,
+          metadata: {
+            entity_type: "AccountReceivable",
+            entity_id: account.id,
+            action: "CREATED",
+            changed_fields: {
+              description: changedField(null, data.description),
+              amount: changedField(null, data.amount),
+              dueDate: changedField(null, data.dueDate),
+              categoryId: changedField(null, data.categoryId),
+              costCenterId: changedField(null, data.costCenterId ?? null),
+              client: changedField(null, data.client ?? null),
+            },
+            timestamp: new Date().toISOString(),
+            amount: Number(data.amount),
+            dueDate: data.dueDate.toISOString(),
+            categoryId: data.categoryId,
+            costCenterId: data.costCenterId ?? null,
+            client: data.client ?? null,
+          },
+        },
+      });
+
+      return account;
     });
   },
 
   async update(id: string, data: UpdateAccountReceivableData) {
-    const existing = await prisma.accountReceivable.findFirst({
-      where: { id, deletedAt: null },
-    });
-    if (!existing) throw new NotFoundError("AccountReceivable", id);
+    return prisma.$transaction(async (tx) => {
+      const existing = await tx.accountReceivable.findFirst({
+        where: { id, deletedAt: null },
+      });
+      if (!existing) throw new NotFoundError("AccountReceivable", id);
 
-    return prisma.accountReceivable.update({
-      where: { id },
-      data,
-      include: { category: true, costCenter: true },
+      const { userId, ...accountData } = data;
+      const account = await tx.accountReceivable.update({
+        where: { id },
+        data: accountData,
+        include: { category: true, costCenter: true },
+      });
+
+      if (userId) {
+        const changedFields = Object.entries(accountData).reduce<
+          Record<string, ReturnType<typeof changedField>>
+        >((fields, [field, nextValue]) => {
+          const previousValue = existing[field as keyof typeof existing];
+          if (toAuditValue(previousValue) !== toAuditValue(nextValue)) {
+            fields[field] = changedField(previousValue, nextValue);
+          }
+          return fields;
+        }, {});
+
+        await tx.auditLog.create({
+          data: {
+            userId,
+            action: "UPDATED",
+            entity: "AccountReceivable",
+            entityId: id,
+            metadata: {
+              entity_type: "AccountReceivable",
+              entity_id: id,
+              action: "UPDATED",
+              changed_fields: changedFields,
+              timestamp: new Date().toISOString(),
+              fields: Object.keys(accountData),
+            },
+          },
+        });
+      }
+
+      return account;
     });
   },
 

@@ -90,6 +90,7 @@ describe("receiveAccountReceivable", () => {
     const result = await receiveAccountReceivable(ACCOUNT_ID, {
       receivedDate,
       receivedAmount: 475,
+      discountAmount: 25,
       paymentMethod: "pix",
       bankAccount: "Banco teste",
       notes: "Desconto combinado",
@@ -110,6 +111,12 @@ describe("receiveAccountReceivable", () => {
         data: expect.objectContaining({
           description: account.description,
           amount: 475,
+          grossAmount: 500,
+          discountAmount: 25,
+          paymentMethod: "pix",
+          bankAccount: "Banco teste",
+          originType: "accounts_receivable",
+          originId: ACCOUNT_ID,
           type: "receita",
           date: receivedDate,
           status: "confirmed",
@@ -142,6 +149,38 @@ describe("receiveAccountReceivable", () => {
       })
     );
     expect(result.financialEntry).toBe(createdFinancialEntry);
+  });
+
+  it("rejects divergent receipt values without explicit adjustments", async () => {
+    const tx = {
+      accountReceivable: {
+        findFirst: vi.fn().mockResolvedValue(account),
+        update: vi.fn(),
+      },
+      financialEntry: {
+        findFirst: vi.fn(),
+        create: vi.fn(),
+      },
+      auditLog: {
+        create: vi.fn(),
+      },
+    };
+
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) =>
+      callback(tx as unknown as Parameters<typeof callback>[0])
+    );
+
+    await expect(
+      receiveAccountReceivable(ACCOUNT_ID, {
+        receivedDate: new Date("2026-07-06T00:00:00"),
+        receivedAmount: 475,
+        paymentMethod: "pix",
+        userId: USER_ID,
+      })
+    ).rejects.toThrow("Valor recebido divergente");
+
+    expect(tx.accountReceivable.update).not.toHaveBeenCalled();
+    expect(tx.financialEntry.create).not.toHaveBeenCalled();
   });
 });
 

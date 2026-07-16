@@ -11,6 +11,9 @@ import { NotFoundError } from "./repositories.js";
 export interface PayAccountPayableInput {
   paymentDate: Date;
   paidAmount: number | Prisma.Decimal;
+  discountAmount?: number | Prisma.Decimal;
+  interestAmount?: number | Prisma.Decimal;
+  penaltyAmount?: number | Prisma.Decimal;
   paymentMethod: string;
   bankAccount?: string | null;
   notes?: string | null;
@@ -62,6 +65,35 @@ function buildReversalEntryNotes(
 
 function businessError(message: string, status = 400) {
   return Object.assign(new Error(message), { name: "ValidationError", status });
+}
+
+function toMoneyNumber(value: number | Prisma.Decimal | null | undefined) {
+  return Math.round(Number(value ?? 0) * 100) / 100;
+}
+
+function validateSettlementAmount(
+  accountAmount: number | Prisma.Decimal,
+  paidAmount: number | Prisma.Decimal,
+  input: Pick<PayAccountPayableInput, "discountAmount" | "interestAmount" | "penaltyAmount">
+) {
+  const discountAmount = toMoneyNumber(input.discountAmount);
+  const interestAmount = toMoneyNumber(input.interestAmount);
+  const penaltyAmount = toMoneyNumber(input.penaltyAmount);
+
+  if (discountAmount < 0 || interestAmount < 0 || penaltyAmount < 0) {
+    throw businessError("Desconto, juros e multa nao podem ser negativos.");
+  }
+
+  const expectedAmount = toMoneyNumber(
+    toMoneyNumber(accountAmount) - discountAmount + interestAmount + penaltyAmount
+  );
+  if (Math.abs(toMoneyNumber(paidAmount) - expectedAmount) >= 0.01) {
+    throw businessError(
+      "Valor pago divergente. Informe desconto, juros e multa para que o valor liquido feche com a conta."
+    );
+  }
+
+  return { discountAmount, interestAmount, penaltyAmount, expectedAmount };
 }
 
 function getLegacyPaymentDate(account: {
@@ -135,7 +167,13 @@ export async function payAccountPayable(
       where: {
         deletedAt: null,
         status: { not: "reversed" },
-        notes: { contains: accountPayableOriginMarker(accountPayableId) },
+        OR: [
+          {
+            originType: FINANCIAL_ORIGINS.ACCOUNTS_PAYABLE,
+            originId: accountPayableId,
+          },
+          { notes: { contains: accountPayableOriginMarker(accountPayableId) } },
+        ],
       },
     });
 
@@ -157,6 +195,12 @@ export async function payAccountPayable(
       );
     }
 
+    const settlement = validateSettlementAmount(
+      account.amount,
+      input.paidAmount,
+      input
+    );
+
     const paidAccount = await tx.accountPayable.update({
       where: { id: accountPayableId },
       data: {
@@ -171,6 +215,10 @@ export async function payAccountPayable(
       data: {
         description: getFinancialEntryDescription(account),
         amount: input.paidAmount,
+        grossAmount: account.amount,
+        discountAmount: settlement.discountAmount,
+        interestAmount: settlement.interestAmount,
+        penaltyAmount: settlement.penaltyAmount,
         type: "despesa",
         date: input.paymentDate,
         status: "confirmed",
@@ -178,6 +226,10 @@ export async function payAccountPayable(
         costCenterId: account.costCenterId,
         collaboratorId: getCollaboratorId(account),
         clientName: getBeneficiaryName(account),
+        paymentMethod: input.paymentMethod,
+        bankAccount: input.bankAccount ?? null,
+        originType: FINANCIAL_ORIGINS.ACCOUNTS_PAYABLE,
+        originId: accountPayableId,
         userId: input.userId,
         notes: buildFinancialEntryNotes(accountPayableId, input),
       },
@@ -192,6 +244,10 @@ export async function payAccountPayable(
         entityId: accountPayableId,
         metadata: {
           paidAmount: Number(input.paidAmount),
+          grossAmount: Number(account.amount),
+          discountAmount: settlement.discountAmount,
+          interestAmount: settlement.interestAmount,
+          penaltyAmount: settlement.penaltyAmount,
           paymentDate: input.paymentDate.toISOString(),
           paymentMethod: input.paymentMethod,
           bankAccount: input.bankAccount ?? null,
@@ -285,7 +341,13 @@ export async function reverseAccountPayablePayment(
       where: {
         deletedAt: null,
         status: { not: "reversed" },
-        notes: { contains: originMarker },
+        OR: [
+          {
+            originType: FINANCIAL_ORIGINS.ACCOUNTS_PAYABLE,
+            originId: accountPayableId,
+          },
+          { notes: { contains: originMarker } },
+        ],
       },
       include: { category: true, costCenter: true, collaborator: true },
     });
@@ -295,7 +357,13 @@ export async function reverseAccountPayablePayment(
         where: {
           deletedAt: null,
           status: "reversed",
-          notes: { contains: originMarker },
+          OR: [
+            {
+              originType: FINANCIAL_ORIGINS.ACCOUNTS_PAYABLE,
+              originId: accountPayableId,
+            },
+            { notes: { contains: originMarker } },
+          ],
         },
         include: { category: true, costCenter: true, collaborator: true },
       });
@@ -336,6 +404,7 @@ export async function reverseAccountPayablePayment(
         data: {
           description: getFinancialEntryDescription(account),
           amount: account.amount,
+          grossAmount: account.amount,
           type: "despesa",
           date: getLegacyPaymentDate(account),
           status: "confirmed",
@@ -343,6 +412,8 @@ export async function reverseAccountPayablePayment(
           costCenterId: account.costCenterId,
           collaboratorId: getCollaboratorId(account),
           clientName: getBeneficiaryName(account),
+          originType: FINANCIAL_ORIGINS.ACCOUNTS_PAYABLE,
+          originId: accountPayableId,
           userId: account.userId,
           notes: [
             originMarker,
@@ -381,7 +452,13 @@ export async function reverseAccountPayablePayment(
     const existingReversalEntry = await tx.financialEntry.findFirst({
       where: {
         deletedAt: null,
-        notes: { contains: reversalMarker },
+        OR: [
+          {
+            originType: FINANCIAL_ORIGINS.REVERSAL,
+            originId: `${FINANCIAL_ORIGINS.ACCOUNTS_PAYABLE}:${accountPayableId}`,
+          },
+          { notes: { contains: reversalMarker } },
+        ],
       },
       include: { category: true, costCenter: true, collaborator: true },
     });
@@ -442,6 +519,10 @@ export async function reverseAccountPayablePayment(
       data: {
         description: `Estorno: ${financialEntry.description}`,
         amount: financialEntry.amount,
+        grossAmount: financialEntry.grossAmount,
+        discountAmount: financialEntry.discountAmount,
+        interestAmount: financialEntry.interestAmount,
+        penaltyAmount: financialEntry.penaltyAmount,
         type: "receita",
         date: input.reversalDate,
         status: "confirmed",
@@ -449,6 +530,11 @@ export async function reverseAccountPayablePayment(
         costCenterId: financialEntry.costCenterId,
         collaboratorId: financialEntry.collaboratorId,
         clientName: financialEntry.clientName,
+        paymentMethod: financialEntry.paymentMethod,
+        bankAccount: financialEntry.bankAccount,
+        originType: FINANCIAL_ORIGINS.REVERSAL,
+        originId: `${FINANCIAL_ORIGINS.ACCOUNTS_PAYABLE}:${accountPayableId}`,
+        reversalOfFinancialEntryId: financialEntry.id,
         userId: input.userId,
         notes: buildReversalEntryNotes(accountPayableId, financialEntry.id, input),
       },

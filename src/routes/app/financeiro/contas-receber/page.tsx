@@ -162,6 +162,9 @@ export function Component() {
     useState<AccountReceivableRow | null>(null);
   const [receiptDate, setReceiptDate] = useState("");
   const [receivedAmount, setReceivedAmount] = useState("");
+  const [receiptDiscountAmount, setReceiptDiscountAmount] = useState("");
+  const [receiptInterestAmount, setReceiptInterestAmount] = useState("");
+  const [receiptPenaltyAmount, setReceiptPenaltyAmount] = useState("");
   const [receiptMethod, setReceiptMethod] = useState("");
   const [bankAccount, setBankAccount] = useState("");
   const [receiptNotes, setReceiptNotes] = useState("");
@@ -255,6 +258,9 @@ export function Component() {
     setReceivingEntry(entry);
     setReceiptDate(toDateInputValue(new Date()));
     setReceivedAmount(String(entry.amount));
+    setReceiptDiscountAmount("");
+    setReceiptInterestAmount("");
+    setReceiptPenaltyAmount("");
     setReceiptMethod("");
     setBankAccount("");
     setReceiptNotes("");
@@ -282,6 +288,9 @@ export function Component() {
     setReceivingEntry(null);
     setReceiptDate("");
     setReceivedAmount("");
+    setReceiptDiscountAmount("");
+    setReceiptInterestAmount("");
+    setReceiptPenaltyAmount("");
     setReceiptMethod("");
     setBankAccount("");
     setReceiptNotes("");
@@ -363,6 +372,12 @@ export function Component() {
   async function confirmReceipt() {
     if (!receivingEntry) return;
     const parsedAmount = parseMoneyInput(receivedAmount);
+    const parsedDiscount = parseMoneyInput(receiptDiscountAmount);
+    const parsedInterest = parseMoneyInput(receiptInterestAmount);
+    const parsedPenalty = parseMoneyInput(receiptPenaltyAmount);
+    const discountAmount = Number.isFinite(parsedDiscount) ? parsedDiscount : 0;
+    const interestAmount = Number.isFinite(parsedInterest) ? parsedInterest : 0;
+    const penaltyAmount = Number.isFinite(parsedPenalty) ? parsedPenalty : 0;
     if (!receiptDate) {
       toast.error("Informe a data do recebimento");
       return;
@@ -373,6 +388,10 @@ export function Component() {
     }
     if (!receiptMethod.trim()) {
       toast.error("Informe a forma de recebimento");
+      return;
+    }
+    if (discountAmount < 0 || interestAmount < 0 || penaltyAmount < 0) {
+      toast.error("Desconto, juros e multa nao podem ser negativos");
       return;
     }
     if (!user) {
@@ -386,6 +405,9 @@ export function Component() {
         data: {
           receivedDate: new Date(receiptDate + "T00:00:00"),
           receivedAmount: parsedAmount,
+          discountAmount,
+          interestAmount,
+          penaltyAmount,
           paymentMethod: receiptMethod.trim(),
           bankAccount: bankAccount.trim() || undefined,
           notes: receiptNotes.trim() || undefined,
@@ -478,15 +500,35 @@ export function Component() {
   if (status === "received")
     statusOptions.unshift({ value: "received", label: "Recebido" });
   const receivedAmountNumber = parseMoneyInput(receivedAmount);
+  const receiptDiscountNumber = parseMoneyInput(receiptDiscountAmount);
+  const receiptInterestNumber = parseMoneyInput(receiptInterestAmount);
+  const receiptPenaltyNumber = parseMoneyInput(receiptPenaltyAmount);
+  const receiptDiscount = Number.isFinite(receiptDiscountNumber)
+    ? receiptDiscountNumber
+    : 0;
+  const receiptInterest = Number.isFinite(receiptInterestNumber)
+    ? receiptInterestNumber
+    : 0;
+  const receiptPenalty = Number.isFinite(receiptPenaltyNumber)
+    ? receiptPenaltyNumber
+    : 0;
+  const expectedReceiptAmount = receivingEntry
+    ? toFiniteNumber(receivingEntry.amount) - receiptDiscount + receiptInterest + receiptPenalty
+    : 0;
   const hasReceiptDifference =
     !!receivingEntry &&
     Number.isFinite(receivedAmountNumber) &&
     Math.abs(receivedAmountNumber - toFiniteNumber(receivingEntry.amount)) >=
       0.01;
+  const receiptSettlementMatches =
+    !!receivingEntry &&
+    Number.isFinite(receivedAmountNumber) &&
+    Math.abs(receivedAmountNumber - expectedReceiptAmount) < 0.01;
   const canConfirmReceipt =
     !!receiptDate &&
     Number.isFinite(receivedAmountNumber) &&
     receivedAmountNumber > 0 &&
+    receiptSettlementMatches &&
     !!receiptMethod.trim() &&
     !receiving;
 
@@ -893,6 +935,33 @@ export function Component() {
                 placeholder="R$ 0,00"
               />
             </Field>
+            <Field label="Desconto">
+              <Input
+                type="text"
+                inputMode="decimal"
+                value={receiptDiscountAmount}
+                onChange={(e) => setReceiptDiscountAmount(e.target.value)}
+                placeholder="R$ 0,00"
+              />
+            </Field>
+            <Field label="Juros">
+              <Input
+                type="text"
+                inputMode="decimal"
+                value={receiptInterestAmount}
+                onChange={(e) => setReceiptInterestAmount(e.target.value)}
+                placeholder="R$ 0,00"
+              />
+            </Field>
+            <Field label="Multa">
+              <Input
+                type="text"
+                inputMode="decimal"
+                value={receiptPenaltyAmount}
+                onChange={(e) => setReceiptPenaltyAmount(e.target.value)}
+                placeholder="R$ 0,00"
+              />
+            </Field>
             <Field label="Forma de recebimento">
               <Select
                 value={receiptMethod}
@@ -923,8 +992,8 @@ export function Component() {
               <Clock3 className="mt-0.5 size-4 shrink-0 text-amber-600" />
               <span>
                 O valor recebido difere do valor original de{" "}
-                {formatMoney(receivingEntry.amount)}. O financeiro sera criado
-                com o valor confirmado aqui.
+                {formatMoney(receivingEntry.amount)}. O valor liquido esperado
+                com ajustes e {formatMoney(expectedReceiptAmount)}.
               </span>
             </div>
           ) : null}

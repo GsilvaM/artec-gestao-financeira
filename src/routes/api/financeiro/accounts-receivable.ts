@@ -25,10 +25,17 @@ const createSchema = accountReceivableCreateSchema.extend({
   userId: uuidField,
 });
 
+const updateSchema = accountReceivableUpdateSchema.extend({
+  userId: uuidField.optional(),
+});
+
 const receiptSchema = z.object({
   status: z.literal("received"),
   receivedDate: z.coerce.date(),
   receivedAmount: z.coerce.number().positive(),
+  discountAmount: z.coerce.number().min(0).optional(),
+  interestAmount: z.coerce.number().min(0).optional(),
+  penaltyAmount: z.coerce.number().min(0).optional(),
   paymentMethod: z.string().min(1),
   bankAccount: z.string().optional(),
   notes: z.string().optional(),
@@ -111,6 +118,9 @@ export async function action({ request, params, authenticatedUserId }: RouteArgs
           await receiveAccountReceivable(id!, {
             receivedDate: data.receivedDate,
             receivedAmount: data.receivedAmount,
+            discountAmount: data.discountAmount,
+            interestAmount: data.interestAmount,
+            penaltyAmount: data.penaltyAmount,
             paymentMethod: data.paymentMethod,
             bankAccount: data.bankAccount?.trim() || null,
             notes: data.notes?.trim() || null,
@@ -146,7 +156,10 @@ export async function action({ request, params, authenticatedUserId }: RouteArgs
       return json(
         await accountReceivableRepo.update(
           id!,
-          accountReceivableUpdateSchema.parse(body)
+          {
+            ...updateSchema.parse(body),
+            userId: actorUserId,
+          }
         )
       );
     }

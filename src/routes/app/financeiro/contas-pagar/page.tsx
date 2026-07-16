@@ -193,6 +193,9 @@ export function Component() {
   );
   const [paymentDate, setPaymentDate] = useState("");
   const [paidAmount, setPaidAmount] = useState("");
+  const [paymentDiscountAmount, setPaymentDiscountAmount] = useState("");
+  const [paymentInterestAmount, setPaymentInterestAmount] = useState("");
+  const [paymentPenaltyAmount, setPaymentPenaltyAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
   const [bankAccount, setBankAccount] = useState("");
   const [paymentNotes, setPaymentNotes] = useState("");
@@ -376,6 +379,9 @@ export function Component() {
     setPayingEntry(entry);
     setPaymentDate(toDateInputValue(new Date()));
     setPaidAmount(String(entry.amount));
+    setPaymentDiscountAmount("");
+    setPaymentInterestAmount("");
+    setPaymentPenaltyAmount("");
     setPaymentMethod("");
     setBankAccount("");
     setPaymentNotes("");
@@ -403,6 +409,9 @@ export function Component() {
     setPayingEntry(null);
     setPaymentDate("");
     setPaidAmount("");
+    setPaymentDiscountAmount("");
+    setPaymentInterestAmount("");
+    setPaymentPenaltyAmount("");
     setPaymentMethod("");
     setBankAccount("");
     setPaymentNotes("");
@@ -509,6 +518,12 @@ export function Component() {
   async function confirmPayment() {
     if (!payingEntry) return;
     const parsedAmount = parseMoneyInput(paidAmount);
+    const parsedDiscount = parseMoneyInput(paymentDiscountAmount);
+    const parsedInterest = parseMoneyInput(paymentInterestAmount);
+    const parsedPenalty = parseMoneyInput(paymentPenaltyAmount);
+    const discountAmount = Number.isFinite(parsedDiscount) ? parsedDiscount : 0;
+    const interestAmount = Number.isFinite(parsedInterest) ? parsedInterest : 0;
+    const penaltyAmount = Number.isFinite(parsedPenalty) ? parsedPenalty : 0;
     if (!paymentDate) {
       toast.error("Informe a data do pagamento");
       return;
@@ -519,6 +534,10 @@ export function Component() {
     }
     if (!paymentMethod.trim()) {
       toast.error("Informe a forma de pagamento");
+      return;
+    }
+    if (discountAmount < 0 || interestAmount < 0 || penaltyAmount < 0) {
+      toast.error("Desconto, juros e multa nao podem ser negativos");
       return;
     }
     if (!user) {
@@ -532,6 +551,9 @@ export function Component() {
         data: {
           paymentDate: new Date(paymentDate + "T00:00:00"),
           paidAmount: parsedAmount,
+          discountAmount,
+          interestAmount,
+          penaltyAmount,
           paymentMethod: paymentMethod.trim(),
           bankAccount: bankAccount.trim() || undefined,
           notes: paymentNotes.trim() || undefined,
@@ -625,14 +647,34 @@ export function Component() {
   if (status === "paid")
     statusOptions.unshift({ value: "paid", label: "Pago" });
   const paidAmountNumber = parseMoneyInput(paidAmount);
+  const paymentDiscountNumber = parseMoneyInput(paymentDiscountAmount);
+  const paymentInterestNumber = parseMoneyInput(paymentInterestAmount);
+  const paymentPenaltyNumber = parseMoneyInput(paymentPenaltyAmount);
+  const paymentDiscount = Number.isFinite(paymentDiscountNumber)
+    ? paymentDiscountNumber
+    : 0;
+  const paymentInterest = Number.isFinite(paymentInterestNumber)
+    ? paymentInterestNumber
+    : 0;
+  const paymentPenalty = Number.isFinite(paymentPenaltyNumber)
+    ? paymentPenaltyNumber
+    : 0;
+  const expectedPaymentAmount = payingEntry
+    ? toFiniteNumber(payingEntry.amount) - paymentDiscount + paymentInterest + paymentPenalty
+    : 0;
   const hasPaymentDifference =
     !!payingEntry &&
     Number.isFinite(paidAmountNumber) &&
     Math.abs(paidAmountNumber - toFiniteNumber(payingEntry.amount)) >= 0.01;
+  const paymentSettlementMatches =
+    !!payingEntry &&
+    Number.isFinite(paidAmountNumber) &&
+    Math.abs(paidAmountNumber - expectedPaymentAmount) < 0.01;
   const canConfirmPayment =
     !!paymentDate &&
     Number.isFinite(paidAmountNumber) &&
     paidAmountNumber > 0 &&
+    paymentSettlementMatches &&
     !!paymentMethod.trim() &&
     !paying;
   const activeFilters = [];
@@ -1215,6 +1257,33 @@ export function Component() {
                 placeholder="R$ 0,00"
               />
             </Field>
+            <Field label="Desconto">
+              <Input
+                type="text"
+                inputMode="decimal"
+                value={paymentDiscountAmount}
+                onChange={(e) => setPaymentDiscountAmount(e.target.value)}
+                placeholder="R$ 0,00"
+              />
+            </Field>
+            <Field label="Juros">
+              <Input
+                type="text"
+                inputMode="decimal"
+                value={paymentInterestAmount}
+                onChange={(e) => setPaymentInterestAmount(e.target.value)}
+                placeholder="R$ 0,00"
+              />
+            </Field>
+            <Field label="Multa">
+              <Input
+                type="text"
+                inputMode="decimal"
+                value={paymentPenaltyAmount}
+                onChange={(e) => setPaymentPenaltyAmount(e.target.value)}
+                placeholder="R$ 0,00"
+              />
+            </Field>
             <Field label="Forma de pagamento">
               <Select
                 value={paymentMethod}
@@ -1245,8 +1314,8 @@ export function Component() {
               <Clock3 className="mt-0.5 size-4 shrink-0 text-amber-600" />
               <span>
                 O valor pago difere do valor original de{" "}
-                {formatMoney(payingEntry.amount)}. O financeiro sera criado com
-                o valor confirmado aqui.
+                {formatMoney(payingEntry.amount)}. O valor liquido esperado com
+                ajustes e {formatMoney(expectedPaymentAmount)}.
               </span>
             </div>
           ) : null}

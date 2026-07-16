@@ -87,6 +87,10 @@ export interface FinancialEntryRow {
   id: string;
   description: string;
   amount: number;
+  grossAmount?: number | null;
+  discountAmount?: number;
+  interestAmount?: number;
+  penaltyAmount?: number;
   type: 'receita' | 'despesa';
   date: string;
   status: 'pending' | 'confirmed' | 'cancelled' | 'reversed';
@@ -98,6 +102,11 @@ export interface FinancialEntryRow {
   collaboratorId: string | null;
   collaboratorName: string | null;
   clientName: string | null;
+  paymentMethod?: string | null;
+  bankAccount?: string | null;
+  originType?: string | null;
+  originId?: string | null;
+  reversalOfFinancialEntryId?: string | null;
   userId: string;
   notes: string | null;
   createdAt: string;

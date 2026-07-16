@@ -101,8 +101,12 @@ const STATUS_REVERSE: Record<string, string> = {
 
 function isOriginatedEntry(entry: FinancialEntryRow) {
   return (
+    entry.originType === "accounts_payable" ||
+    entry.originType === "accounts_receivable" ||
+    entry.originType === "reversal" ||
     entry.notes?.includes("[originType=accounts_payable;") ||
-    entry.notes?.includes("[originType=accounts_receivable;")
+    entry.notes?.includes("[originType=accounts_receivable;") ||
+    entry.notes?.includes("[originType=reversal;")
   );
 }
 
@@ -252,7 +256,9 @@ export function Component() {
         despesas: summary.despesas,
         saldo: summary.saldo,
       }
-    : calculateFinancialSummary(pagedEntries);
+    : calculateFinancialSummary(pagedEntries, {
+        status: filters?.status ?? "confirmed",
+      });
 
   useEffect(() => {
     if (!pagination) return;
