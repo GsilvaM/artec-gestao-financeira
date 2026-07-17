@@ -60,6 +60,10 @@ function collaboratorWhereNotDeleted(): Prisma.CollaboratorWhereInput {
   return { deletedAt: null };
 }
 
+function customerWhereNotDeleted(): Prisma.CustomerWhereInput {
+  return { deletedAt: null };
+}
+
 // ---------------------------------------------------------------------------
 // FinancialEntry
 // ---------------------------------------------------------------------------
@@ -366,6 +370,151 @@ export const financialEntryRepo = {
     return prisma.financialEntry.update({
       where: { id },
       data: { deletedAt: new Date() },
+    });
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Customer
+// ---------------------------------------------------------------------------
+
+export interface CreateCustomerData {
+  name: string;
+  document?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  notes?: string | null;
+  active?: boolean;
+  userId: string;
+}
+
+export interface UpdateCustomerData {
+  name?: string;
+  document?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  notes?: string | null;
+  active?: boolean;
+}
+
+export interface CustomerFilters {
+  includeInactive?: boolean;
+  search?: string;
+  document?: string;
+  email?: string;
+}
+
+function normalizeCustomerDocument(value: string | null | undefined) {
+  const digits = value?.replace(/\D/g, "") ?? "";
+  return digits || null;
+}
+
+export const customerRepo = {
+  async findAll(filters?: CustomerFilters) {
+    const search = cleanOptionalText(filters?.search);
+    const document = normalizeCustomerDocument(filters?.document);
+    const email = cleanOptionalText(filters?.email);
+    const where: Prisma.CustomerWhereInput = {
+      ...customerWhereNotDeleted(),
+      ...(filters?.includeInactive ? {} : { active: true }),
+      ...(document ? { document: { contains: document } } : {}),
+      ...(email ? { email: { equals: email, mode: "insensitive" } } : {}),
+      ...(search
+        ? {
+            OR: [
+              { name: { contains: search, mode: "insensitive" } },
+              { document: { contains: search.replace(/\D/g, "") || search, mode: "insensitive" } },
+              { email: { contains: search, mode: "insensitive" } },
+              { phone: { contains: search, mode: "insensitive" } },
+              { address: { contains: search, mode: "insensitive" } },
+            ],
+          }
+        : {}),
+    };
+
+    return prisma.customer.findMany({
+      where,
+      orderBy: { name: "asc" },
+    });
+  },
+
+  async findById(id: string) {
+    const customer = await prisma.customer.findFirst({
+      where: { id, deletedAt: null },
+    });
+    if (!customer) throw new NotFoundError("Customer", id);
+    return customer;
+  },
+
+  async findExisting(data: Pick<CreateCustomerData, "name" | "document" | "email">) {
+    const document = normalizeCustomerDocument(data.document);
+    const email = cleanOptionalText(data.email);
+    const name = cleanOptionalText(data.name);
+    if (!document && !email && !name) return null;
+
+    const orConditions: Prisma.CustomerWhereInput[] = [];
+    if (document) orConditions.push({ document });
+    if (email) orConditions.push({ email: { equals: email, mode: "insensitive" } });
+    if (name) orConditions.push({ name: { equals: name, mode: "insensitive" } });
+
+    return prisma.customer.findFirst({
+      where: {
+        ...customerWhereNotDeleted(),
+        OR: orConditions,
+      },
+      orderBy: { updatedAt: "desc" },
+    });
+  },
+
+  async create(data: CreateCustomerData) {
+    const existing = await customerRepo.findExisting(data);
+    if (existing) return existing;
+
+    return prisma.customer.create({
+      data: {
+        name: data.name.trim(),
+        document: normalizeCustomerDocument(data.document),
+        email: cleanOptionalText(data.email),
+        phone: cleanOptionalText(data.phone),
+        address: cleanOptionalText(data.address),
+        notes: cleanOptionalText(data.notes),
+        active: data.active ?? true,
+        userId: data.userId,
+      },
+    });
+  },
+
+  async update(id: string, data: UpdateCustomerData) {
+    const existing = await prisma.customer.findFirst({
+      where: { id, deletedAt: null },
+    });
+    if (!existing) throw new NotFoundError("Customer", id);
+
+    return prisma.customer.update({
+      where: { id },
+      data: {
+        ...(data.name !== undefined ? { name: data.name.trim() } : {}),
+        ...(data.document !== undefined ? { document: normalizeCustomerDocument(data.document) } : {}),
+        ...(data.email !== undefined ? { email: cleanOptionalText(data.email) } : {}),
+        ...(data.phone !== undefined ? { phone: cleanOptionalText(data.phone) } : {}),
+        ...(data.address !== undefined ? { address: cleanOptionalText(data.address) } : {}),
+        ...(data.notes !== undefined ? { notes: cleanOptionalText(data.notes) } : {}),
+        ...(data.active !== undefined ? { active: data.active } : {}),
+      },
+    });
+  },
+
+  async softDelete(id: string) {
+    const existing = await prisma.customer.findFirst({
+      where: { id, deletedAt: null },
+    });
+    if (!existing) throw new NotFoundError("Customer", id);
+
+    return prisma.customer.update({
+      where: { id },
+      data: { deletedAt: new Date(), active: false },
     });
   },
 };

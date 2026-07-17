@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Copy, ExternalLink, FileInput, Link2, Mail, Plus, RefreshCcw } from "lucide-react";
+import { CheckCircle2, Copy, ExternalLink, FileInput, Link2, Mail, Plus, RefreshCcw, UserPlus } from "lucide-react";
 import { FormField as Field } from "@/components/forms/form-field";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,8 +38,10 @@ import { useImportAuvoInvoice } from "@/domain/financeiro/hooks/use-auvo-cobranc
 import { useCreateAccountReceivable } from "@/domain/financeiro/hooks/use-accounts";
 import { useCategories } from "@/domain/financeiro/hooks/use-categories";
 import { useCostCenters } from "@/domain/financeiro/hooks/use-cost-centers";
+import { useCreateCustomer, useCustomers } from "@/domain/financeiro/hooks/use-customers";
 import { useAuthStore } from "@/lib/supabase/auth-store";
 import { formatDate, formatMoney, parseMoneyInput } from "@/lib/utils";
+import type { CustomerRow } from "@/domain/financeiro/types";
 
 const TITAN_URL = "https://web.titan.email/";
 
@@ -261,6 +263,22 @@ function normalizeReviewValue(value: string | null | undefined) {
   return (value ?? "").trim();
 }
 
+function onlyDigits(value: string | null | undefined) {
+  return (value ?? "").replace(/\D/g, "");
+}
+
+function mergeCustomerIntoReview(review: ReviewState, customer: CustomerRow): ReviewState {
+  return {
+    ...review,
+    clientName: review.clientName.trim() || customer.name,
+    clientDocument: review.clientDocument.trim() || (customer.document ?? ""),
+    clientEmail: review.clientEmail.trim() || (customer.email ?? ""),
+    clientPhone: review.clientPhone.trim() || (customer.phone ?? ""),
+    serviceAddress: review.serviceAddress.trim() || (customer.address ?? ""),
+    billingAddress: review.billingAddress.trim() || (customer.address ?? ""),
+  };
+}
+
 function fieldStatus(extracted: string | number | null | undefined, current: string): ReviewFieldStatus {
   const currentValue = normalizeReviewValue(current);
   const extractedValue = extracted === null || extracted === undefined ? "" : String(extracted).trim();
@@ -302,12 +320,34 @@ export function AuvoCobrancaDialog({
   const [paymentText, setPaymentText] = useState(DEFAULT_BILLING_TEXTS.payment);
   const [closingText, setClosingText] = useState(DEFAULT_BILLING_TEXTS.closing);
   const [senderName, setSenderName] = useState("Gabriel");
+  const [selectedCustomerId, setSelectedCustomerId] = useState("");
+  const [createMissingCustomer, setCreateMissingCustomer] = useState(true);
+  const [appliedCustomerId, setAppliedCustomerId] = useState("");
 
   const user = useAuthStore((state) => state.user);
   const { data: categories } = useCategories({ type: "receita" });
   const { data: costCenters } = useCostCenters();
+  const customerFilters = useMemo(() => {
+    if (!review) return undefined;
+    const document = onlyDigits(review.clientDocument);
+    if (document) return { document };
+    const search = review.clientName.trim();
+    return search ? { search } : undefined;
+  }, [review]);
+  const { data: customers } = useCustomers(customerFilters);
   const importMutation = useImportAuvoInvoice();
   const createMutation = useCreateAccountReceivable();
+  const createCustomerMutation = useCreateCustomer();
+  const matchingCustomer = useMemo(() => {
+    if (!review || !customers?.length) return null;
+    const document = onlyDigits(review.clientDocument);
+    if (document) {
+      const byDocument = customers.find((customer) => onlyDigits(customer.document) === document);
+      if (byDocument) return byDocument;
+    }
+    const name = review.clientName.trim().toLowerCase();
+    return name ? customers.find((customer) => customer.name.trim().toLowerCase() === name) ?? null : null;
+  }, [customers, review]);
 
   const currentEmailSource = useMemo(
     () =>
@@ -335,6 +375,14 @@ export function AuvoCobrancaDialog({
   );
   const generatedEmail = emailData ? generateBillingEmail(emailData) : null;
 
+  useEffect(() => {
+    if (!matchingCustomer || !review || appliedCustomerId === matchingCustomer.id) return;
+    setSelectedCustomerId(matchingCustomer.id);
+    setCreateMissingCustomer(false);
+    setAppliedCustomerId(matchingCustomer.id);
+    setReview(mergeCustomerIntoReview(review, matchingCustomer));
+  }, [appliedCustomerId, matchingCustomer, review]);
+
   function resetAll() {
     setUrl("");
     setPreview(null);
@@ -351,6 +399,9 @@ export function AuvoCobrancaDialog({
     setPaymentText(DEFAULT_BILLING_TEXTS.payment);
     setClosingText(DEFAULT_BILLING_TEXTS.closing);
     setSenderName("Gabriel");
+    setSelectedCustomerId("");
+    setCreateMissingCustomer(true);
+    setAppliedCustomerId("");
     onEmailSourceChange(null);
   }
 
@@ -361,6 +412,9 @@ export function AuvoCobrancaDialog({
       setReview(buildReviewState(data.invoice));
       setRecipientEmail(data.invoice.client.email ?? "");
       setEmailSubject(`Documentos financeiros - Fatura nº ${data.invoice.invoiceNumber ?? "sem numero"} - ${data.invoice.client.name ?? "Cliente"}`);
+      setSelectedCustomerId("");
+      setCreateMissingCustomer(true);
+      setAppliedCustomerId("");
       toast.success(data.invoice.warnings.length ? "Dados encontrados parcialmente. Revise antes de criar." : "Dados do Auvo encontrados.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erro ao importar dados do Auvo.");
@@ -393,6 +447,20 @@ export function AuvoCobrancaDialog({
 
     const invoice = buildInvoiceFromReview(preview.invoice, review);
     try {
+      let customerId = selectedCustomerId;
+      if (!customerId && createMissingCustomer && review.clientName.trim()) {
+        const createdCustomer = await createCustomerMutation.mutateAsync({
+          name: review.clientName.trim(),
+          document: review.clientDocument.trim() || null,
+          email: review.clientEmail.trim() || null,
+          phone: review.clientPhone.trim() || null,
+          address: review.serviceAddress.trim() || review.billingAddress.trim() || null,
+          notes: "Cliente criado a partir da importacao de fatura do Auvo.",
+          active: true,
+        }) as { id?: string };
+        customerId = createdCustomer.id ?? "";
+        setSelectedCustomerId(customerId);
+      }
       const created = await createMutation.mutateAsync({
         description: review.description.trim(),
         amount,
@@ -405,7 +473,7 @@ export function AuvoCobrancaDialog({
         userId: user.id,
       });
       onEmailSourceChange({ kind: "auvo", invoice, accountId: (created as { id?: string }).id });
-      toast.success("Conta a receber criada. Agora revise e prepare o e-mail de cobranca.");
+      toast.success(customerId ? "Cliente vinculado e conta a receber criada. Agora revise o e-mail." : "Conta a receber criada. Agora revise e prepare o e-mail de cobranca.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erro ao criar conta a receber.");
     }
@@ -528,6 +596,66 @@ export function AuvoCobrancaDialog({
               <Field label="Pagamento">
                 <Input value={review.paymentMethod} onChange={(e) => setReview({ ...review, paymentMethod: e.target.value })} />
               </Field>
+            </div>
+            <div className="grid gap-3 rounded-[var(--radius-card)] border border-border bg-surface-muted p-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-bold text-foreground">Cliente no sistema</p>
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Use um cadastro existente para preencher contato ou crie um novo junto com a conta.
+                  </p>
+                </div>
+                {matchingCustomer || selectedCustomerId ? (
+                  <Badge variant="success"><CheckCircle2 className="size-3.5" />Cliente encontrado</Badge>
+                ) : (
+                  <Badge variant="warning"><UserPlus className="size-3.5" />Novo cliente</Badge>
+                )}
+              </div>
+              {customers?.length ? (
+                <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+                  <Field label="Selecionar cliente existente">
+                    <Select
+                      value={selectedCustomerId}
+                      onChange={(event) => {
+                        const customer = customers.find((item) => item.id === event.target.value);
+                        setSelectedCustomerId(event.target.value);
+                        setCreateMissingCustomer(false);
+                        if (customer) {
+                          setAppliedCustomerId(customer.id);
+                          setReview(mergeCustomerIntoReview(review, customer));
+                        }
+                      }}
+                      options={customers.slice(0, 8).map((customer) => ({
+                        value: customer.id,
+                        label: [customer.name, customer.document, customer.email].filter(Boolean).join(" - "),
+                      }))}
+                      placeholder="Nenhum cliente selecionado"
+                    />
+                  </Field>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => {
+                      setSelectedCustomerId("");
+                      setCreateMissingCustomer(true);
+                      setAppliedCustomerId("");
+                    }}
+                  >
+                    <UserPlus className="size-4" />
+                    Criar novo
+                  </Button>
+                </div>
+              ) : null}
+              {!selectedCustomerId ? (
+                <label className="inline-flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <input
+                    type="checkbox"
+                    checked={createMissingCustomer}
+                    onChange={(event) => setCreateMissingCustomer(event.target.checked)}
+                  />
+                  Criar cliente com os dados revisados da fatura
+                </label>
+              ) : null}
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <Field label="Assunto">
@@ -715,7 +843,7 @@ export function AuvoCobrancaDialog({
                 <RefreshCcw className="size-4" />
                 Trocar link
               </Button>
-              <Button onClick={handleCreateAccount} loading={createMutation.isPending}>
+              <Button onClick={handleCreateAccount} loading={createMutation.isPending || createCustomerMutation.isPending}>
                 <FileInput className="size-4" />
                 Criar conta pendente
               </Button>

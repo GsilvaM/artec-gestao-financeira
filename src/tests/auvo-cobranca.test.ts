@@ -161,6 +161,52 @@ const AUVO_HTML_INLINE_FIELDS = `
   </html>
 `;
 
+const AUVO_HTML_REAL_LAYOUT = `
+  <html>
+    <body>
+      <h1>Fatura #289</h1>
+      <div>
+        <p>ARTECK AMBIENTES CLIMATIZADOS</p>
+        <p><span>Telefone:</span> 27998441989</p>
+        <p><span>CNPJ:</span> 27.859.657/0001-65</p>
+        <p><span>Email:</span> contato@artecclimatizados.com.br</p>
+      </div>
+      <div>
+        <p>Emitida para:</p>
+        <p>Luiz Fernando Landeiro</p>
+        <p><span>CPF/CNPJ:</span> 075.784.817-62</p>
+        <p><span>Telefone:</span> (27) 99293-8298</p>
+        <p><span>Endereco:</span> Rua Chapot Presvot, 51 , Praia do Canto , Vitoria - ES, 29055-410, Ap 403, Ed Costa Victoria Residences</p>
+        <p><span>Data de emissao:</span> 16/07/2026</p>
+      </div>
+      <table>
+        <thead><tr><th>Forma de pagamento</th></tr></thead>
+      </table>
+      <table>
+        <thead><tr><th colspan="4">A vista no Boleto</th></tr></thead>
+        <tbody>
+          <tr><td>Valor</td><td>Vencimento</td><td>Informacao</td></tr>
+          <tr><td>R$950,00</td><td>17/07/2026</td><td>Aguardando recebimento</td></tr>
+        </tbody>
+      </table>
+      <h2>Resumo</h2>
+      <table>
+        <tr><td>Servicos</td><td>R$950,00</td></tr>
+        <tr><td>Total</td><td>R$950,00</td></tr>
+      </table>
+      <h2>Itens</h2>
+      <h3>Servicos</h3>
+      <table>
+        <tr><th>Servico</th><th>Quantidade</th><th>Valor unitario</th><th>Subtotal</th></tr>
+        <tr><td>Acrescimo de fluido refrigerante</td><td>1,00</td><td>R$300,00</td><td>R$300,00</td></tr>
+        <tr><td>Descobrir e vedar vazamento com nitrogenio pressurizado</td><td>1,00</td><td>R$250,00</td><td>R$250,00</td></tr>
+        <tr><td>Instalacao de ar condicionado split hi wall</td><td>1,00</td><td>R$250,00</td><td>R$250,00</td></tr>
+        <tr><td>Desinstalacao de ar condicionado split hi wall</td><td>1,00</td><td>R$150,00</td><td>R$150,00</td></tr>
+      </table>
+    </body>
+  </html>
+`;
+
 function htmlResponse(html = AUVO_HTML, init?: ResponseInit) {
   return new Response(html, {
     status: 200,
@@ -266,6 +312,23 @@ describe("Auvo invoice parser", () => {
     expect(invoice.serviceAddress).toBe("Rua Chapot Presvot, 51, Praia do Canto, Vitoria - ES, 29055-410, Ap. 403, Ed Costa Victoria");
     expect(invoice.items).toHaveLength(4);
     expect(invoice.warnings).not.toContain("Numero da fatura nao encontrado.");
+    expect(invoice.warnings).not.toContain("Cliente nao encontrado.");
+  });
+
+  it("extracts client fields from the real Auvo emitted-to layout", () => {
+    const invoice = parseAuvoInvoiceHtml(AUVO_HTML_REAL_LAYOUT, AUVO_URL);
+
+    expect(invoice.invoiceNumber).toBe("289");
+    expect(invoice.client.name).toBe("Luiz Fernando Landeiro");
+    expect(invoice.client.document).toBe("075.784.817-62");
+    expect(invoice.client.phone).toBe("(27) 99293-8298");
+    expect(invoice.client.email).toBeNull();
+    expect(invoice.issueDate).toBe("2026-07-16");
+    expect(invoice.dueDate).toBe("2026-07-17");
+    expect(invoice.total).toBe(950);
+    expect(invoice.paymentMethod).toBe("A vista no Boleto");
+    expect(invoice.serviceAddress).toContain("Rua Chapot Presvot");
+    expect(invoice.items).toHaveLength(4);
     expect(invoice.warnings).not.toContain("Cliente nao encontrado.");
   });
 

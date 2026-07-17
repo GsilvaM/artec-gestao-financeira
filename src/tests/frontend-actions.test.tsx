@@ -21,7 +21,7 @@ describe("frontend actions", () => {
   });
 
   it("opens the new client dialog", () => {
-    render(<Clientes />);
+    renderWithQueryClient(<Clientes />);
     fireEvent.click(screen.getAllByRole("button", { name: /novo cliente/i })[0]!);
     expect(screen.getByRole("heading", { name: /novo cliente/i })).toBeInTheDocument();
   });

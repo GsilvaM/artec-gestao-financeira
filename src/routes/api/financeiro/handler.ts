@@ -3,6 +3,7 @@ import * as accountsPayable from "./accounts-payable.js";
 import * as accountsReceivable from "./accounts-receivable.js";
 import * as categories from "./categories.js";
 import * as costCenters from "./cost-centers.js";
+import * as customers from "./customers.js";
 import * as collaborators from "./collaborators.js";
 import * as beneficiaries from "./beneficiaries.js";
 import * as dre from "./dre.js";
@@ -23,6 +24,7 @@ const routes: Record<string, RouteModule> = {
   "accounts-receivable": accountsReceivable,
   categories,
   "cost-centers": costCenters,
+  customers,
   collaborators,
   beneficiaries,
   dre,

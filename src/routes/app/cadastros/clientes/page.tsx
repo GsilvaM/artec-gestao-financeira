@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Building2, MoreHorizontal, Pencil, Plus, Trash2, UserRoundPlus } from "lucide-react";
+import { toast } from "sonner";
 import { ClientDialog, type ClientRecord } from "@/components/forms/client-dialog";
 import { Dialog, DialogCloseButton, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -8,14 +9,32 @@ import { PageHeader, MetricCard, StatusBadge, FilterBar, EmptyState, pageHeaderS
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Select } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useCreateCustomer, useCustomers, useDeleteCustomer, useUpdateCustomer } from "@/domain/financeiro/hooks/use-customers";
+import type { CustomerRow } from "@/domain/financeiro/types";
+
+function toClientRecord(customer: CustomerRow): ClientRecord {
+  return {
+    id: customer.id,
+    nome: customer.name,
+    telefone: customer.phone ?? "",
+    email: customer.email ?? "",
+    documento: customer.document ?? "",
+    observacoes: customer.address ?? customer.notes ?? "",
+    status: customer.active ? "ativo" : "ativo",
+  };
+}
 
 export function Component() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<ClientRecord | null>(null);
   const [deleting, setDeleting] = useState<ClientRecord | null>(null);
-  const [records, setRecords] = useState<ClientRecord[]>([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const customersQuery = useCustomers({ search: search.trim() || undefined, includeInactive: statusFilter !== "ativo" ? undefined : false });
+  const createCustomer = useCreateCustomer();
+  const updateCustomer = useUpdateCustomer();
+  const deleteCustomer = useDeleteCustomer();
+  const records = useMemo(() => (customersQuery.data ?? []).map(toClientRecord), [customersQuery.data]);
 
   const filteredRecords = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -31,21 +50,34 @@ export function Component() {
   }, [records, search, statusFilter]);
 
   function handleSave(data: ClientRecord) {
-    setRecords((current) => {
-      const exists = current.findIndex((r) => r.id === data.id);
-      if (exists >= 0) {
-        const copy = [...current];
-        copy[exists] = data;
-        return copy;
-      }
-      return [data, ...current];
-    });
+    const payload = {
+      name: data.nome,
+      phone: data.telefone || null,
+      email: data.email || null,
+      document: data.documento || null,
+      address: data.observacoes || null,
+      active: true,
+    };
+    const action = editing
+      ? updateCustomer.mutateAsync({ id: data.id, data: payload })
+      : createCustomer.mutateAsync(payload);
+    void action
+      .then(() => {
+        toast.success(editing ? "Cliente atualizado." : "Cliente cadastrado.");
+        setOpen(false);
+        setEditing(null);
+      })
+      .catch((err) => toast.error(err instanceof Error ? err.message : "Erro ao salvar cliente."));
   }
 
   function confirmDelete() {
     if (!deleting) return;
-    setRecords((current) => current.filter((r) => r.id !== deleting.id));
-    setDeleting(null);
+    void deleteCustomer.mutateAsync(deleting.id)
+      .then(() => {
+        toast.success("Cliente excluido.");
+        setDeleting(null);
+      })
+      .catch((err) => toast.error(err instanceof Error ? err.message : "Erro ao excluir cliente."));
   }
 
   const metrics = [

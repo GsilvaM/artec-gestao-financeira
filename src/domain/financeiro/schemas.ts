@@ -95,6 +95,19 @@ export const accountReceivableCreateSchema = z.object({
 export const accountReceivableSchema = accountReceivableCreateSchema;
 export const accountReceivableUpdateSchema = accountReceivableCreateSchema.partial();
 
+export const customerCreateSchema = z.object({
+  name: z.string().min(1),
+  document: z.string().nullable().optional(),
+  email: z.string().email().nullable().optional().or(z.literal("")),
+  phone: z.string().nullable().optional(),
+  address: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
+  active: z.boolean().default(true),
+});
+
+export const customerSchema = customerCreateSchema;
+export const customerUpdateSchema = customerCreateSchema.partial();
+
 // ── Category ─────────────────────────────────────────────────────────
 
 export const categoryCreateSchema = z.object({
@@ -183,6 +196,13 @@ export const accountReceivableFilterSchema = z.object({
   dueDateFrom: dateField.optional(),
   dueDateTo: dateField.optional(),
   search: z.string().optional(),
+});
+
+export const customerFilterSchema = z.object({
+  includeInactive: z.boolean().optional(),
+  search: z.string().optional(),
+  document: z.string().optional(),
+  email: z.string().optional(),
 });
 
 export const categoryFilterSchema = z.object({

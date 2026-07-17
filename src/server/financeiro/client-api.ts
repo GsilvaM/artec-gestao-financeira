@@ -393,6 +393,52 @@ export const clientApi = {
         .then(handleResponse),
   },
 
+  customers: {
+    findAll: (filters?: Record<string, unknown>) =>
+      getAuthHeaders()
+        .then((headers) =>
+          apiFetch(`${BASE_URL}/customers?${toSearchParams(filters)}`, {
+            headers,
+          })
+        )
+        .then(handleResponse),
+    findById: (id: string) =>
+      getAuthHeaders()
+        .then((headers) =>
+          apiFetch(`${BASE_URL}/customers/${id}`, { headers })
+        )
+        .then(handleResponse),
+    create: (data: unknown) =>
+      getAuthHeaders(true)
+        .then((headers) =>
+          apiFetch(`${BASE_URL}/customers`, {
+            method: "POST",
+            headers,
+            body: JSON.stringify(data),
+          })
+        )
+        .then(handleResponse),
+    update: (id: string, data: unknown) =>
+      getAuthHeaders(true)
+        .then((headers) =>
+          apiFetch(`${BASE_URL}/customers/${id}`, {
+            method: "PUT",
+            headers,
+            body: JSON.stringify(data),
+          })
+        )
+        .then(handleResponse),
+    softDelete: (id: string) =>
+      getAuthHeaders()
+        .then((headers) =>
+          apiFetch(`${BASE_URL}/customers/${id}`, {
+            method: "DELETE",
+            headers,
+          })
+        )
+        .then(handleResponse),
+  },
+
   collaborators: {
     findAll: (filters?: Record<string, unknown>) =>
       getAuthHeaders()

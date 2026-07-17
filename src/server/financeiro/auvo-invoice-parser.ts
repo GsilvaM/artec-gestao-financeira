@@ -8,13 +8,16 @@ const SECTION_TITLES = [
   "dados do cliente",
   "cliente",
   "tomador",
+  "emitida para",
   "dados da cobranca",
   "cobranca",
+  "forma de pagamento",
   "endereco",
   "endereco de servico",
   "endereco de cobranca",
   "produtos",
   "servicos",
+  "itens",
   "resumo",
   "pagamento",
   "recebimentos",
@@ -75,6 +78,8 @@ function textLines(value: string) {
 
 function isSectionTitle(line: string) {
   const key = normalizeKey(line);
+  if (/^(telefone|cpf cnpj|cpf|cnpj|email|e mail|data de emissao)(\s|$)/.test(key)) return false;
+  if (/^endereco(?:$|\s+(?!de servico|do servico|de cobranca))/.test(key)) return false;
   return SECTION_TITLES.some((title) => key === title || key.startsWith(`${title} `));
 }
 
@@ -158,6 +163,14 @@ function findValueByLabel(text: string, labels: string[]) {
 
 function findAnyValue(rows: TableRow[], fullText: string, labels: string[]) {
   return findValueInRows(rows, labels) ?? findValueByLabel(fullText, labels);
+}
+
+function firstParsedMoney(...values: Array<string | null | undefined>) {
+  for (const value of values) {
+    const parsed = parseBrazilianMoney(value);
+    if (parsed !== null) return parsed;
+  }
+  return null;
 }
 
 function firstSectionValue(text: string) {
@@ -404,8 +417,8 @@ export function parseAuvoInvoiceHtml(html: string, sourceUrl = ""): AuvoInvoiceD
   const tables = extractTables(html);
   const lines = textLines(html);
   const text = lines.join("\n");
-  const clientSection = findSection(lines, ["dados do cliente", "cliente", "tomador"]);
-  const billingSection = findSection(lines, ["dados da cobranca", "cobranca", "pagamento"]);
+  const clientSection = findSection(lines, ["dados do cliente", "cliente", "tomador", "emitida para"]);
+  const billingSection = findSection(lines, ["dados da cobranca", "cobranca", "pagamento", "forma de pagamento"]);
   const receiptSection = findSection(lines, ["recebimentos"]);
   const addressSection = findSection(lines, ["endereco", "endereco de servico", "endereco de cobranca"]);
 
@@ -431,13 +444,21 @@ export function parseAuvoInvoiceHtml(html: string, sourceUrl = ""): AuvoInvoiceD
     parseBrazilianDate(findValueByLabel(billingSection, ["vencimento", "data de vencimento"]) ?? findAnyValue(rows, text, ["vencimento", "data de vencimento"])) ??
     installments.find((item) => item.dueDate)?.dueDate ??
     null;
-  const total = parseBrazilianMoney(findValueByLabel(billingSection, ["valor total", "total", "valor"]) ?? findAnyValue(rows, text, ["valor total", "total"]));
+  const total = firstParsedMoney(
+    findValueByLabel(billingSection, ["valor total", "total", "valor"]),
+    findAnyValue(rows, text, ["valor total", "total"]),
+    findAnyValue(rows, text, ["valor"]),
+  );
   const remainingAmount = parseBrazilianMoney(findAnyValue(rows, text, ["valor restante", "restante"]));
   const serviceAddress =
     findValueByLabel(addressSection, ["endereco de servico", "endereco do servico", "endereco"]) ??
+    findValueByLabel(clientSection, ["endereco de servico", "endereco do servico", "endereco"]) ??
     firstSectionValue(addressSection) ??
     findAnyValue(rows, text, ["endereco de servico", "endereco do servico"]);
-  const billingAddress = findValueByLabel(addressSection, ["endereco de cobranca"]) ?? findAnyValue(rows, text, ["endereco de cobranca"]);
+  const billingAddress =
+    findValueByLabel(addressSection, ["endereco de cobranca"]) ??
+    findValueByLabel(clientSection, ["endereco de cobranca", "endereco"]) ??
+    findAnyValue(rows, text, ["endereco de cobranca"]);
   const items = parseItems(tables, lines);
   const warnings: string[] = [];
 

@@ -195,6 +195,28 @@ model AccountReceivable {
   @@map("accounts_receivable")
 }
 
+model Customer {
+  id        String    @id @default(uuid()) @db.Uuid
+  name      String
+  document  String?
+  email     String?
+  phone     String?
+  address   String?
+  notes     String?
+  active    Boolean   @default(true)
+  userId    String    @map("user_id") @db.Uuid
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@index([active])
+  @@index([deletedAt, name])
+  @@index([document])
+  @@index([email])
+  @@index([userId])
+  @@map("customers")
+}
+
 model ServiceCatalog {
   id             String         @id @default(uuid()) @db.Uuid
   name           String

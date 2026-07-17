@@ -10,6 +10,8 @@ import {
   categoryUpdateSchema,
   costCenterSchema,
   costCenterUpdateSchema,
+  customerSchema,
+  customerUpdateSchema,
   collaboratorSchema,
   collaboratorUpdateSchema,
   financialEntryFilterSchema,
@@ -17,6 +19,7 @@ import {
   accountReceivableFilterSchema,
   categoryFilterSchema,
   costCenterFilterSchema,
+  customerFilterSchema,
   collaboratorFilterSchema,
 } from './schemas.js';
 
@@ -38,6 +41,8 @@ export type CategoryUpdate = z.infer<typeof categoryUpdateSchema>;
 
 export type CostCenterCreate = z.infer<typeof costCenterSchema>;
 export type CostCenterUpdate = z.infer<typeof costCenterUpdateSchema>;
+export type CustomerCreate = z.infer<typeof customerSchema>;
+export type CustomerUpdate = z.infer<typeof customerUpdateSchema>;
 export type CollaboratorCreate = z.infer<typeof collaboratorSchema>;
 export type CollaboratorUpdate = z.infer<typeof collaboratorUpdateSchema>;
 
@@ -46,6 +51,7 @@ export type AccountPayableFilters = z.infer<typeof accountPayableFilterSchema>;
 export type AccountReceivableFilters = z.infer<typeof accountReceivableFilterSchema>;
 export type CategoryFilters = z.infer<typeof categoryFilterSchema>;
 export type CostCenterFilters = z.infer<typeof costCenterFilterSchema>;
+export type CustomerFilters = z.infer<typeof customerFilterSchema>;
 export type CollaboratorFilters = z.infer<typeof collaboratorFilterSchema>;
 export type AccountPayableBeneficiaryType = 'supplier' | 'collaborator';
 
@@ -170,6 +176,20 @@ export interface CostCenterRow {
   code: string | null;
   active: boolean;
   entryCount?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CustomerRow {
+  id: string;
+  name: string;
+  document: string | null;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+  notes: string | null;
+  active: boolean;
+  userId: string;
   createdAt: string;
   updatedAt: string;
 }
