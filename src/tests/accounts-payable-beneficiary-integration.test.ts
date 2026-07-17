@@ -10,6 +10,10 @@ function asRecord(value: unknown) {
   return value as Record<string, unknown>;
 }
 
+function uniqueEmail(prefix: string) {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}@teste.com`;
+}
+
 afterAll(async () => {
   await prisma.$disconnect();
 });
@@ -43,7 +47,7 @@ describe("accounts payable beneficiary integration", () => {
     });
 
     const collaborator = await prisma.collaborator.create({
-      data: { name: "Maria Teste", email: "maria@teste.com", active: true },
+      data: { name: "Maria Teste", email: uniqueEmail("maria"), active: true },
     });
 
     const account = await accountPayableRepo.create({
@@ -72,7 +76,7 @@ describe("accounts payable beneficiary integration", () => {
     });
 
     const collaborator = await prisma.collaborator.create({
-      data: { name: "Inativo Teste", email: "inativo@teste.com", active: false },
+      data: { name: "Inativo Teste", email: uniqueEmail("inativo"), active: false },
     });
 
     await expect(
@@ -117,7 +121,7 @@ describe("accounts payable beneficiary integration", () => {
     });
 
     const collaborator = await prisma.collaborator.create({
-      data: { name: "João Pagamento", email: "joao@teste.com", active: true },
+      data: { name: "João Pagamento", email: uniqueEmail("joao"), active: true },
     });
 
     const account = await accountPayableRepo.create({
@@ -155,7 +159,7 @@ describe("accounts payable beneficiary integration", () => {
     });
 
     const collaborator = await prisma.collaborator.create({
-      data: { name: "Carlos Atualizado", email: "carlos@teste.com", active: true },
+      data: { name: "Carlos Atualizado", email: uniqueEmail("carlos"), active: true },
     });
 
     const account = await accountPayableRepo.create({
@@ -352,7 +356,7 @@ describe("accounts payable beneficiary integration", () => {
     });
 
     const filterCollab = await prisma.collaborator.create({
-      data: { name: "Filtrado Colab", email: "filtro@teste.com", active: true },
+      data: { name: "Filtrado Colab", email: uniqueEmail("filtro"), active: true },
     });
 
     const account2 = await accountPayableRepo.create({

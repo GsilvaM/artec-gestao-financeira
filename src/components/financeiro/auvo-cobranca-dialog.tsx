@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Copy, ExternalLink, FileInput, Link2, Mail, Plus, RefreshCcw } from "lucide-react";
 import { FormField as Field } from "@/components/forms/form-field";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -71,6 +72,8 @@ interface ReviewState {
   categoryId: string;
   costCenterId: string;
 }
+
+type ReviewFieldStatus = "found" | "missing" | "reviewed";
 
 function toDateInput(value: string | null | undefined) {
   return value?.slice(0, 10) ?? "";
@@ -254,12 +257,28 @@ async function copyText(value: string, message: string) {
   toast.success(message);
 }
 
-function FieldStatus({ found }: { found: boolean }) {
-  return (
-    <span className={found ? "text-success-foreground text-xs font-bold" : "text-muted-foreground text-xs font-bold"}>
-      {found ? "Encontrado" : "Nao encontrado"}
-    </span>
-  );
+function normalizeReviewValue(value: string | null | undefined) {
+  return (value ?? "").trim();
+}
+
+function fieldStatus(extracted: string | number | null | undefined, current: string): ReviewFieldStatus {
+  const currentValue = normalizeReviewValue(current);
+  const extractedValue = extracted === null || extracted === undefined ? "" : String(extracted).trim();
+  if (!extractedValue) return currentValue ? "reviewed" : "missing";
+  return currentValue && currentValue !== extractedValue ? "reviewed" : "found";
+}
+
+function amountStatus(invoice: AuvoInvoiceData, current: string): ReviewFieldStatus {
+  const extracted = invoice.remainingAmount ?? invoice.total;
+  const parsed = parseMoneyInput(current);
+  if (extracted === null || extracted === undefined) return Number.isFinite(parsed) ? "reviewed" : "missing";
+  return Number.isFinite(parsed) && Math.abs(parsed - extracted) > 0.01 ? "reviewed" : "found";
+}
+
+function FieldStatus({ status }: { status: ReviewFieldStatus }) {
+  if (status === "reviewed") return <Badge variant="default">Revisado</Badge>;
+  if (status === "found") return <Badge variant="success">Encontrado</Badge>;
+  return <Badge variant="warning">Nao encontrado</Badge>;
 }
 
 export function AuvoCobrancaDialog({
@@ -545,18 +564,38 @@ export function AuvoCobrancaDialog({
               </div>
             </div>
             <div className="grid gap-3 rounded-[var(--radius-card)] border border-border bg-surface-muted p-4">
-              <div className="flex flex-wrap items-center gap-3 text-sm">
-                <FieldStatus found={Boolean(preview.invoice.invoiceNumber)} /> Fatura
-                <FieldStatus found={Boolean(preview.invoice.client.name)} /> Cliente
-                <FieldStatus found={Boolean(preview.invoice.dueDate)} /> Vencimento
-                <FieldStatus found={Boolean(preview.invoice.total)} /> Valor
+              <p className="text-sm font-bold text-foreground">Conferencia da importacao</p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {[
+                  ["Fatura", fieldStatus(preview.invoice.invoiceNumber, review.invoiceNumber)],
+                  ["Cliente", fieldStatus(preview.invoice.client.name, review.clientName)],
+                  ["CPF/CNPJ", fieldStatus(preview.invoice.client.document, review.clientDocument)],
+                  ["Emissao", fieldStatus(toDateInput(preview.invoice.issueDate), review.issueDate)],
+                  ["Vencimento", fieldStatus(toDateInput(preview.invoice.dueDate), review.dueDate)],
+                  ["Valor", amountStatus(preview.invoice, review.amount)],
+                  ["Pagamento", fieldStatus(preview.invoice.paymentMethod, review.paymentMethod)],
+                  ["E-mail", fieldStatus(preview.invoice.client.email, review.clientEmail)],
+                  ["Telefone", fieldStatus(preview.invoice.client.phone, review.clientPhone)],
+                  ["Endereco", fieldStatus(preview.invoice.serviceAddress, review.serviceAddress)],
+                ].map(([label, status]) => (
+                  <div key={label} className="flex min-w-0 items-center justify-between gap-3 rounded-[var(--radius-field)] border border-border bg-surface px-3 py-2 text-sm">
+                    <span className="min-w-0 font-semibold text-foreground">{label}</span>
+                    <FieldStatus status={status as ReviewFieldStatus} />
+                  </div>
+                ))}
               </div>
               {preview.invoice.items.length ? (
                 <div className="grid gap-2 text-sm">
-                  {preview.invoice.items.slice(0, 4).map((item) => (
-                    <div key={`${item.description}-${item.total}`} className="flex justify-between gap-3">
-                      <span className="text-muted-foreground">{item.description}</span>
+                  <p className="mt-2 text-sm font-bold text-foreground">Servicos encontrados</p>
+                  {preview.invoice.items.slice(0, 6).map((item) => (
+                    <div key={`${item.description}-${item.total}`} className="grid gap-1 rounded-[var(--radius-field)] border border-border bg-surface px-3 py-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+                      <span className="min-w-0 text-muted-foreground">{item.description}</span>
                       <strong>{formatMoney(item.total)}</strong>
+                      <span className="text-xs font-semibold text-muted-foreground sm:col-span-2">
+                        {[item.quantity !== null ? `Qtd. ${item.quantity}` : null, item.unitPrice !== null ? `Unit. ${formatMoney(item.unitPrice)}` : null]
+                          .filter(Boolean)
+                          .join(" - ")}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -564,7 +603,11 @@ export function AuvoCobrancaDialog({
                 <p className="text-muted-foreground text-sm">Servicos nao encontrados automaticamente.</p>
               )}
               {preview.invoice.warnings.length ? (
-                <p className="text-muted-foreground text-xs">{preview.invoice.warnings.join(" ")}</p>
+                <div className="rounded-[var(--radius-field)] border border-warning/20 bg-warning-soft px-3 py-2 text-xs font-semibold text-warning-foreground">
+                  {preview.invoice.warnings.map((warning) => (
+                    <p key={warning}>{warning}</p>
+                  ))}
+                </div>
               ) : null}
             </div>
           </div>

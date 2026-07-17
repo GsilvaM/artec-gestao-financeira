@@ -29,6 +29,13 @@ const AUVO_URL =
 const AUVO_HTML = `
   <html>
     <body>
+      <section>
+        <h2>Prestador</h2>
+        <p>Artec Ambientes Climatizados</p>
+        <p>CNPJ: 27.859.657/0001-65</p>
+        <p>E-mail: contato@artecclimatizados.com.br</p>
+        <p>Telefone: 27998441989</p>
+      </section>
       <table>
         <tr><td>Fatura</td><td>289</td></tr>
         <tr><td>Assunto</td><td>Servicos prestados a Tarefa #76966433</td></tr>
@@ -40,8 +47,70 @@ const AUVO_HTML = `
         <tr><td>Endereco de servico</td><td>Rua Teste, 123</td></tr>
         <tr><td>Total</td><td>R$ 950,00</td></tr>
       </table>
+      <section>
+        <h2>Cliente</h2>
+        <p>Nome</p>
+        <p>Luiz Fernando Landeiro</p>
+        <p>CPF/CNPJ</p>
+        <p>075.784.817-62</p>
+      </section>
+      <section>
+        <h2>Endereco de servico</h2>
+        <p>Rua Chapot Presvot, 51, Praia do Canto, Vitoria - ES, 29055-410, Ap. 403, Ed. Costa Victoria Residences</p>
+      </section>
+      <section>
+        <h2>Servicos</h2>
+        <table>
+          <tr><th>Servico</th><th>Quantidade</th><th>Valor unitario</th><th>Subtotal</th></tr>
+          <tr><td>Acrescimo de fluido refrigerante</td><td>1</td><td>R$ 300,00</td><td>R$ 300,00</td></tr>
+          <tr><td>Descobrir e vedar vazamento com nitrogenio pressurizado</td><td>1</td><td>R$ 250,00</td><td>R$ 250,00</td></tr>
+          <tr><td>Instalacao de ar-condicionado split hi-wall</td><td>1</td><td>R$ 250,00</td><td>R$ 250,00</td></tr>
+          <tr><td>Desinstalacao de ar-condicionado split hi-wall</td><td>1</td><td>R$ 150,00</td><td>R$ 150,00</td></tr>
+        </table>
+      </section>
       <p>Acréscimo de fluido refrigerante R$ 300,00</p>
       <p>Higienizacao R$ 650,00</p>
+    </body>
+  </html>
+`;
+
+const AUVO_HTML_DUE_FROM_INSTALLMENT = `
+  <html>
+    <body>
+      <table>
+        <tr><td>Fatura</td><td>290</td></tr>
+        <tr><td>Cliente</td><td>Cliente Parcela</td></tr>
+        <tr><td>Total</td><td>R$ 100,00</td></tr>
+      </table>
+      <section>
+        <h2>Recebimentos</h2>
+        <table>
+          <tr><th>Parcela</th><th>Data</th><th>Valor</th></tr>
+          <tr><td>1</td><td>18/07/2026</td><td>R$ 100,00</td></tr>
+        </table>
+      </section>
+    </body>
+  </html>
+`;
+
+const AUVO_HTML_REORDERED_SERVICE_COLUMNS = `
+  <html>
+    <body>
+      <table>
+        <tr><td>Fatura</td><td>291</td></tr>
+        <tr><td>Cliente</td><td>Cliente Ordem</td></tr>
+        <tr><td>Total</td><td>R$ 950,00</td></tr>
+      </table>
+      <section>
+        <h2>Servicos</h2>
+        <table>
+          <tr><th>Subtotal</th><th>Descricao</th><th>Valor unitario</th><th>Quantidade</th></tr>
+          <tr><td>R$ 300,00</td><td>Acrescimo de fluido refrigerante</td><td>R$ 300,00</td><td>1</td></tr>
+          <tr><td>R$ 250,00</td><td>Descobrir e vedar vazamento com nitrogenio pressurizado</td><td>R$ 250,00</td><td>1</td></tr>
+          <tr><td>R$ 250,00</td><td>Instalacao de ar-condicionado split hi-wall</td><td>R$ 250,00</td><td>1</td></tr>
+          <tr><td>R$ 150,00</td><td>Desinstalacao de ar-condicionado split hi-wall</td><td>R$ 150,00</td><td>1</td></tr>
+        </table>
+      </section>
     </body>
   </html>
 `;
@@ -69,22 +138,30 @@ describe("Auvo invoice URL validation", () => {
 });
 
 describe("Auvo invoice parser", () => {
-  it("normalizes money, dates and key invoice fields from sanitized HTML", () => {
+  it("normalizes money, dates and key invoice fields from sanitized HTML for invoice 289", () => {
     const invoice = parseAuvoInvoiceHtml(AUVO_HTML, AUVO_URL);
 
     expect(invoice.invoiceNumber).toBe("289");
     expect(invoice.taskNumber).toBe("76966433");
     expect(invoice.client.name).toBe("Luiz Fernando Landeiro");
     expect(invoice.client.document).toBe("075.784.817-62");
+    expect(invoice.client.email).toBeNull();
+    expect(invoice.client.phone).toBeNull();
     expect(invoice.issueDate).toBe("2026-07-16");
     expect(invoice.dueDate).toBe("2026-07-17");
     expect(invoice.paymentMethod).toBe("Boleto");
     expect(invoice.total).toBe(950);
-    expect(invoice.items).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ description: expect.stringContaining("fluido"), total: 300 }),
-      ]),
-    );
+    expect(invoice.serviceAddress).toBe("Rua Chapot Presvot, 51, Praia do Canto, Vitoria - ES, 29055-410, Ap. 403, Ed. Costa Victoria Residences");
+    expect(invoice.items).toHaveLength(4);
+    expect(invoice.items).toEqual([
+      expect.objectContaining({ description: "Acrescimo de fluido refrigerante", quantity: 1, unitPrice: 300, total: 300 }),
+      expect.objectContaining({ description: "Descobrir e vedar vazamento com nitrogenio pressurizado", quantity: 1, unitPrice: 250, total: 250 }),
+      expect.objectContaining({ description: "Instalacao de ar-condicionado split hi-wall", quantity: 1, unitPrice: 250, total: 250 }),
+      expect.objectContaining({ description: "Desinstalacao de ar-condicionado split hi-wall", quantity: 1, unitPrice: 150, total: 150 }),
+    ]);
+    expect(invoice.items.reduce((total, item) => total + item.total, 0)).toBe(950);
+    expect(invoice.serviceAddress).not.toContain("Quantidade");
+    expect(invoice.items.some((item) => item.description === "1,00" || item.total === 1)).toBe(false);
   });
 
   it("does not invent missing data and reports warnings", () => {
@@ -96,9 +173,62 @@ describe("Auvo invoice parser", () => {
     expect(invoice.warnings.length).toBeGreaterThan(0);
   });
 
+  it("keeps provider data out of client fields", () => {
+    const invoice = parseAuvoInvoiceHtml(AUVO_HTML, AUVO_URL);
+
+    expect(invoice.client.name).toBe("Luiz Fernando Landeiro");
+    expect(invoice.client.document).toBe("075.784.817-62");
+    expect(invoice.client.document).not.toBe("27998441989");
+    expect(invoice.client.phone).not.toBe("075.784.817-62");
+    expect(invoice.client.email).toBeNull();
+  });
+
+  it("uses the first installment due date when there is no explicit vencimento", () => {
+    const invoice = parseAuvoInvoiceHtml(AUVO_HTML_DUE_FROM_INSTALLMENT, AUVO_URL);
+
+    expect(invoice.dueDate).toBe("2026-07-18");
+    expect(invoice.installments).toEqual([expect.objectContaining({ number: 1, amount: 100, dueDate: "2026-07-18" })]);
+  });
+
+  it("maps service table columns by header even when their order changes", () => {
+    const invoice = parseAuvoInvoiceHtml(AUVO_HTML_REORDERED_SERVICE_COLUMNS, AUVO_URL);
+
+    expect(invoice.items).toHaveLength(4);
+    expect(invoice.items[0]).toMatchObject({
+      description: "Acrescimo de fluido refrigerante",
+      quantity: 1,
+      unitPrice: 300,
+      total: 300,
+    });
+    expect(invoice.items.reduce((total, item) => total + item.total, 0)).toBe(950);
+  });
+
+  it("handles spacing changes and keeps absent fields null", () => {
+    const invoice = parseAuvoInvoiceHtml(`
+      <html><body>
+        <section>
+          <h2> Cliente </h2>
+          <div> CPF / CNPJ : 075.784.817-62 </div>
+        </section>
+        <table>
+          <tr><td> Fatura </td><td> 292 </td></tr>
+          <tr><td> Data de emissao </td><td> 16/07/2026 09:30:00 </td></tr>
+          <tr><td> Total </td><td> R$ 100,00 </td></tr>
+        </table>
+      </body></html>
+    `, AUVO_URL);
+
+    expect(invoice.invoiceNumber).toBe("292");
+    expect(invoice.issueDate).toBe("2026-07-16");
+    expect(invoice.client.document).toBe("075.784.817-62");
+    expect(invoice.client.email).toBeNull();
+    expect(invoice.client.phone).toBeNull();
+  });
+
   it("normalizes Brazilian formats", () => {
     expect(parseBrazilianMoney("R$ 1.234,56")).toBe(1234.56);
     expect(parseBrazilianDate("5/8/2026")).toBe("2026-08-05");
+    expect(parseBrazilianDate("2026-07-17")).toBe("2026-07-17");
   });
 });
 

@@ -1,5 +1,30 @@
 import type { AuvoInvoiceData, AuvoInvoiceInstallment, AuvoInvoiceItem } from "../../domain/financeiro/auvo-cobranca.js";
 
+type TableRow = string[];
+
+const SECTION_TITLES = [
+  "identificacao da fatura",
+  "dados da fatura",
+  "dados do cliente",
+  "cliente",
+  "tomador",
+  "dados da cobranca",
+  "cobranca",
+  "endereco",
+  "endereco de servico",
+  "endereco de cobranca",
+  "produtos",
+  "servicos",
+  "resumo",
+  "pagamento",
+  "recebimentos",
+  "nota fiscal",
+  "anexos",
+  "prestador",
+  "emitente",
+  "fornecedor",
+];
+
 function decodeEntities(value: string) {
   return value
     .replace(/&nbsp;/gi, " ")
@@ -7,11 +32,9 @@ function decodeEntities(value: string) {
     .replace(/&quot;/gi, '"')
     .replace(/&#39;/gi, "'")
     .replace(/&lt;/gi, "<")
-    .replace(/&gt;/gi, ">");
-}
-
-function stripTags(value: string) {
-  return normalizeText(value.replace(/<script[\s\S]*?<\/script>/gi, " ").replace(/<style[\s\S]*?<\/style>/gi, " ").replace(/<[^>]+>/g, " "));
+    .replace(/&gt;/gi, ">")
+    .replace(/&#(\d+);/g, (_, code: string) => String.fromCodePoint(Number(code)))
+    .replace(/&#x([\da-f]+);/gi, (_, code: string) => String.fromCodePoint(Number.parseInt(code, 16)));
 }
 
 function normalizeText(value: string | null | undefined) {
@@ -29,8 +52,109 @@ function normalizeKey(value: string) {
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
     .toLowerCase()
+    .replace(/n[Âº°]\b/g, "numero")
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
+}
+
+function stripTags(value: string) {
+  return normalizeText(
+    value
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/(?:td|th|tr|p|div|li|h[1-6]|section|article|table)>/gi, "\n")
+      .replace(/<[^>]+>/g, " "),
+  );
+}
+
+function textLines(value: string) {
+  return stripTags(value).split(/\n+/).map((line) => normalizeText(line)).filter(Boolean);
+}
+
+function isSectionTitle(line: string) {
+  const key = normalizeKey(line);
+  return SECTION_TITLES.some((title) => key === title || key.startsWith(`${title} `));
+}
+
+function findSection(lines: string[], titles: string[]) {
+  const titleKeys = titles.map(normalizeKey);
+  let start = -1;
+  lines.forEach((line, index) => {
+    const key = normalizeKey(line);
+    if (titleKeys.some((title) => key === title)) start = index;
+  });
+  if (start < 0) return "";
+
+  const end = lines.findIndex((line, index) => index > start && isSectionTitle(line));
+  return lines.slice(start + 1, end > start ? end : undefined).join("\n");
+}
+
+function normalizeLabel(value: string) {
+  return normalizeKey(value.replace(/:$/, ""));
+}
+
+function extractTableRows(html: string): TableRow[] {
+  const rows: TableRow[] = [];
+  for (const rowMatch of html.matchAll(/<tr[\s\S]*?<\/tr>/gi)) {
+    const cells = [...rowMatch[0].matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)]
+      .map((cell) => stripTags(cell[1] ?? ""))
+      .filter(Boolean);
+    if (cells.length) rows.push(cells);
+  }
+  return rows;
+}
+
+function extractTables(html: string) {
+  return [...html.matchAll(/<table[\s\S]*?<\/table>/gi)].map((match) => ({
+    html: match[0],
+    text: stripTags(match[0]),
+    rows: extractTableRows(match[0]),
+  }));
+}
+
+function findValueInRows(rows: TableRow[], labels: string[]) {
+  const labelKeys = labels.map(normalizeLabel);
+  for (const row of rows) {
+    if (row.length < 2) continue;
+    const label = normalizeLabel(row[0] ?? "");
+    if (!labelKeys.includes(label)) continue;
+    const value = normalizeText(row.slice(1).join(" "));
+    if (value && normalizeLabel(value) !== label) return value;
+  }
+  return null;
+}
+
+function findValueByLabel(text: string, labels: string[]) {
+  const lines = text.split(/\n+/).map((line) => normalizeText(line)).filter(Boolean);
+  const labelKeys = labels.map(normalizeLabel);
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index] ?? "";
+    const colon = line.indexOf(":");
+    if (colon > 0) {
+      const label = normalizeLabel(line.slice(0, colon));
+      const value = normalizeText(line.slice(colon + 1));
+      if (labelKeys.includes(label) && value) return value;
+    }
+
+    const lineKey = normalizeLabel(line);
+    if (!labelKeys.includes(lineKey)) continue;
+    for (const next of lines.slice(index + 1, index + 4)) {
+      if (isSectionTitle(next)) break;
+      if (normalizeLabel(next) && !labelKeys.includes(normalizeLabel(next))) return next;
+    }
+  }
+
+  return null;
+}
+
+function findAnyValue(rows: TableRow[], fullText: string, labels: string[]) {
+  return findValueInRows(rows, labels) ?? findValueByLabel(fullText, labels);
+}
+
+function firstSectionValue(text: string) {
+  return text.split(/\n+/).map((line) => normalizeText(line)).find((line) => line && !isSectionTitle(line)) ?? null;
 }
 
 export function parseBrazilianMoney(value: string | null | undefined) {
@@ -45,6 +169,12 @@ export function parseBrazilianMoney(value: string | null | undefined) {
 
 export function parseBrazilianDate(value: string | null | undefined) {
   if (!value) return null;
+  const iso = value.match(/\b(\d{4})-(\d{2})-(\d{2})\b/);
+  if (iso) {
+    const date = new Date(Date.UTC(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3])));
+    if (!Number.isNaN(date.getTime())) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+  }
+
   const match = value.match(/\b(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})\b/);
   if (!match) return null;
   const day = Number(match[1]);
@@ -64,89 +194,22 @@ function parseNumber(value: string | null | undefined) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-function parseDocument(text: string) {
+function parseDocument(text: string | null | undefined) {
+  if (!text) return null;
   const match = text.match(/\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b|\b\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}\b/);
   return match?.[0] ?? null;
 }
 
-function parseEmail(text: string) {
-  return text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0] ?? null;
+function parseEmail(text: string | null | undefined) {
+  if (!text) return null;
+  const email = text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0] ?? null;
+  if (!email) return null;
+  return /artec|climatizado/i.test(email) ? null : email;
 }
 
-function parsePhone(text: string) {
+function parsePhone(text: string | null | undefined) {
+  if (!text) return null;
   return text.match(/\(?\d{2}\)?\s?\d{4,5}-?\d{4}/)?.[0] ?? null;
-}
-
-function extractTablePairs(html: string) {
-  const pairs = new Map<string, string>();
-  const rowRegex = /<tr[\s\S]*?<\/tr>/gi;
-  for (const rowMatch of html.matchAll(rowRegex)) {
-    const cells = [...rowMatch[0].matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)].map((cell) => stripTags(cell[1] ?? ""));
-    if (cells.length >= 2) {
-      const label = (cells[0] ?? "").replace(/:$/, "").trim();
-      const value = cells.slice(1).join(" ").trim();
-      if (label && value) pairs.set(normalizeKey(label), value);
-    }
-  }
-  return pairs;
-}
-
-function extractInlinePairs(text: string) {
-  const pairs = new Map<string, string>();
-  const labels = [
-    "numero da fatura",
-    "nº da fatura",
-    "número",
-    "fatura",
-    "assunto",
-    "cliente",
-    "cpf/cnpj",
-    "cpf",
-    "cnpj",
-    "data de emissao",
-    "emissao",
-    "vencimento",
-    "endereco de servico",
-    "endereco do servico",
-    "endereco de cobranca",
-    "forma de pagamento",
-    "condicao de pagamento",
-    "subtotal",
-    "desconto",
-    "acrescimos",
-    "total",
-    "valor restante",
-    "observacao",
-    "status",
-  ];
-  const lines = text.split(/\n+/).map((line) => normalizeText(line)).filter(Boolean);
-  for (const line of lines) {
-    const colon = line.indexOf(":");
-    if (colon > 0) {
-      const label = normalizeKey(line.slice(0, colon));
-      const value = line.slice(colon + 1).trim();
-      if (label && value) pairs.set(label, value);
-      continue;
-    }
-    for (const label of labels) {
-      const normalizedLine = normalizeKey(line);
-      if (normalizedLine.startsWith(label + " ")) {
-        pairs.set(label, line.slice(label.length).trim());
-      }
-    }
-  }
-  return pairs;
-}
-
-function getPair(pairs: Map<string, string>, keys: string[]) {
-  for (const key of keys.map(normalizeKey)) {
-    const exact = pairs.get(key);
-    if (exact) return exact;
-    for (const [candidate, value] of pairs) {
-      if (candidate.includes(key) || key.includes(candidate)) return value;
-    }
-  }
-  return null;
 }
 
 function parseExternalId(sourceUrl: string) {
@@ -158,62 +221,171 @@ function parseExternalId(sourceUrl: string) {
   }
 }
 
-function parseItems(text: string): AuvoInvoiceItem[] {
-  const items: AuvoInvoiceItem[] = [];
-  const serviceSection = text.split(/\n/).filter((line) => {
-    const normalized = normalizeKey(line);
-    return normalized.includes("r$") || /\d+,\d{2}/.test(line);
+function isProviderText(value: string | null | undefined) {
+  return Boolean(value && /artec|ambientes climatizados|prestador|emitente|fornecedor/i.test(value));
+}
+
+function isInvalidAddress(value: string | null | undefined) {
+  if (!value) return true;
+  const key = normalizeKey(value);
+  if (/^(quantidade|valor unitario|subtotal|subtotals|produtos|servicos|resumo)(\s|$)/.test(key)) return true;
+  if (!/[a-z]{3}/i.test(value)) return true;
+  return !/(rua|avenida|av\b|rodovia|travessa|alameda|bairro|cep|\d{5}-?\d{3}|vitoria|vila velha|es\b)/i.test(value);
+}
+
+function headerIndex(headers: string[], labels: string[]) {
+  const labelKeys = labels.map(normalizeKey);
+  return headers.findIndex((header) => {
+    const key = normalizeKey(header);
+    return labelKeys.some((label) => key === label || key.includes(label));
   });
-  for (const line of serviceSection) {
+}
+
+function isInvalidItemDescription(value: string | null | undefined) {
+  if (!value) return true;
+  const key = normalizeKey(value);
+  if (/^(quantidade|valor unitario|subtotal|subtotals|total|desconto|valor total)$/.test(key)) return true;
+  if (/^(?:r\$\s*)?\d+(?:[,.]\d{1,2})?$/.test(value.trim())) return true;
+  return !/[a-z]{3}/i.test(value);
+}
+
+function parseItemsFromTables(tables: ReturnType<typeof extractTables>): AuvoInvoiceItem[] {
+  const items: AuvoInvoiceItem[] = [];
+
+  for (const table of tables) {
+    const tableKey = normalizeKey(table.text);
+    const looksLikeServiceTable = tableKey.includes("servico") || tableKey.includes("descricao");
+    if (!looksLikeServiceTable) continue;
+
+    const headerRowIndex = table.rows.findIndex((row) => {
+      const headers = row.map(normalizeKey);
+      return headers.some((cell) => cell.includes("quantidade")) && headers.some((cell) => cell.includes("valor"));
+    });
+    if (headerRowIndex < 0) continue;
+
+    const headers = table.rows[headerRowIndex] ?? [];
+    const descriptionIndex = headerIndex(headers, ["servico", "descricao"]);
+    const quantityIndex = headerIndex(headers, ["quantidade", "qtd"]);
+    const unitPriceIndex = headerIndex(headers, ["valor unitario", "valor unit", "unitario"]);
+    const discountIndex = headerIndex(headers, ["desconto"]);
+    const totalIndex = headerIndex(headers, ["valor total", "subtotal", "subtotals", "total"]);
+
+    for (const row of table.rows.slice(headerRowIndex + 1)) {
+      const rowText = normalizeText(row.join(" "));
+      const rowKey = normalizeKey(rowText);
+      if (!rowText || rowKey.includes("nenhum servico") || /^(subtotal|total|resumo)/.test(rowKey)) continue;
+
+      const description =
+        descriptionIndex >= 0
+          ? normalizeText(row[descriptionIndex])
+          : normalizeText(row.find((cell) => !parseBrazilianMoney(cell) && !parseNumber(cell)) ?? "");
+      const total = totalIndex >= 0 ? parseBrazilianMoney(row[totalIndex]) : parseBrazilianMoney(rowText);
+      if (isInvalidItemDescription(description) || total === null) continue;
+
+      items.push({
+        type: "service",
+        description,
+        quantity: quantityIndex >= 0 ? parseNumber(row[quantityIndex]) : null,
+        unitPrice: unitPriceIndex >= 0 ? parseBrazilianMoney(row[unitPriceIndex]) : null,
+        discount: discountIndex >= 0 ? parseBrazilianMoney(row[discountIndex]) : null,
+        total,
+      });
+    }
+  }
+
+  return items;
+}
+
+function parseItemsFromServiceText(serviceText: string): AuvoInvoiceItem[] {
+  const items: AuvoInvoiceItem[] = [];
+  for (const line of serviceText.split(/\n+/).map((item) => normalizeText(item)).filter(Boolean)) {
     const total = parseBrazilianMoney(line);
     if (total === null) continue;
-    const description = normalizeText(line.replace(/R\$\s*[\d.]+,\d{2}/gi, "").replace(/\s+\d+(?:[,.]\d+)?\s*$/g, ""));
-    if (!description || normalizeKey(description).match(/^(subtotal|total|desconto|valor restante|vencimento)$/)) continue;
+    const description = normalizeText(line.replace(/R\$\s*[\d.]+,\d{2}/gi, "").replace(/\s+[\d.]+,\d{2}\s*$/g, ""));
+    if (isInvalidItemDescription(description)) continue;
     items.push({
-      type: normalizeKey(line).includes("produto") ? "product" : "service",
+      type: "service",
       description,
-      quantity: parseNumber(line.match(/\bquantidade[:\s]+([\d,.]+)/i)?.[1] ?? null),
+      quantity: null,
       unitPrice: null,
       discount: null,
       total,
     });
   }
-  return items.slice(0, 20);
+  return items;
 }
 
-function parseInstallments(text: string): AuvoInvoiceInstallment[] {
+function parseItems(tables: ReturnType<typeof extractTables>, lines: string[]) {
+  const tableItems = parseItemsFromTables(tables);
+  if (tableItems.length) return tableItems.slice(0, 20);
+
+  const serviceText = findSection(lines, ["servicos"]);
+  return parseItemsFromServiceText(serviceText || lines.join("\n")).slice(0, 20);
+}
+
+function parseInstallments(rows: TableRow[], text: string): AuvoInvoiceInstallment[] {
   const installments: AuvoInvoiceInstallment[] = [];
+
+  for (const row of rows) {
+    const rowText = row.join(" ");
+    const dueDate = parseBrazilianDate(rowText);
+    const moneyCells = row.filter((cell) => /R\$|,\d{2}/i.test(cell));
+    const amount = parseBrazilianMoney(moneyCells.at(-1) ?? null);
+    if (!dueDate || amount === null) continue;
+    const number = parseNumber(row[0]) ?? installments.length + 1;
+    installments.push({ number, amount, dueDate, remainingAmount: amount });
+  }
+
   for (const match of text.matchAll(/(?:parcela\s*)?(\d{1,2})[^\n]{0,80}?(\d{1,2}\/\d{1,2}\/\d{2,4})[^\n]{0,80}?((?:R\$\s*)?[\d.]+,\d{2})/gi)) {
     const amount = parseBrazilianMoney(match[3]);
-    if (amount === null) continue;
-    installments.push({
-      number: Number(match[1]),
-      amount,
-      dueDate: parseBrazilianDate(match[2]),
-      remainingAmount: amount,
-    });
+    const dueDate = parseBrazilianDate(match[2]);
+    if (amount === null || !dueDate || installments.some((item) => item.dueDate === dueDate && item.amount === amount)) continue;
+    installments.push({ number: Number(match[1]), amount, dueDate, remainingAmount: amount });
   }
-  return installments;
+
+  return installments.slice(0, 20);
 }
 
 export function parseAuvoInvoiceHtml(html: string, sourceUrl = ""): AuvoInvoiceData {
-  const pairs = new Map([...extractTablePairs(html), ...extractInlinePairs(stripTags(html))]);
-  const text = stripTags(html);
-  const invoiceNumber = getPair(pairs, ["numero da fatura", "nº da fatura", "fatura", "numero"])?.match(/\d+/)?.[0] ?? null;
-  const taskNumber = text.match(/tarefa\s*#?\s*(\d+)/i)?.[1] ?? getPair(pairs, ["tarefa"])?.match(/\d+/)?.[0] ?? null;
-  const clientValue = getPair(pairs, ["cliente", "razao social", "nome"]);
-  const document = getPair(pairs, ["cpf/cnpj", "cpf", "cnpj"]) ?? parseDocument(text);
-  const dueDate = parseBrazilianDate(getPair(pairs, ["vencimento", "data de vencimento"])) ?? parseBrazilianDate(text.match(/vencimento[^\d]*(\d{1,2}\/\d{1,2}\/\d{2,4})/i)?.[1]);
-  const issueDate = parseBrazilianDate(getPair(pairs, ["data de emissao", "emissao"]));
-  const total = parseBrazilianMoney(getPair(pairs, ["total", "valor total"])) ?? parseBrazilianMoney(text.match(/total[^\d]*(R\$\s*[\d.]+,\d{2})/i)?.[1]);
-  const remainingAmount = parseBrazilianMoney(getPair(pairs, ["valor restante", "restante"])) ?? total;
-  const items = parseItems(text);
-  const installments = parseInstallments(text);
+  const rows = extractTableRows(html);
+  const tables = extractTables(html);
+  const lines = textLines(html);
+  const text = lines.join("\n");
+  const clientSection = findSection(lines, ["dados do cliente", "cliente", "tomador"]);
+  const billingSection = findSection(lines, ["dados da cobranca", "cobranca", "pagamento"]);
+  const receiptSection = findSection(lines, ["recebimentos"]);
+  const addressSection = findSection(lines, ["endereco", "endereco de servico", "endereco de cobranca"]);
+
+  const invoiceNumber = findAnyValue(rows, text, ["numero da fatura", "nº da fatura", "fatura", "numero"])?.match(/\d+/)?.[0] ?? null;
+  const taskNumber = text.match(/tarefa\s*#?\s*(\d+)/i)?.[1] ?? findAnyValue(rows, text, ["tarefa"])?.match(/\d+/)?.[0] ?? null;
+  const clientName = findValueByLabel(clientSection, ["nome", "cliente", "razao social"]) ?? findValueInRows(rows, ["cliente", "razao social", "nome"]);
+  const clientDocument = parseDocument(findValueByLabel(clientSection, ["cpf/cnpj", "cpf / cnpj", "cpf ou cnpj", "documento", "cpf", "cnpj"]) ?? findValueInRows(rows, ["cpf/cnpj", "cpf / cnpj", "cpf ou cnpj", "documento", "cpf", "cnpj"]));
+  const clientEmail = parseEmail(findValueByLabel(clientSection, ["e-mail", "email"]));
+  const clientPhone = parsePhone(findValueByLabel(clientSection, ["telefone", "celular"]));
+  const issueDate = parseBrazilianDate(findAnyValue(rows, text, ["data de emissao", "emissao"]));
+  const installments = parseInstallments(rows, receiptSection || text);
+  const dueDate =
+    parseBrazilianDate(findValueByLabel(billingSection, ["vencimento", "data de vencimento"]) ?? findAnyValue(rows, text, ["vencimento", "data de vencimento"])) ??
+    installments.find((item) => item.dueDate)?.dueDate ??
+    null;
+  const total = parseBrazilianMoney(findAnyValue(rows, text, ["valor total", "total"]));
+  const remainingAmount = parseBrazilianMoney(findAnyValue(rows, text, ["valor restante", "restante"]));
+  const serviceAddress =
+    findValueByLabel(addressSection, ["endereco de servico", "endereco do servico", "endereco"]) ??
+    firstSectionValue(addressSection) ??
+    findAnyValue(rows, text, ["endereco de servico", "endereco do servico"]);
+  const billingAddress = findValueByLabel(addressSection, ["endereco de cobranca"]) ?? findAnyValue(rows, text, ["endereco de cobranca"]);
+  const items = parseItems(tables, lines);
   const warnings: string[] = [];
+
   if (!invoiceNumber) warnings.push("Numero da fatura nao encontrado.");
-  if (!clientValue) warnings.push("Cliente nao encontrado.");
+  if (!clientName || isProviderText(clientName)) warnings.push("Cliente nao encontrado.");
   if (!dueDate) warnings.push("Vencimento nao encontrado.");
   if (total === null) warnings.push("Valor total nao encontrado.");
+  if (items.length && total !== null) {
+    const sum = Math.round(items.reduce((amount, item) => amount + item.total, 0) * 100) / 100;
+    if (Math.abs(sum - total) > 0.01) warnings.push("Soma dos servicos diferente do total da fatura. Confira os valores antes de criar a conta.");
+  }
 
   return {
     source: "auvo",
@@ -221,27 +393,27 @@ export function parseAuvoInvoiceHtml(html: string, sourceUrl = ""): AuvoInvoiceD
     externalId: parseExternalId(sourceUrl),
     invoiceNumber,
     taskNumber,
-    subject: getPair(pairs, ["assunto"]) ?? (taskNumber ? `Servicos prestados a Tarefa #${taskNumber}` : null),
-    status: getPair(pairs, ["status"]),
+    subject: findAnyValue(rows, text, ["assunto"]) ?? (taskNumber ? `Servicos prestados a Tarefa #${taskNumber}` : null),
+    status: findAnyValue(rows, text, ["status"]),
     client: {
-      name: clientValue,
-      document,
-      email: parseEmail(text),
-      phone: parsePhone(text),
+      name: clientName && !isProviderText(clientName) ? clientName : null,
+      document: clientDocument,
+      email: clientEmail,
+      phone: clientPhone,
     },
     issueDate,
     dueDate,
-    serviceAddress: getPair(pairs, ["endereco de servico", "endereco do servico"]),
-    billingAddress: getPair(pairs, ["endereco de cobranca"]),
-    paymentMethod: getPair(pairs, ["forma de pagamento", "condicao de pagamento", "pagamento"]),
+    serviceAddress: isInvalidAddress(serviceAddress) ? null : serviceAddress,
+    billingAddress: isInvalidAddress(billingAddress) ? null : billingAddress,
+    paymentMethod: findValueByLabel(billingSection, ["forma de pagamento", "condicao de pagamento", "pagamento"]) ?? findAnyValue(rows, text, ["forma de pagamento", "condicao de pagamento", "pagamento"]),
     installments,
     items,
-    subtotal: parseBrazilianMoney(getPair(pairs, ["subtotal"])),
-    discount: parseBrazilianMoney(getPair(pairs, ["desconto"])),
-    additionalCosts: parseBrazilianMoney(getPair(pairs, ["acrescimos", "custos adicionais"])),
+    subtotal: parseBrazilianMoney(findAnyValue(rows, text, ["subtotal"])),
+    discount: parseBrazilianMoney(findAnyValue(rows, text, ["desconto"])),
+    additionalCosts: parseBrazilianMoney(findAnyValue(rows, text, ["acrescimos", "custos adicionais"])),
     total,
     remainingAmount,
-    notes: getPair(pairs, ["observacao", "observacoes"]),
+    notes: findAnyValue(rows, text, ["observacao", "observacoes"]),
     documents: [],
     warnings,
   };
