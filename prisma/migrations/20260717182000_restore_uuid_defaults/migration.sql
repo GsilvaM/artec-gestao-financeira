@@ -1,0 +1,15 @@
+ALTER TABLE "profiles" ALTER COLUMN "id" SET DEFAULT gen_random_uuid();
+ALTER TABLE "roles" ALTER COLUMN "id" SET DEFAULT gen_random_uuid();
+ALTER TABLE "permissions" ALTER COLUMN "id" SET DEFAULT gen_random_uuid();
+ALTER TABLE "categories" ALTER COLUMN "id" SET DEFAULT gen_random_uuid();
+ALTER TABLE "cost_centers" ALTER COLUMN "id" SET DEFAULT gen_random_uuid();
+ALTER TABLE "financial_entries" ALTER COLUMN "id" SET DEFAULT gen_random_uuid();
+ALTER TABLE "accounts_payable" ALTER COLUMN "id" SET DEFAULT gen_random_uuid();
+ALTER TABLE "accounts_receivable" ALTER COLUMN "id" SET DEFAULT gen_random_uuid();
+ALTER TABLE "service_catalog" ALTER COLUMN "id" SET DEFAULT gen_random_uuid();
+ALTER TABLE "service_orders" ALTER COLUMN "id" SET DEFAULT gen_random_uuid();
+ALTER TABLE "technicians" ALTER COLUMN "id" SET DEFAULT gen_random_uuid();
+ALTER TABLE "collaborators" ALTER COLUMN "id" SET DEFAULT gen_random_uuid();
+ALTER TABLE "goals" ALTER COLUMN "id" SET DEFAULT gen_random_uuid();
+ALTER TABLE "attachments" ALTER COLUMN "id" SET DEFAULT gen_random_uuid();
+ALTER TABLE "audit_logs" ALTER COLUMN "id" SET DEFAULT gen_random_uuid();

@@ -39,7 +39,7 @@ const receiptSchema = z.object({
   paymentMethod: z.string().min(1),
   bankAccount: z.string().optional(),
   notes: z.string().optional(),
-  userId: uuidField,
+  userId: uuidField.optional(),
 });
 
 const reversalSchema = z.object({

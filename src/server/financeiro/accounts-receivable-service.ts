@@ -1,4 +1,5 @@
 import type { Prisma } from "@prisma/client";
+import { randomUUID } from "node:crypto";
 import { prisma } from "../../lib/prisma/client.js";
 import {
   FINANCIAL_ORIGINS,
@@ -227,12 +228,13 @@ export async function receiveAccountReceivable(
     );
 
     const financialEntry = await tx.financialEntry.create({
-      data: financialEntryData,
+      data: { id: randomUUID(), ...financialEntryData },
       include: { category: true, costCenter: true, collaborator: true },
     });
 
     await tx.auditLog.create({
       data: {
+        id: randomUUID(),
         userId: input.userId,
         action: "account_receivable_received",
         entity: "AccountReceivable",
@@ -262,6 +264,7 @@ export async function receiveAccountReceivable(
 
     await tx.auditLog.create({
       data: {
+        id: randomUUID(),
         userId: input.userId,
         action: "financial_entry_created_from_account_receivable",
         entity: "FinancialEntry",
@@ -356,6 +359,7 @@ export async function reverseAccountReceivableReceipt(
 
         await tx.auditLog.create({
           data: {
+            id: randomUUID(),
             userId: input.userId,
             action: "account_receivable_reconciled_after_reversed_entry",
             entity: "AccountReceivable",
@@ -381,6 +385,7 @@ export async function reverseAccountReceivableReceipt(
     if (!financialEntry) {
       financialEntry = await tx.financialEntry.create({
         data: {
+          id: randomUUID(),
           description: account.description,
           amount: account.amount,
           grossAmount: account.amount,
@@ -404,6 +409,7 @@ export async function reverseAccountReceivableReceipt(
 
       await tx.auditLog.create({
         data: {
+          id: randomUUID(),
           userId: input.userId,
           action: "financial_entry_reconstructed_from_account_receivable",
           entity: "FinancialEntry",
@@ -447,6 +453,7 @@ export async function reverseAccountReceivableReceipt(
 
       await tx.auditLog.create({
         data: {
+          id: randomUUID(),
           userId: input.userId,
           action: "account_receivable_reconciled_after_reversal_entry",
           entity: "AccountReceivable",
@@ -492,6 +499,7 @@ export async function reverseAccountReceivableReceipt(
 
     const reversalEntry = await tx.financialEntry.create({
       data: {
+        id: randomUUID(),
         description: `Estorno: ${financialEntry.description}`,
         amount: financialEntry.amount,
         grossAmount: financialEntry.grossAmount,
@@ -518,6 +526,7 @@ export async function reverseAccountReceivableReceipt(
 
     await tx.auditLog.create({
       data: {
+        id: randomUUID(),
         userId: input.userId,
         action: "account_receivable_receipt_reversed",
         entity: "AccountReceivable",
@@ -534,6 +543,7 @@ export async function reverseAccountReceivableReceipt(
 
     await tx.auditLog.create({
       data: {
+        id: randomUUID(),
         userId: input.userId,
         action: "financial_entry_reversed_from_account_receivable",
         entity: "FinancialEntry",
