@@ -194,11 +194,13 @@ export async function getDreExportPayload(query: DreExportQuery): Promise<DreExp
       status: "confirmed",
       dateFrom: period.dateFrom,
       dateTo: period.dateTo,
+      excludeBankOpeningBalance: true,
     }),
     financialEntryRepo.findAll({
       status: "confirmed",
       dateFrom: period.previousDateFrom,
       dateTo: period.previousDateTo,
+      excludeBankOpeningBalance: true,
     }),
   ]);
 

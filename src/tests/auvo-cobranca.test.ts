@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { generateBillingEmail, DEFAULT_BILLING_TEXTS } from "@/domain/financeiro/billing-email";
-import { appendAuvoMetadata } from "@/domain/financeiro/auvo-cobranca";
+import { appendAuvoMetadata, readAuvoRevenueAllocations } from "@/domain/financeiro/auvo-cobranca";
 import { parseAuvoInvoiceHtml, parseBrazilianDate, parseBrazilianMoney } from "@/server/financeiro/auvo-invoice-parser";
 import { importAuvoInvoice, validateAuvoInvoiceUrl } from "@/server/financeiro/auvo-cobranca-service";
 import * as auvoRoute from "@/routes/api/financeiro/auvo-cobranca";
@@ -207,6 +207,35 @@ const AUVO_HTML_REAL_LAYOUT = `
   </html>
 `;
 
+const AUVO_HTML_WITH_PRODUCTS = `
+  <html>
+    <body>
+      <h1>Fatura #293</h1>
+      <p>Emitida para:</p>
+      <p>Cliente Produto Servico</p>
+      <p><span>CPF/CNPJ:</span> 075.784.817-62</p>
+      <p><span>Data de emissao:</span> 16/07/2026</p>
+      <table>
+        <tr><td>Total</td><td>R$4.000,00</td></tr>
+        <tr><td>Vencimento</td><td>20/07/2026</td></tr>
+      </table>
+      <h2>Itens</h2>
+      <h3>Servicos</h3>
+      <table>
+        <tr><th>Servico</th><th>Quantidade</th><th>Valor unitario</th><th>Subtotal</th></tr>
+        <tr><td>Instalacao de ar condicionado split hi wall</td><td>2</td><td>R$700,00</td><td>R$1.400,00</td></tr>
+        <tr><td>Higienizacao com bolsa coletora</td><td>1</td><td>R$200,00</td><td>R$200,00</td></tr>
+      </table>
+      <h3>Produtos</h3>
+      <table>
+        <tr><th>Produto</th><th>Quantidade</th><th>Valor unitario</th><th>Subtotal</th></tr>
+        <tr><td>Suporte condensadora</td><td>2</td><td>R$300,00</td><td>R$600,00</td></tr>
+        <tr><td>Ar condicionado split</td><td>1</td><td>R$1.800,00</td><td>R$1.800,00</td></tr>
+      </table>
+    </body>
+  </html>
+`;
+
 function htmlResponse(html = AUVO_HTML, init?: ResponseInit) {
   return new Response(html, {
     status: 200,
@@ -330,6 +359,16 @@ describe("Auvo invoice parser", () => {
     expect(invoice.serviceAddress).toContain("Rua Chapot Presvot");
     expect(invoice.items).toHaveLength(4);
     expect(invoice.warnings).not.toContain("Cliente nao encontrado.");
+  });
+
+  it("classifies product and service items from separate Auvo sections", () => {
+    const invoice = parseAuvoInvoiceHtml(AUVO_HTML_WITH_PRODUCTS, AUVO_URL);
+
+    expect(invoice.total).toBe(4000);
+    expect(invoice.items.filter((item) => item.type === "service")).toHaveLength(2);
+    expect(invoice.items.filter((item) => item.type === "product")).toHaveLength(2);
+    expect(invoice.items.filter((item) => item.type === "service").reduce((total, item) => total + item.total, 0)).toBe(1600);
+    expect(invoice.items.filter((item) => item.type === "product").reduce((total, item) => total + item.total, 0)).toBe(2400);
   });
 
   it("handles spacing changes and keeps absent fields null", () => {
@@ -577,5 +616,18 @@ describe("Imported receivable creation", () => {
       }),
     );
     expect(financialEntryRepo.create).not.toHaveBeenCalled();
+  });
+
+  it("stores product and service revenue allocation metadata with the imported receivable", () => {
+    const parsed = parseAuvoInvoiceHtml(AUVO_HTML_WITH_PRODUCTS, AUVO_URL);
+    const notes = appendAuvoMetadata("Receita composta da fatura Auvo.", parsed, [
+      { type: "service", categoryId: CATEGORY_ID, amount: 1600 },
+      { type: "product", categoryId: "00000000-0000-0000-0000-000000000002", amount: 2400 },
+    ]);
+
+    expect(readAuvoRevenueAllocations(notes)).toEqual([
+      { type: "service", categoryId: CATEGORY_ID, amount: 1600 },
+      { type: "product", categoryId: "00000000-0000-0000-0000-000000000002", amount: 2400 },
+    ]);
   });
 });

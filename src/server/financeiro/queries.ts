@@ -7,6 +7,7 @@ import {
   type ProjectedCashFlowResult,
   type ProjectedCashFlowTransaction,
 } from "../../domain/financeiro/cash-flow.js";
+import { BANK_OPENING_BALANCE_MARKER } from "../../domain/financeiro/bank-account.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -94,6 +95,7 @@ export async function getDre(year: number): Promise<DreReport> {
     FROM financial_entries fe
     WHERE fe.deleted_at IS NULL
       AND fe.status = 'confirmed'
+      AND (fe.notes IS NULL OR fe.notes NOT LIKE ${`%${BANK_OPENING_BALANCE_MARKER}%`})
       AND fe.date >= ${startDate}
       AND fe.date <= ${endDate}
     GROUP BY DATE_TRUNC('month', fe.date), fe.type
@@ -251,6 +253,7 @@ export async function getDashboardKpis(): Promise<DashboardKpis> {
         deletedAt: null,
         type: "receita",
         status: "confirmed",
+        NOT: { notes: { contains: BANK_OPENING_BALANCE_MARKER } },
       },
       _sum: { amount: true },
     }),
@@ -259,6 +262,7 @@ export async function getDashboardKpis(): Promise<DashboardKpis> {
         deletedAt: null,
         type: "despesa",
         status: "confirmed",
+        NOT: { notes: { contains: BANK_OPENING_BALANCE_MARKER } },
       },
       _sum: { amount: true },
     }),

@@ -34,6 +34,7 @@ import {
   type PontoMensal,
 } from "@/domain/financeiro/dre-visual";
 import { useFinancialEntries } from "@/domain/financeiro/hooks/use-financial-entries";
+import { hasBankOpeningBalanceMarker } from "@/domain/financeiro/bank-account";
 import { clientApi } from "@/server/financeiro/client-api";
 import { cn, formatMoney, getMoneyToneClass } from "@/lib/utils";
 import type { FinancialEntryFilters } from "@/domain/financeiro/types";
@@ -71,9 +72,21 @@ export function Component() {
     [activeMonth.value, historyMonths],
   );
 
-  const { data: entries = [], isLoading, error } = useFinancialEntries(filters);
-  const { data: previousEntries = [] } = useFinancialEntries(previousFilters);
-  const { data: historyEntries = [], isLoading: isHistoryLoading } = useFinancialEntries(historyFilters);
+  const { data: rawEntries = [], isLoading, error } = useFinancialEntries(filters);
+  const { data: rawPreviousEntries = [] } = useFinancialEntries(previousFilters);
+  const { data: rawHistoryEntries = [], isLoading: isHistoryLoading } = useFinancialEntries(historyFilters);
+  const entries = useMemo(
+    () => rawEntries.filter((entry) => !hasBankOpeningBalanceMarker(entry.notes)),
+    [rawEntries],
+  );
+  const previousEntries = useMemo(
+    () => rawPreviousEntries.filter((entry) => !hasBankOpeningBalanceMarker(entry.notes)),
+    [rawPreviousEntries],
+  );
+  const historyEntries = useMemo(
+    () => rawHistoryEntries.filter((entry) => !hasBankOpeningBalanceMarker(entry.notes)),
+    [rawHistoryEntries],
+  );
 
   const dre = useMemo(() => buildDre(entries, previousEntries), [entries, previousEntries]);
   const composition = useMemo(() => buildExpenseComposition(dre.rows), [dre.rows]);

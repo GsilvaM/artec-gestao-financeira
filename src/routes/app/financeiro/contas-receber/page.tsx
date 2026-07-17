@@ -68,6 +68,7 @@ import {
 } from "@/domain/financeiro/hooks/use-accounts";
 import { useCategories } from "@/domain/financeiro/hooks/use-categories";
 import { useCostCenters } from "@/domain/financeiro/hooks/use-cost-centers";
+import { DEFAULT_BANK_ACCOUNT } from "@/domain/financeiro/bank-account";
 import { useAuthStore } from "@/lib/supabase/auth-store";
 import {
   formatDate,
@@ -172,7 +173,7 @@ export function Component() {
   const [receiptInterestAmount, setReceiptInterestAmount] = useState("");
   const [receiptPenaltyAmount, setReceiptPenaltyAmount] = useState("");
   const [receiptMethod, setReceiptMethod] = useState("");
-  const [bankAccount, setBankAccount] = useState("");
+  const [bankAccount, setBankAccount] = useState(DEFAULT_BANK_ACCOUNT);
   const [receiptNotes, setReceiptNotes] = useState("");
   const [reversalEntry, setReversalEntry] =
     useState<AccountReceivableRow | null>(null);
@@ -270,7 +271,7 @@ export function Component() {
     setReceiptInterestAmount("");
     setReceiptPenaltyAmount("");
     setReceiptMethod("");
-    setBankAccount("");
+    setBankAccount(DEFAULT_BANK_ACCOUNT);
     setReceiptNotes("");
   }
 
@@ -309,7 +310,7 @@ export function Component() {
     setReceiptInterestAmount("");
     setReceiptPenaltyAmount("");
     setReceiptMethod("");
-    setBankAccount("");
+    setBankAccount(DEFAULT_BANK_ACCOUNT);
     setReceiptNotes("");
   }
 
@@ -426,7 +427,7 @@ export function Component() {
           interestAmount,
           penaltyAmount,
           paymentMethod: receiptMethod.trim(),
-          bankAccount: bankAccount.trim() || undefined,
+          bankAccount: bankAccount.trim() || DEFAULT_BANK_ACCOUNT,
           notes: receiptNotes.trim() || undefined,
           userId: user.id,
         },

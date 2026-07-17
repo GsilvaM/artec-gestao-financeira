@@ -112,11 +112,16 @@ function extractTableRows(html: string): TableRow[] {
 }
 
 function extractTables(html: string) {
-  return [...html.matchAll(/<table[\s\S]*?<\/table>/gi)].map((match) => ({
-    html: match[0],
-    text: stripTags(match[0]),
-    rows: extractTableRows(match[0]),
-  }));
+  return [...html.matchAll(/<table[\s\S]*?<\/table>/gi)].map((match) => {
+    const index = match.index ?? 0;
+    const context = stripTags(html.slice(Math.max(0, index - 800), index)).split(/\n+/).slice(-8).join("\n");
+    return {
+      html: match[0],
+      context,
+      text: stripTags(match[0]),
+      rows: extractTableRows(match[0]),
+    };
+  });
 }
 
 function findValueInRows(rows: TableRow[], labels: string[]) {
@@ -319,9 +324,20 @@ function parseItemsFromTables(tables: ReturnType<typeof extractTables>): AuvoInv
   const items: AuvoInvoiceItem[] = [];
 
   for (const table of tables) {
-    const tableKey = normalizeKey(table.text);
-    const looksLikeServiceTable = tableKey.includes("servico") || tableKey.includes("descricao");
-    if (!looksLikeServiceTable) continue;
+    const contextKey = normalizeKey(table.context);
+    const tableOnlyKey = normalizeKey(table.text);
+    const tableKey = normalizeKey(`${table.context}\n${table.text}`);
+    const looksLikeItemTable =
+      tableKey.includes("servico") ||
+      tableKey.includes("produto") ||
+      tableKey.includes("descricao");
+    if (!looksLikeItemTable) continue;
+    const nearestProductIndex = contextKey.lastIndexOf("produtos");
+    const nearestServiceIndex = contextKey.lastIndexOf("servicos");
+    const itemType: AuvoInvoiceItem["type"] =
+      nearestProductIndex > nearestServiceIndex || (tableOnlyKey.includes("produto") && !tableOnlyKey.includes("servico"))
+        ? "product"
+        : "service";
 
     const headerRowIndex = table.rows.findIndex((row) => {
       const headers = row.map(normalizeKey);
@@ -330,7 +346,7 @@ function parseItemsFromTables(tables: ReturnType<typeof extractTables>): AuvoInv
     if (headerRowIndex < 0) continue;
 
     const headers = table.rows[headerRowIndex] ?? [];
-    const descriptionIndex = headerIndex(headers, ["servico", "descricao"]);
+    const descriptionIndex = headerIndex(headers, ["servico", "produto", "item", "descricao"]);
     const quantityIndex = headerIndex(headers, ["quantidade", "qtd"]);
     const unitPriceIndex = headerIndex(headers, ["valor unitario", "valor unit", "unitario"]);
     const discountIndex = headerIndex(headers, ["desconto"]);
@@ -349,7 +365,7 @@ function parseItemsFromTables(tables: ReturnType<typeof extractTables>): AuvoInv
       if (isInvalidItemDescription(description) || total === null) continue;
 
       items.push({
-        type: "service",
+        type: itemType,
         description,
         quantity: quantityIndex >= 0 ? parseNumber(row[quantityIndex]) : null,
         unitPrice: unitPriceIndex >= 0 ? parseBrazilianMoney(row[unitPriceIndex]) : null,

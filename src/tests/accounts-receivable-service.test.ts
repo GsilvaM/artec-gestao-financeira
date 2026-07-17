@@ -207,12 +207,12 @@ describe("reverseAccountReceivableReceipt", () => {
         }),
       },
       financialEntry: {
-        findFirst: vi.fn()
-          .mockResolvedValueOnce({
+        findMany: vi.fn()
+          .mockResolvedValueOnce([{
             ...createdFinancialEntry,
             notes: `[originType=accounts_receivable;originId=${ACCOUNT_ID}]`,
-          })
-          .mockResolvedValueOnce(null),
+          }])
+          .mockResolvedValueOnce([]),
         create: vi.fn().mockResolvedValue(reversalEntry),
         update: vi.fn().mockResolvedValue({
           ...createdFinancialEntry,
@@ -275,7 +275,7 @@ describe("reverseAccountReceivableReceipt", () => {
       })
     );
     expect(result.account.status).toBe("reversed");
-    expect(result.financialEntry.status).toBe("confirmed");
+    expect(result.financialEntry?.status).toBe("confirmed");
     expect(result.reversalEntry).toBe(reversalEntry);
   });
 
@@ -297,7 +297,10 @@ describe("reverseAccountReceivableReceipt", () => {
         }),
       },
       financialEntry: {
-        findFirst: vi.fn().mockResolvedValue(null),
+        findMany: vi.fn()
+          .mockResolvedValueOnce([])
+          .mockResolvedValueOnce([])
+          .mockResolvedValueOnce([]),
         create: vi.fn().mockResolvedValue(reconstructedEntry),
         update: vi.fn().mockResolvedValue({
           ...reconstructedEntry,
@@ -372,9 +375,9 @@ describe("reverseAccountReceivableReceipt", () => {
         }),
       },
       financialEntry: {
-        findFirst: vi.fn()
-          .mockResolvedValueOnce(null)
-          .mockResolvedValueOnce(reversedEntry),
+        findMany: vi.fn()
+          .mockResolvedValueOnce([])
+          .mockResolvedValueOnce([reversedEntry]),
         create: vi.fn(),
         update: vi.fn(),
       },
@@ -428,12 +431,12 @@ describe("reverseAccountReceivableReceipt", () => {
         }),
       },
       financialEntry: {
-        findFirst: vi.fn()
-          .mockResolvedValueOnce({
+        findMany: vi.fn()
+          .mockResolvedValueOnce([{
             ...createdFinancialEntry,
             notes: `[originType=accounts_receivable;originId=${ACCOUNT_ID}]`,
-          })
-          .mockResolvedValueOnce(reversalEntry),
+          }])
+          .mockResolvedValueOnce([reversalEntry]),
         create: vi.fn(),
         update: vi.fn(),
       },
@@ -466,7 +469,7 @@ describe("reverseAccountReceivableReceipt", () => {
         }),
       })
     );
-    expect(result.financialEntry.notes).toContain(
+    expect(result.financialEntry?.notes).toContain(
       `[originType=accounts_receivable;originId=${ACCOUNT_ID}]`
     );
     expect(result.reversalEntry).toBe(reversalEntry);

@@ -65,6 +65,7 @@ import {
 } from "@/domain/financeiro/hooks/use-accounts";
 import { useCategories } from "@/domain/financeiro/hooks/use-categories";
 import { useCostCenters } from "@/domain/financeiro/hooks/use-cost-centers";
+import { DEFAULT_BANK_ACCOUNT } from "@/domain/financeiro/bank-account";
 import { useAuthStore } from "@/lib/supabase/auth-store";
 import {
   formatDate,
@@ -197,7 +198,7 @@ export function Component() {
   const [paymentInterestAmount, setPaymentInterestAmount] = useState("");
   const [paymentPenaltyAmount, setPaymentPenaltyAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
-  const [bankAccount, setBankAccount] = useState("");
+  const [bankAccount, setBankAccount] = useState(DEFAULT_BANK_ACCOUNT);
   const [paymentNotes, setPaymentNotes] = useState("");
   const [reversalEntry, setReversalEntry] = useState<AccountPayableRow | null>(
     null
@@ -383,7 +384,7 @@ export function Component() {
     setPaymentInterestAmount("");
     setPaymentPenaltyAmount("");
     setPaymentMethod("");
-    setBankAccount("");
+    setBankAccount(DEFAULT_BANK_ACCOUNT);
     setPaymentNotes("");
   }
 
@@ -413,7 +414,7 @@ export function Component() {
     setPaymentInterestAmount("");
     setPaymentPenaltyAmount("");
     setPaymentMethod("");
-    setBankAccount("");
+    setBankAccount(DEFAULT_BANK_ACCOUNT);
     setPaymentNotes("");
   }
 
@@ -555,7 +556,7 @@ export function Component() {
           interestAmount,
           penaltyAmount,
           paymentMethod: paymentMethod.trim(),
-          bankAccount: bankAccount.trim() || undefined,
+          bankAccount: bankAccount.trim() || DEFAULT_BANK_ACCOUNT,
           notes: paymentNotes.trim() || undefined,
           userId: user.id,
         },

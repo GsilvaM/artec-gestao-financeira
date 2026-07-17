@@ -1,4 +1,5 @@
 import { toFiniteNumber } from "@/lib/utils";
+import { hasBankOpeningBalanceMarker } from "./bank-account";
 
 export type FinancialEntryLike = {
   amount: unknown;
@@ -9,6 +10,7 @@ export type FinancialEntryLike = {
   categoryName?: string | null;
   costCenterId?: string | null;
   date?: string | Date | null;
+  notes?: string | null;
 };
 
 export type FinancialEntryFiltersLike = {
@@ -42,7 +44,9 @@ export function calculateFinancialSummary(
 ): FinancialSummary {
   const status = options.status ?? "confirmed";
   const realizedEntries = entries.filter(
-    (entry) => entry.status === undefined || entry.status === status
+    (entry) =>
+      (entry.status === undefined || entry.status === status) &&
+      !hasBankOpeningBalanceMarker(entry.notes)
   );
   const receitas = sumAmounts(realizedEntries.filter((entry) => entry.type === "receita"));
   const despesas = sumAmounts(realizedEntries.filter((entry) => entry.type === "despesa"));

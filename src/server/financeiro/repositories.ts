@@ -6,6 +6,7 @@ import {
   hasOriginMarker,
   originMarker,
 } from "./financial-origin.js";
+import { BANK_OPENING_BALANCE_MARKER } from "../../domain/financeiro/bank-account.js";
 
 export class RepositoryError extends Error {
   public readonly code: string;
@@ -38,6 +39,14 @@ export class ValidationError extends RepositoryError {
 
 function whereNotDeleted(): Prisma.FinancialEntryWhereInput {
   return { deletedAt: null };
+}
+
+function whereNotBankOpeningBalance(): Prisma.FinancialEntryWhereInput {
+  return {
+    NOT: {
+      notes: { contains: BANK_OPENING_BALANCE_MARKER },
+    },
+  };
 }
 
 function accountPayableWhereNotDeleted(): Prisma.AccountPayableWhereInput {
@@ -126,6 +135,7 @@ export interface FinancialEntryFilters {
   dateFrom?: Date;
   dateTo?: Date;
   search?: string;
+  excludeBankOpeningBalance?: boolean;
 }
 
 export const financialEntryRepo = {
@@ -163,6 +173,9 @@ export const financialEntryRepo = {
         ],
       });
     }
+    if (filters?.excludeBankOpeningBalance) {
+      andFilters.push(whereNotBankOpeningBalance());
+    }
 
     const where: Prisma.FinancialEntryWhereInput = {
       ...whereNotDeleted(),
@@ -193,9 +206,14 @@ export const financialEntryRepo = {
           }
         : {}),
     };
-    const summaryWhere: Prisma.FinancialEntryWhereInput = filters?.status
-      ? where
-      : { ...where, status: "confirmed" };
+    const summaryWhere: Prisma.FinancialEntryWhereInput = {
+      ...where,
+      ...(filters?.status ? {} : { status: "confirmed" }),
+      AND: [
+        ...((where.AND as Prisma.FinancialEntryWhereInput[] | undefined) ?? []),
+        whereNotBankOpeningBalance(),
+      ],
+    };
 
     const [items, total, summary] = await Promise.all([
       prisma.financialEntry.findMany({
@@ -266,6 +284,9 @@ export const financialEntryRepo = {
           { notes: { contains: `[originType=${FINANCIAL_ORIGINS.MANUAL};` } },
         ],
       });
+    }
+    if (filters?.excludeBankOpeningBalance) {
+      andFilters.push(whereNotBankOpeningBalance());
     }
 
     const where: Prisma.FinancialEntryWhereInput = {

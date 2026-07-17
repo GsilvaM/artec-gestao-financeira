@@ -45,6 +45,12 @@ export interface AuvoInvoiceData {
   warnings: string[];
 }
 
+export interface AuvoRevenueAllocation {
+  type: "service" | "product";
+  categoryId: string;
+  amount: number;
+}
+
 export interface AuvoDuplicateCandidate {
   id: string;
   description: string;
@@ -111,6 +117,8 @@ export interface BillingEmailResult {
 
 export const AUVO_METADATA_START = "[auvoImport]";
 export const AUVO_METADATA_END = "[/auvoImport]";
+export const AUVO_REVENUE_ALLOCATIONS_START = "[auvoRevenueAllocations]";
+export const AUVO_REVENUE_ALLOCATIONS_END = "[/auvoRevenueAllocations]";
 
 export function buildAuvoMetadataBlock(data: AuvoInvoiceData) {
   const lines = [
@@ -126,9 +134,32 @@ export function buildAuvoMetadataBlock(data: AuvoInvoiceData) {
   return lines.join("\n");
 }
 
-export function appendAuvoMetadata(humanNotes: string | null | undefined, data: AuvoInvoiceData) {
+export function buildAuvoRevenueAllocationsBlock(allocations: AuvoRevenueAllocation[]) {
+  const payload = allocations
+    .filter((allocation) => allocation.categoryId && allocation.amount > 0)
+    .map((allocation) => ({
+      type: allocation.type,
+      categoryId: allocation.categoryId,
+      amount: Math.round(allocation.amount * 100) / 100,
+    }));
+
+  if (!payload.length) return "";
+  return [
+    AUVO_REVENUE_ALLOCATIONS_START,
+    JSON.stringify(payload),
+    AUVO_REVENUE_ALLOCATIONS_END,
+  ].join("\n");
+}
+
+export function appendAuvoMetadata(
+  humanNotes: string | null | undefined,
+  data: AuvoInvoiceData,
+  allocations: AuvoRevenueAllocation[] = [],
+) {
   const text = humanNotes?.trim();
-  return [text || null, buildAuvoMetadataBlock(data)].filter(Boolean).join("\n\n");
+  return [text || null, buildAuvoMetadataBlock(data), buildAuvoRevenueAllocationsBlock(allocations) || null]
+    .filter(Boolean)
+    .join("\n\n");
 }
 
 export function stripAuvoMetadata(notes: string | null | undefined) {
@@ -153,4 +184,30 @@ export function readAuvoMetadata(notes: string | null | undefined) {
     metadata[line.slice(0, separator)] = line.slice(separator + 1);
     return metadata;
   }, {});
+}
+
+export function readAuvoRevenueAllocations(notes: string | null | undefined): AuvoRevenueAllocation[] {
+  if (!notes) return [];
+  const start = notes.indexOf(AUVO_REVENUE_ALLOCATIONS_START);
+  const end = notes.indexOf(AUVO_REVENUE_ALLOCATIONS_END);
+  if (start < 0 || end < start) return [];
+  const block = notes.slice(start + AUVO_REVENUE_ALLOCATIONS_START.length, end).trim();
+  if (!block) return [];
+
+  try {
+    const parsed: unknown = JSON.parse(block);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.reduce<AuvoRevenueAllocation[]>((allocations, item) => {
+      if (!item || typeof item !== "object") return allocations;
+      const current = item as Record<string, unknown>;
+      const type = current.type === "product" ? "product" : current.type === "service" ? "service" : null;
+      const categoryId = typeof current.categoryId === "string" ? current.categoryId : "";
+      const amount = typeof current.amount === "number" ? current.amount : Number(current.amount);
+      if (!type || !categoryId || !Number.isFinite(amount) || amount <= 0) return allocations;
+      allocations.push({ type, categoryId, amount: Math.round(amount * 100) / 100 });
+      return allocations;
+    }, []);
+  } catch {
+    return [];
+  }
 }

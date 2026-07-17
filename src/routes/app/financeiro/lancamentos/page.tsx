@@ -35,6 +35,11 @@ import { useCategories } from "@/domain/financeiro/hooks/use-categories";
 import { useCollaborators } from "@/domain/financeiro/hooks/use-collaborators";
 import { useAuthStore } from "@/lib/supabase/auth-store";
 import { calculateFinancialSummary } from "@/domain/financeiro/calculations";
+import {
+  BANK_OPENING_BALANCE_MARKER,
+  DEFAULT_BANK_ACCOUNT,
+  MANUAL_REVENUE_SPLIT_MARKER,
+} from "@/domain/financeiro/bank-account";
 import { SummaryCard } from "@/components/lancamentos/SummaryCard";
 import { TransactionFilters } from "@/components/lancamentos/TransactionFilters";
 import { ResponsiveTransactionList } from "./responsive-transaction-list.js";
@@ -46,7 +51,7 @@ import type {
 const schema = z.object({
   data: z.string().min(1, "Informe a data"),
   tipo: z.enum(["receita", "despesa"], { required_error: "Informe o tipo" }),
-  categoria: z.string().min(1, "Selecione a categoria"),
+  categoria: z.string().optional(),
   descricao: z.string().min(3, "Informe a descrição"),
   cliente: z.string().optional(),
   colaborador: z.string().optional(),
@@ -60,6 +65,12 @@ const schema = z.object({
     return Number(normalized);
   }, z.number().positive("Informe um valor maior que zero")),
   status: z.enum(["aberto", "pago", "vencido"]),
+  bankAccount: z.string().optional(),
+  saldoInicial: z.string().optional(),
+  receitaServicosCategoria: z.string().optional(),
+  receitaServicosValor: z.string().optional(),
+  receitaProdutosCategoria: z.string().optional(),
+  receitaProdutosValor: z.string().optional(),
   observacoes: z.string().optional(),
 });
 
@@ -72,6 +83,12 @@ const initialForm: LancamentoFormState = {
   colaborador: "",
   valor: "",
   status: "aberto",
+  bankAccount: DEFAULT_BANK_ACCOUNT,
+  saldoInicial: "",
+  receitaServicosCategoria: "",
+  receitaServicosValor: "",
+  receitaProdutosCategoria: "",
+  receitaProdutosValor: "",
   observacoes: "",
 };
 
@@ -98,6 +115,44 @@ const STATUS_REVERSE: Record<string, string> = {
   confirmed: "pago",
   cancelled: "vencido",
 };
+
+function parseMoneyInput(value: string | null | undefined): number {
+  const input = value?.trim();
+  if (!input) return 0;
+  const normalized = input.includes(",")
+    ? input.replace(/\./g, "").replace(",", ".")
+    : input;
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : Number.NaN;
+}
+
+function roundCurrency(value: number): number {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+
+function createBatchId() {
+  return typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `manual-${Date.now()}`;
+}
+
+function withoutSystemMarkers(notes: string | null | undefined) {
+  return (notes ?? "")
+    .split("\n")
+    .filter(
+      (line) =>
+        !line.includes(BANK_OPENING_BALANCE_MARKER) &&
+        !line.includes(MANUAL_REVENUE_SPLIT_MARKER) &&
+        !line.includes("[manualRevenueSplitGroupId=") &&
+        !line.includes("[manualRevenueSplitAllocation=")
+    )
+    .join("\n")
+    .trim();
+}
+
+function joinNotes(lines: Array<string | null | undefined>) {
+  return lines.map((line) => line?.trim() || null).filter(Boolean).join("\n") || undefined;
+}
 
 function isOriginatedEntry(entry: FinancialEntryRow) {
   return (
@@ -309,11 +364,30 @@ export function Component() {
   }
 
   function updateField(field: keyof LancamentoFormState, value: string) {
-    setForm((current) => ({ ...current, [field]: value }));
+    setForm((current) => {
+      const next = { ...current, [field]: value };
+      if (field === "tipo" && value !== "receita") {
+        next.saldoInicial = "";
+        next.receitaServicosCategoria = "";
+        next.receitaServicosValor = "";
+        next.receitaProdutosCategoria = "";
+        next.receitaProdutosValor = "";
+      }
+      if (field === "saldoInicial" && value === "true") {
+        next.status = "pago";
+        next.bankAccount = next.bankAccount.trim() || DEFAULT_BANK_ACCOUNT;
+        next.receitaServicosCategoria = "";
+        next.receitaServicosValor = "";
+        next.receitaProdutosCategoria = "";
+        next.receitaProdutosValor = "";
+      }
+      return next;
+    });
     setErrors((current) => ({ ...current, [field]: "" }));
   }
 
-  function findCategoryId(name: string): string | null {
+  function findCategoryId(name: string | undefined): string | null {
+    if (!name) return null;
     const match = (categories ?? []).find(
       (c) => c.name.toLowerCase() === name.toLowerCase() && c.type === form.tipo
     );
@@ -350,9 +424,15 @@ export function Component() {
         | "aberto"
         | "pago"
         | "vencido",
+      bankAccount: entry.bankAccount ?? DEFAULT_BANK_ACCOUNT,
+      saldoInicial: entry.notes?.includes(BANK_OPENING_BALANCE_MARKER) ? "true" : "",
+      receitaServicosCategoria: "",
+      receitaServicosValor: "",
+      receitaProdutosCategoria: "",
+      receitaProdutosValor: "",
       observacoes: entry.notes?.startsWith("Cliente/Fornecedor: ")
         ? entry.notes.split(" | ").slice(1).join(" | ")
-        : (entry.notes ?? ""),
+        : withoutSystemMarkers(entry.notes),
     });
     setEditingId(entry.id);
     setEditingEntry(entry);
@@ -388,9 +468,15 @@ export function Component() {
         | "aberto"
         | "pago"
         | "vencido",
+      bankAccount: entry.bankAccount ?? DEFAULT_BANK_ACCOUNT,
+      saldoInicial: "",
+      receitaServicosCategoria: "",
+      receitaServicosValor: "",
+      receitaProdutosCategoria: "",
+      receitaProdutosValor: "",
       observacoes: entry.notes?.startsWith("Cliente/Fornecedor: ")
         ? entry.notes.split(" | ").slice(1).join(" | ")
-        : (entry.notes ?? ""),
+        : withoutSystemMarkers(entry.notes),
     });
     setEditingId(null);
     setEditingEntry(null);
@@ -446,16 +532,78 @@ export function Component() {
     }
 
     const categoryId = findCategoryId(parsed.data.categoria);
-    if (!categoryId) {
+    if (
+      !categoryId &&
+      !(
+        !editingId &&
+        parsed.data.tipo === "receita" &&
+        parsed.data.saldoInicial !== "true" &&
+        (parseMoneyInput(parsed.data.receitaServicosValor) > 0 ||
+          parseMoneyInput(parsed.data.receitaProdutosValor) > 0 ||
+          Boolean(parsed.data.receitaServicosCategoria) ||
+          Boolean(parsed.data.receitaProdutosCategoria))
+      )
+    ) {
       toast.error(
         "Categoria não encontrada. Cadastre-a em Financeiro > Categorias primeiro."
       );
       return;
     }
 
-    const notes = parsed.data.observacoes?.trim() || undefined;
+    const isOpeningBalance = parsed.data.saldoInicial === "true";
+    const splitServiceAmount = parseMoneyInput(parsed.data.receitaServicosValor);
+    const splitProductAmount = parseMoneyInput(parsed.data.receitaProdutosValor);
+    const hasSplit =
+      !editingId &&
+      parsed.data.tipo === "receita" &&
+      !isOpeningBalance &&
+      (splitServiceAmount > 0 ||
+        splitProductAmount > 0 ||
+        Boolean(parsed.data.receitaServicosCategoria) ||
+        Boolean(parsed.data.receitaProdutosCategoria));
+    const validationErrors: Record<string, string> = {};
+
+    if (!parsed.data.bankAccount?.trim()) {
+      validationErrors.bankAccount = "Informe a conta bancaria";
+    }
+
+    if (hasSplit) {
+      if (!parsed.data.receitaServicosCategoria && splitServiceAmount > 0) {
+        validationErrors.receitaServicosCategoria = "Selecione a categoria";
+      }
+      if (!parsed.data.receitaProdutosCategoria && splitProductAmount > 0) {
+        validationErrors.receitaProdutosCategoria = "Selecione a categoria";
+      }
+      if (parsed.data.receitaServicosCategoria && splitServiceAmount <= 0) {
+        validationErrors.receitaServicosValor = "Informe um valor maior que zero";
+      }
+      if (parsed.data.receitaProdutosCategoria && splitProductAmount <= 0) {
+        validationErrors.receitaProdutosValor = "Informe um valor maior que zero";
+      }
+      if (Number.isNaN(splitServiceAmount)) {
+        validationErrors.receitaServicosValor = "Valor invalido";
+      }
+      if (Number.isNaN(splitProductAmount)) {
+        validationErrors.receitaProdutosValor = "Valor invalido";
+      }
+      if (roundCurrency(splitServiceAmount + splitProductAmount) !== roundCurrency(parsed.data.valor)) {
+        validationErrors.rateioReceita = "A soma do rateio precisa ser igual ao valor total";
+      }
+    }
+
+    if (Object.keys(validationErrors).length) {
+      setErrors(validationErrors);
+      toast.error("Revise os campos do lancamento");
+      return;
+    }
+
+    const notes = joinNotes([
+      parsed.data.observacoes,
+      isOpeningBalance ? BANK_OPENING_BALANCE_MARKER : null,
+    ]);
     const clientName = parsed.data.cliente?.trim() || null;
     const collaboratorId = parsed.data.colaborador || null;
+    const bankAccount = parsed.data.bankAccount?.trim() || DEFAULT_BANK_ACCOUNT;
 
     try {
       if (editingId) {
@@ -470,26 +618,69 @@ export function Component() {
               | "pending"
               | "confirmed"
               | "cancelled",
-            categoryId,
+            categoryId: categoryId!,
             clientName,
             collaboratorId,
+            bankAccount,
             notes,
           },
         });
         toast.success("Lançamento atualizado");
       } else {
-        await createEntry({
+        if (hasSplit) {
+          const splitGroupId = createBatchId();
+          const allocations = [
+            {
+              label: "Servicos",
+              amount: splitServiceAmount,
+              categoryId: parsed.data.receitaServicosCategoria,
+            },
+            {
+              label: "Produtos",
+              amount: splitProductAmount,
+              categoryId: parsed.data.receitaProdutosCategoria,
+            },
+          ].filter((allocation): allocation is { label: string; amount: number; categoryId: string } =>
+            allocation.amount > 0 && Boolean(allocation.categoryId)
+          );
+
+          await Promise.all(
+            allocations.map((allocation) =>
+              createEntry({
+                description: `${parsed.data.descricao} - ${allocation.label}`,
+                amount: allocation.amount,
+                type: parsed.data.tipo,
+                date: new Date(parsed.data.data + "T00:00:00"),
+                status: STATUS_MAP[parsed.data.status] ?? "pending",
+                categoryId: allocation.categoryId,
+                clientName,
+                collaboratorId,
+                bankAccount,
+                userId: user.id,
+                notes: joinNotes([
+                  parsed.data.observacoes,
+                  MANUAL_REVENUE_SPLIT_MARKER,
+                  `[manualRevenueSplitGroupId=${splitGroupId}]`,
+                  `[manualRevenueSplitAllocation=${allocation.label.toLowerCase()}]`,
+                ]),
+              })
+            )
+          );
+        } else {
+          await createEntry({
           description: parsed.data.descricao,
           amount: parsed.data.valor,
           type: parsed.data.tipo,
           date: new Date(parsed.data.data + "T00:00:00"),
-          status: STATUS_MAP[parsed.data.status] ?? "pending",
-          categoryId,
+          status: isOpeningBalance ? "confirmed" : STATUS_MAP[parsed.data.status] ?? "pending",
+          categoryId: categoryId!,
           clientName,
           collaboratorId,
+          bankAccount,
           userId: user.id,
           notes,
         });
+        }
         toast.success("Lançamento criado");
       }
       setOpen(false);

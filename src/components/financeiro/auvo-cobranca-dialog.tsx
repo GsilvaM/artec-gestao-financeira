@@ -71,7 +71,10 @@ interface ReviewState {
   billingAddress: string;
   description: string;
   notes: string;
-  categoryId: string;
+  serviceCategoryId: string;
+  productCategoryId: string;
+  serviceAmount: string;
+  productAmount: string;
   costCenterId: string;
 }
 
@@ -90,7 +93,32 @@ function moneyInput(value: number | null | undefined) {
   return value === null || value === undefined ? "" : String(value).replace(".", ",");
 }
 
+function roundMoney(value: number) {
+  return Math.round(value * 100) / 100;
+}
+
+function getInvoiceItemTotal(invoice: AuvoInvoiceData, type: "service" | "product") {
+  return roundMoney(invoice.items.filter((item) => item.type === type).reduce((total, item) => total + item.total, 0));
+}
+
+function getDefaultRevenueAmounts(invoice: AuvoInvoiceData) {
+  const invoiceAmount = invoice.remainingAmount ?? invoice.total ?? 0;
+  const serviceAmount = getInvoiceItemTotal(invoice, "service");
+  const productAmountFromItems = getInvoiceItemTotal(invoice, "product");
+  const productAmount = productAmountFromItems > 0
+    ? productAmountFromItems
+    : serviceAmount > 0 && invoiceAmount > serviceAmount
+      ? roundMoney(invoiceAmount - serviceAmount)
+      : 0;
+
+  return {
+    serviceAmount: serviceAmount > 0 ? serviceAmount : invoiceAmount,
+    productAmount,
+  };
+}
+
 function buildReviewState(invoice: AuvoInvoiceData): ReviewState {
+  const revenueAmounts = getDefaultRevenueAmounts(invoice);
   return {
     invoiceNumber: invoice.invoiceNumber ?? "",
     subject: invoice.subject ?? "",
@@ -106,7 +134,10 @@ function buildReviewState(invoice: AuvoInvoiceData): ReviewState {
     billingAddress: invoice.billingAddress ?? "",
     description: suggestedDescription(invoice),
     notes: invoice.notes ?? "Servicos referentes a fatura importada do Auvo.",
-    categoryId: "",
+    serviceCategoryId: "",
+    productCategoryId: "",
+    serviceAmount: moneyInput(revenueAmounts.serviceAmount),
+    productAmount: revenueAmounts.productAmount > 0 ? moneyInput(revenueAmounts.productAmount) : "",
     costCenterId: "",
   };
 }
@@ -293,6 +324,19 @@ function amountStatus(invoice: AuvoInvoiceData, current: string): ReviewFieldSta
   return Number.isFinite(parsed) && Math.abs(parsed - extracted) > 0.01 ? "reviewed" : "found";
 }
 
+function buildRevenueAllocations(review: ReviewState) {
+  const serviceAmount = parseMoneyInput(review.serviceAmount);
+  const productAmount = parseMoneyInput(review.productAmount);
+  return [
+    Number.isFinite(serviceAmount) && serviceAmount > 0
+      ? { type: "service" as const, categoryId: review.serviceCategoryId, amount: serviceAmount }
+      : null,
+    Number.isFinite(productAmount) && productAmount > 0
+      ? { type: "product" as const, categoryId: review.productCategoryId, amount: productAmount }
+      : null,
+  ].filter((allocation): allocation is { type: "service" | "product"; categoryId: string; amount: number } => Boolean(allocation));
+}
+
 function FieldStatus({ status }: { status: ReviewFieldStatus }) {
   if (status === "reviewed") return <Badge variant="default">Revisado</Badge>;
   if (status === "found") return <Badge variant="success">Encontrado</Badge>;
@@ -436,8 +480,24 @@ export function AuvoCobrancaDialog({
       toast.error("Informe o vencimento.");
       return;
     }
-    if (!review.categoryId) {
-      toast.error("Selecione a categoria de receita.");
+    const revenueAllocations = buildRevenueAllocations(review);
+    const allocationTotal = roundMoney(revenueAllocations.reduce((total, allocation) => total + allocation.amount, 0));
+    if (!revenueAllocations.length) {
+      toast.error("Informe ao menos um valor de receita.");
+      return;
+    }
+    if (Math.abs(allocationTotal - amount) > 0.01) {
+      toast.error("A soma de produtos e servicos precisa fechar com o valor da fatura.");
+      return;
+    }
+    const missingCategory = revenueAllocations.find((allocation) => !allocation.categoryId);
+    if (missingCategory) {
+      toast.error(missingCategory.type === "product" ? "Selecione a categoria de receita de produtos." : "Selecione a categoria de receita de servicos.");
+      return;
+    }
+    const primaryAllocation = revenueAllocations[0];
+    if (!primaryAllocation) {
+      toast.error("Informe a composicao da receita.");
       return;
     }
     if (!user) {
@@ -466,10 +526,10 @@ export function AuvoCobrancaDialog({
         amount,
         dueDate: new Date(`${review.dueDate}T00:00:00`),
         status: "pending",
-        categoryId: review.categoryId,
+        categoryId: primaryAllocation.categoryId,
         costCenterId: review.costCenterId || undefined,
         client: review.clientName.trim() || undefined,
-        notes: appendAuvoMetadata(review.notes, invoice),
+        notes: appendAuvoMetadata(review.notes, invoice, revenueAllocations),
         userId: user.id,
       });
       onEmailSourceChange({ kind: "auvo", invoice, accountId: (created as { id?: string }).id });
@@ -664,14 +724,49 @@ export function AuvoCobrancaDialog({
               <Field label="Descricao da conta">
                 <Input value={review.description} onChange={(e) => setReview({ ...review, description: e.target.value })} />
               </Field>
-              <Field label="Categoria de receita">
-                <Select
-                  value={review.categoryId}
-                  onChange={(e) => setReview({ ...review, categoryId: e.target.value })}
-                  options={(categories ?? []).map((category) => ({ value: category.id, label: category.name }))}
-                  placeholder="Selecione..."
-                />
-              </Field>
+              <div className="grid gap-3 rounded-[var(--radius-card)] border border-border bg-surface-muted p-4 md:col-span-2">
+                <div>
+                  <p className="text-sm font-bold text-foreground">Composicao da receita</p>
+                  <p className="text-xs font-medium text-muted-foreground">
+                    A fatura fica em uma conta unica; no recebimento, o sistema separa os lancamentos por categoria.
+                  </p>
+                </div>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <Field label="Receita de servicos">
+                    <Select
+                      value={review.serviceCategoryId}
+                      onChange={(e) => setReview({ ...review, serviceCategoryId: e.target.value })}
+                      options={(categories ?? []).map((category) => ({ value: category.id, label: category.name }))}
+                      placeholder="Categoria de servicos"
+                    />
+                  </Field>
+                  <Field label="Valor de servicos">
+                    <Input
+                      value={review.serviceAmount}
+                      inputMode="decimal"
+                      onChange={(e) => setReview({ ...review, serviceAmount: e.target.value })}
+                    />
+                  </Field>
+                  <Field label="Receita de produtos">
+                    <Select
+                      value={review.productCategoryId}
+                      onChange={(e) => setReview({ ...review, productCategoryId: e.target.value })}
+                      options={(categories ?? []).map((category) => ({ value: category.id, label: category.name }))}
+                      placeholder="Categoria de produtos"
+                    />
+                  </Field>
+                  <Field label="Valor de produtos">
+                    <Input
+                      value={review.productAmount}
+                      inputMode="decimal"
+                      onChange={(e) => setReview({ ...review, productAmount: e.target.value })}
+                    />
+                  </Field>
+                </div>
+                <div className="rounded-[var(--radius-field)] border border-border bg-surface px-3 py-2 text-xs font-semibold text-muted-foreground">
+                  Total informado: {formatMoney(roundMoney(buildRevenueAllocations(review).reduce((total, allocation) => total + allocation.amount, 0)))} de {formatMoney(parseMoneyInput(review.amount) || 0)}
+                </div>
+              </div>
               <Field label="Centro de custo">
                 <Select
                   value={review.costCenterId}
@@ -714,10 +809,13 @@ export function AuvoCobrancaDialog({
               </div>
               {preview.invoice.items.length ? (
                 <div className="grid gap-2 text-sm">
-                  <p className="mt-2 text-sm font-bold text-foreground">Servicos encontrados</p>
+                  <p className="mt-2 text-sm font-bold text-foreground">Itens encontrados</p>
                   {preview.invoice.items.slice(0, 6).map((item) => (
                     <div key={`${item.description}-${item.total}`} className="grid gap-1 rounded-[var(--radius-field)] border border-border bg-surface px-3 py-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-                      <span className="min-w-0 text-muted-foreground">{item.description}</span>
+                      <span className="min-w-0 text-muted-foreground">
+                        <Badge variant="outline" className="mr-2 align-middle">{item.type === "product" ? "Produto" : "Servico"}</Badge>
+                        {item.description}
+                      </span>
                       <strong>{formatMoney(item.total)}</strong>
                       <span className="text-xs font-semibold text-muted-foreground sm:col-span-2">
                         {[item.quantity !== null ? `Qtd. ${item.quantity}` : null, item.unitPrice !== null ? `Unit. ${formatMoney(item.unitPrice)}` : null]

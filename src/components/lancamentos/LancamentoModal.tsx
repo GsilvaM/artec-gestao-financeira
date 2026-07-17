@@ -1,4 +1,4 @@
-import { AlertCircle, ArrowDownCircle, ArrowUpCircle, Banknote, Check, FileText, Loader2, Search, Tag, UserRound } from "lucide-react";
+import { AlertCircle, ArrowDownCircle, ArrowUpCircle, Banknote, Check, FileText, Loader2, Search, Tag, UserRound, Wallet } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -18,6 +18,12 @@ export interface LancamentoFormState {
   colaborador: string;
   valor: string;
   status: string;
+  bankAccount: string;
+  saldoInicial: string;
+  receitaServicosCategoria: string;
+  receitaServicosValor: string;
+  receitaProdutosCategoria: string;
+  receitaProdutosValor: string;
   observacoes: string;
 }
 
@@ -66,6 +72,11 @@ export function LancamentoModal({
     () => categories.filter((category) => category.type === form.tipo).map((category) => ({ value: category.name, label: category.name })),
     [categories, form.tipo],
   );
+  const revenueCategoryOptions = useMemo(
+    () => categories.filter((category) => category.type === "receita").map((category) => ({ value: category.id, label: category.name })),
+    [categories],
+  );
+  const canSplitRevenue = modo !== "editar" && isReceita && form.saldoInicial !== "true";
 
   const title = modo === "editar" ? "Editar lançamento" : modo === "duplicar" ? "Duplicar lançamento" : "Novo lançamento";
   const description = modo === "editar"
@@ -156,6 +167,82 @@ export function LancamentoModal({
                 className="min-h-[var(--field-height)] rounded-[var(--radius-field)] bg-[var(--color-bg-field)] focus-visible:border-[var(--color-border-focus)]"
               />
             </ModalField>
+
+            <ModalField label="Conta bancaria" error={errors.bankAccount} icon={<Wallet className="size-4" />}>
+              <Input
+                value={form.bankAccount}
+                onChange={(event) => onFieldChange("bankAccount", event.target.value)}
+                placeholder="Sicredi"
+                className="min-h-[var(--field-height)] rounded-[var(--radius-field)] bg-[var(--color-bg-field)] pl-10 focus-visible:border-[var(--color-border-focus)]"
+              />
+            </ModalField>
+
+            {isReceita ? (
+              <label className="inline-flex min-h-10 items-center gap-2 rounded-[var(--radius-field)] border border-border bg-[var(--color-bg-field)] px-3 text-sm font-semibold leading-none text-foreground sm:col-span-2">
+                <input
+                  type="checkbox"
+                  checked={form.saldoInicial === "true"}
+                  onChange={(event) => onFieldChange("saldoInicial", event.target.checked ? "true" : "")}
+                  className="size-4 rounded border-border text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                />
+                Saldo inicial da conta Sicredi
+              </label>
+            ) : null}
+
+            {canSplitRevenue ? (
+              <div className="grid gap-3 rounded-2xl border border-border bg-[var(--surface-2)] p-3 sm:col-span-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-xs font-bold uppercase tracking-[0.04em] text-muted-foreground">Rateio da receita</span>
+                  <span className="text-xs font-semibold text-muted-foreground">Opcional</span>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <ModalField label="Receita de servicos" error={errors.receitaServicosCategoria}>
+                    <Select
+                      value={form.receitaServicosCategoria}
+                      onChange={(event) => onFieldChange("receitaServicosCategoria", event.target.value)}
+                      options={revenueCategoryOptions}
+                      placeholder="Categoria"
+                      className="min-h-[var(--field-height)] rounded-[var(--radius-field)] bg-[var(--color-bg-field)] focus-visible:border-[var(--color-border-focus)]"
+                    />
+                  </ModalField>
+                  <ModalField label="Valor servicos" error={errors.receitaServicosValor}>
+                    <Input
+                      type="text"
+                      inputMode="decimal"
+                      value={form.receitaServicosValor}
+                      onChange={(event) => onFieldChange("receitaServicosValor", event.target.value)}
+                      placeholder="Valor dos servicos"
+                      className="min-h-[var(--field-height)] rounded-[var(--radius-field)] bg-[var(--color-bg-field)] text-right focus-visible:border-[var(--color-border-focus)]"
+                    />
+                  </ModalField>
+                  <ModalField label="Receita de produtos" error={errors.receitaProdutosCategoria}>
+                    <Select
+                      value={form.receitaProdutosCategoria}
+                      onChange={(event) => onFieldChange("receitaProdutosCategoria", event.target.value)}
+                      options={revenueCategoryOptions}
+                      placeholder="Categoria"
+                      className="min-h-[var(--field-height)] rounded-[var(--radius-field)] bg-[var(--color-bg-field)] focus-visible:border-[var(--color-border-focus)]"
+                    />
+                  </ModalField>
+                  <ModalField label="Valor produtos" error={errors.receitaProdutosValor}>
+                    <Input
+                      type="text"
+                      inputMode="decimal"
+                      value={form.receitaProdutosValor}
+                      onChange={(event) => onFieldChange("receitaProdutosValor", event.target.value)}
+                      placeholder="Valor dos produtos"
+                      className="min-h-[var(--field-height)] rounded-[var(--radius-field)] bg-[var(--color-bg-field)] text-right focus-visible:border-[var(--color-border-focus)]"
+                    />
+                  </ModalField>
+                </div>
+                {errors.rateioReceita ? (
+                  <span className="inline-flex min-h-4 items-center gap-1 text-xs font-semibold leading-4 text-destructive">
+                    <AlertCircle className="size-3.5 shrink-0" />
+                    {errors.rateioReceita}
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
 
             <ModalField label="Vínculo (cliente/fornecedor)" icon={<Search className="size-4" />}>
               <Input

@@ -8,6 +8,10 @@ import {
   reversalOriginMarker,
 } from "./financial-origin.js";
 import { NotFoundError } from "./repositories.js";
+import {
+  readAuvoRevenueAllocations,
+  type AuvoRevenueAllocation,
+} from "../../domain/financeiro/auvo-cobranca.js";
 
 export interface ReceiveAccountReceivableInput {
   receivedDate: Date;
@@ -77,19 +81,27 @@ function buildFinancialEntryData(
     client: string | null;
   },
   input: ReceiveAccountReceivableInput,
-  settlement: ReturnType<typeof validateSettlementAmount>
+  settlement: ReturnType<typeof validateSettlementAmount>,
+  allocation?: AuvoRevenueAllocation & {
+    receivedAmount: number;
+    discountAmount: number;
+    interestAmount: number;
+    penaltyAmount: number;
+  }
 ): Prisma.FinancialEntryCreateInput {
   return {
-    description: account.description,
-    amount: input.receivedAmount,
-    grossAmount: account.amount,
-    discountAmount: settlement.discountAmount,
-    interestAmount: settlement.interestAmount,
-    penaltyAmount: settlement.penaltyAmount,
+    description: allocation
+      ? `${account.description} - ${allocation.type === "product" ? "Produtos" : "Servicos"}`
+      : account.description,
+    amount: allocation?.receivedAmount ?? input.receivedAmount,
+    grossAmount: allocation?.amount ?? account.amount,
+    discountAmount: allocation?.discountAmount ?? settlement.discountAmount,
+    interestAmount: allocation?.interestAmount ?? settlement.interestAmount,
+    penaltyAmount: allocation?.penaltyAmount ?? settlement.penaltyAmount,
     type: "receita",
     date: input.receivedDate,
     status: "confirmed",
-    category: { connect: { id: account.categoryId } },
+    category: { connect: { id: allocation?.categoryId ?? account.categoryId } },
     ...(account.costCenterId
       ? { costCenter: { connect: { id: account.costCenterId } } }
       : {}),
@@ -99,7 +111,13 @@ function buildFinancialEntryData(
     originType: FINANCIAL_ORIGINS.ACCOUNTS_RECEIVABLE,
     originId: accountReceivableId,
     userId: input.userId,
-    notes: buildFinancialEntryNotes(accountReceivableId, input),
+    notes: allocation
+      ? [
+          buildFinancialEntryNotes(accountReceivableId, input),
+          `[auvoRevenueType=${allocation.type}]`,
+          `[auvoRevenueAmount=${allocation.amount.toFixed(2)}]`,
+        ].join("\n")
+      : buildFinancialEntryNotes(accountReceivableId, input),
   };
 }
 
@@ -134,6 +152,51 @@ function validateSettlementAmount(
   }
 
   return { discountAmount, interestAmount, penaltyAmount, expectedAmount };
+}
+
+function getValidRevenueAllocations(notes: string | null, accountAmount: number | Prisma.Decimal) {
+  const allocations = readAuvoRevenueAllocations(notes);
+  if (allocations.length < 2) return [];
+
+  const total = toMoneyNumber(allocations.reduce((sum, allocation) => sum + allocation.amount, 0));
+  if (Math.abs(total - toMoneyNumber(accountAmount)) >= 0.01) return [];
+
+  return allocations;
+}
+
+function distributeSettlement(
+  allocations: AuvoRevenueAllocation[],
+  settlement: ReturnType<typeof validateSettlementAmount>
+) {
+  const grossTotal = toMoneyNumber(allocations.reduce((sum, allocation) => sum + allocation.amount, 0));
+  let receivedRemainder = settlement.expectedAmount;
+  let discountRemainder = settlement.discountAmount;
+  let interestRemainder = settlement.interestAmount;
+  let penaltyRemainder = settlement.penaltyAmount;
+
+  return allocations.map((allocation, index) => {
+    const isLast = index === allocations.length - 1;
+    const ratio = grossTotal > 0 ? allocation.amount / grossTotal : 0;
+    const discountAmount = isLast ? discountRemainder : toMoneyNumber(settlement.discountAmount * ratio);
+    const interestAmount = isLast ? interestRemainder : toMoneyNumber(settlement.interestAmount * ratio);
+    const penaltyAmount = isLast ? penaltyRemainder : toMoneyNumber(settlement.penaltyAmount * ratio);
+    const receivedAmount = isLast
+      ? receivedRemainder
+      : toMoneyNumber(allocation.amount - discountAmount + interestAmount + penaltyAmount);
+
+    receivedRemainder = toMoneyNumber(receivedRemainder - receivedAmount);
+    discountRemainder = toMoneyNumber(discountRemainder - discountAmount);
+    interestRemainder = toMoneyNumber(interestRemainder - interestAmount);
+    penaltyRemainder = toMoneyNumber(penaltyRemainder - penaltyAmount);
+
+    return {
+      ...allocation,
+      receivedAmount,
+      discountAmount,
+      interestAmount,
+      penaltyAmount,
+    };
+  });
 }
 
 function getLegacyReceiptDate(account: {
@@ -220,17 +283,41 @@ export async function receiveAccountReceivable(
       include: { category: true, costCenter: true },
     });
 
-    const financialEntryData = buildFinancialEntryData(
-      accountReceivableId,
-      account,
-      input,
-      settlement
-    );
-
-    const financialEntry = await tx.financialEntry.create({
-      data: { id: randomUUID(), ...financialEntryData },
-      include: { category: true, costCenter: true, collaborator: true },
-    });
+    const allocations = getValidRevenueAllocations(account.notes, account.amount);
+    const distributedAllocations = distributeSettlement(allocations, settlement);
+    const financialEntries = distributedAllocations.length
+      ? await Promise.all(
+          distributedAllocations.map((allocation) =>
+            tx.financialEntry.create({
+              data: {
+                id: randomUUID(),
+                ...buildFinancialEntryData(
+                  accountReceivableId,
+                  account,
+                  input,
+                  settlement,
+                  allocation
+                ),
+              },
+              include: { category: true, costCenter: true, collaborator: true },
+            })
+          )
+        )
+      : [
+          await tx.financialEntry.create({
+            data: {
+              id: randomUUID(),
+              ...buildFinancialEntryData(
+                accountReceivableId,
+                account,
+                input,
+                settlement
+              ),
+            },
+            include: { category: true, costCenter: true, collaborator: true },
+          }),
+        ];
+    const financialEntry = financialEntries[0];
 
     await tx.auditLog.create({
       data: {
@@ -248,13 +335,15 @@ export async function receiveAccountReceivable(
           receivedDate: input.receivedDate.toISOString(),
           paymentMethod: input.paymentMethod,
           bankAccount: input.bankAccount ?? null,
-          financialEntryId: financialEntry.id,
+          financialEntryId: financialEntry?.id,
+          financialEntryIds: financialEntries.map((entry) => entry.id),
+          allocationCount: financialEntries.length,
           financialEntry: {
             amount: Number(input.receivedAmount),
             date: input.receivedDate.toISOString(),
             type: "receita",
             status: "confirmed",
-            categoryId: account.categoryId,
+            categoryId: financialEntry?.categoryId ?? account.categoryId,
             costCenterId: account.costCenterId,
             clientName: account.client,
           },
@@ -268,10 +357,11 @@ export async function receiveAccountReceivable(
         userId: input.userId,
         action: "financial_entry_created_from_account_receivable",
         entity: "FinancialEntry",
-        entityId: financialEntry.id,
+        entityId: financialEntry?.id ?? accountReceivableId,
         metadata: {
           originType: FINANCIAL_ORIGINS.ACCOUNTS_RECEIVABLE,
           originId: accountReceivableId,
+          financialEntryIds: financialEntries.map((entry) => entry.id),
         },
       },
     });
@@ -279,6 +369,7 @@ export async function receiveAccountReceivable(
     return {
       account: receivedAccount,
       financialEntry,
+      financialEntries,
       message:
         "Recebimento registrado com sucesso. O lancamento financeiro foi criado automaticamente.",
     };
@@ -319,7 +410,7 @@ export async function reverseAccountReceivableReceipt(
       FINANCIAL_ORIGINS.ACCOUNTS_RECEIVABLE,
       accountReceivableId
     );
-    let financialEntry = await tx.financialEntry.findFirst({
+    let financialEntries = await tx.financialEntry.findMany({
       where: {
         deletedAt: null,
         status: { not: "reversed" },
@@ -334,8 +425,8 @@ export async function reverseAccountReceivableReceipt(
       include: { category: true, costCenter: true, collaborator: true },
     });
 
-    if (!financialEntry) {
-      const reversedFinancialEntry = await tx.financialEntry.findFirst({
+    if (!financialEntries.length) {
+      const reversedFinancialEntries = await tx.financialEntry.findMany({
         where: {
           deletedAt: null,
           status: "reversed",
@@ -350,7 +441,7 @@ export async function reverseAccountReceivableReceipt(
         include: { category: true, costCenter: true, collaborator: true },
       });
 
-      if (reversedFinancialEntry) {
+      if (reversedFinancialEntries.length) {
         const reconciledAccount = await tx.accountReceivable.update({
           where: { id: accountReceivableId },
           data: { status: "reversed" },
@@ -365,7 +456,7 @@ export async function reverseAccountReceivableReceipt(
             entity: "AccountReceivable",
             entityId: accountReceivableId,
             metadata: {
-              financialEntryId: reversedFinancialEntry.id,
+              financialEntryIds: reversedFinancialEntries.map((entry) => entry.id),
               reversalDate: input.reversalDate.toISOString(),
               reason: input.reason.trim(),
               notes: input.notes ?? null,
@@ -375,15 +466,16 @@ export async function reverseAccountReceivableReceipt(
 
         return {
           account: reconciledAccount,
-          financialEntry: reversedFinancialEntry,
+          financialEntry: reversedFinancialEntries[0],
+          financialEntries: reversedFinancialEntries,
           message:
             "Recebimento reconciliado. O lancamento financeiro ja estava estornado.",
         };
       }
     }
 
-    if (!financialEntry) {
-      financialEntry = await tx.financialEntry.create({
+    if (!financialEntries.length) {
+      const financialEntry = await tx.financialEntry.create({
         data: {
           id: randomUUID(),
           description: account.description,
@@ -406,6 +498,7 @@ export async function reverseAccountReceivableReceipt(
         },
         include: { category: true, costCenter: true, collaborator: true },
       });
+      financialEntries = [financialEntry];
 
       await tx.auditLog.create({
         data: {
@@ -426,11 +519,7 @@ export async function reverseAccountReceivableReceipt(
       });
     }
 
-    if (financialEntry.status === "reversed") {
-      throw businessError("Lancamento financeiro ja esta estornado.", 409);
-    }
-
-    const existingReversalEntry = await tx.financialEntry.findFirst({
+    const existingReversalEntries = await tx.financialEntry.findMany({
       where: {
         deletedAt: null,
         OR: [
@@ -444,7 +533,7 @@ export async function reverseAccountReceivableReceipt(
       include: { category: true, costCenter: true, collaborator: true },
     });
 
-    if (existingReversalEntry) {
+    if (existingReversalEntries.length) {
       const reconciledAccount = await tx.accountReceivable.update({
         where: { id: accountReceivableId },
         data: { status: "reversed" },
@@ -459,8 +548,8 @@ export async function reverseAccountReceivableReceipt(
           entity: "AccountReceivable",
           entityId: accountReceivableId,
           metadata: {
-            financialEntryId: financialEntry.id,
-            reversalEntryId: existingReversalEntry.id,
+            financialEntryIds: financialEntries.map((entry) => entry.id),
+            reversalEntryIds: existingReversalEntries.map((entry) => entry.id),
             reversalDate: input.reversalDate.toISOString(),
             reason: input.reason.trim(),
             notes: input.notes ?? null,
@@ -470,8 +559,10 @@ export async function reverseAccountReceivableReceipt(
 
       return {
         account: reconciledAccount,
-        financialEntry,
-        reversalEntry: existingReversalEntry,
+        financialEntry: financialEntries[0],
+        financialEntries,
+        reversalEntry: existingReversalEntries[0],
+        reversalEntries: existingReversalEntries,
         message:
           "Recebimento reconciliado. O lancamento de estorno ja existia.",
       };
@@ -483,46 +574,56 @@ export async function reverseAccountReceivableReceipt(
       include: { category: true, costCenter: true },
     });
 
-    const originalEntry = await tx.financialEntry.update({
-      where: { id: financialEntry.id },
-      data: {
-        notes: appendMetadata(financialEntry.notes, [
-          `[reversalDate=${input.reversalDate.toISOString()}]`,
-          `[reversalUserId=${input.userId}]`,
-          `[reversalEntryOrigin=${reversalMarker}]`,
-          `Motivo do estorno: ${input.reason.trim()}`,
-          input.notes ? `Observacoes do estorno: ${input.notes}` : null,
-        ]),
-      },
-      include: { category: true, costCenter: true, collaborator: true },
-    });
+    const originalEntries = await Promise.all(
+      financialEntries.map((entry) =>
+        tx.financialEntry.update({
+          where: { id: entry.id },
+          data: {
+            notes: appendMetadata(entry.notes, [
+              `[reversalDate=${input.reversalDate.toISOString()}]`,
+              `[reversalUserId=${input.userId}]`,
+              `[reversalEntryOrigin=${reversalMarker}]`,
+              `Motivo do estorno: ${input.reason.trim()}`,
+              input.notes ? `Observacoes do estorno: ${input.notes}` : null,
+            ]),
+          },
+          include: { category: true, costCenter: true, collaborator: true },
+        })
+      )
+    );
 
-    const reversalEntry = await tx.financialEntry.create({
-      data: {
-        id: randomUUID(),
-        description: `Estorno: ${financialEntry.description}`,
-        amount: financialEntry.amount,
-        grossAmount: financialEntry.grossAmount,
-        discountAmount: financialEntry.discountAmount,
-        interestAmount: financialEntry.interestAmount,
-        penaltyAmount: financialEntry.penaltyAmount,
-        type: "despesa",
-        date: input.reversalDate,
-        status: "confirmed",
-        categoryId: financialEntry.categoryId,
-        costCenterId: financialEntry.costCenterId,
-        collaboratorId: financialEntry.collaboratorId,
-        clientName: financialEntry.clientName,
-        paymentMethod: financialEntry.paymentMethod,
-        bankAccount: financialEntry.bankAccount,
-        originType: FINANCIAL_ORIGINS.REVERSAL,
-        originId: `${FINANCIAL_ORIGINS.ACCOUNTS_RECEIVABLE}:${accountReceivableId}`,
-        reversalOfFinancialEntryId: financialEntry.id,
-        userId: input.userId,
-        notes: buildReversalEntryNotes(accountReceivableId, financialEntry.id, input),
-      },
-      include: { category: true, costCenter: true, collaborator: true },
-    });
+    const reversalEntries = await Promise.all(
+      financialEntries.map((entry) =>
+        tx.financialEntry.create({
+          data: {
+            id: randomUUID(),
+            description: `Estorno: ${entry.description}`,
+            amount: entry.amount,
+            grossAmount: entry.grossAmount,
+            discountAmount: entry.discountAmount,
+            interestAmount: entry.interestAmount,
+            penaltyAmount: entry.penaltyAmount,
+            type: "despesa",
+            date: input.reversalDate,
+            status: "confirmed",
+            categoryId: entry.categoryId,
+            costCenterId: entry.costCenterId,
+            collaboratorId: entry.collaboratorId,
+            clientName: entry.clientName,
+            paymentMethod: entry.paymentMethod,
+            bankAccount: entry.bankAccount,
+            originType: FINANCIAL_ORIGINS.REVERSAL,
+            originId: `${FINANCIAL_ORIGINS.ACCOUNTS_RECEIVABLE}:${accountReceivableId}`,
+            reversalOfFinancialEntryId: entry.id,
+            userId: input.userId,
+            notes: buildReversalEntryNotes(accountReceivableId, entry.id, input),
+          },
+          include: { category: true, costCenter: true, collaborator: true },
+        })
+      )
+    );
+    const originalEntry = originalEntries[0];
+    const reversalEntry = reversalEntries[0];
 
     await tx.auditLog.create({
       data: {
@@ -535,8 +636,10 @@ export async function reverseAccountReceivableReceipt(
           reversalDate: input.reversalDate.toISOString(),
           reason: input.reason.trim(),
           notes: input.notes ?? null,
-          financialEntryId: financialEntry.id,
-          reversalEntryId: reversalEntry.id,
+          financialEntryId: originalEntry?.id,
+          reversalEntryId: reversalEntry?.id,
+          financialEntryIds: originalEntries.map((entry) => entry.id),
+          reversalEntryIds: reversalEntries.map((entry) => entry.id),
         },
       },
     });
@@ -547,13 +650,15 @@ export async function reverseAccountReceivableReceipt(
         userId: input.userId,
         action: "financial_entry_reversed_from_account_receivable",
         entity: "FinancialEntry",
-        entityId: reversalEntry.id,
+        entityId: reversalEntry?.id ?? accountReceivableId,
         metadata: {
           originType: FINANCIAL_ORIGINS.REVERSAL,
           originId: accountReceivableId,
           reversedOriginType: FINANCIAL_ORIGINS.ACCOUNTS_RECEIVABLE,
-          financialEntryId: financialEntry.id,
-          reversalEntryId: reversalEntry.id,
+          financialEntryId: originalEntry?.id,
+          reversalEntryId: reversalEntry?.id,
+          financialEntryIds: originalEntries.map((entry) => entry.id),
+          reversalEntryIds: reversalEntries.map((entry) => entry.id),
           reversalDate: input.reversalDate.toISOString(),
           reason: input.reason.trim(),
         },
@@ -563,7 +668,9 @@ export async function reverseAccountReceivableReceipt(
     return {
       account: reversedAccount,
       financialEntry: originalEntry,
+      financialEntries: originalEntries,
       reversalEntry,
+      reversalEntries,
       message:
         "Recebimento estornado com sucesso. Um lancamento de contrapartida foi criado.",
     };
