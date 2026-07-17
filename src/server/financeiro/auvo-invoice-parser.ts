@@ -49,6 +49,7 @@ function normalizeText(value: string | null | undefined) {
 
 function normalizeKey(value: string) {
   return normalizeText(value)
+    .replace(/[º°]/g, "o")
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
     .toLowerCase()
@@ -139,6 +140,12 @@ function findValueByLabel(text: string, labels: string[]) {
     }
 
     const lineKey = normalizeLabel(line);
+    const inlineLabel = labelKeys.find((label) => lineKey.startsWith(`${label} `));
+    if (inlineLabel) {
+      const inlineValue = normalizeText(line.split(/\s+/).slice(inlineLabel.split(/\s+/).length).join(" "));
+      if (inlineValue && normalizeLabel(inlineValue) !== inlineLabel) return inlineValue.replace(/^[:#-]\s*/, "");
+    }
+
     if (!labelKeys.includes(lineKey)) continue;
     for (const next of lines.slice(index + 1, index + 4)) {
       if (isSectionTitle(next)) break;
@@ -223,6 +230,52 @@ function parseExternalId(sourceUrl: string) {
 
 function isProviderText(value: string | null | undefined) {
   return Boolean(value && /artec|ambientes climatizados|prestador|emitente|fornecedor/i.test(value));
+}
+
+function looksLikeClientName(value: string | null | undefined) {
+  if (!value || isProviderText(value)) return false;
+  const key = normalizeKey(value);
+  if (!key || SECTION_TITLES.includes(key)) return false;
+  if (/^(nome|cliente|razao social|cpf|cnpj|cpf cnpj|documento|email|e mail|telefone|celular)$/.test(key)) return false;
+  if (parseDocument(value) || parseEmail(value) || parsePhone(value)) return false;
+  if (parseBrazilianDate(value) || parseBrazilianMoney(value) !== null) return false;
+  return /[a-z]{3}/i.test(value) && value.trim().split(/\s+/).length >= 2;
+}
+
+function extractClientName(clientSection: string, rows: TableRow[], fullText: string) {
+  const labeled =
+    findValueByLabel(clientSection, ["nome", "cliente", "razao social", "tomador"]) ??
+    findValueInRows(rows, ["cliente", "nome do cliente", "razao social", "tomador"]);
+  if (looksLikeClientName(labeled)) return labeled;
+
+  const sectionCandidate = clientSection
+    .split(/\n+/)
+    .map((line) => normalizeText(line))
+    .find(looksLikeClientName);
+  if (sectionCandidate) return sectionCandidate;
+
+  const globalClient = findValueByLabel(fullText, ["cliente", "nome do cliente", "razao social"]);
+  return looksLikeClientName(globalClient) ? globalClient : null;
+}
+
+function parseInvoiceNumber(rows: TableRow[], fullText: string) {
+  const labeled = findAnyValue(rows, fullText, ["numero da fatura", "nº da fatura", "no da fatura", "fatura", "numero"])?.match(/\d+/)?.[0];
+  if (labeled) return labeled;
+
+  for (const line of fullText.split(/\n+/)) {
+    const key = normalizeKey(line);
+    if (!key.includes("fatura") || key.includes("referente")) continue;
+    const match = key.match(/\bfatura\s+(?:n\s*o\s+|no\s+|numero\s+|num\s+)?(\d{1,10})\b/);
+    if (match?.[1]) return match[1];
+  }
+
+  return null;
+}
+
+function parseTaskNumber(rows: TableRow[], fullText: string) {
+  const labeled = findAnyValue(rows, fullText, ["tarefa", "numero da tarefa", "no da tarefa"])?.match(/\d+/)?.[0];
+  if (labeled) return labeled;
+  return normalizeKey(fullText).match(/\btarefa\s+(?:n\s*o\s+|no\s+|numero\s+|#\s*)?(\d{4,})\b/)?.[1] ?? null;
 }
 
 function isInvalidAddress(value: string | null | undefined) {
@@ -362,13 +415,23 @@ export function parseAuvoInvoiceHtml(html: string, sourceUrl = ""): AuvoInvoiceD
   const clientDocument = parseDocument(findValueByLabel(clientSection, ["cpf/cnpj", "cpf / cnpj", "cpf ou cnpj", "documento", "cpf", "cnpj"]) ?? findValueInRows(rows, ["cpf/cnpj", "cpf / cnpj", "cpf ou cnpj", "documento", "cpf", "cnpj"]));
   const clientEmail = parseEmail(findValueByLabel(clientSection, ["e-mail", "email"]));
   const clientPhone = parsePhone(findValueByLabel(clientSection, ["telefone", "celular"]));
+  const resolvedInvoiceNumber = parseInvoiceNumber(rows, text) ?? invoiceNumber;
+  const resolvedTaskNumber = parseTaskNumber(rows, text) ?? taskNumber;
+  const resolvedClientName = extractClientName(clientSection, rows, text) ?? clientName;
+  const resolvedClientDocument = parseDocument(
+    findValueByLabel(clientSection, ["cpf/cnpj", "cpf / cnpj", "cpf ou cnpj", "documento", "cpf", "cnpj"]) ??
+      findValueInRows(rows, ["cpf/cnpj", "cpf / cnpj", "cpf ou cnpj", "documento", "cpf", "cnpj"]) ??
+      clientSection,
+  );
+  const resolvedClientEmail = parseEmail(findValueByLabel(clientSection, ["e-mail", "email"]) ?? clientSection) ?? clientEmail;
+  const resolvedClientPhone = parsePhone(findValueByLabel(clientSection, ["telefone", "celular"]) ?? clientSection) ?? clientPhone;
   const issueDate = parseBrazilianDate(findAnyValue(rows, text, ["data de emissao", "emissao"]));
   const installments = parseInstallments(rows, receiptSection || text);
   const dueDate =
     parseBrazilianDate(findValueByLabel(billingSection, ["vencimento", "data de vencimento"]) ?? findAnyValue(rows, text, ["vencimento", "data de vencimento"])) ??
     installments.find((item) => item.dueDate)?.dueDate ??
     null;
-  const total = parseBrazilianMoney(findAnyValue(rows, text, ["valor total", "total"]));
+  const total = parseBrazilianMoney(findValueByLabel(billingSection, ["valor total", "total", "valor"]) ?? findAnyValue(rows, text, ["valor total", "total"]));
   const remainingAmount = parseBrazilianMoney(findAnyValue(rows, text, ["valor restante", "restante"]));
   const serviceAddress =
     findValueByLabel(addressSection, ["endereco de servico", "endereco do servico", "endereco"]) ??
@@ -378,8 +441,8 @@ export function parseAuvoInvoiceHtml(html: string, sourceUrl = ""): AuvoInvoiceD
   const items = parseItems(tables, lines);
   const warnings: string[] = [];
 
-  if (!invoiceNumber) warnings.push("Numero da fatura nao encontrado.");
-  if (!clientName || isProviderText(clientName)) warnings.push("Cliente nao encontrado.");
+  if (!resolvedInvoiceNumber) warnings.push("Numero da fatura nao encontrado.");
+  if (!resolvedClientName || isProviderText(resolvedClientName)) warnings.push("Cliente nao encontrado.");
   if (!dueDate) warnings.push("Vencimento nao encontrado.");
   if (total === null) warnings.push("Valor total nao encontrado.");
   if (items.length && total !== null) {
@@ -391,15 +454,15 @@ export function parseAuvoInvoiceHtml(html: string, sourceUrl = ""): AuvoInvoiceD
     source: "auvo",
     sourceUrl,
     externalId: parseExternalId(sourceUrl),
-    invoiceNumber,
-    taskNumber,
-    subject: findAnyValue(rows, text, ["assunto"]) ?? (taskNumber ? `Servicos prestados a Tarefa #${taskNumber}` : null),
+    invoiceNumber: resolvedInvoiceNumber,
+    taskNumber: resolvedTaskNumber,
+    subject: findAnyValue(rows, text, ["assunto"]) ?? (resolvedTaskNumber ? `Servicos prestados a Tarefa #${resolvedTaskNumber}` : null),
     status: findAnyValue(rows, text, ["status"]),
     client: {
-      name: clientName && !isProviderText(clientName) ? clientName : null,
-      document: clientDocument,
-      email: clientEmail,
-      phone: clientPhone,
+      name: resolvedClientName && !isProviderText(resolvedClientName) ? resolvedClientName : null,
+      document: resolvedClientDocument ?? clientDocument,
+      email: resolvedClientEmail,
+      phone: resolvedClientPhone,
     },
     issueDate,
     dueDate,

@@ -115,6 +115,52 @@ const AUVO_HTML_REORDERED_SERVICE_COLUMNS = `
   </html>
 `;
 
+const AUVO_HTML_INLINE_FIELDS = `
+  <html>
+    <body>
+      <section>
+        <h2>Prestador</h2>
+        <p>Artec Ambientes Climatizados</p>
+        <p>CNPJ: 27.859.657/0001-65</p>
+        <p>E-mail: contato@artecclimatizados.com.br</p>
+        <p>Telefone: 27998441989</p>
+      </section>
+      <section>
+        <h1>Fatura Nº 289</h1>
+        <p>Assunto Servicos prestados a Tarefa #76966433</p>
+      </section>
+      <section>
+        <h2>Dados do cliente</h2>
+        <p>Luiz Fernando Landeiro</p>
+        <p>CPF/CNPJ 075.784.817-62</p>
+        <p>E-mail cliente@example.com</p>
+        <p>Telefone (27) 99999-0000</p>
+      </section>
+      <section>
+        <h2>Dados da cobranca</h2>
+        <p>Emissao 16/07/2026</p>
+        <p>Vencimento 17/07/2026</p>
+        <p>Valor R$ 950,00</p>
+        <p>Pagamento A vista no Boleto</p>
+      </section>
+      <section>
+        <h2>Endereco de servico</h2>
+        <p>Rua Chapot Presvot, 51, Praia do Canto, Vitoria - ES, 29055-410, Ap. 403, Ed Costa Victoria</p>
+      </section>
+      <section>
+        <h2>Servicos</h2>
+        <table>
+          <tr><th>Servico</th><th>Quantidade</th><th>Valor unitario</th><th>Subtotal</th></tr>
+          <tr><td>Acrescimo de fluido refrigerante</td><td>1</td><td>R$ 300,00</td><td>R$ 300,00</td></tr>
+          <tr><td>Descobrir e vedar vazamento com nitrogenio pressurizado</td><td>1</td><td>R$ 250,00</td><td>R$ 250,00</td></tr>
+          <tr><td>Instalacao de ar-condicionado split hi wall</td><td>1</td><td>R$ 250,00</td><td>R$ 250,00</td></tr>
+          <tr><td>Desinstalacao de ar condicionado split hi wall</td><td>1</td><td>R$ 150,00</td><td>R$ 150,00</td></tr>
+        </table>
+      </section>
+    </body>
+  </html>
+`;
+
 function htmlResponse(html = AUVO_HTML, init?: ResponseInit) {
   return new Response(html, {
     status: 200,
@@ -201,6 +247,26 @@ describe("Auvo invoice parser", () => {
       total: 300,
     });
     expect(invoice.items.reduce((total, item) => total + item.total, 0)).toBe(950);
+  });
+
+  it("extracts inline Auvo fields needed by the billing email", () => {
+    const invoice = parseAuvoInvoiceHtml(AUVO_HTML_INLINE_FIELDS, AUVO_URL);
+
+    expect(invoice.invoiceNumber).toBe("289");
+    expect(invoice.taskNumber).toBe("76966433");
+    expect(invoice.subject).toBe("Servicos prestados a Tarefa #76966433");
+    expect(invoice.client.name).toBe("Luiz Fernando Landeiro");
+    expect(invoice.client.document).toBe("075.784.817-62");
+    expect(invoice.client.email).toBe("cliente@example.com");
+    expect(invoice.client.phone).toBe("(27) 99999-0000");
+    expect(invoice.issueDate).toBe("2026-07-16");
+    expect(invoice.dueDate).toBe("2026-07-17");
+    expect(invoice.total).toBe(950);
+    expect(invoice.paymentMethod).toBe("A vista no Boleto");
+    expect(invoice.serviceAddress).toBe("Rua Chapot Presvot, 51, Praia do Canto, Vitoria - ES, 29055-410, Ap. 403, Ed Costa Victoria");
+    expect(invoice.items).toHaveLength(4);
+    expect(invoice.warnings).not.toContain("Numero da fatura nao encontrado.");
+    expect(invoice.warnings).not.toContain("Cliente nao encontrado.");
   });
 
   it("handles spacing changes and keeps absent fields null", () => {
