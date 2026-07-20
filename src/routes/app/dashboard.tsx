@@ -241,7 +241,7 @@ function KpiCard({
         </div>
         <div className="min-w-0">
           <p className="metric-title">{title}</p>
-          <strong className={cn("metric-value", valueClassName)}>{value}</strong>
+          <strong className={cn("metric-value", valueClassName)} title={String(value)}>{value}</strong>
         </div>
       </div>
       <div>
@@ -270,13 +270,13 @@ function PendingKpiCard({
   const hasPending = total > 0;
   return (
     <section className="metric-card card-hover">
-      <div>
+      <div className="min-w-0">
         <div className="metric-icon bg-purple-soft text-purple">
           <Bell />
         </div>
-        <div>
+        <div className="min-w-0">
           <p className="metric-title">Pendências</p>
-          <strong className="metric-value">{hasPending ? total : "0"}</strong>
+          <strong className="metric-value" title={hasPending ? String(total) : "0"}>{hasPending ? total : "0"}</strong>
         </div>
       </div>
       <div>
@@ -1285,7 +1285,7 @@ const dashboardStyles = `
   .metric-icon { width: 34px; height: 34px; border-radius: 12px; }
   .metric-icon svg { width: 18px; height: 18px; }
   .metric-title { font-size: 0.625rem; }
-  .metric-value { font-size: 1rem; white-space: normal; overflow-wrap: anywhere; }
+  .metric-value { font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .metric-trend { font-size: 12px; }
   .metric-sparkline { display: none; }
 }
@@ -1489,9 +1489,11 @@ const dashboardStyles = `
 
 .metric-value {
   display: block;
+  min-width: 0;
+  max-width: 100%;
   margin-top: 6px;
   color: var(--text-strong);
-  font-size: clamp(1rem, 1.35vw, 1.32rem);
+  font-size: 1.18rem;
   line-height: 1.1;
   font-weight: 750;
   letter-spacing: 0;

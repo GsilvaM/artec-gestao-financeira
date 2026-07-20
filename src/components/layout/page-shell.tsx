@@ -90,7 +90,7 @@ export function MetricCard({
           <Icon size={18} />
         </span>
       </div>
-      <strong className={cn("stat-value", valueClassName)}>{value}</strong>
+      <strong className={cn("stat-value", valueClassName)} title={value}>{value}</strong>
       {helper && <span className="stat-description">{helper}</span>}
     </div>
   );
@@ -109,7 +109,7 @@ export function MoneyValue({
       : tone === "negative"
         ? "text-destructive"
         : "text-foreground";
-  return <span className={cn("font-bold tabular-nums", color)}>{value}</span>;
+  return <span className={cn("block min-w-0 max-w-full overflow-hidden text-ellipsis whitespace-nowrap font-bold tabular-nums", color)} title={value}>{value}</span>;
 }
 
 const statusStyles: Record<string, string> = {

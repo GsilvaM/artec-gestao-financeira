@@ -16,7 +16,7 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./src/tests/setup.ts"],
     globals: true,
-    exclude: ["e2e", "node_modules", "**/.opencode/**"],
+    exclude: ["e2e", "node_modules", "**/node_modules/**", "**/.opencode/**"],
     env: {
       DATABASE_URL: process.env.DATABASE_URL ?? "",
       DIRECT_URL: process.env.DIRECT_URL ?? "",

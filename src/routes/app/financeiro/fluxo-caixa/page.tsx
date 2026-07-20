@@ -758,13 +758,13 @@ function KpiCard({ title, value, icon: Icon, tone, helper, valueClassName, spark
   const iconClassName = tone === "green" ? "bg-success-soft text-success" : tone === "orange" ? "bg-warning-soft text-warning" : "bg-primary-soft text-primary";
   return (
     <div className={cn("stat-card", alert && "border-warning/40 bg-warning-light/40") }>
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
+      <div className="flex min-w-0 items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
           <div className={cn("flex size-10 items-center justify-center rounded-2xl", iconClassName)}>
             <Icon className="size-5" />
           </div>
-          <p className="mt-3 text-sm font-semibold text-muted-foreground">{title}</p>
-          <p className={cn("mt-2 text-xl font-black tracking-tight", valueClassName)}>{value}</p>
+          <p className="mt-3 truncate text-sm font-semibold text-muted-foreground" title={title}>{title}</p>
+          <p className={cn("mt-2 max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-lg font-black tracking-normal sm:text-xl", valueClassName)} title={value}>{value}</p>
         </div>
         {alert ? <AlertTriangle className="size-4 shrink-0 text-warning" /> : null}
       </div>

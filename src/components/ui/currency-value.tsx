@@ -19,8 +19,8 @@ const toneClass: Record<NonNullable<CurrencyValueProps["tone"]>, string> = {
 const sizeClass: Record<NonNullable<CurrencyValueProps["size"]>, string> = {
   sm: "text-sm",
   md: "text-base",
-  lg: "text-[clamp(0.92rem,4.15vw,1.35rem)] sm:text-2xl",
-  xl: "text-[clamp(1.15rem,5vw,1.75rem)] sm:text-3xl",
+  lg: "text-lg sm:text-xl xl:text-2xl",
+  xl: "text-xl sm:text-2xl xl:text-3xl",
 };
 
 export function CurrencyValue({
@@ -33,6 +33,10 @@ export function CurrencyValue({
   const [display, setDisplay] = useState(value);
   const previousValue = useRef(value);
   const prefersReducedMotion = usePrefersReducedMotion();
+  const formattedValue = display.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
 
   useEffect(() => {
     const from = previousValue.current;
@@ -64,16 +68,14 @@ export function CurrencyValue({
   return (
     <span
       className={cn(
-        "inline-block max-w-full whitespace-nowrap font-bold leading-none tabular-nums tracking-normal",
+        "block min-w-0 max-w-full overflow-hidden text-ellipsis whitespace-nowrap font-bold leading-none tabular-nums tracking-normal",
         sizeClass[size],
         toneClass[tone],
         className,
       )}
+      title={formattedValue}
     >
-      {display.toLocaleString("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-      })}
+      {formattedValue}
     </span>
   );
 }

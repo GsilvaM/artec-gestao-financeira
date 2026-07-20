@@ -2,6 +2,8 @@
 
 Sistema web administrativo para gestao financeira e operacional da Artec Ambientes Climatizados. A aplicacao combina dashboard, financeiro, operacional, cadastros, relatorios, DRE, fluxo de caixa e administracao de usuarios com aprovacao de acesso.
 
+O Artec CRM fica em projeto independente em `C:\Users\Artec Climatizados\Desktop\artec-crm`. Nao implemente CRM, Auvo ou integrações comerciais neste repositorio financeiro/operacional.
+
 ## Tecnologias
 
 - Bun

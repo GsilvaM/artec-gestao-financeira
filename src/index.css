@@ -617,6 +617,8 @@
   [data-money] {
     min-width: 0;
     max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
     overflow-wrap: anywhere;
     font-variant-numeric: tabular-nums;
   }
@@ -916,11 +918,13 @@
 
   .stat-value {
     display: block;
+    min-width: 0;
+    max-width: 100%;
     margin-top: 14px;
     color: var(--text-strong);
-    font-size: clamp(1.1rem, 1.5vw, 1.5rem);
+    font-size: 1.25rem;
     font-weight: 750;
-    letter-spacing: -0.03em;
+    letter-spacing: 0;
     line-height: 1.1;
     white-space: nowrap;
     overflow: hidden;
@@ -967,9 +971,11 @@
 
     .stat-value {
       margin-top: 12px;
-      font-size: clamp(1.05rem, 4.6vw, 1.3rem);
-      white-space: normal;
-      overflow-wrap: anywhere;
+      font-size: 1rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      overflow-wrap: normal;
     }
 
     .stat-description {
@@ -1612,8 +1618,11 @@
     }
 
     .accounts-summary-grid .stat-value {
-      font-size: clamp(1rem, 6vw, 1.25rem);
-      overflow-wrap: anywhere;
+      font-size: 1rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      overflow-wrap: normal;
+      white-space: nowrap;
     }
 
     .accounts-summary-grid .stat-description {
@@ -1714,8 +1723,10 @@
       width: 100%;
       flex: 0 1 auto;
       min-width: 0;
-      font-size: clamp(1rem, 4.65vw, 1.28rem);
+      font-size: 1rem;
       line-height: 1.05;
+      overflow: hidden;
+      text-overflow: ellipsis;
       overflow-wrap: normal;
       white-space: nowrap;
     }

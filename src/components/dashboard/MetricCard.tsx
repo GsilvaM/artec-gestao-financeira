@@ -68,7 +68,7 @@ export function MetricCard({
           <Icon className="size-4" />
         </div>
         <p className={cn(
-          "min-w-0 flex-1 text-xl font-bold leading-[1.1] tabular-nums sm:text-2xl",
+          "min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-right text-lg font-bold leading-[1.1] tabular-nums sm:text-xl xl:text-2xl",
           valueTone === "positive" ? "text-success" : valueTone === "negative" ? "text-destructive" : "text-[var(--foreground)]",
         )}>{value}</p>
         {deltaContent}
